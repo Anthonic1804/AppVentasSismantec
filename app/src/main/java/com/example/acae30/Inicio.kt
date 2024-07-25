@@ -158,11 +158,10 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 finish()
             }
 
-            cvconfig.setOnClickListener {
-                val intento = Intent(this@Inicio, Configuracion::class.java)
-                startActivity(intento)
-                finish()
+            cvReportes.setOnClickListener {
+                funciones?.mensaje(this@Inicio, "FUNCION EN DESARROLLO")
             }
+
             cvcliente.setOnClickListener {
                 val intento = Intent(this@Inicio, Clientes::class.java)
                 startActivity(intento)
@@ -425,6 +424,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         when(item.itemId){
             R.id.nav_pedido -> historicoPedidos()
             R.id.nav_token -> crearTokens()
+            R.id.nav_config -> configuracion()
             R.id.nav_salir -> salir()
         }
         //drawerLayout.closeDrawer(GravityCompat.START)
@@ -458,6 +458,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private fun crearTokens(){
         val intent = Intent(this@Inicio, PreciosAutorizados::class.java)
         startActivity(intent)
+        finish()
+    }
+
+    private fun configuracion(){
+        val intento = Intent(this@Inicio, Configuracion::class.java)
+        startActivity(intento)
         finish()
     }
 

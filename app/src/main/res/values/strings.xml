@@ -144,4 +144,5 @@
     <string name="cliente_en_mora">CLIENTE EN MORA</string>
     <string name="punto_de_venta">PUNTO DE VENTA</string>
     <string name="numero_orden">N° ORDEN</string>
+    <string name="configuracion">CONFIGURACION</string>
 </resources>

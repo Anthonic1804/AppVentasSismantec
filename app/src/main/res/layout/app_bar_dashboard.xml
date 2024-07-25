@@ -302,7 +302,7 @@
                                 android:layout_height="60dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_config" />
+                                app:srcCompat="@drawable/ic_configuracion" />
                         </androidx.cardview.widget.CardView>
 
                     </LinearLayout>

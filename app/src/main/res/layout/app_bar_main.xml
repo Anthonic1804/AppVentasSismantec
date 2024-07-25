@@ -313,7 +313,7 @@
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
-                            android:id="@+id/cvconfig"
+                            android:id="@+id/cvReportes"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginLeft="10dp"
@@ -321,26 +321,27 @@
                             android:layout_marginTop="2dp"
                             android:layout_marginBottom="2dp"
                             android:layout_weight="1"
-                            android:backgroundTint="@color/cart">
+                            android:backgroundTint="@color/colorPrimary"
+                            app:cardCornerRadius="15dp">
 
                             <TextView
-                                android:id="@+id/lblconfig"
+                                android:id="@+id/lblReportes"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal|center_vertical"
                                 android:layout_marginTop="35dp"
-                                android:text="CONFIGURACIÓN"
-                                android:textColor="@color/colorPrimaryDark"
+                                android:text="REPORTES"
+                                android:textColor="@color/colorAccent"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
                             <ImageView
-                                android:id="@+id/ajustes"
+                                android:id="@+id/imgReportes"
                                 android:layout_width="75dp"
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ajustes" />
+                                app:srcCompat="@drawable/ic_reporte" />
                         </androidx.cardview.widget.CardView>
 
                     </LinearLayout>
