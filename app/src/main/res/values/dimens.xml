@@ -10,4 +10,6 @@
     <dimen name="height_card_135dp">135dp</dimen>
     <dimen name="corner_radious_card_15dp">15dp</dimen>
     <dimen name="sizeIconLoad">100dp</dimen>
+
+    <dimen name="menu_card">15dp</dimen>
 </resources>

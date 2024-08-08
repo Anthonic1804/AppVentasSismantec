@@ -641,7 +641,7 @@ class Producto_agregar : AppCompatActivity() {
             precio_iva * cantidad
         }
 
-        txttotal!!.text = "${String.format("%.2f".format(total) )}"
+        txttotal!!.text = "${String.format("%.4f".format(total) )}"
 
         if(bonificacion > 0){
             val productosBonificados = cantidad / bonificacion

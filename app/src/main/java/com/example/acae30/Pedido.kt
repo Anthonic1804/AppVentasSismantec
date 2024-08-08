@@ -3,10 +3,8 @@ package com.example.acae30
 import android.Manifest
 import android.app.Dialog
 import android.content.ContentValues
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Environment
@@ -16,7 +14,6 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
@@ -723,6 +720,7 @@ class Pedido : AppCompatActivity() {
             1
         )
     }
+
 
     private fun AlertaGPS(contexto: com.example.acae30.Pedido) {
         val dialogo = Dialog(this)

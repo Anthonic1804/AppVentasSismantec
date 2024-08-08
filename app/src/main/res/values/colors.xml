@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#064870</color>
-    <color name="colorPrimaryDark">#064870</color>
+    <color name="colorPrimary">#01579B</color>
+    <color name="colorPrimaryDark">#01579B</color>
     <color name="colorAccent">#FFFFFF</color>
     <color name="colordark">#2A3132</color>
     <color name="moderado">#762626</color>
 
-    <color name="cart">#e3f2fd</color>
+    <color name="cart">#01579B</color>
     <color name="border">#e0e0e0</color>
     <color name="icons">#9e9e9e</color>
     <color name="recicler">#EFEFEF</color>
     <color name="black">#000000</color>
 
-    <color name="colorHint">#7E7E7E</color>
+    <color name="colorHint">#2B2B2B</color>
 
-    <color name="colorPrimaryOld">#0288d1</color>
-    <color name="colorPrimaryDarkOld">#004c8c</color>
+    <color name="colorPrimaryOld">#064870</color>
+    <color name="colorPrimaryDarkOld">#064870</color>
     <color name="SEGUNDOCOLORLOGO">#6ba3bc</color>
     <color name="PRIMERCOLORLOGO">#064870</color>
-    <color name="cartOLD">#e3f2fd</color>
+    <color name="cartOLD">#69A0B9</color>
 
     <!-- COLORES PARA BOTONES -->
     <!-- AZUL -->

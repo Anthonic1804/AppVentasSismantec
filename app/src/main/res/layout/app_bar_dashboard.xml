@@ -211,7 +211,7 @@
                                 android:layout_height="60dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_inventario" />
+                                app:srcCompat="@drawable/ic_inventario_2" />
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
@@ -241,7 +241,7 @@
                                 android:layout_height="60dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_clientes" />
+                                app:srcCompat="@drawable/ic_clientes_2" />
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
@@ -272,7 +272,7 @@
                                 android:layout_height="60dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_cargar" />
+                                app:srcCompat="@drawable/ic_cargar_2" />
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
