@@ -867,7 +867,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.sinSucursal.text = getString(R.string.no_tiene_sucursal_registrada_)
                 }
 
-                if(pedido!!.Enviado == 1){
+                if(pedido!!.Enviado == 1 && pedido.pedido_dte == 0){
                     binding.txtCliente.isEnabled = false
                     binding.imgbtnadd.visibility = View.GONE
                     binding.btnenviar.visibility = View.GONE
@@ -881,6 +881,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.sinSucursal.visibility = View.VISIBLE
                     binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
                     binding.tvTipoenvio.visibility = View.VISIBLE
+                    binding.btnInvalidar.visibility = View.GONE
 
                 }else if(pedido.Enviado == 0 && pedido.Cerrado == 1){
                     binding.txtCliente.isEnabled = false
@@ -892,6 +893,22 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnexportar.visibility = View.VISIBLE
                     binding.spSucursal.visibility = View.GONE
                     binding.sinSucursal.visibility = View.VISIBLE
+                    binding.btnInvalidar.visibility = View.GONE
+                }else if(pedido.Enviado == 1 && pedido.pedido_dte == 1){
+                    binding.txtCliente.isEnabled = false
+                    binding.imgbtnadd.visibility = View.GONE
+                    binding.btnenviar.visibility = View.GONE
+                    binding.btnguardar.visibility = View.GONE
+                    binding.imbtnatras.visibility = View.VISIBLE
+                    binding.btncancelar.visibility = View.GONE
+                    binding.btnexportar.visibility = View.VISIBLE
+                    binding.spDocumento.visibility = View.GONE
+                    binding.spTipoEnvio.visibility = View.GONE
+                    binding.spSucursal.visibility = View.GONE
+                    binding.sinSucursal.visibility = View.VISIBLE
+                    binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
+                    binding.tvTipoenvio.visibility = View.VISIBLE
+                    binding.btnInvalidar.visibility = View.VISIBLE
                 }
 
             }
@@ -905,6 +922,7 @@ class Detallepedido : AppCompatActivity() {
                 binding.btncancelar.visibility = View.VISIBLE
                 binding.btnexportar.visibility = View.GONE
                 binding.imbtnatras.visibility = View.GONE
+                binding.btnInvalidar.visibility = View.GONE
             }
         }
     }

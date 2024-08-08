@@ -74,7 +74,7 @@ class InventarioAdapter(
                 .error(R.drawable.no_photography)
                 .into(vista.imagen)
         }else{
-            val imgDrawable = R.drawable.ic_car85dp
+            val imgDrawable = R.drawable.inventory_ic
             vista.imagen.setImageResource(imgDrawable)
         }
         contador++

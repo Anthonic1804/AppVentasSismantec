@@ -527,6 +527,23 @@
                     app:layout_constraintTop_toBottomOf="@+id/btncancelar"
                     app:layout_constraintVertical_bias="0.0" />
 
+                <Button
+                    android:id="@+id/btnInvalidar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/btn_eliminarpedido"
+                    android:layout_marginStart="@dimen/margin_default_16dp"
+                    android:layout_marginEnd="@dimen/margin_default_16dp"
+                    android:layout_marginTop="10dp"
+                    android:text="INVALIDAR PEDIDO"
+                    android:textColor="@color/colorAccent"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/btnexportar"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>

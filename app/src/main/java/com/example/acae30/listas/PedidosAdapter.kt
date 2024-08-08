@@ -42,6 +42,7 @@ class PedidosAdapter(
 
         holder.txtTotal.text = "$" + "${String.format("%.2f".format(total))}"
 
+        //VERIFICANDO ESTADO DE PEDIDO ENVIADO
         var estado = "ENVIADO"
         if (data.Enviado == 0) {
             estado = "NO ENVIADO"
@@ -50,6 +51,7 @@ class PedidosAdapter(
         holder.txtEstado.text = estado
         holder.txtFecha.text = data.Fecha_creado
 
+        //VERIFICANDO ESTADO DE PEDIDO TRANSMITIDO O INVALIDADO
         var transmitido = "TRANSMITIDO"
         if(data.pedido_dte == 0){
             transmitido = "NO TRANSMITIDO"
@@ -58,6 +60,12 @@ class PedidosAdapter(
 
         if(data.pedido_dte_error == 1 && data.pedido_dte == 0){
             transmitido = "ERROR DE TRANSMISION"
+            holder.txtTransmitido.setBackgroundResource(R.drawable.border_status_red)
+        }
+
+        //ESTADO DE INVALIDADO
+        if(data.pedido_dte_error == 2){
+            transmitido = "INVALIDADO"
             holder.txtTransmitido.setBackgroundResource(R.drawable.border_status_red)
         }
 
