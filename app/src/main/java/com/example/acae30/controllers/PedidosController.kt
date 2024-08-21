@@ -5,18 +5,18 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import com.example.acae30.Funciones
+import com.example.acae30.R
 import com.example.acae30.modelos.DetallePedido
-import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
 import com.example.acae30.modelos.JSONmodels.PedidoDTE
 import com.example.acae30.modelos.Pedidos
 import com.google.gson.Gson
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.OutputStreamWriter
-import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -399,6 +399,74 @@ class PedidosController {
         }finally {
             bd.close()
         }
+    }
+
+    //FUNCION PARA OBTENER SI EL DOCUMENTO TRANSMITDO ESTA INVALIDADO
+    suspend fun obtenerDocumentosTransmitidosInvalidados(Id_pedido:Int, context:Context) {
+
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+
+        try {
+            val datos = PedidoDTE(
+                Id_pedido
+            )
+            val objecto =
+                Gson().toJson(datos)
+            val ruta: String = servidor + "pedido/invalidarDTE"
+            val url = URL(ruta)
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 20000
+                    setRequestProperty(
+                        "Content-Type",
+                        "application/json;charset=utf-8"
+                    )
+                    requestMethod = "POST"
+                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+                    or.write(objecto) //SE ESCRIBE EL OBJ JSON
+                    or.flush() //SE ENVIA EL OBJ JSON
+                    when (responseCode) {
+                        200 -> {
+                            withContext(Dispatchers.Main){
+                                Toast.makeText(context, "DOCUMENTO ANULADO", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        404 -> {
+                            withContext(Dispatchers.Main){
+                                Toast.makeText(context, "DOCUMENTO SIN ANULAR", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw Exception(e.message)
+                }
+            }
+        } catch (e: Exception) {
+            throw Exception(e.message)
+        }
+    }
+
+    //FUNCION DE MENSAJE DE ADVERTENCIA
+    fun mensajeInvalidarDTE(context: Context, mensaje: String, Id_pedido : Int){
+        val dialog = AlertDialog.Builder(context)
+            .setTitle("INVALIDAR DTE")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    obtenerDocumentosTransmitidosInvalidados(Id_pedido, context)
+                }
+            }
+            .setNegativeButton("CANCELAR"){ view, _ ->
+                view.dismiss()
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
     }
 
 }

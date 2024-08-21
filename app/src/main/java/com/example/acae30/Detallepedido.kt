@@ -145,6 +145,8 @@ class Detallepedido : AppCompatActivity() {
     private var FacturaExportacion = false
     private var precioConIVA = true
 
+    private var idPedidoServidor = 0
+
     private lateinit var infoSucursal : InformacionSucursal
     private lateinit var infoCliente : Cliente
 
@@ -358,6 +360,11 @@ class Detallepedido : AppCompatActivity() {
         //BOTON DE EXPORTAR A PDF EL PEDIDO
         binding.btnexportar.setOnClickListener {
             imprimirRecibo()
+        }
+
+        //BOTON DE INVALIDAR PEDIDO
+        binding.btnInvalidar.setOnClickListener {
+            pedidosController.mensajeInvalidarDTE(this@Detallepedido, "¿Desea Invalidar este Pedido?", idPedidoServidor)
         }
 
         //IMPLEMENTANDO LOGICA DE SUCURSAL SELECCIONADA EN SPINNER
@@ -909,6 +916,8 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
                     binding.tvTipoenvio.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.VISIBLE
+
+                    idPedidoServidor = pedido.Id_pedido_sistema!!
                 }
 
             }
