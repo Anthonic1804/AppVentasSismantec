@@ -1,12 +1,14 @@
 package com.example.acae30.controllers
 
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.example.acae30.Funciones
+import com.example.acae30.Pedido
 import com.example.acae30.R
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.JSONmodels.PedidoDTE
@@ -24,7 +26,7 @@ import java.nio.charset.StandardCharsets
 class PedidosController {
 
     var funciones = Funciones()
-    var clienteController = ClientesController()
+    var inventarioController = InventarioController()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
 
@@ -402,14 +404,14 @@ class PedidosController {
     }
 
     //FUNCION PARA OBTENER SI EL DOCUMENTO TRANSMITDO ESTA INVALIDADO
-    suspend fun obtenerDocumentosTransmitidosInvalidados(Id_pedido:Int, context:Context) {
+    private suspend fun obtenerDocumentosTransmitidosInvalidados(idPedidoServidor:Int, context:Context, idPedido: Int) {
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
         try {
             val datos = PedidoDTE(
-                Id_pedido
+                idPedidoServidor
             )
             val objecto =
                 Gson().toJson(datos)
@@ -431,12 +433,15 @@ class PedidosController {
                     when (responseCode) {
                         200 -> {
                             withContext(Dispatchers.Main){
-                                Toast.makeText(context, "DOCUMENTO ANULADO", Toast.LENGTH_SHORT).show()
+                                funciones.mensaje(context, "DOCUMENTO INVALIDADO CORRECTAMENTE")
+                            }
+                            CoroutineScope(Dispatchers.IO).launch {
+                                actualizarInventarioAlInvalidar(context, idPedido)
                             }
                         }
-                        404 -> {
+                        else -> {
                             withContext(Dispatchers.Main){
-                                Toast.makeText(context, "DOCUMENTO SIN ANULAR", Toast.LENGTH_SHORT).show()
+                                funciones.mensaje(context, "EL DOCUMENTO NO HA SIDO INVALIDADO EN EL SISTEMA ACAE")
                             }
                         }
                     }
@@ -450,13 +455,13 @@ class PedidosController {
     }
 
     //FUNCION DE MENSAJE DE ADVERTENCIA
-    fun mensajeInvalidarDTE(context: Context, mensaje: String, Id_pedido : Int){
+    fun mensajeInvalidarDTE(context: Context, mensaje: String, idPedidoServidor : Int, idPedido: Int){
         val dialog = AlertDialog.Builder(context)
             .setTitle("INVALIDAR DTE")
             .setMessage(mensaje)
             .setPositiveButton("ACEPTAR") { view, _ ->
                 CoroutineScope(Dispatchers.IO).launch {
-                    obtenerDocumentosTransmitidosInvalidados(Id_pedido, context)
+                    obtenerDocumentosTransmitidosInvalidados(idPedidoServidor, context, idPedido)
                 }
             }
             .setNegativeButton("CANCELAR"){ view, _ ->
@@ -467,6 +472,34 @@ class PedidosController {
             .create()
 
         dialog.show()
+    }
+
+    //FUCION PARA RETORNAR INVENTARIO AL INVALIDAR PEDIDO
+    private fun actualizarInventarioAlInvalidar(context: Context, idPedido: Int){
+        val detallePedido = obtenerDetallePedido(idPedido, context)
+        val bd = funciones.getDataBase(context).writableDatabase
+
+        try{
+            for(item in detallePedido){
+                inventarioController.actualizarExistenciasInventario(context, item.Cantidad!!, item.Id_producto!!)
+            }
+
+            bd!!.execSQL("UPDATE pedidos set pedido_dte_error=2 WHERE id=$idPedido")
+
+        }catch (e:Exception){
+            throw Exception("ERROR AL ACTUALIZAR EL INVENTARIO AL INVALIDAR" + e.message)
+        }finally {
+            bd.close()
+
+            if (context is Activity) {
+                val intento = Intent(context, Pedido::class.java)
+                context.startActivity(intento)
+                context.finish()
+            } else {
+                throw IllegalArgumentException("Contexto debe ser una instancia de Activity")
+            }
+        }
+
     }
 
 }

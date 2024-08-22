@@ -67,6 +67,7 @@ class PedidosAdapter(
         if(data.pedido_dte_error == 2){
             transmitido = "INVALIDADO"
             holder.txtTransmitido.setBackgroundResource(R.drawable.border_status_red)
+            holder.txtEstado.visibility = View.GONE
         }
 
         holder.txtTransmitido.text = transmitido

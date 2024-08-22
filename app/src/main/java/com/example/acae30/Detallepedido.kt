@@ -364,7 +364,7 @@ class Detallepedido : AppCompatActivity() {
 
         //BOTON DE INVALIDAR PEDIDO
         binding.btnInvalidar.setOnClickListener {
-            pedidosController.mensajeInvalidarDTE(this@Detallepedido, "¿Desea Invalidar este Pedido?", idPedidoServidor)
+            pedidosController.mensajeInvalidarDTE(this@Detallepedido, "¿Desea Invalidar este Pedido?", idPedidoServidor, idpedido)
         }
 
         //IMPLEMENTANDO LOGICA DE SUCURSAL SELECCIONADA EN SPINNER
@@ -890,6 +890,21 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvTipoenvio.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.GONE
 
+                }else if(pedido.pedido_dte_error == 2){
+                    binding.txtCliente.isEnabled = false
+                    binding.imgbtnadd.visibility = View.GONE
+                    binding.btnenviar.visibility = View.GONE
+                    binding.btnguardar.visibility = View.GONE
+                    binding.imbtnatras.visibility = View.VISIBLE
+                    binding.btncancelar.visibility = View.GONE
+                    binding.btnexportar.visibility = View.GONE
+                    binding.spDocumento.visibility = View.GONE
+                    binding.spTipoEnvio.visibility = View.GONE
+                    binding.spSucursal.visibility = View.GONE
+                    binding.sinSucursal.visibility = View.VISIBLE
+                    binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
+                    binding.tvTipoenvio.visibility = View.VISIBLE
+                    binding.btnInvalidar.visibility = View.GONE
                 }else if(pedido.Enviado == 0 && pedido.Cerrado == 1){
                     binding.txtCliente.isEnabled = false
                     binding.imgbtnadd.visibility = View.GONE
@@ -919,7 +934,6 @@ class Detallepedido : AppCompatActivity() {
 
                     idPedidoServidor = pedido.Id_pedido_sistema!!
                 }
-
             }
             "visita" -> {
                 //RUTINA PARA AGREGAR NUEVO PEDIDO

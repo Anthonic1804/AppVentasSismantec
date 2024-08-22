@@ -635,7 +635,7 @@ class InventarioController {
     }
 
     //FUNCION ACTUALIZAR INVENTARIO POR HOJA DE CARGA
-    private fun actualizarExistenciasInventario(context: Context, cantidad:Float, id:Int){
+    fun actualizarExistenciasInventario(context: Context, cantidad:Float, id:Int){
         val bd = funciones.getDataBase(context).writableDatabase
         try {
             bd.execSQL("UPDATE inventario SET Existencia=(Existencia + $cantidad) WHERE id=$id")
