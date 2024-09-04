@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets
 class InventarioController {
 
     private var funciones = Funciones()
+    private var hojaController = HojaCargaController()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
 
@@ -844,31 +845,39 @@ class InventarioController {
                 val codigo = funciones.validateJsonIsnullString(dato, "codigo_producto")
                 val cantidad = funciones.validateJsonIsNullFloat(dato, "salida")
 
-                try {
-                    val cursor = bd.rawQuery("SELECT * FROM hoja_detalle_recargas WHERE id=$id AND recargado=1", null)
-                    if(cursor.count == 0){
+                //refactorizando codigo
+                try{
 
-                        //INSERTANDO RECARGA
-                        bd.execSQL("INSERT INTO hoja_detalle_recargas(id, id_hoja, id_producto, codigo_producto, cantidad) VALUES(" +
-                                "$id, $id_hoja, $id_producto, '$codigo', $cantidad)")
+                    //Buscar el id en el inventario si no Existe se buscar en el servidor para agregarlo
+                    val producto = obtenerInformacionProductoPorId(context, id, false)
+                    if(producto != null){
+                        //existe en el inventario
+                        //buscando en tbl recargas detalle
+                        val idRecarga = hojaController.obtenerRecargasRealizadas(context, id)
+                        if(idRecarga == 0){
+                            //INSERTANDO RECARGA
+                            CoroutineScope(Dispatchers.IO).launch {
+                                hojaController.insertarRecargaProducto(context, id, id_hoja, id_producto, codigo, cantidad)
+                            }
 
-                        //ACTUALIZANDO EXISTENCIAS
-                        CoroutineScope(Dispatchers.IO).launch {
-                            actualizarExistenciasInventario(context, cantidad, id_producto)
+                            //ACTUALIZANDO EXISTENCIAS
+                            CoroutineScope(Dispatchers.IO).launch {
+                                actualizarExistenciasInventario(context, cantidad, id_producto)
+                            }
+
+                            //ACTUALIZANDO REGISTRO YA CARGADO
+                            CoroutineScope(Dispatchers.IO).launch {
+                                actualizarRegistrodeRecargas(context, id)
+                            }
+
+                            hojaRecargada = 1
                         }
-
-                        //ACTUALIZANDO REGISTRO YA CARGADO
-                        CoroutineScope(Dispatchers.IO).launch {
-                            actualizarRegistrodeRecargas(context, id)
-                        }
-
-                        hojaRecargada = 1
+                    }else{
+                        //no existe en el inventario
                     }
-                    cursor.close()
                 }catch (e:Exception){
                     throw Exception("Error al realizar la busqueda en las recargas")
                 }
-
             }
 
             if(hojaRecargada == 1){
