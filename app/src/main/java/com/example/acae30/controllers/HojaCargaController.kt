@@ -1,11 +1,24 @@
 package com.example.acae30.controllers
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.example.acae30.Funciones
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.io.Reader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.nio.charset.StandardCharsets
 
 class HojaCargaController {
 
     private var funciones = Funciones()
+    private lateinit var preferences: SharedPreferences
+    private var instancia = "CONFIG_SERVIDOR"
 
     //BUSCAR ID DE LA RECARGA EN LA TBL RECARGAS
     fun obtenerRecargasRealizadas(context: Context, id: Int) : Int{
@@ -39,6 +52,5 @@ class HojaCargaController {
 
         }
     }
-
 
 }

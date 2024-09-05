@@ -13,6 +13,7 @@ import com.example.acae30.modelos.JSONmodels.HojaRecargasJSON
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -322,7 +323,7 @@ class InventarioController {
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    fun saveInventarioDatabase(json: JSONArray, context: Context, view:View, numeroHojaCarga:Int) {
+    fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, recarga: Int) {
         val bd = funciones.getDataBase(context).writableDatabase
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
@@ -401,12 +402,12 @@ class InventarioController {
         } finally {
             bd!!.endTransaction()
             bd.close()
-            if(hojaCarga){
+            if(hojaCarga && recarga == 0){
                 CoroutineScope(Dispatchers.IO).launch {
-                    insertarHojaDeCargar(json, context, view, numeroHojaCarga)
+                    insertarHojaDeCargar(json, context, numeroHojaCarga)
                 }
             }else{
-                funciones.mostrarMensaje("INVENTARIO CARGADO CORRECTAMENTE", context, view)
+                funciones.mensaje(context, "INVENTARIO CARGADO CORRECTAMENTE")
             }
         }
     }
@@ -414,9 +415,9 @@ class InventarioController {
 
     //FUNCIONES PARA HOJA DE CARGA
     //FUNCION PARA OBTENER EL INVENTARIO DESDE LA HOJA DE CARGA DE ESCARRSA
-    suspend fun obtenerInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context, view:View) {
+    suspend fun obtenerInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
         try {
             val datos = HojaCargaJSON(
@@ -427,9 +428,11 @@ class InventarioController {
             val objecto =
                 Gson().toJson(datos)
             println(objecto)
-            val ruta: String = url + "inventario/hojacarga"
+            val ruta: String = servidor + "inventario/hojacarga"
             val url = URL(ruta)
-            with(url.openConnection() as HttpURLConnection) {
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -462,13 +465,13 @@ class InventarioController {
 
                                             println("INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA")
                                             //ALMACENANDO INVENTARIO NUEVO
-                                            saveInventarioDatabase(res, context, view, numero)
+                                            saveInventarioDatabase(res, context, numero,0)
 
                                         }else{
                                             //AQUI SE CARGAR SOLO LAS EXISTENCIA DE ACUERDO A LA HOJA DE CARGA
                                             println("INSERTANDO INSERTANDO INFORMACION SOLO EN HOJA DE CARGA Y DETALLE")
                                             //ALMACENANDO INVENTARIO NUEVO
-                                            insertarHojaDeCargar(res, context, view, numero)
+                                            insertarHojaDeCargar(res, context, numero)
                                         }
 
                                     } else {
@@ -561,7 +564,7 @@ class InventarioController {
     }
 
     //FUNCION PARA INSERTAR MAESTRO HOJA CARGA
-    private fun insertarHojaDeCargar(json: JSONArray, context: Context, view:View, numeroHojaCarga:Int){
+    private fun insertarHojaDeCargar(json: JSONArray, context: Context, numeroHojaCarga:Int){
         val bd = funciones.getDataBase(context).writableDatabase
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
@@ -583,13 +586,13 @@ class InventarioController {
             bd.endTransaction()
             bd.close()
             CoroutineScope(Dispatchers.IO).launch {
-                insertarDetalleHojaCarga(json, context, view, numeroHojaCarga)
+                insertarDetalleHojaCarga(json, context, numeroHojaCarga)
             }
         }
     }
 
     //FUNCION PARA INSERTAR DETALLE DE HOJA DE CARGA
-    private suspend fun insertarDetalleHojaCarga(json: JSONArray, context: Context, view:View, numeroHojaCarga: Int){
+    private suspend fun insertarDetalleHojaCarga(json: JSONArray, context: Context, numeroHojaCarga: Int){
         val bd = funciones.getDataBase(context).writableDatabase
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
@@ -650,7 +653,7 @@ class InventarioController {
     //ACTUALIZAR INFORMACION DE INVENTARIO
     suspend fun actualizarInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context, view:View) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
         try {
             val datos = HojaCargaJSON(
@@ -661,9 +664,11 @@ class InventarioController {
             val objecto =
                 Gson().toJson(datos)
             println(objecto)
-            val ruta: String = url + "inventario/hojacarga"
+            val ruta: String = servidor + "inventario/hojacarga"
             val url = URL(ruta)
-            with(url.openConnection() as HttpURLConnection) {
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -755,7 +760,7 @@ class InventarioController {
     //FUNCION PARA OBTENER DATOS EN LA TABLA DE REACARGAS DE LA HOJA DE CARGA
     suspend fun obtenerHojaRecargas(context: Context, idHojaCarga:Int, view:View) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
         try {
             val datos = HojaRecargasJSON(
@@ -764,9 +769,11 @@ class InventarioController {
             val objecto =
                 Gson().toJson(datos)
             println(objecto)
-            val ruta: String = url + "inventario/hojarecarga"
+            val ruta: String = servidor + "inventario/hojarecarga"
             val url = URL(ruta)
-            with(url.openConnection() as HttpURLConnection) {
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -855,25 +862,24 @@ class InventarioController {
                         //buscando en tbl recargas detalle
                         val idRecarga = hojaController.obtenerRecargasRealizadas(context, id)
                         if(idRecarga == 0){
-                            //INSERTANDO RECARGA
-                            CoroutineScope(Dispatchers.IO).launch {
-                                hojaController.insertarRecargaProducto(context, id, id_hoja, id_producto, codigo, cantidad)
-                            }
-
-                            //ACTUALIZANDO EXISTENCIAS
-                            CoroutineScope(Dispatchers.IO).launch {
-                                actualizarExistenciasInventario(context, cantidad, id_producto)
-                            }
-
-                            //ACTUALIZANDO REGISTRO YA CARGADO
-                            CoroutineScope(Dispatchers.IO).launch {
-                                actualizarRegistrodeRecargas(context, id)
-                            }
+                            //INSERTANDO DATOS DE RECARGA
+                            insertandoInformacionRecarga(context, id, id_hoja, id_producto, codigo, cantidad)
 
                             hojaRecargada = 1
                         }
                     }else{
                         //no existe en el inventario
+                        //buscar producto en servidor para luego insertarlo en sqlite
+                        CoroutineScope(Dispatchers.IO).launch {
+                            obtenerProductoPorIdServidor(id_producto, context)
+                        }
+                        delay(1000)
+
+                        //INSERTANDO DATOS DE RECARGA
+                        insertandoInformacionRecarga(context, id, id_hoja, id_producto, codigo, cantidad)
+
+                        hojaRecargada = 1
+
                     }
                 }catch (e:Exception){
                     throw Exception("Error al realizar la busqueda en las recargas")
@@ -907,4 +913,77 @@ class InventarioController {
             db.close()
         }
     }
+
+    //OBTENER PRODUCTO POR ID DESDE EL SERVIDOR
+    suspend fun obtenerProductoPorIdServidor(id: Int, context: Context) {
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+
+        try {
+
+            val ruta: String = servidor + "inventario/ObtenerProductoPorId/" + id.toString()
+            val url = URL(ruta)
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 30000
+                    requestMethod = "GET"
+                    when (responseCode) {
+                        200 -> {
+                            BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                                try {
+                                    val respuesta = StringBuffer()
+                                    var inpuline = it.readLine()
+                                    while (inpuline != null) {
+                                        respuesta.append(inpuline)
+                                        inpuline = it.readLine()
+                                    }
+                                    it.close()
+                                    val res = JSONArray(respuesta.toString())
+                                    if (res.length() > 0) {
+                                        //Almacenar registro en tbl inventario
+                                        saveInventarioDatabase(res, context, 0,0)
+                                    }
+                                } catch (e: Exception) {
+                                    throw Exception(e.message)
+                                }
+                            }
+                        }
+                        404 -> {
+                            withContext(Dispatchers.Main){
+                                funciones.mensaje(context, "ERROR: NO SE ENCONTRO EL PRODUCTO")
+                            }
+                        }
+                        else -> {
+                            println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR")
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw Exception("ERROR: " + e.message)
+                }
+            }
+        } catch (e: Exception) {
+            throw Exception("ERROR EN LA CONEXION CON EL SERVIDOR" + e.message)
+        }
+    }
+
+    //INSERTANDO INFORMACION DE LA RECARGA
+    fun insertandoInformacionRecarga(context: Context, id: Int, id_hoja: Int, id_producto: Int, codigo: String, cantidad: Float){
+        //INSERTANDO RECARGA
+        CoroutineScope(Dispatchers.IO).launch {
+            hojaController.insertarRecargaProducto(context, id, id_hoja, id_producto, codigo, cantidad)
+        }
+
+        //ACTUALIZANDO EXISTENCIAS
+        CoroutineScope(Dispatchers.IO).launch {
+            actualizarExistenciasInventario(context, cantidad, id_producto)
+        }
+
+        //ACTUALIZANDO REGISTRO YA CARGADO
+        CoroutineScope(Dispatchers.IO).launch {
+            actualizarRegistrodeRecargas(context, id)
+        }
+    }
+
 }
