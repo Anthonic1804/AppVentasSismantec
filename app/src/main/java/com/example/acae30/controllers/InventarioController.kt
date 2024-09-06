@@ -801,10 +801,8 @@ class InventarioController {
                                         //INSERTANDO LAS RECARGAS ENCONTRADAS
                                         insertarHojaRecargas(res, context, view)
                                     } else {
-                                        //println("ERROR: ERROR NO SE ENCONTRARON DATOS PARA ALMACENAR 222222")
                                         withContext(Dispatchers.Main){
                                             funciones.mensaje(context, "NO SE ENCONTRARON RECARGAS PARA SU HOJA")
-                                            //Toast.makeText(context,"ERROR: NO SE ENCONTRARON RECARGAS PARA SU HOJA", Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -856,7 +854,7 @@ class InventarioController {
                 try{
 
                     //Buscar el id en el inventario si no Existe se buscar en el servidor para agregarlo
-                    val producto = obtenerInformacionProductoPorId(context, id, false)
+                    val producto = obtenerInformacionProductoPorId(context, id_producto, false)
                     if(producto != null){
                         //existe en el inventario
                         //buscando en tbl recargas detalle
@@ -868,16 +866,17 @@ class InventarioController {
                             hojaRecargada = 1
                         }
                     }else{
-                        //no existe en el inventario
-                        //buscar producto en servidor para luego insertarlo en sqlite
-                        CoroutineScope(Dispatchers.IO).launch {
-                            obtenerProductoPorIdServidor(id_producto, context)
+                        //NO EXISTE EN EL INVENTARIO
+                        try{
+                            CoroutineScope(Dispatchers.IO).launch {
+                                obtenerProductoPorIdServidor(id_producto, context)
+                            }
+                        }catch (e:Exception){
+                            throw Exception("Error al obtener el producto por id -> " + e.message)
+                        }finally {
+                            //INSERTANDO DATOS DE RECARGA
+                            insertandoInformacionRecarga(context, id, id_hoja, id_producto, codigo, cantidad)
                         }
-                        delay(1000)
-
-                        //INSERTANDO DATOS DE RECARGA
-                        insertandoInformacionRecarga(context, id, id_hoja, id_producto, codigo, cantidad)
-
                         hojaRecargada = 1
 
                     }
@@ -915,7 +914,7 @@ class InventarioController {
     }
 
     //OBTENER PRODUCTO POR ID DESDE EL SERVIDOR
-    suspend fun obtenerProductoPorIdServidor(id: Int, context: Context) {
+    private suspend fun obtenerProductoPorIdServidor(id: Int, context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
@@ -943,7 +942,7 @@ class InventarioController {
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
                                         //Almacenar registro en tbl inventario
-                                        saveInventarioDatabase(res, context, 0,0)
+                                        saveInventarioDatabase(res, context, 0,1)
                                     }
                                 } catch (e: Exception) {
                                     throw Exception(e.message)
