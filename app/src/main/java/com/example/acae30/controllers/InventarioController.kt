@@ -323,7 +323,7 @@ class InventarioController {
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, recarga: Int) {
+    suspend fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, recarga: Int) {
         val bd = funciones.getDataBase(context).writableDatabase
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
@@ -356,9 +356,11 @@ class InventarioController {
                 //SI HOJA DE CARGA ESTA ACTIVA, LA EXISTENCIA ES 0 Y SE CARGARA LA CANTIDAD DE LA HOJA DE CARGA
                 if(hojaCarga){
                     data.put("Existencia", 0)
-                    val editor = preferences.edit()
-                    editor.putInt("idHojaCarga", funciones.validateJsonIsNullInt(dato, "idHojaCarga"))
-                    editor.apply()
+                    if(funciones.validateJsonIsNullInt(dato, "idHojaCarga") != 0){
+                        val editor = preferences.edit()
+                        editor.putInt("idHojaCarga", funciones.validateJsonIsNullInt(dato, "idHojaCarga"))
+                        editor.apply()
+                    }
                 }else{
                     data.put("Existencia", funciones.validateJsonIsNullFloat(dato, "existencia"))
                 }
@@ -402,12 +404,16 @@ class InventarioController {
         } finally {
             bd!!.endTransaction()
             bd.close()
-            if(hojaCarga && recarga == 0){
-                CoroutineScope(Dispatchers.IO).launch {
-                    insertarHojaDeCargar(json, context, numeroHojaCarga)
+            if(recarga == 0){
+                if(hojaCarga){
+                    CoroutineScope(Dispatchers.IO).launch {
+                        insertarHojaDeCargar(json, context, numeroHojaCarga)
+                    }
+                }else{
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "INVENTARIO CARGADO CORRECTAMENTE")
+                    }
                 }
-            }else{
-                funciones.mensaje(context, "INVENTARIO CARGADO CORRECTAMENTE")
             }
         }
     }
@@ -460,16 +466,16 @@ class InventarioController {
                                         //saveInventarioDatabase(res, context, view)
                                         //VERIFICANDO SI LA HOJA CORRESPONDE AL MISMO DIA
                                         if(!verificarFechaInventario(context)){
-                                            println("LIMPIANDO INVENTARIO YA QUE NO CORRESPONDE AL MISMO DIA")
+                                            //LIMPIANDO INVENTARIO YA QUE NO CORRESPONDE AL MISMO DIA
                                             limpiarInventarioHojaCarga(context) //LIMPIAR LAS TABLAS
 
-                                            println("INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA")
+                                            //INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA
                                             //ALMACENANDO INVENTARIO NUEVO
                                             saveInventarioDatabase(res, context, numero,0)
 
                                         }else{
                                             //AQUI SE CARGAR SOLO LAS EXISTENCIA DE ACUERDO A LA HOJA DE CARGA
-                                            println("INSERTANDO INSERTANDO INFORMACION SOLO EN HOJA DE CARGA Y DETALLE")
+                                            //INSERTANDO INSERTANDO INFORMACION SOLO EN HOJA DE CARGA Y DETALLE
                                             //ALMACENANDO INVENTARIO NUEVO
                                             insertarHojaDeCargar(res, context, numero)
                                         }
@@ -692,14 +698,12 @@ class InventarioController {
                                     it.close()
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
-                                        println("RESPUESTA DE ACTUALIZACION" + res)
                                         actualizarInventarioDatabase(res, context, view)
                                         withContext(Dispatchers.Main){
                                             Toast.makeText(context,"INFORMACION DE INVENTARIO ACTUALIZADOS", Toast.LENGTH_SHORT).show()
                                         }
 
                                     } else {
-                                        //println("ERROR: ERROR NO SE ENCONTRARON DATOS PARA ALMACENAR 222222")
                                         withContext(Dispatchers.Main){
                                             Toast.makeText(context,"ERROR: NO SE ENCONTRO LA HOJA DE CARGA", Toast.LENGTH_SHORT).show()
                                         }
@@ -744,8 +748,6 @@ class InventarioController {
                 val precio = funciones.validateJsonIsNullFloat(dato, "precio")
                 val precio_iva = funciones.validateJsonIsNullFloat(dato, "precio_iva")
 
-                println("CODIGO PRODUCTO ACTUALIZAR " + idProducto)
-
                 bd.execSQL("UPDATE inventario SET precio=$precio, precio_iva=$precio_iva WHERE id=$idProducto")
             }
             bd.setTransactionSuccessful()
@@ -758,7 +760,8 @@ class InventarioController {
     }
 
     //FUNCION PARA OBTENER DATOS EN LA TABLA DE REACARGAS DE LA HOJA DE CARGA
-    suspend fun obtenerHojaRecargas(context: Context, idHojaCarga:Int, view:View) {
+    suspend fun obtenerHojaRecargas(context: Context, idHojaCarga:Int, view:View){
+
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
@@ -768,7 +771,6 @@ class InventarioController {
             )
             val objecto =
                 Gson().toJson(datos)
-            println(objecto)
             val ruta: String = servidor + "inventario/hojarecarga"
             val url = URL(ruta)
             with(withContext(Dispatchers.IO) {
@@ -817,7 +819,6 @@ class InventarioController {
                         404 -> {
                             withContext(Dispatchers.Main){
                                 funciones.mensaje(context, "NO SE ENCONTRARON RECARGAS PARA SU HOJA")
-                                //Toast.makeText(context,"ERROR: NO SE ENCONTRARON RECARGAS PARA SU HOJA", Toast.LENGTH_SHORT).show()
                             }
                         }
 
@@ -832,6 +833,7 @@ class InventarioController {
         } catch (e: Exception) {
             throw Exception("ERROR EN LA CONEXION CON EL SERVIDOR" + e.message)
         }
+
     }
 
     //INSERTANDO EN TBL RECARGAS
@@ -868,15 +870,21 @@ class InventarioController {
                     }else{
                         //NO EXISTE EN EL INVENTARIO
                         try{
-                            CoroutineScope(Dispatchers.IO).launch {
-                                obtenerProductoPorIdServidor(id_producto, context)
+                            //BUSCANDO EN EL SERVIDOR
+                            val buscandoProducto = obtenerProductoPorIdServidor(id_producto, context)
+                            when(buscandoProducto){
+                                1 -> {
+                                    //INSERTANDO DATOS DE RECARGA
+                                    insertandoInformacionRecarga(context, id, id_hoja, id_producto, codigo, cantidad)
+                                }
+                                else -> {
+                                    throw Exception("NO SE ENCONTRO EL PRODUCTO EN EL SERVIDOR")
+                                }
                             }
                         }catch (e:Exception){
                             throw Exception("Error al obtener el producto por id -> " + e.message)
-                        }finally {
-                            //INSERTANDO DATOS DE RECARGA
-                            insertandoInformacionRecarga(context, id, id_hoja, id_producto, codigo, cantidad)
                         }
+
                         hojaRecargada = 1
 
                     }
@@ -885,13 +893,16 @@ class InventarioController {
                 }
             }
 
-            if(hojaRecargada == 1){
-                withContext(Dispatchers.Main){
-                    funciones.mensaje(context, "SU HOJA HA SIDO RECARGADA CORRECTAMENTE")
+            when(hojaRecargada){
+                1 -> {
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "SU HOJA HA SIDO RECARGADA CORRECTAMENTE")
+                    }
                 }
-            }else{
-                withContext(Dispatchers.Main){
-                    funciones.mensaje(context,"NO HAY RECARGAS PARA SU HOJA")
+                else -> {
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context,"NO HAY RECARGAS PARA SU HOJA")
+                    }
                 }
             }
         }catch (e:Exception){
@@ -914,7 +925,8 @@ class InventarioController {
     }
 
     //OBTENER PRODUCTO POR ID DESDE EL SERVIDOR
-    private suspend fun obtenerProductoPorIdServidor(id: Int, context: Context) {
+    private suspend fun obtenerProductoPorIdServidor(id: Int, context: Context) : Int {
+        var encontrado = 0
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
@@ -943,6 +955,7 @@ class InventarioController {
                                     if (res.length() > 0) {
                                         //Almacenar registro en tbl inventario
                                         saveInventarioDatabase(res, context, 0,1)
+                                        encontrado = 1
                                     }
                                 } catch (e: Exception) {
                                     throw Exception(e.message)
@@ -965,6 +978,8 @@ class InventarioController {
         } catch (e: Exception) {
             throw Exception("ERROR EN LA CONEXION CON EL SERVIDOR" + e.message)
         }
+
+        return encontrado
     }
 
     //INSERTANDO INFORMACION DE LA RECARGA

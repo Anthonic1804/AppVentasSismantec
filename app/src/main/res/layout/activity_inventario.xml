@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/vistaalerta"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Inventario">
@@ -69,12 +70,24 @@
         app:layout_constraintTop_toBottomOf="@+id/barraSearch" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnBuscarRecargas"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/btnVerde"
+        android:contentDescription="Buscar Recargas"
+        android:visibility="visible"
+        app:srcCompat="@drawable/ic_cargar_2"
+        app:layout_constraintBottom_toTopOf="@id/btnActualizarInventario"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnActualizarInventario"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
         android:backgroundTint="@color/moderado"
+        android:contentDescription="Recargar Informacion de Inventario"
         android:visibility="visible"
         android:tint="@color/colorAccent"
         app:srcCompat="@drawable/ic_pventa"

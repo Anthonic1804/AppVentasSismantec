@@ -41,6 +41,7 @@ class Inventario : AppCompatActivity() {
     private var codigo = ""
     private var idapi = 0
     private var scanner: ImageButton? = null
+    private var vista: ConstraintLayout? = null
 
     //VARIABLE MODULO TOKEN
     private var busquedaToken : Boolean = false
@@ -68,6 +69,7 @@ class Inventario : AppCompatActivity() {
     private lateinit var tvMensaje : TextView
     private lateinit var alerta : ConstraintLayout
     private lateinit var btnActualizarInventario: FloatingActionButton
+    private lateinit var btnBuscarRecargas: FloatingActionButton
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +80,8 @@ class Inventario : AppCompatActivity() {
         busqueda = findViewById(R.id.busquedainv)
 
         btnActualizarInventario = findViewById(R.id.btnActualizarInventario)
+        btnBuscarRecargas = findViewById(R.id.btnBuscarRecargas)
+
         alerta = findViewById(R.id.lyInventarioAlerta)
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
@@ -95,12 +99,14 @@ class Inventario : AppCompatActivity() {
         idvendedor = preferences.getInt("Idvendedor", 0)
         hojaCarga = preferences.getInt("hojaCarga", 0)
 
-        println("FACTURA DE EXPORTACION -> $FacturaExportacion")
+        //println("FACTURA DE EXPORTACION -> $FacturaExportacion")
 
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         sinExistencias = if(preferences.getString("pedidos_sin_existencia", "") == "S") 1 else 0
         vistaInventario = preferences.getInt("vistaInventario", 0)
+
+        vista = findViewById(R.id.vistaalerta)
 
         recicle = findViewById(R.id.reciInvent)
 
@@ -131,6 +137,10 @@ class Inventario : AppCompatActivity() {
             alertaInventario()
         }
 
+        btnBuscarRecargas.setOnClickListener {
+            mensajeRecargarHoja()
+        }
+
     }
 
     private fun alertaInventario() {
@@ -152,7 +162,7 @@ class Inventario : AppCompatActivity() {
             CoroutineScope(Dispatchers.IO).launch {
                 inventarioController.actualizarInventarioHojaCarga(0, hojaCarga, idvendedor, this@Inventario, alerta!!)
             }
-            Atras(alerta!!)
+            Atras(alerta)
         }
 
         tvCancel.setOnClickListener {
@@ -181,7 +191,11 @@ class Inventario : AppCompatActivity() {
         }
 
         Busqueda()
-        //GlobalScope.launch(Dispatchers.IO) {
+        actualizarListadeInventario()
+    }
+
+    //FUNCION PARA ACTUALIZAR LA LISTA DEL INVENTARIO
+    private fun actualizarListadeInventario(){
         this@Inventario.lifecycleScope.launch {
             try {
                 val lista = inventarioController.obtenerInformacionProductoPorString(this@Inventario, "")
@@ -418,6 +432,37 @@ class Inventario : AppCompatActivity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         //super.onBackPressed();
+    }
+
+    //FUNCION PARA MOSTRAR EL DIALOG DE RECARGA DE HOJA
+    private fun mensajeRecargarHoja() {
+        val updateDialog = Dialog(this, R.style.Theme_Dialog)
+        updateDialog.setCancelable(false)
+
+        val idHojaCarga = preferences.getInt("idHojaCarga", 0)
+
+        updateDialog.setContentView(R.layout.dialog_cancelar)
+        tvUpdate = updateDialog.findViewById(R.id.tvUpdate)
+        tvCancel = updateDialog.findViewById(R.id.tvCancel)
+        tvMensaje = updateDialog.findViewById(R.id.tvMensaje)
+        tvTitulo = updateDialog.findViewById(R.id.tvTitulo)
+
+        tvTitulo.text = "INFORMACIÓN"
+        tvMensaje.text = "¿DESEA REALIZAR LA RECARGA DE SU HOJA?"
+        tvUpdate.text = "ACEPTAR"
+
+        tvUpdate.setOnClickListener {
+            CoroutineScope(Dispatchers.IO).launch {
+                inventarioController.obtenerHojaRecargas(this@Inventario,idHojaCarga, vista!!)
+            }
+            updateDialog.dismiss()
+        }
+
+        tvCancel.setOnClickListener {
+            updateDialog.dismiss()
+        }
+
+        updateDialog.show()
     }
 }
 

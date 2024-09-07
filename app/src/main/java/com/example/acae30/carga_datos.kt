@@ -144,19 +144,18 @@ class carga_datos : AppCompatActivity() {
         val btnCancelar = hojaCargaDialog.findViewById<TextView>(R.id.tvCancelar)
 
         btnAceptar.setOnClickListener {
+            val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
             val numero = hojaCargaDialog.findViewById<TextInputEditText>(R.id.tietNumeroCarga).text.toString()
             if (numero.isEmpty() || numero.toInt() == 0) {
-                funciones.mostrarAlerta("ERROR EN LA HOJA DE CARGA", this@carga_datos, binding.vistaalerta)
-            } else {
-
-                val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
-                if(hojaCargaActiva == numero.toInt()){
-                    mensajeRecargarHoja()
-                }else{
-                    CoroutineScope(Dispatchers.IO).launch {
-                        //OBTENIENDO INVENTARIO DESDE HOJA DE CARGA
-                        inventarioController.obtenerInventarioHojaCarga(0, numero.toInt(), idVendedor, this@carga_datos)
-                    }
+                hojaCargaDialog.dismiss()
+                funciones.mensaje(this@carga_datos, "INGRESE UN NUMERO DE HOJA DE CARGA")
+            }else if(numero.toInt() == hojaCargaActiva){
+                hojaCargaDialog.dismiss()
+                funciones.mensaje(this@carga_datos, "LA HOJA DE CARGA YA SE ENCUENTRA CARGADA")
+            }else {
+                CoroutineScope(Dispatchers.IO).launch {
+                    //OBTENIENDO INVENTARIO DESDE HOJA DE CARGA
+                    inventarioController.obtenerInventarioHojaCarga(0, numero.toInt(), idVendedor, this@carga_datos)
                 }
 
                 hojaCargaDialog.dismiss()
@@ -169,38 +168,6 @@ class carga_datos : AppCompatActivity() {
 
         hojaCargaDialog.show()
 
-    }
-
-    //FUNCION PARA MOSTRAR EL DIALOG DE RECARGA DE HOJA
-    private fun mensajeRecargarHoja() {
-        val updateDialog = Dialog(this, R.style.Theme_Dialog)
-        updateDialog.setCancelable(false)
-
-        val idHojaCarga = preferences.getInt("idHojaCarga", 0)
-
-        updateDialog.setContentView(R.layout.dialog_cancelar)
-        tvUpdate = updateDialog.findViewById(R.id.tvUpdate)
-        tvCancel = updateDialog.findViewById(R.id.tvCancel)
-        tvMensaje = updateDialog.findViewById(R.id.tvMensaje)
-        tvTitulo = updateDialog.findViewById(R.id.tvTitulo)
-
-        tvTitulo.text = "INFORMACIÓN"
-        tvMensaje.text = "¿DESEA REALIZAR LA RECARGA DE SU HOJA?"
-        tvUpdate.text = "ACEPTAR"
-
-        tvUpdate.setOnClickListener {
-            //Toast.makeText(this@carga_datos, "OPCION EN VERIFICACION", Toast.LENGTH_SHORT).show()
-            CoroutineScope(Dispatchers.IO).launch {
-                inventarioController.obtenerHojaRecargas(this@carga_datos,idHojaCarga,binding.vistaalerta)
-            }
-            updateDialog.dismiss()
-        }
-
-        tvCancel.setOnClickListener {
-            updateDialog.dismiss()
-        }
-
-        updateDialog.show()
     }
 
     //OBTENIENDO SUCURSALES DESDE WEBSERVIS
