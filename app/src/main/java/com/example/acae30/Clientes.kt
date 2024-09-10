@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageButton
 import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
@@ -30,6 +31,7 @@ class Clientes : AppCompatActivity() {
     private var busqueda: SearchView? = null
     private var busquedaPedido: Boolean = false
     private var lienzo: ConstraintLayout? = null
+    private var atras : ImageButton? = null
     private var visita = false
     private var cuentas = false
 
@@ -67,6 +69,7 @@ class Clientes : AppCompatActivity() {
         db = Database(this)
         alert = AlertDialogo(this)
         busqueda = findViewById(R.id.busquedainv)
+        atras = findViewById(R.id.imageButton)
 
         recicle = findViewById(R.id.lista)
         lienzo = findViewById(R.id.lienzo)
@@ -88,6 +91,10 @@ class Clientes : AppCompatActivity() {
             tvListadoClientes.text = getString(R.string.listado_de_clientes_nuevo_pedido)
         }else{
             tvListadoClientes.text = getString(R.string.listado_de_clientes)
+        }
+
+        atras!!.setOnClickListener {
+            Atras(it)
         }
 
         mostrarClientes()

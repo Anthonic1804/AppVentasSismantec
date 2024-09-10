@@ -145,4 +145,5 @@
     <string name="punto_de_venta">PUNTO DE VENTA</string>
     <string name="numero_orden">N° ORDEN</string>
     <string name="configuracion">CONFIGURACION</string>
+    <string name="btnatras">btnAtras</string>
 </resources>

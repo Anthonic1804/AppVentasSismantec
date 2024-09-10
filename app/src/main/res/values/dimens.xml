@@ -12,4 +12,14 @@
     <dimen name="sizeIconLoad">100dp</dimen>
 
     <dimen name="menu_card">15dp</dimen>
+
+    <!-- TAMAÑO DE LAS FUENTES -->
+    <dimen name="Titulo">18sp</dimen>
+
+    <!-- TAMAÑO DE LOS BOTONES -->
+    <dimen name="estandar_55dp">55dp</dimen>
+
+    <!-- ALTURA DE LOS ENCABEZADOS -->
+    <dimen name="alturaEncabezados">60dp</dimen>
+
 </resources>
