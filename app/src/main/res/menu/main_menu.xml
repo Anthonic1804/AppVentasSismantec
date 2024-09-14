@@ -14,11 +14,11 @@
             android:title="@string/autorizaci_n_de_precios"
             />
     </group>
-    <group android:id="@+id/group_config">
+    <group android:id="@+id/group_reporte">
         <item
-            android:id="@+id/nav_config"
-            android:icon="@drawable/ic_configuracion"
-            android:title="@string/configuracion"/>
+            android:id="@+id/nav_reporte"
+            android:icon="@drawable/ic_reporte"
+            android:title="@string/reportes"/>
     </group>
     <group>
         <item

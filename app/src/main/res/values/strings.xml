@@ -146,4 +146,5 @@
     <string name="numero_orden">N° ORDEN</string>
     <string name="configuracion">CONFIGURACION</string>
     <string name="btnatras">btnAtras</string>
+    <string name="reportes">REPORTES</string>
 </resources>

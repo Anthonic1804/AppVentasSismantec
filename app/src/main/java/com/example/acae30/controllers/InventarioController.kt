@@ -2,6 +2,7 @@ package com.example.acae30.controllers
 
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.view.View
 import android.widget.Toast
@@ -506,11 +507,15 @@ class InventarioController {
                         }
                     }
                 } catch (e: Exception) {
-                    throw Exception("ERROR: " + e.message)
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "ERROR -> " + e.message)
+                    }
                 }
             }
         } catch (e: Exception) {
-            throw Exception("ERROR EN LA CONEXION CON EL SERVIDOR" + e.message)
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
+            }
         }
     }
 
@@ -700,12 +705,13 @@ class InventarioController {
                                     if (res.length() > 0) {
                                         actualizarInventarioDatabase(res, context, view)
                                         withContext(Dispatchers.Main){
-                                            Toast.makeText(context,"INFORMACION DE INVENTARIO ACTUALIZADOS", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "INFORMACION DE INVENTARIO ACTUALIZADOS", Toast.LENGTH_SHORT).show()
+
                                         }
 
                                     } else {
                                         withContext(Dispatchers.Main){
-                                            Toast.makeText(context,"ERROR: NO SE ENCONTRO LA HOJA DE CARGA", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "ERROR: NO SE ENCONTRO LA HOJA DE CARGA", Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -719,7 +725,7 @@ class InventarioController {
 
                         404 -> {
                             withContext(Dispatchers.Main){
-                                Toast.makeText(context,"ERROR: NO SE ENCONTRO LA HOJA DE CARGA", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "ERROR: NO SE ENCONTRO LA HOJA DE CARGA", Toast.LENGTH_SHORT).show()
                             }
                         }
 
@@ -728,11 +734,15 @@ class InventarioController {
                         }
                     }
                 } catch (e: Exception) {
-                    throw Exception("ERROR: " + e.message)
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "ERROR -> " + e.message)
+                    }
                 }
             }
         } catch (e: Exception) {
-            throw Exception("ERROR EN LA CONEXION CON EL SERVIDOR" + e.message)
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
+            }
         }
     }
 
@@ -831,7 +841,9 @@ class InventarioController {
                 }
             }
         } catch (e: Exception) {
-            throw Exception("ERROR EN LA CONEXION CON EL SERVIDOR" + e.message)
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
+            }
         }
 
     }
@@ -896,8 +908,11 @@ class InventarioController {
             when(hojaRecargada){
                 1 -> {
                     withContext(Dispatchers.Main){
-                        funciones.mensaje(context, "SU HOJA HA SIDO RECARGADA CORRECTAMENTE")
+                        Toast.makeText(context, "SU HOJA HA SIDO RECARGADA CORRECTAMENTE", Toast.LENGTH_SHORT).show()
                     }
+
+                    val intento = Intent(context, com.example.acae30.Inventario::class.java)
+                    context.startActivity(intento)
                 }
                 else -> {
                     withContext(Dispatchers.Main){
@@ -909,18 +924,6 @@ class InventarioController {
             throw Exception("ERROR AL INSERTAR HOJA DE CARGA DETALLE -> " + e.message)
         }finally {
             bd.close()
-        }
-    }
-
-    //FUNCION PARA ACTUALIZAR REGISTRO DE RECARGAS
-    private fun actualizarRegistrodeRecargas(context: Context, id:Int){
-        val db = funciones.getDataBase(context).writableDatabase
-        try {
-            db.execSQL("UPDATE hoja_detalle_recargas SET recargado=1 WHERE id=$id")
-        }catch (e:Exception){
-            throw Exception("Error al actualizar el registro de recargas -> " + e.message)
-        }finally {
-            db.close()
         }
     }
 
@@ -968,15 +971,21 @@ class InventarioController {
                             }
                         }
                         else -> {
-                            println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR")
+                            withContext(Dispatchers.Main){
+                                funciones.mensaje(context, "ERROR EN LA CONEXION CON EL SERVIDOR -> ")
+                            }
                         }
                     }
                 } catch (e: Exception) {
-                    throw Exception("ERROR: " + e.message)
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "ERROR OBTENIENDO EL PRODUCTO POR ID -> " + e.message)
+                    }
                 }
             }
         } catch (e: Exception) {
-            throw Exception("ERROR EN LA CONEXION CON EL SERVIDOR" + e.message)
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
+            }
         }
 
         return encontrado
@@ -992,11 +1001,6 @@ class InventarioController {
         //ACTUALIZANDO EXISTENCIAS
         CoroutineScope(Dispatchers.IO).launch {
             actualizarExistenciasInventario(context, cantidad, id_producto)
-        }
-
-        //ACTUALIZANDO REGISTRO YA CARGADO
-        CoroutineScope(Dispatchers.IO).launch {
-            actualizarRegistrodeRecargas(context, id)
         }
     }
 

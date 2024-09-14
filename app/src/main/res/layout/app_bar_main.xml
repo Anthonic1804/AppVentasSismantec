@@ -142,7 +142,7 @@
                             android:layout_marginBottom="2dp"
                             android:layout_weight="1"
                             app:cardCornerRadius="@dimen/menu_card"
-                            android:backgroundTint="@color/cart">
+                            android:backgroundTint="@color/inicio_cart">
 
                             <TextView
                                 android:id="@+id/lblcuentas"
@@ -150,9 +150,9 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal|center_vertical"
                                 android:layout_marginTop="35dp"
-                                android:text="CUENTAS x C."
+                                android:text="Cuentas por Cobrar"
                                 android:textAlignment="center"
-                                android:textColor="@color/colorAccent"
+                                android:textColor="@color/colorPrimary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -162,7 +162,7 @@
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_wallet" />
+                                app:srcCompat="@drawable/dinero" />
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
@@ -175,7 +175,7 @@
                             android:layout_marginBottom="2dp"
                             android:layout_weight="1"
                             app:cardCornerRadius="@dimen/menu_card"
-                            android:backgroundTint="@color/cart">
+                            android:backgroundTint="@color/inicio_cart">
 
                             <TextView
                                 android:id="@+id/lblpedidos"
@@ -183,8 +183,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal|center_vertical"
                                 android:layout_marginTop="35dp"
-                                android:text="PEDIDOS"
-                                android:textColor="@color/colorAccent"
+                                android:text="Pedidos"
+                                android:textColor="@color/colorPrimary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -194,7 +194,7 @@
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_car85dp" />
+                                app:srcCompat="@drawable/lapiz" />
                         </androidx.cardview.widget.CardView>
                     </LinearLayout>
 
@@ -218,7 +218,7 @@
                             android:layout_marginBottom="2dp"
                             android:layout_weight="1"
                             app:cardCornerRadius="@dimen/menu_card"
-                            android:backgroundTint="@color/cart">
+                            android:backgroundTint="@color/inicio_cart">
 
                             <TextView
                                 android:id="@+id/lblinventario"
@@ -226,9 +226,9 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal|center_vertical"
                                 android:layout_marginTop="35dp"
-                                android:text="INVENTARIO"
+                                android:text="Inventario"
                                 android:textAlignment="center"
-                                android:textColor="@color/colorAccent"
+                                android:textColor="@color/colorPrimary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -238,7 +238,7 @@
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_inventario_2" />
+                                app:srcCompat="@drawable/lista" />
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
@@ -251,7 +251,7 @@
                             android:layout_marginBottom="2dp"
                             android:layout_weight="1"
                             app:cardCornerRadius="@dimen/menu_card"
-                            android:backgroundTint="@color/cart">
+                            android:backgroundTint="@color/inicio_cart">
 
                             <TextView
                                 android:id="@+id/lblclientes"
@@ -259,8 +259,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal|center_vertical"
                                 android:layout_marginTop="35dp"
-                                android:text="CLIENTES"
-                                android:textColor="@color/colorAccent"
+                                android:text="Clientes"
+                                android:textColor="@color/colorPrimary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -270,7 +270,7 @@
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_clientes_2" />
+                                app:srcCompat="@drawable/cliente" />
                         </androidx.cardview.widget.CardView>
                     </LinearLayout>
 
@@ -294,7 +294,7 @@
                             android:layout_marginBottom="2dp"
                             android:layout_weight="1"
                             app:cardCornerRadius="@dimen/menu_card"
-                            android:backgroundTint="@color/cart">
+                            android:backgroundTint="@color/inicio_cart">
 
                             <TextView
                                 android:id="@+id/lbldata"
@@ -302,9 +302,9 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal|center_vertical"
                                 android:layout_marginTop="35dp"
-                                android:text="CARGA DE DATOS"
+                                android:text="Carga de Datos"
                                 android:textAlignment="center"
-                                android:textColor="@color/colorAccent"
+                                android:textColor="@color/colorPrimary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -314,11 +314,11 @@
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_cargar_2" />
+                                app:srcCompat="@drawable/bases" />
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
-                            android:id="@+id/cvReportes"
+                            android:id="@+id/cvConfiguracion"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginLeft="10dp"
@@ -326,7 +326,7 @@
                             android:layout_marginTop="2dp"
                             android:layout_marginBottom="2dp"
                             android:layout_weight="1"
-                            android:backgroundTint="@color/cart"
+                            android:backgroundTint="@color/inicio_cart"
                             android:elevation="@dimen/menu_card"
                             app:cardCornerRadius="@dimen/menu_card">
 
@@ -336,8 +336,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal|center_vertical"
                                 android:layout_marginTop="35dp"
-                                android:text="REPORTES"
-                                android:textColor="@color/colorAccent"
+                                android:text="Configuraciones"
+                                android:textColor="@color/colorPrimary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -347,7 +347,7 @@
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ic_reporte" />
+                                app:srcCompat="@drawable/ajustes" />
                         </androidx.cardview.widget.CardView>
 
                     </LinearLayout>

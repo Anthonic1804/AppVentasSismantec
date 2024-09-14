@@ -5,7 +5,6 @@ import android.app.Dialog
 import android.content.ContentValues
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Environment
 import android.os.StrictMode
@@ -24,17 +23,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.database.Database
 import com.example.acae30.listas.PedidosAdapter
-import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
-import com.example.acae30.modelos.JSONmodels.CabezeraPedidoSend
 import com.example.acae30.modelos.JSONmodels.DatosReporteJSON
 import com.example.acae30.modelos.JSONmodels.PedidoDTE
 import com.example.acae30.modelos.Pedidos
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import com.itextpdf.text.BaseColor
 import com.itextpdf.text.Document
 import com.itextpdf.text.DocumentException
@@ -94,16 +89,6 @@ class Pedido : AppCompatActivity() {
     private lateinit var lblMensaje: TextView
     private lateinit var lblTitulo: TextView
 
-   /* private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ){
-            isAceptado ->
-        if(isAceptado){
-            Toast.makeText(this, "PERMISOS CONCEDIDOS", Toast.LENGTH_LONG).show()
-        }else{
-            Toast.makeText(this, "PERMISOS DENEGADOS", Toast.LENGTH_LONG).show()
-        }
-    }*/
 
     private var pedidosController = PedidosController()
 
@@ -307,405 +292,11 @@ class Pedido : AppCompatActivity() {
 
     }//obtiene el listado de los pedidos
 
-    private fun enviarVisita(data: JSONObject, idvisita: Int) {
-        try {
-            val strinjson = data.toString()
-            val ip = preferencias.getString("ip", "")
-            val puerto = preferencias.getInt("puerto", 0)
-            val direccion = "http://$ip:$puerto/visitas/registrar_visita"
-            val url = URL(direccion)
-            with(url.openConnection() as HttpURLConnection) {
-                connectTimeout = 5000
-                requestMethod = "POST"
-                setRequestProperty("Content-Type", "application/json;charset=utf-8")
-                val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                or.write(strinjson) //escribimos el json
-                or.flush() //se envia el json
-                val codigoRespuesta = responseCode
-                when (codigoRespuesta) {
-                    201 -> {
-                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
-                            val respuesta = StringBuffer()
-                            var inpuline = it.readLine()
-                            while (inpuline != null) {
-                                respuesta.append(inpuline)
-                                inpuline = it.readLine()
-                            } //obtenemos la respuesta completa
-                            it.close()
-                            var data: String? = respuesta.toString()
-                            if (data != null) {
-                                val res = JSONObject(data)
-                                if (!res.isNull("error") && !res.isNull("response")) {
-                                    val idser = res.getInt("error")
-                                    updateCheckIn(idser, idvisita)
-                                    updateCheckOut(idvisita)
-                                } else {
-                                    println("Error en la respuesta del servidor")
-                                    throw Exception("Error en la respuesta del servidor")
-                                }
-                            } else {
-                                println("Error al recibir respuesta del servidor")
-                                throw Exception("Error al recibir respuesta del servidor")
-                            }
-                        }
-                    } //termina response 201
-
-                    else -> {
-                        println("Error al recibir respuesta del servidor")
-                        throw Exception("Error al recibir respuesta del servidor")
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            println("Error 3: " + e.message)
-            throw Exception(e.message)
-        }
-    } //envia la data al servidor
-
-    private fun updateCheckIn(idvisitaServer: Int, idvisita: Int) {
-        val base = bd!!.writableDatabase
-        try {
-            val data = ContentValues()
-            data.put("Idvisita", idvisitaServer)
-            data.put("Enviado", true)
-            data.put("Enviado_final", true)
-            base.update("visitas", data, "Id=?", arrayOf(idvisita.toString()))
-
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        } finally {
-            base.close()
-        }
-    } //ACTUALIZA CON EL ID DEL PEDIDO DE LA BD
-
-    private fun updateCheckOut(idvisita: Int) {
-        val base = bd!!.writableDatabase
-        try {
-            val data = ContentValues()
-            data.put("Enviado_final", true)
-            base.update("visitas", data, "Id=?", arrayOf(idvisita.toString()))
-
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        } finally {
-            base.close()
-        }
-    } //ACTUALIZA CON EL ID DEL PEDIDO DE LA BD
-
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
 //        super.onBackPressed();
 
     }//anula el boton atras
-
-    private fun isConnected(): Boolean {
-        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networkInfo = connectivityManager.activeNetworkInfo
-
-        var isConnected = true
-
-        isConnected = networkInfo != null && networkInfo.isConnected
-        return isConnected
-    }
-
-    private fun getPedidoSend(idpedido: Int): CabezeraPedidoSend? {
-        val base = bd!!.readableDatabase
-        try {
-            var envio: CabezeraPedidoSend? = null
-            val pedido = base!!.rawQuery("SELECT * FROM pedidos where Id=$idpedido", null)
-            if (pedido.count > 0) {
-                pedido.moveToFirst()
-                envio = CabezeraPedidoSend(
-                    pedido.getInt(1),//id del cliente
-                    pedido.getString(2), //nombre del cliente
-                    pedido.getFloat(11), //POR EL MOMENTO TIENE EL DATO DEL TOTAL
-                    pedido.getFloat(5),
-                    pedido.getFloat(11),
-                    pedido.getInt(12),
-                    pedido.getInt(16),
-                    pedido.getInt(19),
-                    pedido.getString(20),
-                    pedido.getString(21),
-                    pedido.getInt(23),
-                    pedido.getString(22),
-                    0,
-                    "",
-                    pedido.getString(18),
-                    pedido.getString(24),
-                    pedido.getFloat(25),
-                    pedido.getFloat(26),
-                    pedido.getFloat(27),
-                    pedido.getFloat(28),
-                    pedido.getString(39),
-                    pedido.getString(29),
-                    pedido.getString(30),
-                    pedido.getString(31),
-                    pedido.getString(32),
-                    pedido.getString(33),
-                    pedido.getString(34),
-                    pedido.getString(35),
-                    pedido.getString(36),
-                    pedido.getString(37),
-                    pedido.getString(38),
-                    pedido.getInt(47),
-                    pedido.getString(48),
-                    pedido.getString(49),
-                    pedido.getString(50),
-                    pedido.getString(51),
-                    pedido.getString(52),
-                    pedido.getString(53),
-                    pedido.getString(54),
-                    pedido.getString(55),
-                    null
-
-                )
-                pedido.close()
-                var cdetalle =
-                    base.rawQuery("SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido", null)
-                if (cdetalle.count > 0) {
-                    var list = ArrayList<DetallePedido>() //lista donde se guardara el pedido
-                    cdetalle.moveToFirst()
-                    do {
-                        var detalle = DetallePedido(
-                            cdetalle.getInt(0),
-                            cdetalle.getInt(1),
-                            cdetalle.getInt(2),
-                            cdetalle.getString(3),
-                            cdetalle.getString(4),
-                            cdetalle.getFloat(5),
-                            cdetalle.getFloat(6),
-                            cdetalle.getFloat(7),
-                            cdetalle.getFloat(8),
-                            cdetalle.getFloat(9),
-                            cdetalle.getFloat(10),
-                            cdetalle.getFloat(11),
-                            cdetalle.getFloat(12),
-                            cdetalle.getFloat(13),
-                            cdetalle.getFloat(14),
-                            cdetalle.getFloat(15),
-                            cdetalle.getString(16),
-                            cdetalle.getInt(17),
-                            cdetalle.getFloat(18),
-                            cdetalle.getString(19),
-                            cdetalle.getInt(20),
-                            cdetalle.getString(21)
-                        )
-                        list.add(detalle)
-                    } while (cdetalle.moveToNext())
-                    cdetalle.close()
-                    envio.detalle = list //se agrega al objecto el detalle del pedido
-                }
-            }
-            return envio
-        } catch (e: Exception) {
-            throw Exception(e)
-        } finally {
-            base.close()
-        }
-    }//obtiene el pedido
-    private fun SendPedido(pedido: CabezeraPedidoSend, idpedido: Int) {
-        try {
-            val objecto = convertToJson(pedido, idpedido) //convertimos a json el objecto pedido
-            val ruta: String = "http://$ip:$puerto/pedido" //ruta para enviar el pedido
-            //val ruta="http://192.168.0.103:53272/pedido"
-            val url = URL(ruta)
-            with(url.openConnection() as HttpURLConnection) {
-                try {
-                    setRequestProperty(
-                        "Content-Type",
-                        "application/json;charset=utf-8"
-                    ) //definimos la cabezera
-                    connectTimeout = 5000
-                    requestMethod = "POST"
-                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                    or.write(objecto.toString()) //escribo el json
-                    or.flush() //se envia el json
-                    val errorcode = responseCode
-                    BufferedReader(InputStreamReader(inputStream) as Reader?).use {
-                        try {
-                            val respuesta = StringBuffer()
-                            var inpuline = it.readLine()
-                            while (inpuline != null) {
-                                respuesta.append(inpuline)
-                                inpuline = it.readLine()
-                            }
-                            it.close()
-                            var data: String? = respuesta.toString()
-                            if (data != null && data.length > 0) {
-                                val datosservidor = JSONObject(data)
-                                if (!datosservidor.isNull("error") && !datosservidor.isNull("response")) {
-                                    when (responseCode) {
-                                        201 -> {
-                                            val idpedidoS = datosservidor.getString("error").toInt()
-                                            if (idpedidoS > 0) {
-                                                ConfirmarPedido(idpedido, idpedidoS)
-                                            } else {
-                                                throw Exception(datosservidor.getString("response"))
-                                            }
-                                        }
-                                        400 -> {
-                                            throw Exception(datosservidor.getString("response"))
-                                        }
-                                        500 -> {
-                                            throw Exception(datosservidor.getString("response"))
-                                        }
-                                        else -> {
-                                            throw Exception("Ocurrio algo Intenta Nuevamente")
-                                        }
-                                    }
-                                } else {
-                                    throw Exception("No se recibio ninguna respuesta del servidor")
-                                }
-                            } else {
-                                throw Exception("No se recibio ninguna respuesta del servidor")
-                            }
-                        } catch (e: Exception) {
-                            throw Exception(e.message)
-                        }
-                    } //se obtiene la respuesta del servidor
-
-                } catch (e: Exception) {
-                    throw Exception(e.message)
-                }
-            }
-        } catch (e: Exception) {
-            throw Exception("Error: No hay productos agregados al pedido.")
-            print(e.message)
-        }
-    } //funcion que envia el pedido a la bd
-
-    private fun ConfirmarPedido(idpedido: Int, idservidor: Int) {
-        val bd = bd!!.writableDatabase
-        try {
-            bd!!.execSQL("UPDATE pedidos set Id_pedido_sistema=$idservidor,Enviado=1,Cerrado=1 WHERE Id=$idpedido")
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        } finally {
-            bd!!.close()
-        }
-    } //actualiza el pedido y confirma que se envio
-
-    private fun convertToJson(pedido: CabezeraPedidoSend, idpedido_param: Int): JsonObject {
-        // CONSULTAR EL ID DE LA VISITA EN EL SERVIDOR
-        var idvisita_v = 0.toInt()
-
-        val base = bd!!.writableDatabase
-        try {
-            var cursor = base!!.rawQuery(
-                "select v.Idvisita from visitas v inner join pedidos p on v.id = p.idvisita where p.id = ${idpedido_param}",
-                null
-            )
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                idvisita_v = cursor.getInt(0)
-                cursor.close()
-            } else {
-                throw Exception("Error al obtener código de cliente")
-            }
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        } finally {
-            base.close()
-        }
-
-        var json = JsonObject()
-        json.addProperty("Idcliente", pedido.Idcliente)
-        json.addProperty("Cliente", pedido.Cliente)
-        json.addProperty("Subtotal", pedido.Subtotal)
-        json.addProperty("Descuento", pedido.Descuento)
-        json.addProperty("Total", pedido.Total)
-        json.addProperty("Envidado", false)
-        json.addProperty("Cerrado", false)
-        json.addProperty("IdSucursal", pedido.IdSucursal)
-        json.addProperty("CodigoSucursal", pedido.CodigoSucursal)
-        json.addProperty("NombreSucursal", pedido.NombreSucursal)
-        json.addProperty("TipoEnvio", pedido.TipoEnvio)
-        json.addProperty("Idvendedor", pedido.Idvendedor)
-        json.addProperty("Vendedor", pedido.Vendedor)
-        json.addProperty("Idapp", idvisita_v)
-
-        //se ordena la cabezera
-        var detalle = JsonArray()
-        for (i in 0..(pedido.detalle!!.size - 1)) {
-            val data = pedido.detalle!!.get(i)
-            var d = JsonObject()
-            d.addProperty("Id", data.Id)
-            d.addProperty("Id_pedido", data.Id_pedido)
-            d.addProperty("Id_producto", data.Id_producto)
-            d.addProperty("Codigo", data.Codigo)
-            d.addProperty("Descripcion", data.Descripcion)
-            d.addProperty("Costo", data.Costo)
-            d.addProperty("Costo_iva", data.Costo_iva)
-            d.addProperty("Precio", data.Precio)
-            d.addProperty("Precio_iva", data.Precio_iva)
-            d.addProperty("Precio_u", data.Precio_u)
-            d.addProperty("Precio_u_iva", data.Precio_u_iva)
-            d.addProperty("Cantidad", data.Cantidad)
-            d.addProperty("Precio_venta", data.Precio_venta)
-            d.addProperty("Total", data.Total)
-            d.addProperty("Total_iva", data.Total_iva)
-            d.addProperty("Unidad", data.Unidad)
-            d.addProperty("Bonificado", data.Bonificado)
-            d.addProperty("Descuento", data.Descuento)
-            d.addProperty("Precio_editado", data.Precio_editado)
-            d.addProperty("Idunidad", data.Idunidad)
-            d.addProperty("FechaCreado", pedido.fechaCreado)
-            detalle.add(d)
-        }
-        json.add("detalle", detalle)
-        return json
-
-    } //convierte el pedido a json
-
-    private fun Sendfinal(data: JSONObject, idvisita: Int) {
-        try {
-            val strinjson = data.toString()
-            val ip = preferencias.getString("ip", "")
-            val puerto = preferencias.getInt("puerto", 0)
-            val direccion = "http://$ip:$puerto/visitas/fin_visita"
-            val url = URL(direccion)
-            with(url.openConnection() as HttpURLConnection) {
-                connectTimeout = 5000
-                requestMethod = "POST"
-                setRequestProperty("Content-Type", "application/json;charset=utf-8")
-                val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                or.write(strinjson) //escribimos el json
-                or.flush() //se envia el json
-                val codigoRespuesta = responseCode
-                when (codigoRespuesta) {
-                    200 -> {
-                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
-                            val respuesta = StringBuffer()
-                            var inpuline = it.readLine()
-                            while (inpuline != null) {
-                                respuesta.append(inpuline)
-                                inpuline = it.readLine()
-                            } //obtenemos la respuesta completa
-                            it.close()
-                            var data: String? = respuesta.toString()
-                            if (data != null) {
-                                val res = JSONObject(data)
-                                if (!res.isNull("error") && !res.isNull("response")) {
-                                    //respuesta correcta
-                                    updateCheckOut(idvisita)
-                                } else {
-                                    throw Exception("Error en la respuesta del servidor")
-                                }
-                            } else {
-                                throw Exception("Error al recibir respuesta del servidor")
-                            }
-                        }
-                    } //termina response 201
-
-                    else -> {
-                        throw Exception("Error al recibir respuesta del servidor")
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        }
-    }//finaliza el checkout
 
     private fun solicitarPermisos() {
         // SOLICITAR
@@ -721,7 +312,6 @@ class Pedido : AppCompatActivity() {
         )
     }
 
-
     private fun AlertaGPS(contexto: com.example.acae30.Pedido) {
         val dialogo = Dialog(this)
         dialogo.setContentView(R.layout.alerta_gps)
@@ -734,7 +324,6 @@ class Pedido : AppCompatActivity() {
         dialogo.show()
 
     } //muestra la alerta para agregar precio
-
 
     //FUNCIONES PARA REPORTE DE PEDIDOS ENVIADOS DIARIMENTE DESDE LA APP
     //MODIFICACION 21/06/2023
@@ -828,7 +417,9 @@ class Pedido : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            runOnUiThread {
+                funciones!!.mensaje(this@Pedido, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
+            }
         }
     }
     //FUNCION PARA CARGAR LOS PEDIDOS ENVIADOS EN LA BD
@@ -859,30 +450,6 @@ class Pedido : AppCompatActivity() {
         }
     }
 
-    //FUNCION PARA VERIFICAR PERMISOS DE CREACION DE DIRECTORIO Y DOCUMENTOS
-    /*private fun verificarPermisos(view: View) {
-        when{
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                generarPDF()
-            }
-
-            ActivityCompat.shouldShowRequestPermissionRationale(
-                this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) -> {
-                Snackbar.make(view, "ESTE PERMISO ES NECESARIO PARA CREAR EL ARCHIVO", Snackbar.LENGTH_INDEFINITE).setAction("Ok"){
-                    requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }.show()
-            }
-
-            else -> {
-                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            }
-        }
-    }*/
     //FUNCION PARA GENERAR EL REPORTE EN PDF
     private fun generarPDF() {
         try {
@@ -1139,7 +706,9 @@ class Pedido : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            runOnUiThread {
+                funciones!!.mensaje(this@Pedido, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
+            }
         }
     }
 

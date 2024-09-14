@@ -43,8 +43,8 @@ class HojaCargaController {
     fun insertarRecargaProducto(context: Context, id: Int, id_hoja: Int, id_producto: Int, codigo: String, cantidad: Float){
         val db = funciones.getDataBase(context).writableDatabase
         try {
-            db.execSQL("INSERT INTO hoja_detalle_recargas(id, id_hoja, id_producto, codigo_producto, cantidad) VALUES(" +
-                    "$id, $id_hoja, $id_producto, '$codigo', $cantidad)")
+            db.execSQL("INSERT INTO hoja_detalle_recargas(id, id_hoja, id_producto, codigo_producto, cantidad, recargado) VALUES(" +
+                    "$id, $id_hoja, $id_producto, '$codigo', $cantidad, 1)")
         }catch (e:Exception){
             println("ERROR: NO SE LOGRO REALIZAR LA INSERCION " + e.message)
         }finally {
