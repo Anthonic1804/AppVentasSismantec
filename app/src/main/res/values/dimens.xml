@@ -15,6 +15,7 @@
 
     <!-- TAMAÑO DE LAS FUENTES -->
     <dimen name="Titulo">18sp</dimen>
+    <dimen name="FuenteEncabezado">20sp</dimen>
 
     <!-- TAMAÑO DE LOS BOTONES -->
     <dimen name="estandar_55dp">55dp</dimen>

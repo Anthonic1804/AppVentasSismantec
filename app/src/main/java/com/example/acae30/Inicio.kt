@@ -55,15 +55,9 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
 
     private var inventarioController = InventarioController()
 
-    @Deprecated("Deprecated in Java")
+    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
     override fun onBackPressed() {
-       /* if (tiempoPrimerClick + INTERVALO > System.currentTimeMillis()) {
-            super.onBackPressed()
-            return
-        } else {
-            Toast.makeText(this, "Vuelve a presionar para salir", Toast.LENGTH_SHORT).show()
-        }
-        tiempoPrimerClick = System.currentTimeMillis()*/
+        super.onBackPressed()
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -158,8 +152,8 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 finish()
             }
 
-            cvConfiguracion.setOnClickListener {
-                val intento = Intent(this@Inicio, Configuracion::class.java)
+            cvAbonos.setOnClickListener {
+                val intento = Intent(this@Inicio, AbonosCxc::class.java)
                 startActivity(intento)
                 finish()
             }
@@ -427,6 +421,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             R.id.nav_pedido -> historicoPedidos()
             R.id.nav_token -> crearTokens()
             R.id.nav_reporte -> funciones?.mensaje(this, "FUNCION EN DESARROLLO")
+            R.id.nav_configuracion -> configuracion()
             R.id.nav_salir -> salir()
         }
         //drawerLayout.closeDrawer(GravityCompat.START)
@@ -460,6 +455,11 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private fun crearTokens(){
         val intent = Intent(this@Inicio, PreciosAutorizados::class.java)
         startActivity(intent)
+        finish()
+    }
+    private fun configuracion(){
+        val intento = Intent(this@Inicio, Configuracion::class.java)
+        startActivity(intento)
         finish()
     }
 

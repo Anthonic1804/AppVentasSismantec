@@ -8,7 +8,6 @@ import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityHistoricoPedidoDetallesBinding
 import com.example.acae30.listas.VentaDetalleTempAdapter
 import com.example.acae30.modelos.VentasDetalleTemp
-import kotlinx.android.synthetic.main.activity_historico_pedido_detalles.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -64,7 +63,7 @@ class HistoricoPedidoDetalles : AppCompatActivity() {
 
         }
 
-        imgRegresar.setOnClickListener { regresar() }
+        binding.imgRegresar.setOnClickListener { regresar() }
     }
 
     //FUNCION PARA OBTENER EL DETALLE DE LA VENTA TEMP

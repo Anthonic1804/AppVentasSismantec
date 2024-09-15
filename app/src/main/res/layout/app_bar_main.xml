@@ -238,7 +238,7 @@
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/lista" />
+                                app:srcCompat="@drawable/control_de_inventarios" />
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
@@ -318,7 +318,7 @@
                         </androidx.cardview.widget.CardView>
 
                         <androidx.cardview.widget.CardView
-                            android:id="@+id/cvConfiguracion"
+                            android:id="@+id/cvAbonos"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_marginLeft="10dp"
@@ -336,7 +336,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal|center_vertical"
                                 android:layout_marginTop="35dp"
-                                android:text="Configuraciones"
+                                android:text="Abonos a CxC"
                                 android:textColor="@color/colorPrimary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -347,7 +347,7 @@
                                 android:layout_height="75dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="15dp"
-                                app:srcCompat="@drawable/ajustes" />
+                                app:srcCompat="@drawable/ic_cobros" />
                         </androidx.cardview.widget.CardView>
 
                     </LinearLayout>

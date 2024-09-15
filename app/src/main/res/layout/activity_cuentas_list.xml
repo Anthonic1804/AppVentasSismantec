@@ -19,7 +19,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
-            android:id="@+id/imgbtnatras"
+            android:id="@+id/btnAtras"
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:backgroundTint="@color/colorPrimary"
@@ -41,11 +41,11 @@
 
 
     <TextView
-        android:id="@+id/textView41"
+        android:id="@+id/tvTituloCxc"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/margin_default_16dp"
-        android:text="LISTADO DE CUENTAS "
+        tools:text="LISTADO DE CUENTAS "
         android:textAlignment="center"
         android:textColor="@color/moderado"
         android:textSize="18sp"
@@ -60,7 +60,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         android:background="@color/recicler"
-        app:layout_constraintTop_toBottomOf="@id/textView41"
+        app:layout_constraintTop_toBottomOf="@id/tvTituloCxc"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>

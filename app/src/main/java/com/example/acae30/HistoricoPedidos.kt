@@ -10,6 +10,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -22,7 +23,6 @@ import com.example.acae30.modelos.VentasTemp
 import com.example.acae30.modelos.VentasTempSucursal
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.activity_historico_pedidos.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -36,7 +36,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
+import java.util.TimeZone
 
 class HistoricoPedidos : AppCompatActivity() {
 
@@ -62,6 +63,10 @@ class HistoricoPedidos : AppCompatActivity() {
     private lateinit var tvMsj: TextView
     private lateinit var tvTitulo: TextView
 
+    private lateinit var tvNoRegistros : TextView
+    private lateinit var imgRegresar : ImageButton
+    private lateinit var imgBuscarCliente : ImageButton
+
     private var ventasSucursal : Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +77,11 @@ class HistoricoPedidos : AppCompatActivity() {
         edtDesde = findViewById(R.id.etFechaDesde)
         edtHasta = findViewById(R.id.etFechaHasta)
         rvVentasTemp = findViewById(R.id.rvPedidos)
+
+        tvNoRegistros = findViewById(R.id.tvNoRegistros)
+        imgRegresar = findViewById(R.id.imgRegresar)
+        imgBuscarCliente = findViewById(R.id.imgBuscarCliente)
+
         alert = AlertDialogo(this@HistoricoPedidos)
         funciones = Funciones()
         database = Database(this@HistoricoPedidos)

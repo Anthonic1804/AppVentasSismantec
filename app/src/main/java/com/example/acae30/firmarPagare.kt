@@ -19,10 +19,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.acae30.controllers.ClientesController
+import com.example.acae30.databinding.ActivityFirmarPagareBinding
 import com.google.android.material.snackbar.Snackbar
-import com.itextpdf.text.*
+import com.itextpdf.text.BaseColor
+import com.itextpdf.text.Document
+import com.itextpdf.text.DocumentException
+import com.itextpdf.text.Element
+import com.itextpdf.text.Font
+import com.itextpdf.text.FontFactory
+import com.itextpdf.text.Image
+import com.itextpdf.text.PageSize
+import com.itextpdf.text.Paragraph
 import com.itextpdf.text.pdf.PdfWriter
-import kotlinx.android.synthetic.main.activity_firmar_pagare.*
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileNotFoundException
@@ -37,10 +45,6 @@ class firmarPagare : AppCompatActivity() {
     private lateinit var tvCancel : TextView
     private lateinit var tvMsj : TextView
     private lateinit var tvTitulo : TextView
-    private lateinit var btnCancelar : Button
-    private lateinit var btnLimpiar : Button
-    private lateinit var btnFirmar : Button
-    private lateinit var vista: LinearLayout
 
     private var idcliente : Int = 0
     private var nombreCliente : String = ""
@@ -64,6 +68,8 @@ class firmarPagare : AppCompatActivity() {
     private var clienteController = ClientesController()
     private var funciones = Funciones()
 
+    private lateinit var binding : ActivityFirmarPagareBinding
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ){
@@ -82,10 +88,8 @@ class firmarPagare : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_firmar_pagare)
-        btnCancelar = findViewById(R.id.btnCancelarFirma)
-        btnLimpiar = findViewById(R.id.clear)
-        btnFirmar = findViewById(R.id.save)
+        binding = ActivityFirmarPagareBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         idcliente = intent.getIntExtra("idcliente", 0)
 
         val datosCliente = clienteController.obtenerInformacionCliente(this@firmarPagare, idcliente)
@@ -105,7 +109,6 @@ class firmarPagare : AppCompatActivity() {
         plazo = datosCliente.Plazo_credito?.toLong() ?: 0
         personaJuridica = datosCliente.Persona_juridica.toString()
 
-        vista = findViewById(R.id.vista)
 
         //busquedaPedido = intent.getBooleanExtra("busqueda", false)
         //visita = intent.getBooleanExtra("visita", false)
@@ -113,12 +116,12 @@ class firmarPagare : AppCompatActivity() {
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         visita = preferencias.getBoolean("visita", false)
 
-        btnCancelar.setOnClickListener {
+        binding.btnCancelarFirma.setOnClickListener {
             mensaje("Cancelar")
         }
 
-        btnLimpiar.setOnClickListener {
-            signatureView.clearCanvas()
+        binding.clear.setOnClickListener {
+            binding.signatureView.clearCanvas()
         }
 
         //CALCULANDO LA FECHA DE VENCIMIENTO DE ACUERDO AL PLAZO DADO EN EL CREDITO.
@@ -158,19 +161,19 @@ class firmarPagare : AppCompatActivity() {
                 "a quien relevo de la obligación de rendir fianza y cuenta de administración."
 
 
-        btnFirmar.setOnClickListener {
+        binding.save.setOnClickListener {
             fechaDoc = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"))
-            imageFirmada = signatureView.isBitmapEmpty
+            imageFirmada = binding.signatureView.isBitmapEmpty
             if(funciones.isInternetAvailable(this@firmarPagare)){
                 if(imageFirmada){
                     Toast.makeText(this, "POR FAVOR INGRESE SU FIRMA", Toast.LENGTH_LONG).show()
                 }else{
-                    imagenBitmap = signatureView.signatureBitmap
+                    imagenBitmap = binding.signatureView.signatureBitmap
                     imageFinal = bitmapToByteArray(imagenBitmap)
                     verificarPermisos(it)
                 }
             }else{
-                funciones.mostrarAlerta("ERROR: NO TIENE CONEXION A INTERNET", this@firmarPagare, vista)
+                funciones.mostrarAlerta("ERROR: NO TIENE CONEXION A INTERNET", this@firmarPagare, binding.vista)
             }
         }
 
@@ -192,7 +195,7 @@ class firmarPagare : AppCompatActivity() {
                 /*
                 * ACTUALIZANDO EL PAGARE FIRMADO DEL CLIENTE
                 * SQLITE Y SQLSERVER*/
-                clienteController.actualizarPagareFirmadoSqlServer(this@firmarPagare, idcliente, vista)
+                clienteController.actualizarPagareFirmadoSqlServer(this@firmarPagare, idcliente, binding.vista)
 
                 /*
                 * GENERANDO EL ARCHIVO PDF DEL PAGARE*/

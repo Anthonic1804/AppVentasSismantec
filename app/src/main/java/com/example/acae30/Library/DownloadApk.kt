@@ -35,6 +35,7 @@ class DownloadApk(var context: Context) : AppCompatActivity() {
         val fileName: String
     ): AsyncTask<String, Int, Boolean>() {
         private lateinit var bar: ProgressDialog
+        @Deprecated("Deprecated in Java")
         override fun onPreExecute() {
             super.onPreExecute()
             bar = ProgressDialog(context).apply {
@@ -46,6 +47,7 @@ class DownloadApk(var context: Context) : AppCompatActivity() {
             }
         }
 
+        @Deprecated("Deprecated in Java")
         override fun onProgressUpdate(vararg values: Int?) {
             super.onProgressUpdate(*values)
             var msg = ""
@@ -62,6 +64,7 @@ class DownloadApk(var context: Context) : AppCompatActivity() {
             }
         }
 
+        @Deprecated("Deprecated in Java")
         override fun onPostExecute(result: Boolean?) {
             super.onPostExecute(result)
             bar.dismiss()
@@ -72,6 +75,7 @@ class DownloadApk(var context: Context) : AppCompatActivity() {
             }
         }
 
+        @Deprecated("Deprecated in Java")
         override fun doInBackground(vararg p0: String?): Boolean {
             var flag = false
 

@@ -147,4 +147,14 @@
     <string name="configuracion">CONFIGURACION</string>
     <string name="btnatras">btnAtras</string>
     <string name="reportes">REPORTES</string>
+    <string name="nuevo_abono">NUEVO ABONO</string>
+    <string name="lista_de_abonos">LISTA DE ABONOS</string>
+    <string name="listado_de_cuentas_nuevo_abono">LISTADO DE CUENTAS (NUEVO ABONO)</string>
+    <string name="listado_de_cuentas">LISTADO DE CUENTAS</string>
+    <string name="nuevo_abono_CXC">NUEVO ABONO</string>
+    <string name="cancelar_proceso">CANCELAR PROCESO</string>
+    <string name="cliente">CLIENTE</string>
+    <string name="forma_de_pago">FORMA DE PAGO</string>
+    <string name="monto_del_abono">MONTO DEL ABONO</string>
+    <string name="ingresar_abono">INGRESAR ABONO</string>
 </resources>

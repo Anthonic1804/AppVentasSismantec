@@ -194,6 +194,29 @@ class Tablas {
                 "nombre_empleado VARCHAR(50) NOT NULL);"
     }
 
+    //CREANDO TABLA DE ABONOS CXC
+    fun abonosCxc() : String{
+        return "CREATE TABLE abonos(" +
+                "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
+                "fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
+                "idCliente INTEGER NOT NULL," +
+                "cliente VARCHAR(100) NOT NULL," +
+                "idSucursal INTEGER NOT NULL DEFAULT O," +
+                "sucursal VARCHAR(100) NULL," +
+                "abono NUMERIC(18,2) NOT NULL DEFAULT O," +
+                "tipoPago VARCHAR(50) NOT NULL," +
+                "numeroCheque VARCHAR(50) NULL," +
+                "cuenta VARCHAR(50) NULL," +
+                "banco VARCHAR(50) NULL," +
+                "idVendedor INTEGER NOT NULL DEFAULT O," +
+                "vendedor VARCHAR(100) NOT NULL," +
+                "fecha_hora_proceso TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
+                "abonoApp INTEGER NOT NULL DEFAULT 1," +
+                "idVisitaServer INTEGER NOT NULL DEFAULT O," +
+                "puntoVenta VARCHAR(5) NOT NULL," +
+                "borradoLogico INTEGER NOT NULL DEFAULT O);"
+    }
+
     //CREANDO LA TABLA TOKENAPP
     fun preciosAutorizados(): String {
         return "CREATE TABLE preciosAutorizados(" +

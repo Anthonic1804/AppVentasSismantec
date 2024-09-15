@@ -11,7 +11,6 @@ import com.example.acae30.controllers.CuentasController
 import com.example.acae30.databinding.ActivityCuentasDetalleBinding
 import com.example.acae30.listas.CuentaAdapter
 import com.example.acae30.modelos.Cuenta
-import kotlinx.android.synthetic.main.activity_firmar_pagare.view.clear
 import kotlinx.coroutines.launch
 
 class CuentasDetalle : AppCompatActivity() {

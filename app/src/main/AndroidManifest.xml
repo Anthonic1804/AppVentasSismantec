@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.acae30">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -23,6 +22,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+        <activity
+            android:name=".NuevoAbono"
+            android:exported="false" />
+        <activity
+            android:name=".AbonosCxc"
+            android:exported="false" />
         <activity
             android:name=".HistoricoPedidoDetalles"
             android:exported="false" />
@@ -79,7 +84,7 @@
         <activity
             android:name=".Inventario"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".Clientes"
             android:screenOrientation="portrait" />

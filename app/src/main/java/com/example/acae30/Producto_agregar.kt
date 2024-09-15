@@ -30,7 +30,6 @@ import com.example.acae30.modelos.InventarioPrecios
 import com.example.acae30.modelos.JSONmodels.ActualizarPrecioPersonalizadoJSON
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.activity_producto_agregar.tvCantbonificados
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope

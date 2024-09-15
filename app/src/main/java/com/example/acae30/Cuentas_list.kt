@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.CuentasController
 import com.example.acae30.database.Database
+import com.example.acae30.databinding.ActivityCuentasListBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
 import com.google.android.material.snackbar.Snackbar
@@ -22,34 +23,37 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class Cuentas_list : AppCompatActivity() {
-    private var funciones: Funciones? = null
     private var bd: Database? = null
-    private var lista: RecyclerView? = null
-    private var btnatras: ImageButton? = null
-    private var search: SearchView? = null
-    private var lienzo: ConstraintLayout? = null
 
     private var preferences : SharedPreferences? = null
     private var instancia = "CONFIG_SERVIDOR"
     private var busquedaCliente : String? = null
 
+    private var vista = ""
+
+    private var funciones = Funciones()
     private var cuentasController = CuentasController()
+    private lateinit var binding : ActivityCuentasListBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportActionBar?.hide()
-        setContentView(R.layout.activity_cuentas_list)
-        funciones = Funciones()
+        binding = ActivityCuentasListBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
         bd = Database(this)
-        btnatras = findViewById(R.id.imgbtnatras)
-        search = findViewById(R.id.searchCuenta)
-        lienzo = findViewById(R.id.lienzo)
 
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        vista = preferences!!.getString("vista", "").toString()
 
-        lista = findViewById(R.id.lista)
-        //var list_temp : ArrayList<Cliente> = getClient()
-        //MostrarLista(list_temp)
+        when(vista){
+            "abono" -> {
+                binding.tvTituloCxc.text = getString(R.string.listado_de_cuentas_nuevo_abono)
+            }
+            else -> {
+                binding.tvTituloCxc.text = getString(R.string.listado_de_cuentas)
+            }
+        }
+
 
     }
 
@@ -58,16 +62,27 @@ class Cuentas_list : AppCompatActivity() {
 
         busquedaCliente = preferences!!.getString("busquedaCliente", "")
         if(busquedaCliente != ""){
-            search!!.setQuery("$busquedaCliente", true)
+            binding.searchCuenta.setQuery("$busquedaCliente", true)
         }
 
-        btnatras!!.setOnClickListener {
+        binding.btnAtras.setOnClickListener {
 
-            eliminarBusqueda()
+            when(vista){
+                "abono" -> {
+                    eliminarBusqueda()
 
-            val intento = Intent(this, Inicio::class.java)
-            startActivity(intento)
-            finish()
+                    val intento = Intent(this, AbonosCxc::class.java)
+                    startActivity(intento)
+                    finish()
+                }
+                else -> {
+                    eliminarBusqueda()
+
+                    val intento = Intent(this, Inicio::class.java)
+                    startActivity(intento)
+                    finish()
+                }
+            }
         }
         //GlobalScope.launch(Dispatchers.IO) {
         this@Cuentas_list.lifecycleScope.launch {
@@ -113,18 +128,21 @@ class Cuentas_list : AppCompatActivity() {
     //FUNCION PARA ELIMINAR LA BUSQUEDA PERSISTENTE DEL CLIENTE
     private fun eliminarBusqueda(){
         val clientSearch = preferences!!.getString("busquedaCliente", "")
+        val deleteSearch = preferences!!.edit()
         if(clientSearch != ""){
-            val deleteSearch = preferences!!.edit()
             deleteSearch.remove("busquedaCliente")
-            deleteSearch.apply()
         }
+        if(vista == "abono"){
+            deleteSearch.remove("vista")
+        }
+        deleteSearch.apply()
     }
 
     //BUSQUEDA DE CLIENTES DINAMICA
     //MODIFICACION PARA LA LIBRERIA DM
     //31-08-2022
     private fun busqueda() {
-        search!!.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        binding.searchCuenta.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(p0: String?): Boolean {
                 return false
             }
@@ -144,12 +162,12 @@ class Cuentas_list : AppCompatActivity() {
             val cursor =
                 bd!!.rawQuery("SELECT COUNT(*) FROM cuentas where Id_cliente=$idcliente AND status LIKE '%PENDIENTE%'", null)
             val cuentas = 0
-            if (cursor.count > 0) {
-                return cursor.count
+            return if (cursor.count > 0) {
+                cursor.count
             } else {
-                return cuentas
+                cuentas
             }
-
+            cursor.close()
         } catch (e: Exception) {
             throw Exception(e.message)
         } finally {
@@ -159,11 +177,10 @@ class Cuentas_list : AppCompatActivity() {
 
     private fun MostrarLista(list: ArrayList<Cliente>?) {
         try {
-
             if (list!!.size > 0) {
                 val mLayoutManager =
                     LinearLayoutManager(this@Cuentas_list, LinearLayoutManager.VERTICAL, false)
-                lista!!.layoutManager = mLayoutManager
+                binding.lista.layoutManager = mLayoutManager
                 val adapter =
                     ClienteAdapter(list, this@Cuentas_list, this@Cuentas_list, 0) { position ->
                         val cliente = list[position]
@@ -173,29 +190,38 @@ class Cuentas_list : AppCompatActivity() {
                                 try {
                                     val cuentas = CountCuenta(cliente.Id!!)
                                     if (cuentas > 0) {
+                                        when(vista){
+                                            "abono" -> {
+                                                val intento = Intent(this@Cuentas_list, NuevoAbono::class.java)
+                                                intento.putExtra("idcliente", cliente.Id!!)
+                                                startActivity(intento)
+                                                finish()
+                                            }
+                                            else -> {
+                                                buscarCliente(binding.searchCuenta.query.toString())
 
-                                        buscarCliente(search!!.query.toString())
-
-                                        val intento = Intent(this@Cuentas_list, CuentasDetalle::class.java)
-                                        intento.putExtra("idcliente", cliente.Id!!)
-                                        intento.putExtra("nombrecliente", cliente.Cliente!!)
-                                        startActivity(intento)
-                                        finish()
+                                                val intento = Intent(this@Cuentas_list, CuentasDetalle::class.java)
+                                                intento.putExtra("idcliente", cliente.Id!!)
+                                                intento.putExtra("nombrecliente", cliente.Cliente!!)
+                                                startActivity(intento)
+                                                finish()
+                                            }
+                                        }
                                     } else {
                                         runOnUiThread {
-                                            funciones!!.mostrarAlerta ("Este cliente no Tiene cuentas Pendientes", this@Cuentas_list, lienzo!!)
+                                            funciones.mostrarAlerta ("Este cliente no Tiene cuentas Pendientes", this@Cuentas_list, binding.lienzo)
                                         }
                                     }
                                 } catch (e: Exception) {
                                     runOnUiThread {
-                                        funciones!!.mostrarAlerta("ERROR: AL MOSTRAR EL LISTADO" + e.message.toString(), this@Cuentas_list, lienzo!!)
+                                        funciones.mostrarAlerta("ERROR: AL MOSTRAR EL LISTADO" + e.message.toString(), this@Cuentas_list, binding.lienzo)
                                     }
                                 }
                             }
                         }
 
                     }
-                lista!!.adapter = adapter
+                binding.lista.adapter = adapter
 
             }
         } catch (e: Exception) {
