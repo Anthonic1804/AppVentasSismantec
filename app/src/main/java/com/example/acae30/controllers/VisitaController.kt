@@ -36,7 +36,8 @@ class VisitaController {
         Longitud_checkout: String,
         Comentarios: String,
         idVisitaGloval: Int,
-        context: Context
+        context: Context,
+        tipo : String
     ) : Int{
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
@@ -58,10 +59,12 @@ class VisitaController {
                 Comentarios
             )
 
+
+
             val objecto = Gson().toJson(datos)
             val ruta: String = server + "visitas/iniciar_visita"
             val url = URL(ruta)
-
+            println("OBJETO -> " + objecto)
             with(url.openConnection() as HttpURLConnection){
                 try {
                     connectTimeout = 2000
@@ -93,7 +96,9 @@ class VisitaController {
                                     if (!res.isNull("error") && !res.isNull("response")) {
                                         val idser = res.getInt("error")
                                         idvisitaApi = idser
-                                        updateCheckIn(idser, idVisitaGloval, context)
+                                        if(tipo == "PEDIDO"){
+                                            updateCheckIn(idser, idVisitaGloval, context)
+                                        }
                                     } else {
                                         //throw Exception("Error en la respuesta del servidor")
                                         println("ERROR NO HAY RESPUESTA DEL SERVIDOR 1")

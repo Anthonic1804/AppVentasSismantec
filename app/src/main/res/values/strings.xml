@@ -160,4 +160,5 @@
     <string name="banco">BANCO</string>
     <string name="n_cuenta">N° CUENTA</string>
     <string name="n_cheque">N° CHEQUE</string>
+    <string name="sin_sucursal">SIN SUCURSAL</string>
 </resources>

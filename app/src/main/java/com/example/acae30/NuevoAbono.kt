@@ -1,8 +1,12 @@
 package com.example.acae30
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -11,13 +15,18 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.acae30.controllers.AbonosController
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.SucursalesController
+import com.example.acae30.controllers.VisitaController
 import com.example.acae30.databinding.ActivityNuevoAbonoBinding
 import com.example.acae30.modelos.Abono
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.InformacionSucursal
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,17 +37,27 @@ class NuevoAbono : AppCompatActivity() {
     private lateinit var binding : ActivityNuevoAbonoBinding
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
+
     private var funciones = Funciones()
     private var clienteController = ClientesController()
     private var sucursalesController = SucursalesController()
     private var abonosController = AbonosController()
+    private var visitaController = VisitaController()
+
     private var formaPagoSeleccionada = "-- SELECCIONE --"
     private var sucursal = "-- SELECCIONES UNA SUCURSAL --"
+    private var idSucursal = 0
     private var idCliente = 0
     private var datosCliente : Cliente? = null
     private var datosSucursal : InformacionSucursal? = null
     private var vendedor = ""
     private var idVendedor = 0
+    private var idVisitarServer = 0
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001
+    private var latitud = "0"
+    private var longitud = "0"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +80,23 @@ class NuevoAbono : AppCompatActivity() {
         binding.btnAceptar.isEnabled = false
         binding.btnAceptar.setBackgroundResource(R.drawable.border_btndisable)
 
+        // OBTERNIENDO UBICACIÓN
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        capturarLocalizacion()
+    }
+
+    // Manejar el resultado de la solicitud de permisos
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permiso concedido, obtener la ubicación
+                updateGPS()
+            } else {
+                // Permiso denegado, mostrar un mensaje o realizar otra acción
+                Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     override fun onStart() {
@@ -139,13 +175,61 @@ class NuevoAbono : AppCompatActivity() {
         }
 
         binding.btnAceptar.setOnClickListener {
-            mensaje("ACEPTAR")
+
+            //ASIGNADO EL ID DE LA SUCURSAL
+            idSucursal = if(datosSucursal == null){
+                0
+            }else{
+                datosSucursal!!.id
+            }
+
+            idVisitarServer = visitaController.registrarVisita(
+                0,
+                funciones.getFechaHoraProceso()!!,
+                latitud,
+                longitud,
+                datosCliente!!.Id!!,
+                datosCliente!!.Cliente!!,
+                idVendedor,
+                funciones.getFechaHoraProceso()!!,
+                latitud,
+                longitud,
+                "",
+                0,
+                this@NuevoAbono,
+                "ABONO")
+
+            if(idVisitarServer > 0){
+                mensaje("ACEPTAR")
+            }else{
+                funciones.mensaje(this@NuevoAbono, "error de visita")
+            }
         }
 
     }
 
+    //FUNCION PARA CAPTURAR LA GEOLOCALIZACION
+    private fun capturarLocalizacion() {
+        // Verificar permisos de ubicación
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Si no hay permiso, solicitarlo
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        } else {
+            // Si ya hay permiso, obtener la ubicación
+            updateGPS()
+        }
+    }
+
     //FUNCION PARA VALIDAR EL ENVIO
-    fun validar(){
+    private fun validar(){
         if(sucursal == "-- SELECCIONES UNA SUCURSAL --" || formaPagoSeleccionada == "-- SELECCIONE --"){
             binding.btnAceptar.isEnabled = false
             binding.btnAceptar.setBackgroundResource(R.drawable.border_btndisable)
@@ -163,6 +247,7 @@ class NuevoAbono : AppCompatActivity() {
         if(listSucursal.isEmpty()){
             binding.spSucursal.visibility = View.GONE
             binding.sinSucursal.visibility = View.VISIBLE
+            sucursal = "SIN SUCURSAL"
         }else{
             binding.spSucursal.visibility = View.VISIBLE
             binding.sinSucursal.visibility = View.GONE
@@ -232,6 +317,7 @@ class NuevoAbono : AppCompatActivity() {
         finish()
     }
 
+    //FUNCION PARA REGRESAR AL MENU ABONOS
     private fun listadoAbono(){
         val intento = Intent(this@NuevoAbono, AbonosCxc::class.java)
         startActivity(intento)
@@ -245,7 +331,7 @@ class NuevoAbono : AppCompatActivity() {
             idCliente,
             datosCliente!!.Codigo,
             datosCliente!!.Cliente,
-            datosSucursal!!.id,
+            idSucursal,
             sucursal,
             binding.txtMonto.text.toString().toFloat(),
             formaPagoSeleccionada,
@@ -268,5 +354,25 @@ class NuevoAbono : AppCompatActivity() {
                 mensaje("ERROR")
             }
         }
+    }
+
+    // HACER PETICIÓN DE POSICIÓN ACTUAL DEL GPS
+    @SuppressLint("MissingPermission")
+    private fun updateGPS() {
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                // OBTENIENDO LA UBICACION ACTUAL
+                location?.let {
+                    latitud = location.latitude.toString()
+                    longitud = location.longitude.toString()
+                } ?: run {
+                    latitud = 0.toString()
+                    longitud = 0.toString()
+                }
+            }
+            .addOnFailureListener { e ->
+                // ERROR AL NO OBTENER LA UBICACION
+                Toast.makeText(this, "Error al obtener la ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 }

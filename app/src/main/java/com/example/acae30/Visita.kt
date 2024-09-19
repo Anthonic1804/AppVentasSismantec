@@ -343,7 +343,8 @@ class Visita : AppCompatActivity() {
                                         Longitud_checkout,
                                         Comentarios,
                                         idvisitaGLOBAL!!,
-                                        this@Visita
+                                        this@Visita,
+                                        "PEDIDO"
                                     )
                                 }
                             }catch (e:Exception){

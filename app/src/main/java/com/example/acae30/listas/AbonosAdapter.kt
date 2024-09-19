@@ -25,6 +25,13 @@ class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Co
         val item = list[position]
         holder.codigo.text = item.codigoCliente.toString()
         holder.cliente.text = item.Cliente.toString()
+
+        if(item.IdSucursal!! > 0){
+            holder.sucursal.text = item.Sucursal.toString()
+        }else{
+            holder.sucursal.text = context.getString(R.string.sin_sucursal)
+        }
+        
         holder.total.text = "$ " + String.format("%.2f", item.Abono)
         holder.fecha.text = item.Fecha_hora_proceso
     }
@@ -36,12 +43,14 @@ class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Co
     inner class MyViewHolder(item: View) : RecyclerView.ViewHolder(item){
         internal var codigo : TextView
         internal var cliente : TextView
+        internal var sucursal : TextView
         internal var total : TextView
         internal var fecha : TextView
 
         init {
             codigo = item.findViewById(R.id.tvCodigoAbono)
             cliente  = item.findViewById(R.id.tvClienteAbono)
+            sucursal = item.findViewById(R.id.tvSucursalAbono)
             total = item.findViewById(R.id.tvTotalAbono)
             fecha = item.findViewById(R.id.tvFechaAbono)
         }
