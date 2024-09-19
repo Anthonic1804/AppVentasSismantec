@@ -121,7 +121,7 @@ class firmarPagare : AppCompatActivity() {
         }
 
         binding.clear.setOnClickListener {
-            binding.signatureView.clearCanvas()
+            binding.SignatureView.clear()
         }
 
         //CALCULANDO LA FECHA DE VENCIMIENTO DE ACUERDO AL PLAZO DADO EN EL CREDITO.
@@ -163,12 +163,12 @@ class firmarPagare : AppCompatActivity() {
 
         binding.save.setOnClickListener {
             fechaDoc = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"))
-            imageFirmada = binding.signatureView.isBitmapEmpty
+            imageFirmada = binding.SignatureView.isEmpty
             if(funciones.isInternetAvailable(this@firmarPagare)){
                 if(imageFirmada){
                     Toast.makeText(this, "POR FAVOR INGRESE SU FIRMA", Toast.LENGTH_LONG).show()
                 }else{
-                    imagenBitmap = binding.signatureView.signatureBitmap
+                    imagenBitmap = binding.SignatureView.signatureBitmap
                     imageFinal = bitmapToByteArray(imagenBitmap)
                     verificarPermisos(it)
                 }

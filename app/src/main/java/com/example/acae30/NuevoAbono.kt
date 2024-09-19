@@ -21,6 +21,7 @@ import com.example.acae30.modelos.InformacionSucursal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class NuevoAbono : AppCompatActivity() {
 
@@ -179,6 +180,12 @@ class NuevoAbono : AppCompatActivity() {
             "CANCELAR" -> {
                 "¿DESEA CANCELAR EL PROCESO?"
             }
+            "ENVIADO" -> {
+                "ABONO REGISTRADO CORRECTAMENTE"
+            }
+            "ERROR" -> {
+                "ERROR AL REGISTRAR EL ABONO"
+            }
             else -> {
                 "¿DESEA INGRESAR EL ABONO?"
             }
@@ -187,14 +194,26 @@ class NuevoAbono : AppCompatActivity() {
             .setTitle("INFORMACION")
             .setMessage(mensaje)
             .setPositiveButton("ACEPTAR") { view, _ ->
-                if(tipo == "CANCELAR"){
-                    cancelarAbono()
-                }else{
-                    CoroutineScope(Dispatchers.IO).launch {
-                        procesarAbono()
+
+                when(tipo){
+                    "CANCELAR" -> {
+                        view.dismiss()
+                        cancelarAbono()
+                    }
+                    "ENVIADO" -> {
+                        view.dismiss()
+                        listadoAbono()
+                    }
+                    "ERROR" -> {
+                        view.dismiss()
+                    }
+                    else -> {
+                        view.dismiss()
+                        CoroutineScope(Dispatchers.IO).launch {
+                            procesarAbono()
+                        }
                     }
                 }
-                view.dismiss()
             }
             .setNegativeButton("CANCENLAR"){ view, _ ->
                 view.dismiss()
@@ -209,6 +228,12 @@ class NuevoAbono : AppCompatActivity() {
     //FUNCION PARA REGRESAR AL MODULO DE ABONOS
     private fun cancelarAbono(){
         val intento = Intent(this@NuevoAbono, Cuentas_list::class.java)
+        startActivity(intento)
+        finish()
+    }
+
+    private fun listadoAbono(){
+        val intento = Intent(this@NuevoAbono, AbonosCxc::class.java)
         startActivity(intento)
         finish()
     }
@@ -233,6 +258,15 @@ class NuevoAbono : AppCompatActivity() {
             1 //LUEGO CAMBIAR POR EL RESPONSE DEL WS
         )
 
-        abonosController.enviarAbonoAlServidor(this@NuevoAbono, abono)
+        val respuesta = abonosController.enviarAbonoAlServidor(this@NuevoAbono, abono)
+        if(respuesta){
+            withContext(Dispatchers.Main){
+                mensaje("ENVIADO")
+            }
+        }else{
+            withContext(Dispatchers.Main) {
+                mensaje("ERROR")
+            }
+        }
     }
 }

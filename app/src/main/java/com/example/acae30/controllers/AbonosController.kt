@@ -7,7 +7,9 @@ import com.example.acae30.Funciones
 import com.example.acae30.modelos.Abono
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -25,7 +27,7 @@ class AbonosController {
     private var instancia = "CONFIG_SERVIDOR"
 
     //FUNCION PARA INSERTAR LOS ABONOS EN SQLITE
-    suspend fun insertarAbonoCxc(context: Context, abono: Abono){
+    fun insertarAbonoCxc(context: Context, abono: Abono){
         val bd = funciones.getDataBase(context).writableDatabase
         try {
             bd.beginTransaction()
@@ -48,14 +50,9 @@ class AbonosController {
             data.put("idVisitaServer", abono.Id_app_visita)
 
             bd.insert("abonos", null, data)
-            withContext(Dispatchers.Main){
-                funciones.mensaje(context, "ABONO REGISTRADO CORRECTAMENTE")
-            }
             bd.setTransactionSuccessful()
         }catch (e:Exception){
-            withContext(Dispatchers.Main){
-                funciones.mensaje(context, "ERROR AL INSERTAR EL ABONO LOCALMENTE")
-            }
+            println("ERROR: INSERTAR ABONO -> ${e.message}")
         }finally {
             bd.endTransaction()
             bd.close()
@@ -68,7 +65,7 @@ class AbonosController {
         val listaAbonos = ArrayList<Abono>()
 
         try{
-            val cursor = bd.rawQuery("SELECT * FROM abonos WHERE fecha = '$fecha' AND borradoLogico = 0", null)
+            val cursor = bd.rawQuery("SELECT * FROM abonos WHERE fecha = '$fecha' AND borradoLogico = 0 ORDER BY id DESC", null)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -103,7 +100,8 @@ class AbonosController {
     }
 
     //FUNCION PARA EL ENVIO DEL ABONO AL SERVIDOR
-    suspend fun enviarAbonoAlServidor(context: Context, abono: Abono){
+    suspend fun enviarAbonoAlServidor(context: Context, abono: Abono) : Boolean {
+        var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val abonoJson = convertirAbonoAJson(context, abono)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
@@ -142,7 +140,10 @@ class AbonosController {
                                     if(idAbono == 0){
                                         println("ERROR")
                                     }else{
-                                        println("ALMACENADO")
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            insertarAbonoCxc(context, abono)
+                                        }
+                                        envio = true
                                     }
                                 }
                             } catch (e: Exception) {
@@ -160,6 +161,7 @@ class AbonosController {
         } catch (e: Exception) {
             funciones.mensaje(context, "ERROR DE CONEXION CON EL SERVIDOR 2 " + e.message)
         }
+        return envio
     }
 
     //FUNCION PARA CONVERTIR EL OBJETO DEL ABONO EN JSON

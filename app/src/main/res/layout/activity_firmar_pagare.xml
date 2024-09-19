@@ -29,6 +29,15 @@
                 android:background="@drawable/border_signature"
                 android:orientation="vertical">
 
+                <com.github.gcacace.signaturepad.views.SignaturePad
+                    android:id="@+id/SignatureView"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    app:penColor="@android:color/black"
+                    app:penMaxWidth="7dp"
+                    app:penMinWidth="3dp"
+                    />
+                <!--LIBRERIA ANTERIOR DE FIRMA
                 <com.kyanogen.signatureview.SignatureView
                     xmlns:sign="http://schemas.android.com/apk/res-auto"
                     android:id="@+id/signatureView"
@@ -39,6 +48,7 @@
                     sign:backgroundColor="#ffffff"
                     sign:penColor="#000000"
                     sign:enableSignature="true"/>
+                    -->
             </LinearLayout>
 
             <LinearLayout
