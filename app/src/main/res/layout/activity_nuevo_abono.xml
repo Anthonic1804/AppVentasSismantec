@@ -172,7 +172,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="BANCO">
+                        android:hint="@string/banco">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/tvBanco"
@@ -190,7 +190,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="N° CUENTA">
+                        android:hint="@string/n_cuenta">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/tvNumCuentaCheque"
@@ -208,73 +208,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="N° CHEQUE">
+                        android:hint="@string/n_cheque">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/tvNumCheque"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:textAlignment="center"
-                            android:textColor="@color/colorHint"
-                            android:textSize="16sp"
-                            android:textStyle="bold"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/lyContenedorDeposito"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/lyDeposito"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="BANCO">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/tvDeposito"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:textAlignment="center"
-                            android:textColor="@color/colorHint"
-                            android:textSize="16sp"
-                            android:textStyle="bold"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/lyNumCuentaDeposito"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="N° CUENTA">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/tvNumCuentaDeposito"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:textAlignment="center"
-                            android:textColor="@color/colorHint"
-                            android:textSize="16sp"
-                            android:textStyle="bold"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/lyNumDeposito"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="N° DEPOSITO">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/tvNumDeposito"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="text"

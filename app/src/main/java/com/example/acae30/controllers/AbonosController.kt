@@ -1,0 +1,164 @@
+package com.example.acae30.controllers
+
+import android.content.ContentValues
+import android.content.Context
+import android.content.SharedPreferences
+import com.example.acae30.Funciones
+import com.example.acae30.modelos.Abono
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.io.Reader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.nio.charset.StandardCharsets
+
+class AbonosController {
+
+    private var funciones = Funciones()
+    private lateinit var preferences: SharedPreferences
+    private var instancia = "CONFIG_SERVIDOR"
+
+    //FUNCION PARA INSERTAR LOS ABONOS EN SQLITE
+    suspend fun insertarAbonoCxc(context: Context, abono: Abono){
+        val bd = funciones.getDataBase(context).writableDatabase
+        try {
+            bd.beginTransaction()
+
+            val data = ContentValues()
+            data.put("fecha", abono.Fecha)
+            data.put("idCliente", abono.IdCliente)
+            data.put("codigoCliente", abono.codigoCliente)
+            data.put("cliente", abono.Cliente)
+            data.put("idSucursal", abono.IdSucursal)
+            data.put("sucursal", abono.Sucursal)
+            data.put("abono", abono.Abono)
+            data.put("tipoPago", abono.Tipo_pago)
+            data.put("numeroCheque", abono.Numero_cheque)
+            data.put("cuenta", abono.Cuenta)
+            data.put("banco", abono.Banco)
+            data.put("idVendedor", abono.IdVendedor)
+            data.put("vendedor", abono.Vendedor)
+            data.put("fecha_hora_proceso", abono.Fecha_hora_proceso)
+            data.put("idVisitaServer", abono.Id_app_visita)
+
+            bd.insert("abonos", null, data)
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "ABONO REGISTRADO CORRECTAMENTE")
+            }
+            bd.setTransactionSuccessful()
+        }catch (e:Exception){
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "ERROR AL INSERTAR EL ABONO LOCALMENTE")
+            }
+        }finally {
+            bd.endTransaction()
+            bd.close()
+        }
+    }
+
+    //FUNCION PARA SELECCIONAR TODOS LOS ABONOS POR FECHA
+    fun obtenerAbonosSQLite(context: Context, fecha : String) : ArrayList<Abono>{
+        val bd = funciones.getDataBase(context).readableDatabase
+        val listaAbonos = ArrayList<Abono>()
+
+        try{
+            val cursor = bd.rawQuery("SELECT * FROM abonos WHERE fecha = '$fecha' AND borradoLogico = 0", null)
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                do {
+                    val abono = Abono(
+                        cursor.getString(1),
+                        cursor.getInt(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getInt(5),
+                        cursor.getString(6),
+                        cursor.getFloat(7),
+                        cursor.getString(8),
+                        cursor.getString(9),
+                        cursor.getString(10),
+                        cursor.getString(11),
+                        cursor.getInt(12),
+                        cursor.getString(13),
+                        cursor.getString(14),
+                        cursor.getInt(15)
+                    )
+
+                    listaAbonos.add(abono)
+                }while (cursor.moveToNext())
+            }
+            cursor.close()
+        }catch (e:Exception){
+            funciones.mensaje(context,"ERROR: OBTENER LOS ABONOS -> ${e.message}")
+        }finally {
+            bd.close()
+        }
+        return listaAbonos
+    }
+
+    //FUNCION PARA EL ENVIO DEL ABONO AL SERVIDOR
+    suspend fun enviarAbonoAlServidor(context: Context, abono: Abono){
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        try {
+            val objecto =
+                Gson().toJson(abono)
+            val ruta: String = servidor + "abonos"
+            val url = URL(ruta)
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 20000
+                    setRequestProperty(
+                        "Content-Type",
+                        "application/json;charset=utf-8"
+                    )
+                    requestMethod = "POST"
+                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+                    or.write(objecto) //escribo el json
+                    or.flush() //se envia el json
+                    if (responseCode == 201) {
+                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                            try {
+                                val respuesta = StringBuffer()
+                                var inpuline = it.readLine()
+                                while (inpuline != null) {
+                                    respuesta.append(inpuline)
+                                    inpuline = it.readLine()
+                                }
+                                it.close()
+
+                                val res: JSONObject = JSONObject(respuesta.toString())
+                                if (res.getInt("idAbono") > 0 && !res.isNull("respuesta")) {
+                                    val idAbono: Int = res.getInt("idAbono")
+                                    if(idAbono == 0){
+                                        println("ERROR")
+                                    }else{
+                                        println("ALMACENADO")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                funciones.mensaje(context, "ERROR DE LECTURA EN LA RESPUESTA 201 " + e.message)
+                            }
+                        }
+                    }else {
+                        funciones.mensaje(context, "ERROR NO SE LOGRO REGISTRAR EL ABONO EN EL SERVIDOR")
+                    }
+
+                } catch (e: Exception) {
+                    funciones.mensaje(context, "ERROR DE CONEXION CON EL SERVIDOR 1 " + e.message)
+                }
+            }
+        } catch (e: Exception) {
+            funciones.mensaje(context, "ERROR DE CONEXION CON EL SERVIDOR 2 " + e.message)
+        }
+    }
+
+
+}

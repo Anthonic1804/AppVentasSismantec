@@ -13,7 +13,7 @@ class Database(context: Context) : SQLiteOpenHelper(
     private var tbl: Tablas = Tablas()
 
     companion object {
-        private const val DATABASE_VERSION = 1 //version de la base
+        private const val DATABASE_VERSION = 3 //version de la base
         private const val DATABASE_NAME = "Acae.db" //nombre de la bd
     }
 
@@ -39,6 +39,7 @@ class Database(context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.ventasTemp())//CREANDO LA TABLA VENTAS TEMP
         db?.execSQL(tbl.ventasDetalleTemp())//CREADNDO LA TABLA VENTAS DETALLE TEMP
         db?.execSQL(tbl.reporteTemp()) //TABLA TEMPORAL PARA EL REPORTE DE VENTAS
+        //db?.execSQL(tbl.abonosCxc())//TABLA PARA LOS ABONOS INGRESADOS AGREGAR LO DESPUES DE LA ACTUALIZACION
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
@@ -52,6 +53,10 @@ class Database(context: Context) : SQLiteOpenHelper(
             db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN DTECodMunicipio VARCHAR(10) NOT NULL DEFAULT ''")
             db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN DTECodPais VARCHAR(10) NOT NULL DEFAULT ''")
             db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN DTEPais VARCHAR(50) NOT NULL DEFAULT ''")*/
+
+            //CREANDO TABLA SIN ELIMINAR LA ANTERIOR BD
+            db?.execSQL(tbl.abonosCxc()) //HABILITAR CON LA VERSION DE LA BD EN 2
+            //db?.execSQL("ALTER TABLE abonos ADD COLUMN idAbonoServer INTEGER NOT NULL DEFAULT 0")
         }
     }
 }

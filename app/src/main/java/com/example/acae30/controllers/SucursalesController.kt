@@ -2,6 +2,7 @@ package com.example.acae30.controllers
 
 import android.content.Context
 import com.example.acae30.Funciones
+import com.example.acae30.modelos.InformacionSucursal
 
 class SucursalesController {
 
@@ -27,6 +28,48 @@ class SucursalesController {
             db!!.close()
         }
         return listaSucursales
+    }
+
+    //FUNCION PARA OBTENER LA INFORMACION DE LA SUCURSAL DEL CLIENTE
+    fun obtenerInformacionSucursal(context: Context, sucursal: String, idCliente: Int) : InformacionSucursal?{
+        val db = funciones.getDataBase(context).readableDatabase
+        var datosSucursal : InformacionSucursal? = null
+
+        try {
+            val cursor = db.rawQuery("SELECT Id, id_cliente, codigo_sucursal, nombre_sucursal, direccion_sucursal, " +
+                    "municipio_sucursal, depto_sucursal, telefono_1, correo_sucursal, " +
+                    "Id_ruta, Ruta, DTECodDepto, DTECodMunicipio, DTECodPais, DTEPais  FROM cliente_sucursal " +
+                    "WHERE nombre_sucursal='$sucursal' AND id_cliente=$idCliente", null)
+
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                datosSucursal = InformacionSucursal(
+                    cursor.getInt(0),
+                    cursor.getInt(1),
+                    cursor.getString(2),
+                    cursor.getString(3),
+                    cursor.getString(4),
+                    cursor.getString(5),
+                    cursor.getString(6),
+                    cursor.getString(7),
+                    cursor.getString(8),
+                    cursor.getInt(9),
+                    cursor.getString(10),
+                    cursor.getString(11),
+                    cursor.getString(12),
+                    cursor.getString(13),
+                    cursor.getString(14)
+                )
+            }else{
+                println("NO SE ENCONTRARON DATOS DE LA SUCURSAL")
+            }
+            cursor.close()
+        }catch (e:Exception){
+            throw Exception("ERROR AL OBTENER LA INFORMACION DE LAS SUCURSALES -> " + e.message)
+        }finally {
+            db.close()
+        }
+        return datosSucursal
     }
 
 

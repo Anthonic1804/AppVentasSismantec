@@ -200,6 +200,7 @@ class Tablas {
                 "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
                 "idCliente INTEGER NOT NULL," +
+                "codigoCliente VARCHAR(50) NOT NULL," +
                 "cliente VARCHAR(100) NOT NULL," +
                 "idSucursal INTEGER NOT NULL DEFAULT O," +
                 "sucursal VARCHAR(100) NULL," +
@@ -211,10 +212,9 @@ class Tablas {
                 "idVendedor INTEGER NOT NULL DEFAULT O," +
                 "vendedor VARCHAR(100) NOT NULL," +
                 "fecha_hora_proceso TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
-                "abonoApp INTEGER NOT NULL DEFAULT 1," +
-                "idVisitaServer INTEGER NOT NULL DEFAULT O," +
-                "puntoVenta VARCHAR(5) NOT NULL," +
-                "borradoLogico INTEGER NOT NULL DEFAULT O);"
+                "idVisitaServer INTEGER NOT NULL DEFAULT 0," +
+                "idAbonoServer INTEGER NOT NULL DEFAULT 0," +
+                "borradoLogico INTEGER NOT NULL DEFAULT 0);"
     }
 
     //CREANDO LA TABLA TOKENAPP

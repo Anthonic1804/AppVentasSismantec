@@ -157,4 +157,7 @@
     <string name="forma_de_pago">FORMA DE PAGO</string>
     <string name="monto_del_abono">MONTO DEL ABONO</string>
     <string name="ingresar_abono">INGRESAR ABONO</string>
+    <string name="banco">BANCO</string>
+    <string name="n_cuenta">N° CUENTA</string>
+    <string name="n_cheque">N° CHEQUE</string>
 </resources>
