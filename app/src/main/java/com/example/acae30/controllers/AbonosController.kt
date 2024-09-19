@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import com.example.acae30.Funciones
 import com.example.acae30.modelos.Abono
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -104,10 +105,11 @@ class AbonosController {
     //FUNCION PARA EL ENVIO DEL ABONO AL SERVIDOR
     suspend fun enviarAbonoAlServidor(context: Context, abono: Abono){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val abonoJson = convertirAbonoAJson(context, abono)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
         try {
             val objecto =
-                Gson().toJson(abono)
+                Gson().toJson(abonoJson)
             val ruta: String = servidor + "abonos"
             val url = URL(ruta)
             with(withContext(Dispatchers.IO) {
@@ -158,6 +160,33 @@ class AbonosController {
         } catch (e: Exception) {
             funciones.mensaje(context, "ERROR DE CONEXION CON EL SERVIDOR 2 " + e.message)
         }
+    }
+
+    //FUNCION PARA CONVERTIR EL OBJETO DEL ABONO EN JSON
+    private fun convertirAbonoAJson(context: Context, abono: Abono): JsonObject {
+
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val puntoVenta = preferences.getString("puntoVenta", "").toString()
+
+        val json = JsonObject()
+        json.addProperty("Fecha", abono.Fecha)
+        json.addProperty("IdCliente", abono.IdCliente)
+        json.addProperty("Cliente", abono.Cliente)
+        json.addProperty("IdSucursal", abono.IdSucursal)
+        json.addProperty("Sucursal", abono.Sucursal)
+        json.addProperty("Abono", abono.Abono)
+        json.addProperty("Tipo_pago", abono.Tipo_pago)
+        json.addProperty("Numero_cheque", abono.Numero_cheque)
+        json.addProperty("Cuenta", abono.Cuenta)
+        json.addProperty("Banco", abono.Banco)
+        json.addProperty("IdVendedor", abono.IdVendedor)
+        json.addProperty("Vendedor", abono.Vendedor)
+        json.addProperty("Fecha_hora_proceso", abono.Fecha_hora_proceso)
+        json.addProperty("Id_app_visita", abono.Id_app_visita)
+        json.addProperty("Punto_venta", puntoVenta)
+
+        return json
+
     }
 
 

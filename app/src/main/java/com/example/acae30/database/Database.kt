@@ -13,7 +13,7 @@ class Database(context: Context) : SQLiteOpenHelper(
     private var tbl: Tablas = Tablas()
 
     companion object {
-        private const val DATABASE_VERSION = 3 //version de la base
+        private const val DATABASE_VERSION = 2 //version de la base
         private const val DATABASE_NAME = "Acae.db" //nombre de la bd
     }
 
