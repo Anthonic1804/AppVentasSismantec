@@ -15,5 +15,6 @@ data class Abono (
     var IdVendedor : Int?,
     var Vendedor : String?,
     var Fecha_hora_proceso : String?,
-    var Id_app_visita : Int?
+    var Id_app_visita : Int?,
+    var PedidoEnviado : Int?
 )

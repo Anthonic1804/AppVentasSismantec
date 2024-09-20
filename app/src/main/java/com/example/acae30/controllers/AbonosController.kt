@@ -27,8 +27,13 @@ class AbonosController {
     private var instancia = "CONFIG_SERVIDOR"
 
     //FUNCION PARA INSERTAR LOS ABONOS EN SQLITE
-    fun insertarAbonoCxc(context: Context, abono: Abono){
+    fun insertarAbonoCxc(context: Context, abono: Abono, tipo: String) : Boolean{
+        var guardado : Boolean = false
         val bd = funciones.getDataBase(context).writableDatabase
+        var enviado = 1
+        if(tipo == "GUARDAR"){
+            enviado = 0
+        }
         try {
             bd.beginTransaction()
 
@@ -48,15 +53,18 @@ class AbonosController {
             data.put("vendedor", abono.Vendedor)
             data.put("fecha_hora_proceso", abono.Fecha_hora_proceso)
             data.put("idVisitaServer", abono.Id_app_visita)
+            data.put("abonoEnviado", enviado)
 
             bd.insert("abonos", null, data)
             bd.setTransactionSuccessful()
+            guardado = true
         }catch (e:Exception){
             println("ERROR: INSERTAR ABONO -> ${e.message}")
         }finally {
             bd.endTransaction()
             bd.close()
         }
+        return guardado
     }
 
     //FUNCION PARA SELECCIONAR TODOS LOS ABONOS POR FECHA
@@ -84,7 +92,8 @@ class AbonosController {
                         cursor.getInt(12),
                         cursor.getString(13),
                         cursor.getString(14),
-                        cursor.getInt(15)
+                        cursor.getInt(15),
+                        cursor.getInt(18)
                     )
 
                     listaAbonos.add(abono)
@@ -141,7 +150,7 @@ class AbonosController {
                                         println("ERROR")
                                     }else{
                                         CoroutineScope(Dispatchers.IO).launch {
-                                            insertarAbonoCxc(context, abono)
+                                            insertarAbonoCxc(context, abono, "ENVIAR")
                                         }
                                         envio = true
                                     }
@@ -191,5 +200,44 @@ class AbonosController {
 
     }
 
+    //FUNCION PARA SELECCIONAR LOS ABONO NO ENVIADOS
+    fun obtenerAbonosNoEnviados(context: Context) : ArrayList<Abono>{
+        val base = funciones.getDataBase(context).readableDatabase
+        val abonos = ArrayList<Abono>()
+        val fecha = funciones.obtenerFecha()
+        try {
+            val cursor = base.rawQuery("SELECT * FROM abonos WHERE abonoEnviado = 0 AND fecha='$fecha'", null)
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                do {
+                    val item = Abono(
+                        cursor.getString(1),
+                        cursor.getInt(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getInt(5),
+                        cursor.getString(6),
+                        cursor.getFloat(7),
+                        cursor.getString(8),
+                        cursor.getString(9),
+                        cursor.getString(10),
+                        cursor.getString(11),
+                        cursor.getInt(12),
+                        cursor.getString(13),
+                        cursor.getString(14),
+                        cursor.getInt(15),
+                        cursor.getInt(18)
+                    )
+                    abonos.add(item)
+                }while (cursor.moveToNext())
+                cursor.close()
+            }
+        }catch (e:Exception){
+            println("ERROR AL OBTENER LOS ABONOS NO ENVIADOS -> " + e.message)
+        }finally {
+            base.close()
+        }
+        return abonos
+    }
 
 }

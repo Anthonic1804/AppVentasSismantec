@@ -28,13 +28,26 @@
             app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/margin_4dp"
+            android:layout_marginStart="@dimen/margin_4dp"
             android:text="@string/lista_de_abonos"
             android:textSize="@dimen/FuenteEncabezado"
             android:textStyle="bold"
             android:textAlignment="center"
             android:textColor="@color/colorAccent" />
+
+        <Button
+            android:id="@+id/btnSincronizar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/margin_4dp"
+            android:layout_marginEnd="@dimen/margin_default_16dp"
+            android:backgroundTint="@color/SEGUNDOCOLORLOGO"
+            android:text="SINCRONIZAR DATOS"
+            android:textColor="@color/colorAccent"
+            android:textSize="10sp"/>
 
     </LinearLayout>
 

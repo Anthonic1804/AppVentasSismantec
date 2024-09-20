@@ -214,7 +214,8 @@ class Tablas {
                 "fecha_hora_proceso TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
                 "idVisitaServer INTEGER NOT NULL DEFAULT 0," +
                 "idAbonoServer INTEGER NOT NULL DEFAULT 0," +
-                "borradoLogico INTEGER NOT NULL DEFAULT 0);"
+                "borradoLogico INTEGER NOT NULL DEFAULT 0," +
+                "abonoEnviado INTEGER NOT NULL DEFAULT 0);"
     }
 
     //CREANDO LA TABLA TOKENAPP

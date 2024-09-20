@@ -4,10 +4,12 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.acae30.controllers.AbonosController
 import com.example.acae30.databinding.ActivityAbonosCxcBinding
@@ -27,10 +29,14 @@ class AbonosCxc : AppCompatActivity() {
     private var abonosController = AbonosController()
     private var funciones = Funciones()
 
+    private var alert: AlertDialogo? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAbonosCxcBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        alert = AlertDialogo(this@AbonosCxc)
 
         preferencias = getSharedPreferences(this.instancia, MODE_PRIVATE)
     }
@@ -56,6 +62,25 @@ class AbonosCxc : AppCompatActivity() {
             mostrarDatos()
         }
 
+        binding.btnSincronizar.setOnClickListener {
+            if(funciones.isInternetAvailable(this@AbonosCxc)){
+                CoroutineScope(Dispatchers.IO).launch {
+                    val abonosNoTransmitidos : ArrayList<Abono> = abonosController.obtenerAbonosNoEnviados(this@AbonosCxc)
+                    if(abonosNoTransmitidos.size > 0){
+                        runOnUiThread {
+                            alert!!.Cargando()
+                        }
+
+                    }else{
+                        runOnUiThread {
+                            funciones.mensaje(this@AbonosCxc, "NO SE ENCONTRARON ABONOS SIN ENVIAR")
+                        }
+                    }
+                }
+            }else{
+                funciones.mensaje(this@AbonosCxc,"ENCIENDE TUS DATOS O EL WIFI")
+            }
+        }
 
     }
 
@@ -75,14 +100,16 @@ class AbonosCxc : AppCompatActivity() {
 
     //FUNCION MARA MOSTRAR LA LISTA DE ABONOS EN LA ACTIVIDAD
     private fun mostrarDatos(){
-        try{
-            val fecha = funciones.obtenerFecha()
-            val lista = abonosController.obtenerAbonosSQLite(this@AbonosCxc, fecha!!)
-            if(lista.size > 0){
-                armarLista(lista)
+        this@AbonosCxc.lifecycleScope.launch {
+            try{
+                val fecha = funciones.obtenerFecha()
+                val lista = abonosController.obtenerAbonosSQLite(this@AbonosCxc, fecha!!)
+                if(lista.size > 0){
+                    armarLista(lista)
+                }
+            }catch (e: Exception){
+                throw Exception(e.message)
             }
-        }catch (e: Exception){
-            throw Exception(e.message)
         }
     }
 

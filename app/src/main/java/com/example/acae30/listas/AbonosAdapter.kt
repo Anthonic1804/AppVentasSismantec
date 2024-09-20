@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.R
 import com.example.acae30.modelos.Abono
@@ -31,6 +33,15 @@ class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Co
         }else{
             holder.sucursal.text = context.getString(R.string.sin_sucursal)
         }
+
+        //SI EL PEDIDO HA SIDO ENVIADO
+        if(item.PedidoEnviado == 0){
+            holder.cvColorAbono.setCardBackgroundColor(
+                ContextCompat.getColor(holder.itemView.context, R.color.moderado))
+        }else{
+            holder.cvColorAbono.setCardBackgroundColor(
+                ContextCompat.getColor(holder.itemView.context, R.color.cart))
+        }
         
         holder.total.text = "$ " + String.format("%.2f", item.Abono)
         holder.fecha.text = item.Fecha_hora_proceso
@@ -46,6 +57,7 @@ class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Co
         internal var sucursal : TextView
         internal var total : TextView
         internal var fecha : TextView
+        internal var cvColorAbono : CardView
 
         init {
             codigo = item.findViewById(R.id.tvCodigoAbono)
@@ -53,6 +65,7 @@ class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Co
             sucursal = item.findViewById(R.id.tvSucursalAbono)
             total = item.findViewById(R.id.tvTotalAbono)
             fecha = item.findViewById(R.id.tvFechaAbono)
+            cvColorAbono = item.findViewById(R.id.cvColorAbono)
         }
     }
 }

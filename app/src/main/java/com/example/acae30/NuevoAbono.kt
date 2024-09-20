@@ -202,7 +202,7 @@ class NuevoAbono : AppCompatActivity() {
             if(idVisitarServer > 0){
                 mensaje("ACEPTAR")
             }else{
-                funciones.mensaje(this@NuevoAbono, "error de visita")
+                mensaje("ERROR")
             }
         }
 
@@ -265,11 +265,8 @@ class NuevoAbono : AppCompatActivity() {
             "CANCELAR" -> {
                 "¿DESEA CANCELAR EL PROCESO?"
             }
-            "ENVIADO" -> {
-                "ABONO REGISTRADO CORRECTAMENTE"
-            }
             "ERROR" -> {
-                "ERROR AL REGISTRAR EL ABONO"
+                "ERROR AL ENVIAR EL ABONO \n ¿DESEA REGISTRARLO PARA ENVIAR MAS TARDE?"
             }
             else -> {
                 "¿DESEA INGRESAR EL ABONO?"
@@ -285,22 +282,21 @@ class NuevoAbono : AppCompatActivity() {
                         view.dismiss()
                         cancelarAbono()
                     }
-                    "ENVIADO" -> {
-                        view.dismiss()
-                        listadoAbono()
-                    }
                     "ERROR" -> {
                         view.dismiss()
+                        CoroutineScope(Dispatchers.IO).launch {
+                            procesarAbono("GUARDAR")
+                        }
                     }
                     else -> {
                         view.dismiss()
                         CoroutineScope(Dispatchers.IO).launch {
-                            procesarAbono()
+                            procesarAbono("ENVIAR")
                         }
                     }
                 }
             }
-            .setNegativeButton("CANCENLAR"){ view, _ ->
+            .setNegativeButton("CANCELAR"){ view, _ ->
                 view.dismiss()
             }
             .setCancelable(false)
@@ -325,7 +321,8 @@ class NuevoAbono : AppCompatActivity() {
     }
 
     //FUNCION PARA PROCESAR EL ABONO
-    private suspend fun procesarAbono(){
+    private suspend fun procesarAbono(tipo : String){
+        var respuesta : Boolean = false
         val abono : Abono = Abono(
             funciones.obtenerFecha(),
             idCliente,
@@ -341,15 +338,30 @@ class NuevoAbono : AppCompatActivity() {
             idVendedor,
             vendedor,
             funciones.getFechaHoraProceso(),
-            1 //LUEGO CAMBIAR POR EL RESPONSE DEL WS
+            1, //LUEGO CAMBIAR POR EL RESPONSE DEL WS
+            0
         )
 
-        val respuesta = abonosController.enviarAbonoAlServidor(this@NuevoAbono, abono)
-        if(respuesta){
-            withContext(Dispatchers.Main){
-                mensaje("ENVIADO")
+        when(tipo){
+            "ENVIAR" -> {
+                respuesta = abonosController.enviarAbonoAlServidor(this@NuevoAbono, abono)
             }
-        }else{
+            "GUARDAR" -> {
+                respuesta = abonosController.insertarAbonoCxc(this@NuevoAbono, abono, "GUARDAR")
+            }
+        }
+
+
+        if(respuesta && tipo == "ENVIAR"){
+            withContext(Dispatchers.Main){
+                mensajeConfirmacion("ENVIADO")
+            }
+        }else if(respuesta && tipo == "GUARDAR"){
+            withContext(Dispatchers.Main){
+                mensajeConfirmacion("GUARDADO")
+            }
+        }
+        else{
             withContext(Dispatchers.Main) {
                 mensaje("ERROR")
             }
@@ -374,5 +386,39 @@ class NuevoAbono : AppCompatActivity() {
                 // ERROR AL NO OBTENER LA UBICACION
                 Toast.makeText(this, "Error al obtener la ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    private fun mensajeConfirmacion(tipo: String){
+        val mensaje = when(tipo){
+            "ENVIADO" -> {
+                "ABONO REGISTRADO CORRECTAMENTE"
+            }
+            else -> {
+                "ABONO ALMACENADO CORRECTAMENTE"
+            }
+        }
+
+        val dialog = AlertDialog.Builder(this@NuevoAbono)
+            .setTitle("INFORMACION")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                view.dismiss()
+                when(tipo){
+                    "ENVIADO" -> {
+                        view.dismiss()
+                        listadoAbono()
+                    }
+                    else -> {
+                        view.dismiss()
+                        listadoAbono()
+                    }
+                }
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
     }
 }
