@@ -732,7 +732,7 @@ class Detallepedido : AppCompatActivity() {
             val cursor = db.rawQuery("SELECT Id, id_cliente, codigo_sucursal, nombre_sucursal, direccion_sucursal, " +
                     "municipio_sucursal, depto_sucursal, telefono_1, correo_sucursal, " +
                     "Id_ruta, Ruta, DTECodDepto, DTECodMunicipio, DTECodPais, DTEPais  FROM cliente_sucursal " +
-                    "WHERE id_cliente=$idCliente and nombre_sucursal like '%$sucursal%'", null)
+                    "WHERE id_cliente=$idCliente and nombre_sucursal = '$sucursal'", null)
             //val cursor = db.rawQuery("SELECT * FROM cliente_sucursal WHERE id_cliente=$idCliente and nombre_sucursal like '%$sucursal%'", null)
             val listaSucursales = ArrayList<InformacionSucursal>()
             if(cursor.count > 0){

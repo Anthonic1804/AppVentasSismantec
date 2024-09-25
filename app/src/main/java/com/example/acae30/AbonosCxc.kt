@@ -20,6 +20,7 @@ import com.example.acae30.modelos.PrecioPersonalizado
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.math.sign
 
 class AbonosCxc : AppCompatActivity() {
 
@@ -69,7 +70,29 @@ class AbonosCxc : AppCompatActivity() {
                     if(abonosNoTransmitidos.size > 0){
                         runOnUiThread {
                             alert!!.Cargando()
+                            for(i in 0 until abonosNoTransmitidos.size){
+                                val item = abonosNoTransmitidos[i]
+                              /*  val abono = Abono(
+                                    item.Fecha,
+                                    item.IdCliente,
+                                    item.codigoCliente,
+                                    item.Cliente,
+                                    item.IdSucursal,
+                                    item.Sucursal,
+                                    item.Abono,
+                                    item.Tipo_pago,
+                                    item.Numero_cheque,
+                                    item.Cuenta,
+                                    item.Banco,
+                                    item.IdVendedor,
+                                    item.Vendedor,
+                                    item.Fecha_hora_proceso,
+                                    item.Id_app_visita,
+                                    item.PedidoEnviado
+                                )*/
+                            }
                         }
+                        //PROCESO DE AUTO ENVIADO
 
                     }else{
                         runOnUiThread {

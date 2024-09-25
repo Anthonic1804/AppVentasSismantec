@@ -27,7 +27,7 @@ class AbonosController {
     private var instancia = "CONFIG_SERVIDOR"
 
     //FUNCION PARA INSERTAR LOS ABONOS EN SQLITE
-    fun insertarAbonoCxc(context: Context, abono: Abono, tipo: String) : Boolean{
+    fun insertarAbonoCxc(context: Context, abono: Abono, tipo: String, idAbonoServer: Int) : Boolean{
         var guardado : Boolean = false
         val bd = funciones.getDataBase(context).writableDatabase
         var enviado = 1
@@ -53,6 +53,7 @@ class AbonosController {
             data.put("vendedor", abono.Vendedor)
             data.put("fecha_hora_proceso", abono.Fecha_hora_proceso)
             data.put("idVisitaServer", abono.Id_app_visita)
+            data.put("idAbonoServer", idAbonoServer)
             data.put("abonoEnviado", enviado)
 
             bd.insert("abonos", null, data)
@@ -93,7 +94,8 @@ class AbonosController {
                         cursor.getString(13),
                         cursor.getString(14),
                         cursor.getInt(15),
-                        cursor.getInt(18)
+                        cursor.getInt(18),
+                        cursor.getInt(16)
                     )
 
                     listaAbonos.add(abono)
@@ -150,7 +152,7 @@ class AbonosController {
                                         println("ERROR")
                                     }else{
                                         CoroutineScope(Dispatchers.IO).launch {
-                                            insertarAbonoCxc(context, abono, "ENVIAR")
+                                            insertarAbonoCxc(context, abono, "ENVIAR", idAbono)
                                         }
                                         envio = true
                                     }
@@ -226,7 +228,8 @@ class AbonosController {
                         cursor.getString(13),
                         cursor.getString(14),
                         cursor.getInt(15),
-                        cursor.getInt(18)
+                        cursor.getInt(18),
+                        cursor.getInt(16)
                     )
                     abonos.add(item)
                 }while (cursor.moveToNext())

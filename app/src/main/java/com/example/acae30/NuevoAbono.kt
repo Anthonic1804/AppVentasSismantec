@@ -171,7 +171,7 @@ class NuevoAbono : AppCompatActivity() {
         binding.txtCliente.setText(datosCliente!!.Cliente)
 
         binding.btnCancelar.setOnClickListener {
-            mensaje("CANCELAR")
+            mensaje("CANCELAR", 0)
         }
 
         binding.btnAceptar.setOnClickListener {
@@ -200,9 +200,9 @@ class NuevoAbono : AppCompatActivity() {
                 "ABONO")
 
             if(idVisitarServer > 0){
-                mensaje("ACEPTAR")
+                mensaje("ACEPTAR", idVisitarServer)
             }else{
-                mensaje("ERROR")
+                mensaje("ERROR", 0)
             }
         }
 
@@ -259,7 +259,7 @@ class NuevoAbono : AppCompatActivity() {
     }
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
-    private fun mensaje(tipo:String){
+    private fun mensaje(tipo:String, idVisitaServer: Int){
         var mensaje = ""
         mensaje = when(tipo){
             "CANCELAR" -> {
@@ -285,13 +285,13 @@ class NuevoAbono : AppCompatActivity() {
                     "ERROR" -> {
                         view.dismiss()
                         CoroutineScope(Dispatchers.IO).launch {
-                            procesarAbono("GUARDAR")
+                            procesarAbono("GUARDAR", idVisitaServer)
                         }
                     }
                     else -> {
                         view.dismiss()
                         CoroutineScope(Dispatchers.IO).launch {
-                            procesarAbono("ENVIAR")
+                            procesarAbono("ENVIAR", idVisitaServer)
                         }
                     }
                 }
@@ -321,7 +321,7 @@ class NuevoAbono : AppCompatActivity() {
     }
 
     //FUNCION PARA PROCESAR EL ABONO
-    private suspend fun procesarAbono(tipo : String){
+    private suspend fun procesarAbono(tipo : String, idVisitaServer: Int){
         var respuesta : Boolean = false
         val abono : Abono = Abono(
             funciones.obtenerFecha(),
@@ -338,7 +338,8 @@ class NuevoAbono : AppCompatActivity() {
             idVendedor,
             vendedor,
             funciones.getFechaHoraProceso(),
-            1, //LUEGO CAMBIAR POR EL RESPONSE DEL WS
+            idVisitaServer,
+            0,
             0
         )
 
@@ -347,7 +348,7 @@ class NuevoAbono : AppCompatActivity() {
                 respuesta = abonosController.enviarAbonoAlServidor(this@NuevoAbono, abono)
             }
             "GUARDAR" -> {
-                respuesta = abonosController.insertarAbonoCxc(this@NuevoAbono, abono, "GUARDAR")
+                respuesta = abonosController.insertarAbonoCxc(this@NuevoAbono, abono, "GUARDAR", 0)
             }
         }
 
@@ -363,7 +364,7 @@ class NuevoAbono : AppCompatActivity() {
         }
         else{
             withContext(Dispatchers.Main) {
-                mensaje("ERROR")
+                mensaje("ERROR", 0)
             }
         }
     }
