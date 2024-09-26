@@ -345,7 +345,7 @@ class NuevoAbono : AppCompatActivity() {
 
         when(tipo){
             "ENVIAR" -> {
-                respuesta = abonosController.enviarAbonoAlServidor(this@NuevoAbono, abono)
+                respuesta = abonosController.enviarAbonoAlServidor(this@NuevoAbono, abono, "NUEVO")
             }
             "GUARDAR" -> {
                 respuesta = abonosController.insertarAbonoCxc(this@NuevoAbono, abono, "GUARDAR", 0)

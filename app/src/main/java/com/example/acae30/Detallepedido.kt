@@ -1730,6 +1730,7 @@ class Detallepedido : AppCompatActivity() {
     private fun crearTicketNormal(canvas: Canvas) {
 
         val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
+        val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
 
         // Tamaños de letra específicos para cada columna
         val textSizeCantidad = 10f
@@ -1744,22 +1745,81 @@ class Detallepedido : AppCompatActivity() {
             textSize = 12f // Tamaño predeterminado para el título y la división
         }
 
-        // Draw title
-        paint.isFakeBoldText = true
-        canvas.drawText("ESCARRSA, DE C.V", 50f, 50f, paint)
-        canvas.drawText("FINAL AV. PERALTA Y 38A AV. NORTE, BO. LOURDES", 50f, 70f, paint)
-        canvas.drawText("SAN SALVADOR, SAN SALVADOR", 50f, 90f, paint)
-        canvas.drawText("N.R.C : 133843-2", 50f, 110f, paint)
-        canvas.drawText("N.I.T : 0614-300801-101-7", 50f, 130f, paint)
-        canvas.drawText("GIRO: VENTA AL POR MAYOR DE HIELO", 50f, 150f, paint)
+        // Asumiendo que el canvas ya está inicializado y el paint también
+        val canvasWidth = canvas.width.toFloat()
+        val paint2 = Paint().apply {
+            isFakeBoldText = true
+            textSize = 14f // Ajusta el tamaño del texto según sea necesario
+            textAlign = Paint.Align.CENTER
+        }
+
+        val texts = listOf(
+            "ESCARRSA, DE C.V",
+            "FINAL AV. PERALTA Y 38A AV. NORTE,",
+            "BO. LOURDES",
+            "SAN SALVADOR, SAN SALVADOR",
+            "N.R.C : 133843-2",
+            "N.I.T : 0614-300801-101-7",
+            "GIRO: VENTA AL POR MAYOR ",
+            "DE HIELO"
+        )
+
+        val startY2= 50f
+        val lineHeight = paint.fontMetrics.descent - paint2.fontMetrics.ascent
+
+        texts.forEachIndexed { index, text ->
+            val textWidth = paint.measureText(text)
+            val x = canvasWidth / 2
+            val y = startY2 + index * lineHeight
+            canvas.drawText(text, x, y, paint2)
+        }
 
         // Draw divider line
         paint.isFakeBoldText = false
-        canvas.drawLine(50f, 160f, canvas.width - 50f, 160f, paint)
+        canvas.drawLine(50f, 185f, canvas.width - 50f, 185f, paint)
+
+        paint.isFakeBoldText = true
+        canvas.drawText("---- DATOS DEL CLIENTE ----", 50f, 200f, paint)
+
+        paint.isFakeBoldText = true
+        canvas.drawText("NOMBRE DEL CLIENTE", 50f, 215f, paint)
+        paint.isFakeBoldText = false
+        canvas.drawText("${infoPedido!!.Nombre_cliente}", 50f, 230f, paint)
+
+        paint.isFakeBoldText = true
+        canvas.drawText("N.I.T / D.U.I", 50f, 245f, paint)
+        paint.isFakeBoldText = false
+        canvas.drawText("${infoCliente!!.Dui}  ${infoCliente.Nit}", 50f, 260f, paint)
+
+        paint.isFakeBoldText = true
+        canvas.drawText("N.R.C", 50f, 275f, paint)
+        paint.isFakeBoldText = false
+        canvas.drawText("${infoCliente.Nrc}", 50f, 290f, paint)
+
+        paint.isFakeBoldText = true
+        canvas.drawText("ACTIVIDAD ECONOMICA", 50f, 305f, paint)
+        paint.isFakeBoldText = false
+        canvas.drawText("${infoCliente.Giro}", 50f, 320f, paint)
+
+        paint.isFakeBoldText = true
+        canvas.drawText("NOMBRE SUCURSAL", 50f, 335f, paint)
+        paint.isFakeBoldText = false
+        canvas.drawText("${infoPedido.Nombre_sucursal}", 50f, 350f, paint)
+
+        paint.isFakeBoldText = true
+        canvas.drawText("DIRECCION", 50f, 365f, paint)
+        paint.isFakeBoldText = false
+        canvas.drawText("${infoCliente.Direccion}", 50f, 380f, paint)
+
+        //FIN DATOS DEL CLIENTE
+
+        // Draw divider line
+        paint.isFakeBoldText = false
+        canvas.drawLine(50f, 390f, canvas.width - 50f, 390f, paint)
 
         // Draw column headers
         val columnWidths = floatArrayOf(20f, 100f, 60f) // Ancho fijo para cada columna
-        val startY = 165f
+        val startY = 400f
         var y = startY
         val columnX = floatArrayOf(
             50f,
@@ -1800,11 +1860,6 @@ class Detallepedido : AppCompatActivity() {
             y += descripcionLayout.height.toFloat() + 20f
             total += data.Total_iva!!
         }
-
-        // Draw divider line
-        y+=20
-        paint.isFakeBoldText = false
-        canvas.drawLine(50f, y, canvas.width - 50f, y, paint)
 
         // Draw divider line
         y+=20
@@ -1874,7 +1929,7 @@ class Detallepedido : AppCompatActivity() {
             textSize = 12f
         }
 
-        var ticketHeight = 170f // Altura del título y la división inicialmente
+        var ticketHeight = 385f // Altura del título y la división inicialmente
 
         // Altura de cada fila de datos
         val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)

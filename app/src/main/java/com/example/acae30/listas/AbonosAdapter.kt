@@ -43,7 +43,7 @@ class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Co
                 ContextCompat.getColor(holder.itemView.context, R.color.cart))
         }
         
-        holder.total.text = "$ " + String.format("%.2f", item.Abono)
+        holder.total.text = "$ " + String.format("%.2f", item.Abono) + " ${item.Tipo_pago}"
         holder.fecha.text = item.Fecha_hora_proceso
     }
 

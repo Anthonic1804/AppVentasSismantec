@@ -111,7 +111,7 @@ class AbonosController {
     }
 
     //FUNCION PARA EL ENVIO DEL ABONO AL SERVIDOR
-    suspend fun enviarAbonoAlServidor(context: Context, abono: Abono) : Boolean {
+    suspend fun enviarAbonoAlServidor(context: Context, abono: Abono, tipo: String) : Boolean {
         var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val abonoJson = convertirAbonoAJson(context, abono)
@@ -151,28 +151,50 @@ class AbonosController {
                                     if(idAbono == 0){
                                         println("ERROR")
                                     }else{
-                                        CoroutineScope(Dispatchers.IO).launch {
-                                            insertarAbonoCxc(context, abono, "ENVIAR", idAbono)
+                                        when(tipo){
+                                            "SINCRONIZANDO" -> {
+                                                CoroutineScope(Dispatchers.IO).launch {
+                                                    actualizandoAbonoCxc(context, abono, idAbono)
+                                                }
+                                            }
+                                            else -> {
+                                                CoroutineScope(Dispatchers.IO).launch {
+                                                    insertarAbonoCxc(context, abono, "ENVIAR", idAbono)
+                                                }
+                                            }
                                         }
                                         envio = true
                                     }
                                 }
                             } catch (e: Exception) {
-                                funciones.mensaje(context, "ERROR DE LECTURA EN LA RESPUESTA 201 " + e.message)
+                                println("ERROR DE LECTURA EN LA RESPUESTA 201 " + e.message)
                             }
                         }
                     }else {
-                        funciones.mensaje(context, "ERROR NO SE LOGRO REGISTRAR EL ABONO EN EL SERVIDOR")
+                        println("ERROR NO SE LOGRO REGISTRAR EL ABONO EN EL SERVIDOR")
                     }
 
                 } catch (e: Exception) {
-                    funciones.mensaje(context, "ERROR DE CONEXION CON EL SERVIDOR 1 " + e.message)
+                    println("ERROR DE CONEXION CON EL SERVIDOR 1 " + e.message)
                 }
             }
         } catch (e: Exception) {
-            funciones.mensaje(context, "ERROR DE CONEXION CON EL SERVIDOR 2 " + e.message)
+            println("ERROR DE CONEXION CON EL SERVIDOR 2 " + e.message)
         }
         return envio
+    }
+
+    //FUNCION PARA ACTUALIZAR EL ESTADO DE ENVIO DEL ABONO
+    private fun actualizandoAbonoCxc(context: Context, abono: Abono, idAbono: Int) {
+        val bd = funciones.getDataBase(context).writableDatabase
+        try {
+            bd.execSQL("UPDATE abonos SET idAbonoServer = $idAbono, abonoEnviado = 1 " +
+                    "WHERE idCliente = ${abono.IdCliente} AND idSucursal = ${abono.IdSucursal} AND fecha = '${abono.Fecha}'")
+        } catch (e: Exception) {
+            println("ERROR AL ACTUALIZAR EL ABONO EN SQLITE -> " + e.message)
+        } finally {
+            bd!!.close()
+        }
     }
 
     //FUNCION PARA CONVERTIR EL OBJETO DEL ABONO EN JSON

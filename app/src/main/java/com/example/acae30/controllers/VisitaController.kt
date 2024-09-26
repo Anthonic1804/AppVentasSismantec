@@ -64,7 +64,6 @@ class VisitaController {
             val objecto = Gson().toJson(datos)
             val ruta: String = server + "visitas/iniciar_visita"
             val url = URL(ruta)
-            println("OBJETO -> " + objecto)
             with(url.openConnection() as HttpURLConnection){
                 try {
                     connectTimeout = 2000
