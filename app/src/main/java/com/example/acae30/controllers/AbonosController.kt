@@ -265,4 +265,9 @@ class AbonosController {
         return abonos
     }
 
+    //FUNCION PARA ANULAR UN ABONO ENVIADO
+    fun anularAbonoEnviado(context: Context){
+
+    }
+
 }

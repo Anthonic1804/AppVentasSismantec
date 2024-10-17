@@ -6,7 +6,8 @@
     <color name="colordark">#2A3132</color>
     <color name="moderado">#762626</color>
 
-    <color name="cart">#0C5891</color>
+    <color name="cart">#EFEFEF</color>
+    <color name="cartold">#0C5891</color>
     <color name="inicio_cart">#e3f2fd</color>
     <color name="border">#e0e0e0</color>
     <color name="icons">#9e9e9e</color>

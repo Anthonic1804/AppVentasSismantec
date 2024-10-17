@@ -749,6 +749,11 @@ class Visita : AppCompatActivity() {
         val base = bd!!.writableDatabase
         val fechanow = funciones.getFechaHoraProceso()
         val terminos = clientesController.obtenerInformacionCliente(this@Visita, idcliente)
+        var tipoDocumento = "FC"
+        val nrc : String = terminos!!.Nrc.toString()
+        if(nrc.length > 2 && nrc.isNotBlank()){
+            tipoDocumento = "CF"
+        }
         try {
             base.beginTransaction()
             val contenido = ContentValues()
@@ -762,6 +767,7 @@ class Visita : AppCompatActivity() {
             contenido.put("Terminos", terminos!!.Terminos_cliente)
             contenido.put("Id_ruta", terminos.Id_ruta)
             contenido.put("Ruta", terminos.Ruta)
+            contenido.put("Tipo_documento", tipoDocumento)
             contenido.put("DTEDireccion", terminos.DTEDireccion)
             contenido.put("DTECodDepto", terminos.DTECodDepto)
             contenido.put("DTECodMunicipio", terminos.DTECodMunicipio)

@@ -188,7 +188,7 @@ class Detallepedido : AppCompatActivity() {
         //OBTENIENDO LA CATEGORIA DEL CLIENTE
         categoriaCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)?.Categoria_cliente.toString()
 
-        //total = pedidosController.obtenerInformacionPedido(idpedido,this@Detallepedido)?.Total!!
+        total = pedidosController.obtenerInformacionPedido(idpedido,this@Detallepedido)?.Total!!
         actualizarTotales()
 
         //DESHABILITAMOS LOS TEXTVIEWS DE INFORMACION ENVIADA
@@ -220,7 +220,7 @@ class Detallepedido : AppCompatActivity() {
 
         //COMPLETANDO SPINNER DOCUMENTO
         val tipoDocumentoAdaptador = ArrayAdapter<String>(this@Detallepedido, android.R.layout.simple_spinner_dropdown_item)
-        tipoDocumentoAdaptador.addAll(listOf("FACTURA", "CREDITO FISCAL")) //LIMINADO "FACTURA EXPORTACION"
+        tipoDocumentoAdaptador.addAll(listOf("FACTURA", "CREDITO FISCAL", "REMISIÓN")) //LIMINADO "FACTURA EXPORTACION"
         binding.spDocumento.adapter = tipoDocumentoAdaptador
 
         //COMPLETANDO TVTIPODOCUMENTO
@@ -242,6 +242,12 @@ class Detallepedido : AppCompatActivity() {
                 //binding.spDocumento.setSelection(2, true)
                 //actualizarVistaTotales()
                 //actualizarTotales()
+            }
+            "RE" -> {
+                binding.tvDocumentoSeleccionado.text = getString(R.string.factura_exportacion)
+                binding.spDocumento.setSelection(2, true)
+                actualizarVistaTotales()
+                actualizarTotales()
             }
         }
 
@@ -457,6 +463,18 @@ class Detallepedido : AppCompatActivity() {
 
                         actualizarTotales()*/
                     }
+                    "REMISIÓN" -> {
+                        pedidosController.updateTipoDocumento("RE", idpedido, this@Detallepedido)
+                        tipoDocumento = "RE"
+                        FacturaExportacion = false
+                        precioConIVA = true
+
+
+                        pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
+                        actualizarVistaTotales()
+
+                        actualizarTotales()
+                    }
                 }
             }
             override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -479,12 +497,7 @@ class Detallepedido : AppCompatActivity() {
             }
         }
 
-        total = pedidosController.obtenerInformacionPedido(idpedido,this@Detallepedido)?.Total!!
-        val retenido = pedidosController.obtenerInformacionPedido(idpedido,this@Detallepedido)?.Iva_Percibido!!
-        if(retenido > 0){
-            total -= retenido
-        }
-        binding.txttotal.text =  "${String.format("%.2f".format(total))}"
+         
     }
 
     //FUNCION PARA COMPLETAR LOS TERMINOS DEL CLIENTE
@@ -527,7 +540,7 @@ class Detallepedido : AppCompatActivity() {
     private fun actualizarTotales(){
         if(total > 0){
             when(tipoDocumento) {
-                "CF" -> {
+                "CF","RE" -> {
                     if(categoriaCliente == "Gran contribuyente"){
                         if((total/1.13f) > 100f){
                             binding.txtSumas.text = "${String.format("%.2f".format((total/1.13)))}"
@@ -550,7 +563,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.txtSumas.text = "${String.format("%.2f".format(total))}"
                     binding.txtIva.text = "${String.format("%.2f".format(0f))}"
                     binding.txtIvaPerci.text = "${String.format("%.2f".format(0f))}"
-
+                    binding.txttotal.text = "${String.format("%.2f".format(total))}"
                 }
             }
         }
@@ -1523,6 +1536,9 @@ class Detallepedido : AppCompatActivity() {
             "FC" -> {
                 "FACTURA"
             }
+            "RE" -> {
+                "REMISIÓN"
+            }
             else -> {
                 "FACTURA DE EXPORTACION"
             }
@@ -1568,7 +1584,7 @@ class Detallepedido : AppCompatActivity() {
         val qrText = "https://webapp.dtes.mh.gob.sv/consultaPublica?ambiente=${infoPedido.dteAmbiente}&codGen=${infoPedido.dteCodigoGeneracion}&fechaEmi=$fecha"
 
         //ENLACE PARA ESCARRSA
-        val qrEscarrsa = "https://dte-sismantec.com/DTEEscarrsa/ventas_view.php?editid1=${infoPedido.dteCodigoGeneracion}"
+        val qrEscarrsa = "https://escarrsa-dte.com/ventas_view.php?editid1=${infoPedido.dteCodigoGeneracion}"
 
         paint.isFakeBoldText = true
         canvas.drawText("-- VERIFICACION CON HACIENDA --", 50f, 575f, paint)
@@ -1954,9 +1970,6 @@ class Detallepedido : AppCompatActivity() {
         dialogo.setContentView(R1.layout.vista_cobro)
         dialogo.setCancelable(false)
 
-
-
-
         val etTotal = dialogo.findViewById<TextInputEditText>(R1.id.txtTotalPago)
         etTotal.setText("$" + "${String.format("%.2f", total)}")
 
@@ -1980,7 +1993,7 @@ class Detallepedido : AppCompatActivity() {
         var pagoTarjeta : Float = 0f
         var pagoDeposito : Float = 0f
 
-        var numeroOrden : String = ""
+        val numeroOrden : String = dialogo.findViewById<TextInputEditText>(R1.id.txtNumeroOrden).text.toString()
 
         var bancoCheque : String = ""
         var numCuentaCheque : String = ""
@@ -2068,7 +2081,11 @@ class Detallepedido : AppCompatActivity() {
             if(terminosPedidos == "Contado" && etPago.text.toString().isEmpty()){
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL PAGO DEL CLIENTE", Toast.LENGTH_SHORT)
                     .show()
-            }else{
+            }else if(codigo == "00037" && numeroOrden.isEmpty()){
+                Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL NUMERO DE ORDEN", Toast.LENGTH_SHORT)
+                    .show()
+            }
+            else{
 
                 when(formaPagoSeleccionada){
                     "TARJETA"->{
@@ -2105,7 +2122,7 @@ class Detallepedido : AppCompatActivity() {
                     }
                 }
 
-                numeroOrden = dialogo.findViewById<TextInputEditText>(R1.id.txtNumeroOrden).text.toString()
+                //numeroOrden = dialogo.findViewById<TextInputEditText>(R1.id.txtNumeroOrden).text.toString()
 
                 bancoCheque = dialogo.findViewById<TextInputEditText>(R1.id.tvBanco).text.toString()
                 numCuentaCheque = dialogo.findViewById<TextInputEditText>(R1.id.tvNumCuentaCheque).text.toString()
