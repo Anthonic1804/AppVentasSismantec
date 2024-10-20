@@ -1993,7 +1993,7 @@ class Detallepedido : AppCompatActivity() {
         var pagoTarjeta : Float = 0f
         var pagoDeposito : Float = 0f
 
-        val numeroOrden : String = dialogo.findViewById<TextInputEditText>(R1.id.txtNumeroOrden).text.toString()
+        var numeroOrden : String = ""
 
         var bancoCheque : String = ""
         var numCuentaCheque : String = ""
@@ -2078,6 +2078,7 @@ class Detallepedido : AppCompatActivity() {
 
         //PROCESO DEL BOTON ACEPTAR
         dialogo.findViewById<Button>(R1.id.btnaceptar).setOnClickListener {
+            numeroOrden = dialogo.findViewById<TextInputEditText>(R1.id.txtNumeroOrden).text.toString()
             if(terminosPedidos == "Contado" && etPago.text.toString().isEmpty()){
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL PAGO DEL CLIENTE", Toast.LENGTH_SHORT)
                     .show()
