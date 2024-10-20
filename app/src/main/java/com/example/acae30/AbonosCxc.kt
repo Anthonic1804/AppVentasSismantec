@@ -84,9 +84,11 @@ class AbonosCxc : AppCompatActivity() {
             finish()
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            mostrarDatos()
-        }
+//        CoroutineScope(Dispatchers.IO).launch {
+//            mostrarDatos()
+//        }
+
+        mostrarDatos()
 
         binding.btnSincronizar.setOnClickListener {
             if(funciones.isInternetAvailable(this@AbonosCxc)){

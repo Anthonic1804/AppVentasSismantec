@@ -2,8 +2,13 @@ package com.example.acae30.controllers
 
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import androidx.appcompat.app.AlertDialog
+import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
+import com.example.acae30.AbonosCxc
 import com.example.acae30.Funciones
+import com.example.acae30.R
 import com.example.acae30.modelos.Abono
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -266,8 +271,112 @@ class AbonosController {
     }
 
     //FUNCION PARA ANULAR UN ABONO ENVIADO
-    fun anularAbonoEnviado(context: Context){
+    private suspend fun anularAbonoEnviado(context: Context, idAbonoServer: Int) : Boolean{
+        println("ID SERVER EN ENVIAR AL SERVIDOR: $idAbonoServer")
+        var anulado = false
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val abonoJson = convertirIdAbonoServerAJson(idAbonoServer)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        try {
+            println("INTENTANDO LA ANULACION")
+            val objecto =
+                Gson().toJson(abonoJson)
+            println("OBEJO JSON ENVIADO AL SERVIDOR" + objecto)
+            val ruta: String = servidor + "abonos/anularAbono"
+            val url = URL(ruta)
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 20000
+                    setRequestProperty(
+                        "Content-Type",
+                        "application/json;charset=utf-8"
+                    )
+                    requestMethod = "POST"
+                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+                    or.write(objecto) //escribo el json
+                    or.flush() //se envia el json
+                    if (responseCode == 201) {
+                        println("ANULACION REALIZADA")
+                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                            try {
+                                val respuesta = StringBuffer()
+                                var inpuline = it.readLine()
+                                while (inpuline != null) {
+                                    respuesta.append(inpuline)
+                                    inpuline = it.readLine()
+                                }
+                                it.close()
 
+                                val res: JSONObject = JSONObject(respuesta.toString())
+                                if (!res.isNull("respuesta")) {
+                                    val resServidor : String = res.getString("respuesta")
+                                    if(resServidor == "ABONO_ANULADO"){
+                                        actualizarEstadoAbonoAnulado(context, idAbonoServer)
+                                        anulado = true
+
+                                        val intento = Intent(context, AbonosCxc::class.java)
+                                        context.startActivity(intento)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                println("ERROR DE LECTURA EN LA RESPUESTA 201 " + e.message)
+                            }
+                        }
+                    }else {
+                        println("ERROR NO SE LOGRO REGISTRAR EL ABONO EN EL SERVIDOR")
+                    }
+
+                } catch (e: Exception) {
+                    println("ERROR DE CONEXION CON EL SERVIDOR 1 " + e.message)
+                }
+            }
+        } catch (e: Exception) {
+            println("ERROR DE CONEXION CON EL SERVIDOR 2 " + e.message)
+        }
+        return anulado
+    }
+
+    //FUNCION PARA CONVERTIR EL IDABONOSERVER EN JSON
+    private fun convertirIdAbonoServerAJson(idAbonoServer: Int) : JsonObject{
+        val json = JsonObject()
+        json.addProperty("IdAbono", idAbonoServer)
+
+        return json
+    }
+
+    //FUNCION ACTUALIZAR ESTADO DE ABONO ANULADO
+    private fun actualizarEstadoAbonoAnulado(context: Context, idAbonoServer: Int){
+        val bd = funciones.getDataBase(context).writableDatabase
+        try {
+            bd.execSQL("UPDATE abonos SET borradoLogico = 1 WHERE idAbonoServer = $idAbonoServer")
+        }catch (e:Exception){
+            println("ERROR AL ACTUALIZAR EL ESTADO DEL ABONO " + e.message)
+        }finally {
+            bd.close()
+        }
+    }
+
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    fun mensajeAnulacion(context: Context, cliente: String, idAbonoServer: Int){
+        println("ID SERVER EN MENSAJE DE ANULACION: $idAbonoServer")
+        val dialog = AlertDialog.Builder(context)
+            .setTitle("INFORMACION")
+            .setMessage("DESEA ANULAR DEL CLIENTE : $cliente")
+            .setNegativeButton("CANCELAR"){view, _ ->
+                view.dismiss()
+            }
+            .setPositiveButton("ACEPTAR") { _, _ ->
+                CoroutineScope(Dispatchers.IO).launch {
+                  anularAbonoEnviado(context, idAbonoServer)
+                }
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
     }
 
 }
