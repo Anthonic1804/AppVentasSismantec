@@ -420,7 +420,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         when(item.itemId){
             R.id.nav_pedido -> historicoPedidos()
             R.id.nav_token -> crearTokens()
-            R.id.nav_reporte -> funciones?.mensaje(this, "FUNCION EN DESARROLLO")
+            R.id.nav_reporte -> reportes()
             R.id.nav_configuracion -> configuracion()
             R.id.nav_salir -> salir()
         }
@@ -459,6 +459,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     }
     private fun configuracion(){
         val intento = Intent(this@Inicio, Configuracion::class.java)
+        startActivity(intento)
+        finish()
+    }
+
+    private fun reportes(){
+        val intento = Intent(this@Inicio, MenuReportes::class.java)
         startActivity(intento)
         finish()
     }

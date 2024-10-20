@@ -23,6 +23,12 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ReporteLiquidacion"
+            android:exported="false" />
+        <activity
+            android:name=".MenuReportes"
+            android:exported="false" />
+        <activity
             android:name=".NuevoAbono"
             android:exported="false" />
         <activity

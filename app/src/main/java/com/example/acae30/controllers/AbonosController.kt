@@ -272,16 +272,13 @@ class AbonosController {
 
     //FUNCION PARA ANULAR UN ABONO ENVIADO
     private suspend fun anularAbonoEnviado(context: Context, idAbonoServer: Int) : Boolean{
-        println("ID SERVER EN ENVIAR AL SERVIDOR: $idAbonoServer")
         var anulado = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val abonoJson = convertirIdAbonoServerAJson(idAbonoServer)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
         try {
-            println("INTENTANDO LA ANULACION")
             val objecto =
                 Gson().toJson(abonoJson)
-            println("OBEJO JSON ENVIADO AL SERVIDOR" + objecto)
             val ruta: String = servidor + "abonos/anularAbono"
             val url = URL(ruta)
             with(withContext(Dispatchers.IO) {
@@ -298,7 +295,6 @@ class AbonosController {
                     or.write(objecto) //escribo el json
                     or.flush() //se envia el json
                     if (responseCode == 201) {
-                        println("ANULACION REALIZADA")
                         BufferedReader(InputStreamReader(inputStream) as Reader?).use {
                             try {
                                 val respuesta = StringBuffer()
@@ -360,7 +356,6 @@ class AbonosController {
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
     fun mensajeAnulacion(context: Context, cliente: String, idAbonoServer: Int){
-        println("ID SERVER EN MENSAJE DE ANULACION: $idAbonoServer")
         val dialog = AlertDialog.Builder(context)
             .setTitle("INFORMACION")
             .setMessage("DESEA ANULAR DEL CLIENTE : $cliente")

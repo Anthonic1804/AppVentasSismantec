@@ -33,7 +33,6 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -56,9 +55,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.zxing.BarcodeFormat
-import com.google.zxing.MultiFormatWriter
 import com.google.zxing.WriterException
-import com.google.zxing.oned.Code128Writer
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -74,8 +71,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Timer
 import kotlin.concurrent.schedule
@@ -244,7 +239,7 @@ class Detallepedido : AppCompatActivity() {
                 //actualizarTotales()
             }
             "RE" -> {
-                binding.tvDocumentoSeleccionado.text = getString(R.string.factura_exportacion)
+                binding.tvDocumentoSeleccionado.text = getString(R.string.remisi_n)
                 binding.spDocumento.setSelection(2, true)
                 actualizarVistaTotales()
                 actualizarTotales()
