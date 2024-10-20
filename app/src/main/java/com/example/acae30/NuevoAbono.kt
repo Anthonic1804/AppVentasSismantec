@@ -175,34 +175,37 @@ class NuevoAbono : AppCompatActivity() {
         }
 
         binding.btnAceptar.setOnClickListener {
-
-            //ASIGNADO EL ID DE LA SUCURSAL
-            idSucursal = if(datosSucursal == null){
-                0
+            if(binding.txtMonto.text!!.isEmpty() || binding.txtMonto.text.toString().toFloat() <= 0){
+                Toast.makeText(this@NuevoAbono, "Debe de ingresar un monto correcto", Toast.LENGTH_SHORT).show()
             }else{
-                datosSucursal!!.id
-            }
+                //ASIGNADO EL ID DE LA SUCURSAL
+                idSucursal = if(datosSucursal == null){
+                    0
+                }else{
+                    datosSucursal!!.id
+                }
 
-            idVisitarServer = visitaController.registrarVisita(
-                0,
-                funciones.getFechaHoraProceso()!!,
-                latitud,
-                longitud,
-                datosCliente!!.Id!!,
-                datosCliente!!.Cliente!!,
-                idVendedor,
-                funciones.getFechaHoraProceso()!!,
-                latitud,
-                longitud,
-                "",
-                0,
-                this@NuevoAbono,
-                "ABONO")
+                idVisitarServer = visitaController.registrarVisita(
+                    0,
+                    funciones.getFechaHoraProceso()!!,
+                    latitud,
+                    longitud,
+                    datosCliente!!.Id!!,
+                    datosCliente!!.Cliente!!,
+                    idVendedor,
+                    funciones.getFechaHoraProceso()!!,
+                    latitud,
+                    longitud,
+                    "",
+                    0,
+                    this@NuevoAbono,
+                    "ABONO")
 
-            if(idVisitarServer > 0){
-                mensaje("ACEPTAR", idVisitarServer)
-            }else{
-                mensaje("ERROR", 0)
+                if(idVisitarServer > 0){
+                    mensaje("ACEPTAR", idVisitarServer)
+                }else{
+                    mensaje("ERROR", 0)
+                }
             }
         }
 
