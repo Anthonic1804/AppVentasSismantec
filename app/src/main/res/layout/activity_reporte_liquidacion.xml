@@ -64,13 +64,207 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:padding="@dimen/margin_default_16dp">
+
+            <ScrollView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginBottom="@dimen/margin_8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/lyAcciones">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:id="@+id/tvEncabezadoContado"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="VENTA AL CONTADO"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvVentaContado"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/margin_4dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvEncabezadoContado"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalContado"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TOTAL"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/rvVentaContado"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalContado2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:text="$ 0.0000"
+                        android:textColor="@color/moderado"
+                        android:textSize="18sp"
+                        android:textAlignment="center"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/tvTotalContado"
+                        app:layout_constraintTop_toBottomOf="@+id/rvVentaContado" />
+
+
+                    <TextView
+                        android:id="@+id/tvEncabezadoCredito"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="VENTA AL CRÉDITO"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        android:layout_marginStart="@dimen/margin_4dp"
+                        android:layout_marginEnd="@dimen/margin_4dp"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvTotalContado"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalCredito"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TOTAL"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvEncabezadoCredito"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalCredito2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:text="$ 0.0000"
+                        android:textColor="@color/moderado"
+                        android:textSize="18sp"
+                        android:textAlignment="center"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/tvTotalCredito"
+                        app:layout_constraintTop_toBottomOf="@+id/tvEncabezadoCredito" />
+
+                    <TextView
+                        android:id="@+id/tvEncabezadoCobros"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="COBROS REALIZADOS"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        android:layout_marginStart="@dimen/margin_4dp"
+                        android:layout_marginEnd="@dimen/margin_4dp"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvTotalCredito"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvCobros"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/margin_4dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvEncabezadoCobros"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalCobros"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TOTAL"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/rvCobros"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalCobros2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:text="$ 0.0000"
+                        android:textColor="@color/moderado"
+                        android:textSize="18sp"
+                        android:textAlignment="center"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/tvTotalCobros"
+                        app:layout_constraintTop_toBottomOf="@+id/rvCobros" />
+
+                    <LinearLayout
+                        android:id="@+id/lySeparador"
+                        android:layout_width="0dp"
+                        android:layout_height="2dp"
+                        android:orientation="horizontal"
+                        android:background="@color/recicler"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvTotalCobros2"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalDiario"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TOTAL DIARIO"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        android:layout_marginEnd="@dimen/margin_default_16dp"
+                        android:textColor="@color/black"
+                        app:layout_constraintEnd_toStartOf="@id/tvTotalDiario2"
+                        app:layout_constraintTop_toBottomOf="@id/lySeparador"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalDiario2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="$ 0.0000"
+                        android:textColor="@color/moderado"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        android:layout_marginEnd="@dimen/margin_default_16dp"
+                        android:textAlignment="center"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/lySeparador" />
+
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </ScrollView>
 
             <LinearLayout
                 android:id="@+id/lyAcciones"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
                 android:orientation="horizontal"
                 android:gravity="center"
                 app:layout_constraintStart_toStartOf="parent"
