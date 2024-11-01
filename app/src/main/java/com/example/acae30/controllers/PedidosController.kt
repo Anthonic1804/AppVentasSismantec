@@ -421,7 +421,7 @@ class PedidosController {
                 url.openConnection()
             } as HttpURLConnection) {
                 try {
-                    connectTimeout = 20000
+                    connectTimeout = 10000
                     setRequestProperty(
                         "Content-Type",
                         "application/json;charset=utf-8"
@@ -446,11 +446,15 @@ class PedidosController {
                         }
                     }
                 } catch (e: Exception) {
-                    throw Exception(e.message)
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "INESTABILIDAD EN LA CONEXION \n INTENTE MAS TARDE")
+                    }
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "PROBLEMAS DE CONEXION CON EL SERVIDOR \n INTENTE MAS TARDE")
+            }
         }
     }
 

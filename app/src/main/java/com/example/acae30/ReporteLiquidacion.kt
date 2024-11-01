@@ -1,11 +1,15 @@
 package com.example.acae30
 
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.print.PrintDocumentAdapter
+import android.print.PrintManager
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -59,7 +63,6 @@ class ReporteLiquidacion : AppCompatActivity() {
 
         val totalDiario = totalContado + totalCredito + totalCobros
         binding.tvTotalDiario2.text = "$ " + "${String.format("%.2f".format(totalDiario))}"
-
 
     }
 
@@ -134,4 +137,23 @@ class ReporteLiquidacion : AppCompatActivity() {
 
         dialog.show()
     }
+
+    @Deprecated("This method has been deprecated in favor of using the\n      " +
+            "{@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      " +
+            "The OnBackPressedDispatcher controls how back button events are dispatched\n      " +
+            "to one or more {@link OnBackPressedCallback} objects.")
+    override fun onBackPressed() {
+        //super.onBackPressed()
+    }
+
+    /*/FUNCION PARA IMPRIMIR EL REPORTE DE LIQUIDACION
+    fun imprimirReporteLiquidacion(){
+        val printManager = ContextCompat.getSystemService(Context.PRINT_SERVICE) as PrintManager
+        val jobName = getString(R.string.app_name) + " ReporteLiquidacion"
+
+        printManager.print(jobName, object : PrintDocumentAdapter() {
+            
+        }, null)
+    }*/
+
 }

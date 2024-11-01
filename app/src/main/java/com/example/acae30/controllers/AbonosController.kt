@@ -130,7 +130,7 @@ class AbonosController {
                 url.openConnection()
             } as HttpURLConnection) {
                 try {
-                    connectTimeout = 20000
+                    connectTimeout = 10000
                     setRequestProperty(
                         "Content-Type",
                         "application/json;charset=utf-8"
@@ -180,11 +180,15 @@ class AbonosController {
                     }
 
                 } catch (e: Exception) {
-                    println("ERROR DE CONEXION CON EL SERVIDOR 1 " + e.message)
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "INESTABILIDAD EN LA CONEXION \n INTENTE MAS TARDE \n ${e.message}")
+                    }
                 }
             }
         } catch (e: Exception) {
-            println("ERROR DE CONEXION CON EL SERVIDOR 2 " + e.message)
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "PROBLEMAS DE CONEXION CON EL SERVIDOR \n INTENTE MAS TARDE \n ${e.message}")
+            }
         }
         return envio
     }
@@ -285,7 +289,7 @@ class AbonosController {
                 url.openConnection()
             } as HttpURLConnection) {
                 try {
-                    connectTimeout = 20000
+                    connectTimeout = 10000
                     setRequestProperty(
                         "Content-Type",
                         "application/json;charset=utf-8"
@@ -325,11 +329,15 @@ class AbonosController {
                     }
 
                 } catch (e: Exception) {
-                    println("ERROR DE CONEXION CON EL SERVIDOR 1 " + e.message)
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "INESTABILIDAD EN LA CONEXION \n INTENTE MAS TARDE \n ${e.message}")
+                    }
                 }
             }
         } catch (e: Exception) {
-            println("ERROR DE CONEXION CON EL SERVIDOR 2 " + e.message)
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "PROBLEMAS DE CONEXION CON EL SERVIDOR \n INTENTE MAS TARDE \n ${e.message}")
+            }
         }
         return anulado
     }
@@ -358,7 +366,7 @@ class AbonosController {
     fun mensajeAnulacion(context: Context, cliente: String, idAbonoServer: Int){
         val dialog = AlertDialog.Builder(context)
             .setTitle("INFORMACION")
-            .setMessage("DESEA ANULAR DEL CLIENTE : $cliente")
+            .setMessage("DESEA ANULAR EL ABONO DEL CLIENTE : $cliente")
             .setNegativeButton("CANCELAR"){view, _ ->
                 view.dismiss()
             }

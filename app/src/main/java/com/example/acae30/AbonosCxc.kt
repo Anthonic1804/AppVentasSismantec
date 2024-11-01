@@ -258,7 +258,7 @@ class AbonosCxc : AppCompatActivity() {
                         item.Vendedor,
                         item.Fecha_hora_proceso,
                         idVisitarServer,
-                        item.PedidoEnviado,
+                        item.AbonoEnviado,
                         item.idAbonoServer
                     )
                     messageAsync("ENVIANDO ABONO \n ${item.Cliente}")

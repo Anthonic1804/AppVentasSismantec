@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.example.acae30.Funciones
 import com.example.acae30.R
 import com.example.acae30.controllers.AbonosController
 import com.example.acae30.modelos.Abono
@@ -17,7 +18,9 @@ import com.example.acae30.modelos.Abono
 class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Context)  :
     RecyclerView.Adapter<AbonosAdapter.MyViewHolder>(){
 
+        private var funciones = Funciones()
         private var abonoController = AbonosController()
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
         val vista  = LayoutInflater.from(parent.context).inflate(
@@ -42,7 +45,7 @@ class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Co
         }
 
         //SI EL PEDIDO HA SIDO ENVIADO
-        if(item.PedidoEnviado == 0){
+        if(item.AbonoEnviado == 0){
             holder.cvColorAbono.setCardBackgroundColor(
                 ContextCompat.getColor(holder.itemView.context, R.color.moderado))
         }else{
@@ -55,7 +58,11 @@ class AbonosAdapter (private var list: ArrayList<Abono>, private val context: Co
 
 
         holder.btnEliminarAbono.setOnClickListener {
-            abonoController.mensajeAnulacion(context, item.Cliente.toString(), item.idAbonoServer)
+            if(item.AbonoEnviado == 0){
+                funciones.mensaje(context, "DEBE ENVIAR EL ABONO PARA LUEGO ANULARLO")
+            }else{
+                abonoController.mensajeAnulacion(context, item.Cliente.toString(), item.idAbonoServer)
+            }
         }
     }
 
