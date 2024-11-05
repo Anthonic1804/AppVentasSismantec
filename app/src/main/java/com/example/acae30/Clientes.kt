@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.database.Database
+import com.example.acae30.databinding.ActivityCargaDatosBinding
+import com.example.acae30.databinding.ActivityClientesBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
 import kotlinx.coroutines.CoroutineScope
@@ -52,10 +54,13 @@ class Clientes : AppCompatActivity() {
     private var clienteController = ClientesController()
     private var funciones = Funciones()
 
+    private lateinit var binding : ActivityClientesBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_clientes)
+        binding = ActivityClientesBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         supportActionBar?.hide()
 
         clienteHistorio = intent.getBooleanExtra("Historico", false)
@@ -99,6 +104,12 @@ class Clientes : AppCompatActivity() {
 
         mostrarClientes()
         Busqueda()
+
+        binding.nuevoCliente.setOnClickListener {
+            val intent = Intent(this@Clientes, NuevoCliente::class.java)
+            startActivity(intent)
+            finish()
+        }
     }
 
     private fun mostrarClientes() {

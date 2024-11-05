@@ -8,13 +8,18 @@ import android.view.View
 import com.example.acae30.Detallepedido
 import com.example.acae30.Funciones
 import com.example.acae30.Visita
+import com.example.acae30.modelos.Abono
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.InformacionSucursal
 import com.example.acae30.modelos.JSONmodels.ActualizarPagareFirmadoCliente
 import com.google.gson.Gson
+import com.google.gson.JsonObject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -488,6 +493,118 @@ class ClientesController {
             base.close()
         }
         return bonificacion
+    }
+
+    //FUNCION PARA REGISTRAR EL CLIENTE EN EL SERVIDOR
+    suspend fun enviarRegistroClienteAlServidor(context: Context, cliente: Cliente) : Boolean {
+        var envio = false
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val abonoJson = convertirClienteToJson(context, cliente)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        try {
+            val objecto =
+                Gson().toJson(abonoJson)
+            println("OBJETO JSON CONVERTIDO -> \n $objecto")
+            val ruta: String = servidor + "clientes/registrar"
+            val url = URL(ruta)
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 10000
+                    setRequestProperty(
+                        "Content-Type",
+                        "application/json;charset=utf-8"
+                    )
+                    requestMethod = "POST"
+                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+                    or.write(objecto) //escribo el json
+                    or.flush() //se envia el json
+                    if (responseCode == 201) {
+                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                            try {
+                                val respuesta = StringBuffer()
+                                var inpuline = it.readLine()
+                                while (inpuline != null) {
+                                    respuesta.append(inpuline)
+                                    inpuline = it.readLine()
+                                }
+                                it.close()
+
+                                val res: JSONObject = JSONObject(respuesta.toString())
+                                if (res.getInt("idCliente") > 0 && !res.isNull("respuesta")) {
+                                    val idAbono: Int = res.getInt("idCliente")
+                                    if(idAbono == 0){
+                                        println("ERROR")
+                                    }else{
+                                        //////CONTINUAR CON EL REGISTRO DEL CLIENTE EN SQLITE
+                                        envio = true
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                println("ERROR DE LECTURA EN LA RESPUESTA 201 " + e.message)
+                            }
+                        }
+                    }else {
+                        println("ERROR NO SE LOGRO REGISTRAR EL CLIENTE EN EL SERVIDOR")
+                    }
+
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main){
+                        funciones.mensaje(context, "INESTABILIDAD EN LA CONEXION \n INTENTE MAS TARDE \n ${e.message}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main){
+                funciones.mensaje(context, "PROBLEMAS DE CONEXION CON EL SERVIDOR \n INTENTE MAS TARDE \n ${e.message}")
+            }
+        }
+        return envio
+    }
+
+    //FUNCION PARA CONVERTIR LOS DATOS DE REGISTRO DEL CLIENTE EN JSON
+    private fun convertirClienteToJson(context: Context, cliente: Cliente): JsonObject {
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+
+        val json = JsonObject()
+        json.addProperty("Id", cliente.Id)
+        json.addProperty("Codigo", cliente.Codigo)
+        json.addProperty("Cliente", cliente.Cliente)
+        json.addProperty("Dui", cliente.Dui)
+        json.addProperty("Nit", cliente.Nit)
+        json.addProperty("Nrc", cliente.Nrc)
+        json.addProperty("Giro", cliente.Giro)
+        json.addProperty("Categoria_cliente", cliente.Categoria_cliente)
+        json.addProperty("Terminos_cliente", cliente.Terminos_cliente)
+        json.addProperty("Plazo_credito", cliente.Plazo_credito)
+        json.addProperty("Limite_credito", cliente.Limite_credito)
+        json.addProperty("Balance", cliente.Balance)
+        json.addProperty("Estado_credito", cliente.Estado_credito)
+        json.addProperty("Direccion", cliente.Direccion)
+        json.addProperty("Municipio", cliente.Municipio)
+        json.addProperty("Departamento", cliente.Departamento)
+        json.addProperty("Telefono_1", cliente.Telefono_1)
+        json.addProperty("Telefono_2", cliente.Telefono_2)
+        json.addProperty("Correo", cliente.Correo)
+        json.addProperty("Id_ruta", cliente.Id_ruta)
+        json.addProperty("Id_vendedor", cliente.Id_vendedor)
+        json.addProperty("Status", cliente.Status)
+        json.addProperty("Ultima_venta", cliente.Ultima_venta)
+        json.addProperty("Aporte_mensual", cliente.Aporte_mensual)
+        json.addProperty("Firmar_pagare_app", cliente.Firmar_pagare_app)
+        json.addProperty("Persona_juridica", cliente.Persona_juridica)
+        json.addProperty("dteGiro", cliente.dteGiro)
+        json.addProperty("Ruta", cliente.Ruta)
+        json.addProperty("DTEDireccion", cliente.DTEDireccion)
+        json.addProperty("DTECodDepto", cliente.DTECodDepto)
+        json.addProperty("DTECodMunicipio", cliente.DTECodMunicipio)
+        json.addProperty("DTECodPais", cliente.DTECodPais)
+        json.addProperty("DTEPais", cliente.DTEPais)
+        json.addProperty("DTECorreo", cliente.DTECorreo)
+        json.addProperty("DTETelefono", cliente.DTETelefono)
+
+        return json
     }
 
 }

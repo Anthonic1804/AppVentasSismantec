@@ -3,6 +3,8 @@ package com.example.acae30.controllers
 import android.content.Context
 import com.example.acae30.Funciones
 import com.example.acae30.modelos.InformacionSucursal
+import com.example.acae30.modelos.InventarioPrecios
+import com.example.acae30.modelos.SucursalesModel
 
 class SucursalesController {
 
@@ -72,5 +74,37 @@ class SucursalesController {
         return datosSucursal
     }
 
+    //FUNCION PARA OBTENER LAS SUCURSALES POR CLIENTE PARA LISTADO
+    fun obtenerInfoSucursalesPorCliente(context: Context, idCliente:Int) : ArrayList<SucursalesModel>{
+        val db = funciones.getDataBase(context).readableDatabase
+        val listaSucursales = ArrayList<SucursalesModel>()
+        try {
+            val dataSucursal = db.rawQuery("SELECT codigo_sucursal, nombre_sucursal, depto_sucursal, municipio_sucursal, " +
+                    "direccion_sucursal, telefono_1, Ruta, DTECorreo FROM cliente_sucursal WHERE id_cliente='$idCliente' LIMIT 30", null)
+            if(dataSucursal.count > 0){
+                dataSucursal.moveToFirst()
+                do{
+                    val escalas = SucursalesModel(
+                        dataSucursal.getString(0),
+                        dataSucursal.getString(1),
+                        dataSucursal.getString(2),
+                        dataSucursal.getString(3),
+                        dataSucursal.getString(4),
+                        dataSucursal.getString(5),
+                        dataSucursal.getString(6),
+                        dataSucursal.getString(7),
+                    )
+                    listaSucursales.add(escalas)
+
+                }while (dataSucursal.moveToNext())
+            }
+            dataSucursal.close()
+        }catch (e: Exception) {
+            throw Exception(e.message)
+        } finally {
+            db!!.close()
+        }
+        return listaSucursales
+    }
 
 }

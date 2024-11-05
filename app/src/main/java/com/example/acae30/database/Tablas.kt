@@ -81,6 +81,60 @@ class Tablas {
                 "bonificado NUMERIC(18,6) NOT NULL DEFAULT 0)"
     }
 
+    //CREANDO TABLA PARA CATALOGO PAIS
+    fun catalogoPais() : String{
+        return "CREATE TABLE cat_pais(" +
+                "Id INTEGER NOT NULL," +
+                "Codigo VARCHAR(10) NULL," +
+                "Valor VARCHAR(10) NULL)"
+    }
+
+    //CREANDO TABLA PARA CATALOGO DEPARTAMENTO
+    fun catalogoDepartamento() : String {
+        return "CREATE TABLE cat_departamento(" +
+                "Id INTEGER NOT NULL," +
+                "Codigo VARCHAR(10) NULL," +
+                "Valor VARCHAR(10) NULL)"
+    }
+
+    //CREANDO TABLA PARA CATALOGO MUNICIPIO
+    fun catalogoMunicipio() : String {
+        return "CREATE TABLE cat_municipio(" +
+                "Id INTEGER NOT NULL," +
+                "Codigo VARCHAR(10) NULL," +
+                "Valor VARCHAR(10) NULL," +
+                "Departamento VARCHAR(10) NULL," +
+                "Id_Departamento INTEGER NULL," +
+                "CodPais VARCHAR(10) NULL)"
+    }
+
+    //CREANDO TABLA PARA EL CATALOGO DISTRITO
+    fun catalogoDistrito() : String{
+        return "CREATE TABLE cat_distrito(" +
+                "Id INTEGER NOT NULL," +
+                "Codigo VARCHAR(10) NULL," +
+                "Valor VARCHAR(10) NULL," +
+                "Departamento VARCHAR(10) NULL," +
+                "Id_Departamento INTEGER NULL," +
+                "Municipio VARCHAR(10) NULL," +
+                "Id_Municipio INTEGER NULL)"
+    }
+
+    //CREANDO TABLA PARA EL CATALOGO GIRO
+    fun catalogoGiro(): String{
+        return "CREATE TABLE cat_giro(" +
+                "Id INTEGER NOT NULL," +
+                "Codigo VARCHAR(10) NULL," +
+                "Valor VARCHAR(10) NULL)"
+    }
+
+    //CREANDO TABLA PARA EL CATALOGO DE RUTAS
+    fun catalogoRuta() : String{
+        return "CREATE TABLE cat_ruta(" +
+                "Id INTEGER NOT NULL," +
+                "Ruta VARCHAR(50) NULL)"
+    }
+
     fun inventario(): String {
         return "CREATE TABLE inventario (" +
                 "Id INTEGER  PRIMARY KEY NOT NULL," +

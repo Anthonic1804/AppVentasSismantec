@@ -23,6 +23,15 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".NuevaSucursal"
+            android:exported="false" />
+        <activity
+            android:name=".Sucursales"
+            android:exported="false" />
+        <activity
+            android:name=".NuevoCliente"
+            android:exported="false" />
+        <activity
             android:name=".ReporteLiquidacion"
             android:exported="false" />
         <activity

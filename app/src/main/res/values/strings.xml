@@ -164,4 +164,7 @@
     <string name="reportes_menu">REPORTES</string>
     <string name="remisi_n">REMISIÓN</string>
     <string name="reporte_de_liquidaci_n_diaria">REPORTE DE LIQUIDACIÓN DIARIA</string>
+    <string name="nuevo_cliente">Nuevo Cliente</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -67,6 +67,13 @@ class ClientesDetalle : AppCompatActivity() {
                 funciones!!.mostrarAlerta("ERROR: NO TIENES CONEXION A INTERNET", this@ClientesDetalle, binding.vista)
             }
         }
+
+        binding.btnSucursales.setOnClickListener {
+            val intent = Intent(this@ClientesDetalle, Sucursales::class.java)
+            intent.putExtra("idcliente", idcliente)
+            startActivity(intent)
+            finish()
+        }
     }
 
     //FUNCION PARA OBTENER LOS DATOS DEL CLIENTE

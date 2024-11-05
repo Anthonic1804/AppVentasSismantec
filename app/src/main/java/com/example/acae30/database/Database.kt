@@ -40,23 +40,28 @@ class Database(context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.ventasDetalleTemp())//CREADNDO LA TABLA VENTAS DETALLE TEMP
         db?.execSQL(tbl.reporteTemp()) //TABLA TEMPORAL PARA EL REPORTE DE VENTAS
         db?.execSQL(tbl.abonosCxc())//TABLA PARA LOS ABONOS INGRESADOS AGREGAR LO DESPUES DE LA ACTUALIZACION
+        db?.execSQL(tbl.catalogoPais())
+        db?.execSQL(tbl.catalogoDepartamento())
+        db?.execSQL(tbl.catalogoMunicipio())
+        db?.execSQL(tbl.catalogoDistrito())
+        db?.execSQL(tbl.catalogoGiro())
+        db?.execSQL(tbl.catalogoRuta())
+
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
         //ESTO SE VERIFICARA CADA VEZ QUE SE ACTUALICE LA APP
         // SE DEBERA CAMBIAR ESTA INFORMACION
         if(oldVersion < newVersion){
-            //ACTUALIZADO TBL CLIENTE_SUCURSAL
-            /*db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN Id_ruta INTEGER NOT NULL DEFAULT 0")
-            db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN Ruta VARCHAR(50) NOT NULL DEFAULT ''")
-            db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN DTECodDepto VARCHAR(10) NOT NULL DEFAULT ''")
-            db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN DTECodMunicipio VARCHAR(10) NOT NULL DEFAULT ''")
-            db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN DTECodPais VARCHAR(10) NOT NULL DEFAULT ''")
-            db?.execSQL("ALTER TABLE cliente_sucursal ADD COLUMN DTEPais VARCHAR(50) NOT NULL DEFAULT ''")*/
-
             //CREANDO TABLA SIN ELIMINAR LA ANTERIOR BD
-            //db?.execSQL(tbl.abonosCxc()) //HABILITAR CON LA VERSION DE LA BD EN 2
-           // db?.execSQL("ALTER TABLE abonos ADD COLUMN abonoEnviado INTEGER NOT NULL DEFAULT 0")
+            //HABILITAR CON LA VERSION DE LA BD EN 2
+//            db?.execSQL(tbl.abonosCxc())
+//            db?.execSQL(tbl.catalogoPais())
+//            db?.execSQL(tbl.catalogoDepartamento())
+//            db?.execSQL(tbl.catalogoMunicipio())
+//            db?.execSQL(tbl.catalogoDistrito())
+//            db?.execSQL(tbl.catalogoGiro())
+//            db?.execSQL(tbl.catalogoRuta())
         }
     }
 }

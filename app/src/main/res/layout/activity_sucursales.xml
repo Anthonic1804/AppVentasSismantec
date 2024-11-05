@@ -2,10 +2,11 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/lienzo"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Clientes">
+    android:background="@color/recicler"
+    tools:context=".Sucursales">
 
     <LinearLayout
         android:id="@+id/barraSearch"
@@ -27,56 +28,37 @@
             android:contentDescription="@string/btnatras"
             app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
 
-        <SearchView
-            android:id="@+id/busquedainv"
-            android:layout_width="0dp"
-            android:layout_height="@dimen/estandar_55dp"
-            android:layout_weight="1"
-            android:iconifiedByDefault="false"
-            android:layout_margin="@dimen/margin_8dp"
-            android:background="@drawable/border_textbox"
-            android:inputType="textCapCharacters"
-            android:queryHint="Ingrese su Búsqueda"
-            android:searchIcon="@drawable/ic_baseline_search_24" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SUCURSALES"
+            android:textAlignment="center"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/colorAccent"/>
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tvListadoClientes"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/margin_8dp"
-        tools:text="LISTADO DE CLIENTES"
-        android:textAlignment="center"
-        android:textColor="@color/moderado"
-        android:textSize="@dimen/Titulo"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/barraSearch"
-        app:layout_constraintBottom_toTopOf="@id/lista"/>
-
-
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/lista"
+        android:id="@+id/listaSucursales"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="@dimen/margin_4dp"
+        android:layout_marginTop="@dimen/margin_default_16dp"
+        android:layout_marginBottom="@dimen/margin_default_16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvListadoClientes" />
+        app:layout_constraintTop_toBottomOf="@+id/barraSearch" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/nuevoCliente"
+        android:id="@+id/btnNuevaSucursal"
         android:layout_width="@dimen/estandar_55dp"
         android:layout_height="@dimen/estandar_55dp"
         android:backgroundTint="@color/btnVerde"
         android:layout_margin="@dimen/margin_default_16dp"
-        android:contentDescription="@string/nuevo_cliente"
+        android:contentDescription="NUEVA SUCURSAL"
         android:src="@drawable/ic_baseline_add_24"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

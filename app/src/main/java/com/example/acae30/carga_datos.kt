@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
+import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.ConfigController
 import com.example.acae30.controllers.InventarioController
@@ -37,6 +38,7 @@ class carga_datos : AppCompatActivity() {
     private var inventarioController = InventarioController()
     private var clietnesController = ClientesController()
     private var pedidosController = PedidosController()
+    private var catalagosController = CatalogosController()
     private var funciones = Funciones()
 
     private lateinit var tvUpdate : TextView
@@ -76,7 +78,123 @@ class carga_datos : AppCompatActivity() {
             if (funciones.isInternetAvailable(this@carga_datos)) {
                 alert!!.Cargando()
                 CoroutineScope(Dispatchers.IO).launch {
+
                     getClients()
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO PRECIOS PERSONALIZADOS")
+                    }
+
+                    try {
+                        clietnesController.obtenerPreciosPersonalizados(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR LOS PRECIOS PERSONALIZADOS " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CATALOGO PRINCIPALES")
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CATALOGO PAISES")
+                    }
+
+                    try {
+                        catalagosController.obtenerCatalogoPais(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR EL CATALOGO DE PAISES " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CATALOGO DEPARTAMENTOS")
+                    }
+
+                    try {
+                        catalagosController.obtenerCatalogoDepartamento(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR EL CATALOGO DE DEPARTAMENTOS " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CATALOGO MUNICIPIOS")
+                    }
+
+                    try {
+                        catalagosController.obtenerCatalogoMunicipio(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR EL CATALOGO DE MUNICIPIOS " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CATALOGO DISTRITOS")
+                    }
+
+                    try {
+                        catalagosController.obtenerCatalogoDistrito(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR EL CATALOGO DE DISTRITOS " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CATALOGO ACTIVIDADES ECONOMICAS")
+                    }
+
+                    try {
+                        catalagosController.obtenerCatalogoGiro(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR EL CATALOGO DE ACTIVIDADES ECONOMICAS " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CATALOGO RUTAS")
+                    }
+
+                    try {
+                        catalagosController.obtenerCatalogoRuta(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR EL CATALOGO DE RUTAS " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CONFIGURACIONES INICIALES")
+                    }
+
+                    try {
+                        configController.obtenerConfigPagareObligatorio(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR LAS CONFIGURACIONES INICIALES " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CATALOGOS CARGADOS EXITOSAMENTE")
+                    }
+
+                    //FIN DA LA CARGA DE DATOS
+                    delay(1500)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.dismisss()
+                    }
                 }
             } else {
                 funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
@@ -256,13 +374,11 @@ class carga_datos : AppCompatActivity() {
                                 delay(1000)
                                 messageAsync("Datos del Cliente Almacenados Exitosamente")
                                 delay(1500)
-                                alert!!.dismisss()
                             } else {
                                 messageAsync("Cargando 100%")
                                 delay(1000)
                                 messageAsync("Datos del Cliente Almacenados Exitosamente")
                                 delay(1500)
-                                alert!!.dismisss()
                             } //caso que la respuesta venga vacia
                         }
                     } else {
@@ -275,24 +391,6 @@ class carga_datos : AppCompatActivity() {
         } catch (e: Exception) {
             alert!!.dismisss()
             funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
-        }
-        finally {
-            try {
-                CoroutineScope(Dispatchers.IO).launch {
-                    configController.obtenerConfigPagareObligatorio(this@carga_datos)
-                }
-            }catch (e:Exception){
-                funciones.mostrarAlerta("ERROR AL CARGAR LA CONFIG -> ${e.message}", this@carga_datos, binding.vistaalerta)
-            }finally {
-                try {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        clietnesController.obtenerPreciosPersonalizados(this@carga_datos)
-                    }
-                }catch (e:Exception){
-                    funciones.mostrarAlerta("ERROR AL CARGAR LOS PRECIOS PERSONALIZADOS -> ${e.message}", this@carga_datos, binding.vistaalerta)
-                }
-            }
-
         }
     } //obtiene los clientes del servidor
 
