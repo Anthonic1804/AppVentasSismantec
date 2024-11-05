@@ -80,6 +80,10 @@ class Clientes : AppCompatActivity() {
         lienzo = findViewById(R.id.lienzo)
         tvListadoClientes = findViewById(R.id.tvListadoClientes)
 
+        if(visita){
+            binding.nuevoCliente.visibility = View.GONE
+        }
+
     }
 
     override fun onStart() {

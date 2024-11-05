@@ -1,6 +1,6 @@
 package com.example.acae30.modelos
 
-data class SucursalesModel (
+data class SucursalesTarjetaModel (
     val codigoSucursal : String,
     val nombreSucursal : String,
     val deptoSucursal : String,

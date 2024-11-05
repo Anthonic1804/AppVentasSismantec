@@ -7,9 +7,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.acae30.controllers.SucursalesController
 import com.example.acae30.databinding.ActivitySucursalesBinding
-import com.example.acae30.listas.AbonosAdapter
 import com.example.acae30.listas.SucursalesAdapter
-import com.example.acae30.modelos.SucursalesModel
+import com.example.acae30.modelos.SucursalesTarjetaModel
 import kotlinx.coroutines.launch
 
 class Sucursales : AppCompatActivity() {
@@ -65,7 +64,7 @@ class Sucursales : AppCompatActivity() {
     }
 
     //FUNCION PARA ARMAR EL LISTADO EN EL RECYCLERVIEW
-    private fun armarLista(lista: ArrayList<SucursalesModel>) {
+    private fun armarLista(lista: ArrayList<SucursalesTarjetaModel>) {
         val mLayoutManager = LinearLayoutManager(
             this@Sucursales,
             LinearLayoutManager.VERTICAL,

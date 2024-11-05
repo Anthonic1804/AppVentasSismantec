@@ -14,14 +14,21 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.CatalogosController
+import com.example.acae30.controllers.SucursalesController
 import com.example.acae30.databinding.ActivityNuevaSucursalBinding
+import com.example.acae30.modelos.SucursalModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class NuevaSucursal : AppCompatActivity() {
 
     private lateinit var binding : ActivityNuevaSucursalBinding
     private var idcliente = 0
     private var catalogoController = CatalogosController()
+    private var funciones = Funciones()
+    private var sucursalesController = SucursalesController()
 
     private var codigoPais : String = "SV"
     private var pais : String = "EL SALVADOR SV"
@@ -58,6 +65,16 @@ class NuevaSucursal : AppCompatActivity() {
 
         binding.btnAtras.setOnClickListener {
             mensajeCancelar()
+        }
+
+        binding.btnaceptar.setOnClickListener {
+            if(!funciones.isInternetAvailable(this@NuevaSucursal)){
+                funciones.mensaje(this@NuevaSucursal, "CONEXION DE INTERNET INESTABLE")
+            }else{
+                CoroutineScope(Dispatchers.IO).launch {
+                    registrarsucursal()
+                }
+            }
         }
 
         //IMPLEMENTANDO LOGICA DEL PAIS SELECCIONADO
@@ -202,6 +219,42 @@ class NuevaSucursal : AppCompatActivity() {
 
     }
 
+    private suspend fun registrarsucursal() {
+        var registrado : Boolean = false
+
+        val sucursal : SucursalModel = SucursalModel(
+            0,
+            idcliente,
+            binding.txtCodigoSucursal.text.toString(),
+            binding.txtNombreSucursal.text.toString(),
+            binding.txtDireccion.text.toString(),
+            municipio,
+            departamento,
+            binding.txtTelefono.text.toString(),
+            binding.txtTelefono.text.toString(),
+            binding.txtCorreo.text.toString(),
+            binding.txtContacto.text.toString(),
+            idRuta,
+            ruta,
+            codigoDepto,
+            codigoMuni,
+            codigoPais,
+            binding.txtDireccion.text.toString(),
+            pais,
+            binding.txtTelefono.text.toString(),
+            binding.txtCorreo.text.toString(),
+            codigoDistri,
+            distrito
+        )
+
+        registrado = sucursalesController.enviarRegistroSucursalAlServidor(this@NuevaSucursal, sucursal)
+
+        withContext(Dispatchers.Main){
+            mensajeRegistrado(registrado)
+        }
+
+    }
+
     private fun cargarPais(){
         this@NuevaSucursal.lifecycleScope.launch {
             try {
@@ -276,7 +329,7 @@ class NuevaSucursal : AppCompatActivity() {
     }
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
-    fun mensajeCancelar(){
+    private fun mensajeCancelar(){
         val dialog = AlertDialog.Builder(this@NuevaSucursal)
             .setTitle("INFORMACION")
             .setMessage("¿DESEA CANCELAR EL PROCESO?")
@@ -286,6 +339,31 @@ class NuevaSucursal : AppCompatActivity() {
             }
             .setNegativeButton("CANCELAR"){ view, _ ->
                 view.dismiss()
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
+
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    private fun mensajeRegistrado(registrado : Boolean){
+        val mensaje = if(registrado){
+            "SUCURSAL REGISTRADA CORRECTAMENTE"
+        }else{
+            "ERROR AL REGISTRAR LA SUCURSAL"
+        }
+        val dialog = AlertDialog.Builder(this@NuevaSucursal)
+            .setTitle("INFORMACION")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                if(registrado){
+                    view.dismiss()
+                    regresarMenuSucursales()
+                }else{
+                    view.dismiss()
+                }
             }
             .setCancelable(false)
             .setIcon(R.drawable.ic_information)

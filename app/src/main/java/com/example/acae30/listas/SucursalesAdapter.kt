@@ -6,9 +6,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.R
-import com.example.acae30.modelos.SucursalesModel
+import com.example.acae30.modelos.SucursalesTarjetaModel
 
-class SucursalesAdapter (private var list: ArrayList<SucursalesModel>)  :
+class SucursalesAdapter (private var list: ArrayList<SucursalesTarjetaModel>)  :
     RecyclerView.Adapter<SucursalesAdapter.MyViewHolder>(){
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {

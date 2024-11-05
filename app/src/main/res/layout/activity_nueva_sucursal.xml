@@ -30,15 +30,38 @@
     </LinearLayout>
 
     <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="@dimen/margin_8dp"
+        android:layout_marginBottom="@dimen/margin_8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lyheader">
+        app:layout_constraintTop_toBottomOf="@id/lyheader"
+        app:layout_constraintBottom_toTopOf="@id/layout_buttons">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/lyCodigoSucursal"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:hint="Codigo Sucursal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/txtCodigoSucursal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text|textCapCharacters"
+                    android:textColor="@color/colorHint"
+                    android:textSize="18sp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/lyNombreSucursal"
@@ -49,13 +72,13 @@
                 android:hint="Nombre Sucursal"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:layout_constraintTop_toBottomOf="@+id/lyCodigoSucursal">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/txtNombreSucursal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textCapCharacters"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -257,7 +280,7 @@
                     android:id="@+id/txtDireccion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textCapCharacters"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -359,7 +382,7 @@
                     android:id="@+id/txtCorreo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textWebEmailAddress|textCapCharacters"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -379,49 +402,49 @@
                     android:id="@+id/txtContacto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textCapCharacters"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <LinearLayout
-                android:id="@+id/layout_buttons"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
-                android:gravity="center"
-                android:orientation="horizontal"
-                app:layout_constraintTop_toBottomOf="@id/lyContacto"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
-
-                <Button
-                    android:id="@+id/btnaceptar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/border_btnenviar"
-                    android:text="REGISTRAR"
-                    android:textAlignment="center"
-                    android:textColor="@color/colorAccent"
-                    android:textStyle="bold"/>
-
-                <Button
-                    android:id="@+id/btnAtras"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="10dp"
-                    android:background="@drawable/btn_eliminarpedido"
-                    android:text="CANCELAR"
-                    android:textAlignment="center"
-                    android:textColor="@color/colorAccent"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/layout_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/margin_default_16dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/lyContacto"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/btnaceptar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/border_btnenviar"
+            android:text="REGISTRAR"
+            android:textAlignment="center"
+            android:textColor="@color/colorAccent"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/btnAtras"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/btn_eliminarpedido"
+            android:text="CANCELAR"
+            android:textAlignment="center"
+            android:textColor="@color/colorAccent"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
