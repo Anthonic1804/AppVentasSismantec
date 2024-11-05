@@ -74,7 +74,8 @@
                     android:id="@+id/txtNombreCliente"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textCapCharacters"
+                    android:textAllCaps="true"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -276,7 +277,8 @@
                     android:id="@+id/txtDireccion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textCapCharacters"
+                    android:textAllCaps="true"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -378,7 +380,8 @@
                     android:id="@+id/txtCorreo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textWebEmailAddress|textCapCharacters"
+                    android:textAllCaps="true"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -398,7 +401,8 @@
                     android:id="@+id/txtContacto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textCapCharacters"
+                    android:textAllCaps="true"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -432,7 +436,8 @@
                     android:id="@+id/txtNombreComercial"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="text|textCapCharacters"
+                    android:textAllCaps="true"
                     android:textColor="@color/colorHint"
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>

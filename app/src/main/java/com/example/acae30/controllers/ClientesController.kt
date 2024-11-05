@@ -239,7 +239,8 @@ class ClientesController {
                     cursor.getString(34),
                     cursor.getString(35),
                     cursor.getString(36),
-                    cursor.getString(37)
+                    cursor.getString(37),
+                    ""
                 )
                 cursor.close()
             }
@@ -306,6 +307,7 @@ class ClientesController {
                         consulta.getFloat(25),
                         consulta.getInt(27),
                         consulta.getString(28),
+                        "",
                         "",
                         "",
                         "",
@@ -499,12 +501,11 @@ class ClientesController {
     suspend fun enviarRegistroClienteAlServidor(context: Context, cliente: Cliente) : Boolean {
         var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val abonoJson = convertirClienteToJson(context, cliente)
+        val clienteJson = convertirClienteToJson(context, cliente)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
         try {
             val objecto =
-                Gson().toJson(abonoJson)
-            println("OBJETO JSON CONVERTIDO -> \n $objecto")
+                Gson().toJson(clienteJson)
             val ruta: String = servidor + "clientes/registrar"
             val url = URL(ruta)
             with(withContext(Dispatchers.IO) {
@@ -533,11 +534,12 @@ class ClientesController {
 
                                 val res: JSONObject = JSONObject(respuesta.toString())
                                 if (res.getInt("idCliente") > 0 && !res.isNull("respuesta")) {
-                                    val idAbono: Int = res.getInt("idCliente")
-                                    if(idAbono == 0){
+                                    val idCliente: Int = res.getInt("idCliente")
+                                    if(idCliente == 0){
                                         println("ERROR")
                                     }else{
-                                        //////CONTINUAR CON EL REGISTRO DEL CLIENTE EN SQLITE
+                                        println("RESPUESTA DEL SERIVDOR -> $idCliente")
+                                        registrarClienteDataBase(cliente, idCliente, context)
                                         envio = true
                                     }
                                 }
@@ -571,10 +573,10 @@ class ClientesController {
         json.addProperty("Id", cliente.Id)
         json.addProperty("Codigo", cliente.Codigo)
         json.addProperty("Cliente", cliente.Cliente)
-        json.addProperty("Dui", cliente.Dui)
-        json.addProperty("Nit", cliente.Nit)
         json.addProperty("Nrc", cliente.Nrc)
+        json.addProperty("Dui", cliente.Dui)
         json.addProperty("Giro", cliente.Giro)
+        json.addProperty("Nit", cliente.Nit)
         json.addProperty("Categoria_cliente", cliente.Categoria_cliente)
         json.addProperty("Terminos_cliente", cliente.Terminos_cliente)
         json.addProperty("Plazo_credito", cliente.Plazo_credito)
@@ -584,27 +586,92 @@ class ClientesController {
         json.addProperty("Direccion", cliente.Direccion)
         json.addProperty("Municipio", cliente.Municipio)
         json.addProperty("Departamento", cliente.Departamento)
-        json.addProperty("Telefono_1", cliente.Telefono_1)
-        json.addProperty("Telefono_2", cliente.Telefono_2)
+        json.addProperty("Telefono1", cliente.Telefono_1)
+        json.addProperty("Telefono2", cliente.Telefono_2)
         json.addProperty("Correo", cliente.Correo)
+        json.addProperty("Contacto", cliente.Contacto)
         json.addProperty("Id_ruta", cliente.Id_ruta)
         json.addProperty("Id_vendedor", cliente.Id_vendedor)
         json.addProperty("Status", cliente.Status)
-        json.addProperty("Ultima_venta", cliente.Ultima_venta)
         json.addProperty("Aporte_mensual", cliente.Aporte_mensual)
         json.addProperty("Firmar_pagare_app", cliente.Firmar_pagare_app)
         json.addProperty("Persona_juridica", cliente.Persona_juridica)
         json.addProperty("dteGiro", cliente.dteGiro)
         json.addProperty("Ruta", cliente.Ruta)
-        json.addProperty("DTEDireccion", cliente.DTEDireccion)
         json.addProperty("DTECodDepto", cliente.DTECodDepto)
         json.addProperty("DTECodMunicipio", cliente.DTECodMunicipio)
         json.addProperty("DTECodPais", cliente.DTECodPais)
+        json.addProperty("DTEDireccion", cliente.DTEDireccion)
         json.addProperty("DTEPais", cliente.DTEPais)
         json.addProperty("DTECorreo", cliente.DTECorreo)
         json.addProperty("DTETelefono", cliente.DTETelefono)
+        json.addProperty("DTECodGiro", cliente.DTECodGiro)
 
         return json
+    }
+
+    //FUNINON PARA REGISTRAR EL NUEVO CLIENTE EN SLITE
+    private fun registrarClienteDataBase(cliente: Cliente, idCliente: Int, context: Context) {
+        val bd = funciones.getDataBase(context).writableDatabase
+        try {
+            bd!!.beginTransaction()
+
+            val data = ContentValues()
+            data.put("Id", idCliente)
+            data.put("Codigo", funciones.validate(cliente.Codigo))
+            data.put("Cliente", funciones.validate(cliente.Cliente))
+            data.put("Dui", funciones.validate(cliente.Dui))
+            data.put("Nit", funciones.validate(cliente.Nit))
+            data.put("Nrc", funciones.validate(cliente.Nrc))
+            data.put("Giro", funciones.validate(cliente.Giro))
+            data.put(
+                "Categoria_cliente",
+                funciones.validate(cliente.Categoria_cliente)
+            )
+            data.put(
+                "Terminos_cliente",
+                funciones.validate(cliente.Terminos_cliente)
+            )
+            data.put("Plazo_credito", funciones.validate(cliente.Plazo_credito))
+            data.put("Limite_credito",
+                funciones.validate(cliente.Limite_credito)
+            )
+            data.put("Balance", funciones.validate(cliente.Balance))
+            data.put("Estado_credito", funciones.validate(cliente.Estado_credito))
+            data.put("Direccion", funciones.validate(cliente.Direccion))
+            data.put("Municipio", funciones.validate(cliente.Municipio))
+            data.put("Departamento", funciones.validate(cliente.Departamento))
+            data.put("Telefono_1", funciones.validate(cliente.Telefono_1))
+            data.put("Telefono_2", funciones.validate(cliente.Telefono_2))
+            data.put("Correo", funciones.validate(cliente.Correo))
+            data.put("Contacto", funciones.validate((cliente.Contacto)))
+            data.put("Id_ruta", funciones.validate(cliente.Id_ruta))
+            data.put("Status", funciones.validate(cliente.Status))
+            data.put(
+                "Aporte_mensual",
+                funciones.validate(cliente.Aporte_mensual)
+            )
+            data.put("Firmar_pagare_app", funciones.validate(cliente.Firmar_pagare_app))
+            data.put("Persona_juridica", funciones.validate(cliente.Persona_juridica))
+            data.put("dteGiro", funciones.validate(cliente.dteGiro))
+            data.put("Ruta", funciones.validate(cliente.Ruta))
+            data.put("DTECodDepto", funciones.validate(cliente.DTECodDepto))
+            data.put("DTECodMunicipio", funciones.validate(cliente.DTECodDepto))
+            data.put("DTECodPais", funciones.validate(cliente.DTECodPais))
+            data.put("DTEDireccion", funciones.validate(cliente.DTEDireccion))
+            data.put("DTEPais", funciones.validate(cliente.DTEPais))
+            data.put("DTETelefono", funciones.validate(cliente.DTETelefono))
+            data.put("DTECorreo", funciones.validate(cliente.DTECorreo))
+
+            bd.insert("clientes", null, data)
+            bd.setTransactionSuccessful()
+
+        } catch (e: Exception) {
+            println("ERROR AL REGISTRAR EL CLIENTE EN SQLITE -> " + e.message)
+        } finally {
+            bd!!.endTransaction()
+            bd.close()
+        }
     }
 
 }

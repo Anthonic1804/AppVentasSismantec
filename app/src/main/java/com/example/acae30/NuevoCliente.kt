@@ -23,6 +23,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class NuevoCliente : AppCompatActivity() {
 
@@ -75,54 +76,8 @@ class NuevoCliente : AppCompatActivity() {
             if(!funciones.isInternetAvailable(this@NuevoCliente)){
                 funciones.mensaje(this@NuevoCliente, "CONEXION DE INTERNET INESTABLE")
             }else{
-                val codigoCliente = if(binding.txtNrc.text.isNullOrEmpty()){
-                    binding.txtDui.text.toString()
-                }else{
-                    binding.txtNrc.text.toString()
-                }
-
-                val cliente : Cliente = Cliente(
-                    0,
-                    codigoCliente,
-                    binding.txtNombreCliente.text.toString(),
-                    binding.txtDui.text.toString(),
-                    binding.txtNit.text.toString(),
-                    binding.txtNrc.text.toString(),
-                    binding.txtGiro.text.toString(),
-                    tipoContribuyente,
-                    terminos,
-                    0,
-                    0f,
-                    0f,
-                    "Activo",
-                    binding.txtDireccion.text.toString(),
-                    municipio,
-                    departamento,
-                    binding.txtTelefono.text.toString(),
-                    binding.txtTelefono.text.toString(),
-                    binding.txtCorreo.text.toString(),
-                    binding.txtContacto.text.toString(),
-                    idRuta,
-                    0,
-                    "",
-                    "ACTIVO",
-                    "",
-                    0f,
-                    0,
-                    "N",
-                    binding.txtGiro.text.toString(),
-                    ruta,
-                    binding.txtDireccion.text.toString(),
-                    codigoDepto,
-                    codigoMuni,
-                    codigoPais,
-                    pais,
-                    binding.txtCorreo.text.toString(),
-                    binding.txtTelefono.text.toString()
-                )
-
                 CoroutineScope(Dispatchers.IO).launch {
-                    clienteController.enviarRegistroClienteAlServidor(this@NuevoCliente, cliente)
+                    registrarCliente()
                 }
             }
         }
@@ -308,6 +263,69 @@ class NuevoCliente : AppCompatActivity() {
 
     }
 
+    private suspend fun registrarCliente() {
+        var registrado : Boolean = false
+
+        val codigoCliente = if(binding.txtNrc.text.isNullOrEmpty()){
+            binding.txtDui.text.toString()
+        }else{
+            binding.txtNrc.text.toString()
+        }
+
+        val documento = if(binding.txtNit.text.isNullOrEmpty()){
+            binding.txtDui.text.toString()
+        }else{
+            binding.txtNit.text.toString()
+        }
+
+        val cliente : Cliente = Cliente(
+            0,
+            codigoCliente,
+            binding.txtNombreCliente.text.toString(),
+            binding.txtDui.text.toString(),
+            documento,
+            binding.txtNrc.text.toString(),
+            binding.txtGiro.text.toString(),
+            tipoContribuyente,
+            terminos,
+            0,
+            0f,
+            0f,
+            "Activo",
+            binding.txtDireccion.text.toString(),
+            municipio,
+            departamento,
+            binding.txtTelefono.text.toString(),
+            binding.txtTelefono.text.toString(),
+            binding.txtCorreo.text.toString(),
+            binding.txtContacto.text.toString(),
+            idRuta,
+            0,
+            "",
+            "ACTIVO",
+            "",
+            0f,
+            0,
+            "N",
+            binding.txtGiro.text.toString(),
+            ruta,
+            binding.txtDireccion.text.toString(),
+            codigoDepto,
+            codigoMuni,
+            codigoPais,
+            pais,
+            binding.txtCorreo.text.toString(),
+            binding.txtTelefono.text.toString(),
+            binding.txtCodGiro.text.toString()
+        )
+
+        registrado = clienteController.enviarRegistroClienteAlServidor(this@NuevoCliente, cliente)
+
+        withContext(Dispatchers.Main){
+            mensajeRegistrado(registrado)
+        }
+    }
+
     private fun cargarPais(){
         this@NuevoCliente.lifecycleScope.launch {
             try {
@@ -403,7 +421,7 @@ class NuevoCliente : AppCompatActivity() {
             .setMessage("¿DESEA CANCELAR EL PROCESO?")
             .setPositiveButton("ACEPTAR") { view, _ ->
                 view.dismiss()
-                regresarMenuSucursales()
+                regresarMenuClientes()
             }
             .setNegativeButton("CANCELAR"){ view, _ ->
                 view.dismiss()
@@ -415,7 +433,32 @@ class NuevoCliente : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun regresarMenuSucursales() {
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    private fun mensajeRegistrado(registrado : Boolean){
+        val mensaje = if(registrado){
+            "CLIENTE REGISTRADO CORRECTAMENTE"
+        }else{
+            "ERROR AL REGISTRAR EL CLIENTE"
+        }
+        val dialog = AlertDialog.Builder(this@NuevoCliente)
+            .setTitle("INFORMACION")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                if(registrado){
+                    view.dismiss()
+                    regresarMenuClientes()
+                }else{
+                    view.dismiss()
+                }
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun regresarMenuClientes() {
         val intent = Intent(this@NuevoCliente, Clientes::class.java)
         startActivity(intent)
         finish()

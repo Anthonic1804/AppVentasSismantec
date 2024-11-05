@@ -56,6 +56,7 @@ class CuentasController {
                         "",
                         "",
                         "",
+                        "",
                         ""
                     )
                     lista.add(listado)
@@ -117,6 +118,7 @@ class CuentasController {
                         consulta.getFloat(25),
                         consulta.getInt(26),
                         consulta.getString(28),
+                        "",
                         "",
                         "",
                         "",
