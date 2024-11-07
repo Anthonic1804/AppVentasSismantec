@@ -167,4 +167,9 @@
     <string name="nuevo_cliente">Nuevo Cliente</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="gastos_diarios">GASTOS DIARIOS</string>
+    <string name="lista_de_gastos">LISTA DE GASTOS</string>
+    <string name="sincronizar_datos">SINCRONIZAR DATOS</string>
+    <string name="nuevo_gasto">NUEVO GASTO</string>
+    <string name="nuevo_gasto_">NUEVO GASTO</string>
 </resources>

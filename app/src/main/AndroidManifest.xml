@@ -23,6 +23,12 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".NuevoGasto"
+            android:exported="false" />
+        <activity
+            android:name=".MenuGasto"
+            android:exported="false" />
+        <activity
             android:name=".NuevaSucursal"
             android:exported="false" />
         <activity

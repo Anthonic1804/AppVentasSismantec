@@ -46,6 +46,7 @@ class Database(context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.catalogoDistrito())
         db?.execSQL(tbl.catalogoGiro())
         db?.execSQL(tbl.catalogoRuta())
+        db?.execSQL(tbl.gastos())
 
     }
 
@@ -62,6 +63,7 @@ class Database(context: Context) : SQLiteOpenHelper(
 //            db?.execSQL(tbl.catalogoDistrito())
 //            db?.execSQL(tbl.catalogoGiro())
 //            db?.execSQL(tbl.catalogoRuta())
+//            db?.execSQL(tbl.gastos())
         }
     }
 }

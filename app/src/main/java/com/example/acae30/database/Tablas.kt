@@ -256,20 +256,39 @@ class Tablas {
                 "idCliente INTEGER NOT NULL," +
                 "codigoCliente VARCHAR(50) NOT NULL," +
                 "cliente VARCHAR(100) NOT NULL," +
-                "idSucursal INTEGER NOT NULL DEFAULT O," +
+                "idSucursal INTEGER NOT NULL DEFAULT 0," +
                 "sucursal VARCHAR(100) NULL," +
-                "abono NUMERIC(18,2) NOT NULL DEFAULT O," +
+                "abono NUMERIC(18,2) NOT NULL DEFAULT 0," +
                 "tipoPago VARCHAR(50) NOT NULL," +
                 "numeroCheque VARCHAR(50) NULL," +
                 "cuenta VARCHAR(50) NULL," +
                 "banco VARCHAR(50) NULL," +
-                "idVendedor INTEGER NOT NULL DEFAULT O," +
+                "idVendedor INTEGER NOT NULL DEFAULT 0," +
                 "vendedor VARCHAR(100) NOT NULL," +
                 "fecha_hora_proceso TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
                 "idVisitaServer INTEGER NOT NULL DEFAULT 0," +
                 "idAbonoServer INTEGER NOT NULL DEFAULT 0," +
                 "borradoLogico INTEGER NOT NULL DEFAULT 0," +
                 "abonoEnviado INTEGER NOT NULL DEFAULT 0);"
+    }
+
+    //CREANDO LA TABLA GASTOS
+    fun gastos() : String {
+        return "CREATE TABLE gastos(" +
+                "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
+                "Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
+                "Tipo_movimiento VARCHAR(25) NOT NULL," +
+                "Concepto VARCHAR(100) NOT NULL," +
+                "Cuenta_bco VARCHAR(50) NULL," +
+                "Banco VARCHAR(25) NULL," +
+                "numero_cheque VARCHAR(25) NULL," +
+                "Mas_infor VARCHAR(50) NULL," +
+                "Valor NUMERIC(18,2) NOT NULL DEFAULT 0," +
+                "Forma VARCHAR(25) NOT NULL," +
+                "Persona VARCHAR(50) NOT NULL," +
+                "NumeroCaja INTEGER NULL DEFAULT 0," +
+                "gastoEnviado INTEGER NOT NULL DEFAULT 0," +
+                "idServidor INTEGER NOT NULL DEFAULT 0);"
     }
 
     //CREANDO LA TABLA TOKENAPP
