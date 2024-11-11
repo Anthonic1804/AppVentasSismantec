@@ -46,7 +46,7 @@ class ReporteLiquidacionController {
 
         try {
             val cursor = bd.rawQuery("SELECT formaPago, SUM(Total) AS 'TOTAL' FROM pedidos " +
-                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 1 AND pedido_dte_error = 0 AND Terminos='Contado' " +
+                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 0 AND pedido_dte_error = 0 AND Terminos='Contado' " +
                     "GROUP BY formaPago", null)
 
             if(cursor.count > 0){
@@ -76,7 +76,7 @@ class ReporteLiquidacionController {
         var total = 0f
         try {
             val cursor = bd.rawQuery("SELECT SUM(Total) FROM pedidos " +
-                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 1 AND pedido_dte_error = 0 AND Terminos='Contado' ", null)
+                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 0 AND pedido_dte_error = 0 AND Terminos='Contado' ", null)
 
             if(cursor.count > 0){
                 cursor.moveToFirst()
@@ -98,7 +98,7 @@ class ReporteLiquidacionController {
         var total = 0f
         try {
             val cursor = bd.rawQuery("SELECT SUM(Total) FROM pedidos " +
-                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 1 AND pedido_dte_error = 0 AND Terminos='Credito' ", null)
+                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 0 AND pedido_dte_error = 0 AND Terminos='Credito' ", null)
 
             if(cursor.count > 0){
                 cursor.moveToFirst()
@@ -129,6 +129,27 @@ class ReporteLiquidacionController {
             cursor.close()
         }catch (e:Exception){
             println("ERROR AL OBTENER TOTAL DE ABONOS DIARIOS " + e.message)
+        }finally {
+            bd.close()
+        }
+        return total
+    }
+
+    //FUNCION PARA OBTENER EL TOTAL DE GASTOS DIARIOS
+    fun obtenerTotalGastosDiarios(context: Context) : Float{
+        val bd = funciones.getDataBase(context).readableDatabase
+        val fecha = funciones.obtenerFecha()
+        var total = 0f
+
+        try{
+            val cursor = bd.rawQuery("SELECT SUM(valor) AS Total FROM gastos WHERE Fecha='$fecha' AND gastoEnviado= 1", null)
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                total = cursor.getFloat(0)
+            }
+            cursor.close()
+        }catch (e:Exception){
+            println("ERROR EN OBTENER EL TOTAL DE GASTOS DIARIOS " + e.message)
         }finally {
             bd.close()
         }

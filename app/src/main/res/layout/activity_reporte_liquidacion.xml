@@ -217,6 +217,46 @@
                         app:layout_constraintStart_toEndOf="@id/tvTotalCobros"
                         app:layout_constraintTop_toBottomOf="@+id/rvCobros" />
 
+                    <TextView
+                        android:id="@+id/tvEncabezadoGastos"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="GASTOS REALIZADOS"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        android:layout_marginStart="@dimen/margin_4dp"
+                        android:layout_marginEnd="@dimen/margin_4dp"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvTotalCobros2"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalGastos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TOTAL"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvEncabezadoGastos"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalGastos2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/margin_4dp"
+                        android:text="$ 0.0000"
+                        android:textColor="@color/moderado"
+                        android:textSize="18sp"
+                        android:textAlignment="center"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/tvTotalCobros"
+                        app:layout_constraintTop_toBottomOf="@+id/tvEncabezadoGastos" />
+
                     <LinearLayout
                         android:id="@+id/lySeparador"
                         android:layout_width="0dp"
@@ -226,7 +266,7 @@
                         android:layout_marginTop="@dimen/margin_default_16dp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/tvTotalCobros2"/>
+                        app:layout_constraintTop_toBottomOf="@id/tvTotalGastos"/>
 
                     <TextView
                         android:id="@+id/tvTotalDiario"

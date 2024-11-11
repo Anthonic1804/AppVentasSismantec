@@ -32,6 +32,7 @@ class ReporteLiquidacion : AppCompatActivity() {
     private var totalContado = 0f
     private var totalCredito = 0f
     private var totalCobros = 0f
+    private var totalGastos = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,8 +62,12 @@ class ReporteLiquidacion : AppCompatActivity() {
         totalCobros = reporte.obtenerTotalVentaCobros(this@ReporteLiquidacion)
         binding.tvTotalCobros2.text = "$ " + "${String.format("%.4f".format(totalCobros))}"
 
-        val totalDiario = totalContado + totalCredito + totalCobros
+        totalGastos = reporte.obtenerTotalGastosDiarios(this@ReporteLiquidacion)
+        binding.tvTotalGastos2.text = "$ " + "${String.format("%.4f".format(totalGastos))}"
+
+        val totalDiario = (totalContado + totalCredito + totalCobros) - totalGastos
         binding.tvTotalDiario2.text = "$ " + "${String.format("%.2f".format(totalDiario))}"
+
 
     }
 

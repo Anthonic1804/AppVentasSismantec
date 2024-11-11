@@ -192,6 +192,12 @@ class Inventario : AppCompatActivity() {
 
         Busqueda()
         actualizarListadeInventario()
+
+        val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
+        if(!hojaCarga){
+            btnBuscarRecargas.visibility = View.GONE
+            btnActualizarInventario.visibility = View.GONE
+        }
     }
 
     //FUNCION PARA ACTUALIZAR LA LISTA DEL INVENTARIO
