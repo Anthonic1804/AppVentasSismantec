@@ -147,7 +147,7 @@ class Producto_agregar : AppCompatActivity() {
        // println("posicion enviada desde detalle: $getSucursalPosition")
 
         db = Database(this)
-        alert = AlertDialogo(this)
+        alert = AlertDialogo(this, this)
         txtcodigo = findViewById(R.id.txtcodigo)
         txtdescripcion = findViewById(R.id.txtdescripcion)
         txtexistencia = findViewById(R.id.txtexistencia)

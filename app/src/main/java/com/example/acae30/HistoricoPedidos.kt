@@ -82,7 +82,7 @@ class HistoricoPedidos : AppCompatActivity() {
         imgRegresar = findViewById(R.id.imgRegresar)
         imgBuscarCliente = findViewById(R.id.imgBuscarCliente)
 
-        alert = AlertDialogo(this@HistoricoPedidos)
+        alert = AlertDialogo(this@HistoricoPedidos, this)
         funciones = Funciones()
         database = Database(this@HistoricoPedidos)
 

@@ -48,6 +48,12 @@ class Database(context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.catalogoRuta())
         db?.execSQL(tbl.gastos())
 
+        db?.execSQL(tbl.inventariosolicitudCarga())
+        db?.execSQL(tbl.solicitudCarga())
+        db?.execSQL(tbl.solicitudCargaDetalle())
+        db?.execSQL(tbl.virtualInventarioSolicitud())
+        db?.execSQL(tbl.triggerInventarioSolicitudVirtual())
+
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
@@ -64,6 +70,10 @@ class Database(context: Context) : SQLiteOpenHelper(
 //            db?.execSQL(tbl.catalogoGiro())
 //            db?.execSQL(tbl.catalogoRuta())
 //            db?.execSQL(tbl.gastos())
+//            db?.execSQL(tbl.inventariosolicitudCarga())
+//            db?.execSQL(tbl.solicitudCarga())
+//            db?.execSQL(tbl.inventariosolicitudCarga())
+//            db?.execSQL(tbl.triggerInventarioSolicitudVirtual())
         }
     }
 }

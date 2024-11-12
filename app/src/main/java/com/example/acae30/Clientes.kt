@@ -72,7 +72,7 @@ class Clientes : AppCompatActivity() {
         pagare = preferences!!.getBoolean("PagareObligatorio", false)
 
         db = Database(this)
-        alert = AlertDialogo(this)
+        alert = AlertDialogo(this, this)
         busqueda = findViewById(R.id.busquedainv)
         atras = findViewById(R.id.imageButton)
 

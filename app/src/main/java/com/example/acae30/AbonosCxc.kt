@@ -58,7 +58,7 @@ class AbonosCxc : AppCompatActivity() {
         binding = ActivityAbonosCxcBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        alert = AlertDialogo(this@AbonosCxc)
+        alert = AlertDialogo(this@AbonosCxc, this@AbonosCxc)
 
         preferencias = getSharedPreferences(this.instancia, MODE_PRIVATE)
 

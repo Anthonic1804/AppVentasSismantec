@@ -90,7 +90,7 @@ class Visita : AppCompatActivity() {
         idvisitaApi = intent.getIntExtra("idapi", 0)
         idvisitaGLOBAL = intent.getIntExtra("visitaid", 0)
 
-        alerta = AlertDialogo(this)
+        alerta = AlertDialogo(this, this)
         bd = Database(this)
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 

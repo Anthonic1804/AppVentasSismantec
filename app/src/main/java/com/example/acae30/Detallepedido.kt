@@ -158,7 +158,7 @@ class Detallepedido : AppCompatActivity() {
         setContentView(binding.root)
         
         val intento = intent
-        alerta = AlertDialogo(this)
+        alerta = AlertDialogo(this, this)
         idcliente = intento.getIntExtra("idcliente", 0)
         nombre = intento.getStringExtra("nombrecliente")
         idpedido = intento.getIntExtra("idpedido", 0)

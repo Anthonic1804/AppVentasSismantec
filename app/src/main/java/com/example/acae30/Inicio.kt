@@ -420,6 +420,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         when(item.itemId){
             R.id.nav_pedido -> historicoPedidos()
             R.id.nav_token -> crearTokens()
+            R.id.nav_carga -> solicitudCarga()
             R.id.nav_gasto -> gastos()
             R.id.nav_reporte -> reportes()
             R.id.nav_configuracion -> configuracion()
@@ -473,6 +474,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private fun gastos(){
         val intent = Intent(this@Inicio, MenuGasto::class.java)
         startActivity(intent)
+        finish()
+    }
+
+    private fun solicitudCarga() {
+        val intento = Intent(this@Inicio, SolicitudCargaMenu::class.java)
+        startActivity(intento)
         finish()
     }
 

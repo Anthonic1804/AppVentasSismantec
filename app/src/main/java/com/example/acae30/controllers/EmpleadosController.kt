@@ -23,7 +23,7 @@ class EmpleadosController {
 
     //OBTENIENDO LOS EMPLEADOS DEL SERVIDOR
     suspend fun obtenerEmpleados(context: Context, view: View) {
-        val alert = AlertDialogo(context as Activity)
+        val alert = AlertDialogo(context as Activity, context)
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
         //IMPORTANDO DATOS DE TABLA EMPLEADOS

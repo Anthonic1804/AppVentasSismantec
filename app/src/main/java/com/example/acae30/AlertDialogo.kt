@@ -3,13 +3,15 @@ package com.example.acae30
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Context
 import android.view.LayoutInflater
 import android.widget.TextView
 
-class AlertDialogo(act: Activity) {
+class AlertDialogo(act: Activity, context: Context) {
 
     var actividad: Activity
-    lateinit var dialogo: Dialog
+    private lateinit var dialogo: Dialog
+
 
     //lateinit var textocarga:TextView
     init {

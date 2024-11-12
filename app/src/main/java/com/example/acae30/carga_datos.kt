@@ -57,7 +57,7 @@ class carga_datos : AppCompatActivity() {
 
         preferences = this@carga_datos.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
-        alert = AlertDialogo(this@carga_datos)
+        alert = AlertDialogo(this@carga_datos, this)
         database = Database(this@carga_datos)
 
         url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())

@@ -7,6 +7,11 @@
             android:title="@string/historico_pedido"
             />
     </group>
+    <group android:id="@+id/group_carga">
+        <item android:id="@+id/nav_carga"
+            android:title="@string/solicitud_de_carga"
+            android:icon="@drawable/ic_solicitud_carga"/>
+    </group>
     <group android:id="@+id/group_admin">
         <item
             android:id="@+id/nav_token"

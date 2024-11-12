@@ -56,7 +56,7 @@ class PreciosAutorizados : AppCompatActivity() {
         lblNoData = findViewById(R.id.lblNoData)
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         database = Database(this)
-        alert = AlertDialogo(this)
+        alert = AlertDialogo(this, this)
 
         lblNoData.visibility = View.GONE
 

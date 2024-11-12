@@ -23,6 +23,18 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".AgregarProductoSolicitud"
+            android:exported="false" />
+        <activity
+            android:name=".ListadoProductosSolicitud"
+            android:exported="false" />
+        <activity
+            android:name=".NuevaSolicitud"
+            android:exported="false" />
+        <activity
+            android:name=".SolicitudCargaMenu"
+            android:exported="false" />
+        <activity
             android:name=".NuevoGasto"
             android:exported="false" />
         <activity

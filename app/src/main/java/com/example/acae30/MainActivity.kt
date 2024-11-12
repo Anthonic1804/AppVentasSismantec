@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         reconfig = intent.getBooleanExtra("reconfig", false)
 
 
-        alerta = AlertDialogo(this)
+        alerta = AlertDialogo(this, this)
         ip = findViewById(R.id.txtip)
         puerto = findViewById(R.id.txtpuerto)
         vista = findViewById(R.id.alerta)

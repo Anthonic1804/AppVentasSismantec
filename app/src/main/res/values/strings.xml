@@ -172,4 +172,9 @@
     <string name="sincronizar_datos">SINCRONIZAR DATOS</string>
     <string name="nuevo_gasto">NUEVO GASTO</string>
     <string name="nuevo_gasto_">NUEVO GASTO</string>
+    <string name="solicitud_de_carga">SOLICITUD DE CARGA</string>
+    <string name="nueva_solicitud">NUEVA SOLICITUD</string>
+    <string name="actualizar_inventario">ACTUALIZAR INVENTARIO</string>
+    <string name="_2">NUEVA SOLICITUD DE CARGA</string>
+    <string name="productos_agregados">PRODUCTOS AGREGADOS</string>
 </resources>

@@ -57,7 +57,7 @@ class Login : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         supportActionBar?.hide()
-        alerta = AlertDialogo(this)
+        alerta = AlertDialogo(this, this)
         bd = Database(this)
         lienzo = findViewById(R.id.lienzo)
         btnlogin = findViewById(R.id.btnlogin)

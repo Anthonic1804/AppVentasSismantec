@@ -64,7 +64,7 @@ class Configuracion : AppCompatActivity() {
         puerto = findViewById(R.id.txtpuerto)
         btnGuardar = findViewById(R.id.btnupdate)
         atras = findViewById(R.id.imgbtnatras)
-        alerta = AlertDialogo(this)
+        alerta = AlertDialogo(this, this)
         dataBase = Database(this)
 
         puntoVenta = findViewById(R.id.tvPuntoVenta)
