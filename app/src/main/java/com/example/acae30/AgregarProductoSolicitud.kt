@@ -178,6 +178,8 @@ class AgregarProductoSolicitud : AppCompatActivity() {
 
     private fun listadoInventario(){
         val intent = Intent(this, ListadoProductosSolicitud::class.java)
+        intent.putExtra("proceso", proceso)
+        intent.putExtra("idSolicitud", idSolicitud)
         startActivity(intent)
         finish()
     }

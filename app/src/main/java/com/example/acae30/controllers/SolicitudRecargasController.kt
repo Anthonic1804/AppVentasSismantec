@@ -234,9 +234,9 @@ class SolicitudRecargasController {
         var query: String = ""
 
         query = if(busqueda != ""){
-            "SELECT * FROM inventario WHERE Id IN (SELECT docid FROM virtualinventariosolicitud WHERE virtualinventariosolicitud MATCH '$busqueda') LIMIT 60"
+            "SELECT * FROM inventario_solicitud_carga WHERE Id IN (SELECT docid FROM virtualinventariosolicitud WHERE virtualinventariosolicitud MATCH '$busqueda') LIMIT 60"
         }else{
-            "SELECT * FROM inventario limit 60"
+            "SELECT * FROM inventario_solicitud_carga limit 60"
         }
 
         try {
