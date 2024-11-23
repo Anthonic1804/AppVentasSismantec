@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -15,6 +16,7 @@ import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.databinding.ActivityNuevoClienteBinding
 import com.example.acae30.modelos.Cliente
+import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,11 +41,18 @@ class NuevoCliente : AppCompatActivity() {
     private var ruta : String = "-- SELECCIONE --"
     private var tipoContribuyente : String = ""
     private var terminos : String = "Contado"
+    private var codigoCliente : String = ""
+
+    private var latitud = ""
+    private var longitud = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNuevoClienteBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        latitud = intent.getStringExtra("latitud").toString()
+        longitud = intent.getStringExtra("longitud").toString()
 
         cargarPais()
 
@@ -71,11 +80,26 @@ class NuevoCliente : AppCompatActivity() {
             if(!funciones.isInternetAvailable(this@NuevoCliente)){
                 funciones.mensaje(this@NuevoCliente, "CONEXION DE INTERNET INESTABLE")
             }else{
-                CoroutineScope(Dispatchers.IO).launch {
-                    registrarCliente()
+
+                codigoCliente = if(binding.txtNrc.text.isNullOrEmpty()){
+                    binding.txtDui.text.toString()
+                }else{
+                    binding.txtNrc.text.toString()
+                }
+
+                if(binding.txtNombreCliente.text!!.isEmpty() || binding.txtNombreCliente.text!!.length < 10 || codigoCliente == ""){
+                    Toast.makeText(this,"VERIFIQUE DATOS IMPORTANTES, NOMBRE, DUI, NRC, NIT, ETC \n CORRESPONDIENTE AL TIPO DE CLIENTE", Toast.LENGTH_LONG).show()
+                }else{
+                    CoroutineScope(Dispatchers.IO).launch {
+                        registrarCliente()
+                    }
                 }
             }
         }
+
+        //SETEANDO LA LONGITUD Y LATITUD DEL CLIENTE
+        binding.txtLatitud.setText(latitud)
+        binding.txtLongitud.setText(longitud)
 
         //IMPLEMENTANDO LOGICA DEL PAIS SELECCIONADO
         binding.spPais.onItemSelectedListener = object : OnItemSelectedListener {
@@ -261,12 +285,6 @@ class NuevoCliente : AppCompatActivity() {
     private suspend fun registrarCliente() {
         var registrado : Boolean = false
 
-        val codigoCliente = if(binding.txtNrc.text.isNullOrEmpty()){
-            binding.txtDui.text.toString()
-        }else{
-            binding.txtNrc.text.toString()
-        }
-
         val documento = if(binding.txtNit.text.isNullOrEmpty()){
             binding.txtDui.text.toString()
         }else{
@@ -311,7 +329,9 @@ class NuevoCliente : AppCompatActivity() {
             pais,
             binding.txtCorreo.text.toString(),
             binding.txtTelefono.text.toString(),
-            binding.txtCodGiro.text.toString()
+            binding.txtCodGiro.text.toString(),
+            latitud,
+            longitud
         )
 
         registrado = clienteController.enviarRegistroClienteAlServidor(this@NuevoCliente, cliente)

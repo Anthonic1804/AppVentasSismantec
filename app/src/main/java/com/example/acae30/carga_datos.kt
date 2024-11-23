@@ -74,12 +74,24 @@ class carga_datos : AppCompatActivity() {
             startActivity(intento)
         }
 
-        binding.cvclientes.setOnClickListener {
+        binding.cvClientes.setOnClickListener {
             if (funciones.isInternetAvailable(this@carga_datos)) {
                 alert!!.Cargando()
                 CoroutineScope(Dispatchers.IO).launch {
 
-                    getClients()
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO INFORMACION DE LOS CLIENTES")
+                    }
+
+                    delay(1000)
+
+                    try {
+                        getClients()
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR LA INFORMACION DE LOS CLIENTES " + e.message)
+                    }
 
                     delay(1000)
 
@@ -92,6 +104,68 @@ class carga_datos : AppCompatActivity() {
                     }catch (e:Exception){
                         println("ERROR AL CARGAR LOS PRECIOS PERSONALIZADOS " + e.message)
                     }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO CUENTAS POR COBRAR")
+                    }
+
+                    try {
+                        getCuentas()
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR LASC CUENTAS POR COBRAR DE LOS CLIENTES " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("INFORMACION DE CLIENTES CARGADA CORRECTAMENTE")
+                    }
+
+                    //FIN DA LA CARGA DE DATOS
+                    delay(1500)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.dismisss()
+                    }
+
+                }
+            } else {
+                funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
+            }
+        }
+
+        binding.cvInventario.setOnClickListener {
+            val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
+            if (funciones.isInternetAvailable(this@carga_datos)) {
+                alert!!.Cargando()
+
+                if(!hojaCarga){
+                    /*
+                    * Si la Hoja de Carga está desactivada en SQL Server
+                    * Carga el inventario Completo
+                    * */
+                    CoroutineScope(Dispatchers.IO).launch {
+                        getInventario()
+                    }
+                }else{
+                    /*
+                    * Si está Activa solamente cargar el inventario de dicha hoja
+                    * */
+                    ingresarHojaCarga()
+                    alert!!.dismisss()
+                }
+
+            } else {
+                funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
+            }
+        }
+
+        binding.cvCatalogos.setOnClickListener {
+            if (funciones.isInternetAvailable(this@carga_datos)) {
+                alert!!.Cargando()
+                CoroutineScope(Dispatchers.IO).launch {
 
                     delay(1000)
 
@@ -201,44 +275,7 @@ class carga_datos : AppCompatActivity() {
             }
         }
 
-        binding.cvinventario.setOnClickListener {
-            val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
-            if (funciones.isInternetAvailable(this@carga_datos)) {
-                alert!!.Cargando()
-
-                if(!hojaCarga){
-                    /*
-                    * Si la Hoja de Carga está desactivada en SQL Server
-                    * Carga el inventario Completo
-                    * */
-                    CoroutineScope(Dispatchers.IO).launch {
-                        getInventario()
-                    }
-                }else{
-                    /*
-                    * Si está Activa solamente cargar el inventario de dicha hoja
-                    * */
-                    ingresarHojaCarga()
-                    alert!!.dismisss()
-                }
-
-            } else {
-                funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
-            }
-        }
-
-        binding.cvcuentas.setOnClickListener {
-            if (funciones.isInternetAvailable(this@carga_datos)) {
-                alert!!.Cargando()
-                CoroutineScope(Dispatchers.IO).launch {
-                    getCuentas()
-                }
-            } else {
-                funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
-            }
-        }
-
-        binding.cvpedidos.setOnClickListener {
+        binding.cvEliminarPedidos.setOnClickListener {
             try {
                 CoroutineScope(Dispatchers.IO).launch {
                     pedidosController.eliminarPedidosAntiguos(this@carga_datos)
@@ -425,6 +462,8 @@ class carga_datos : AppCompatActivity() {
                 valor.put("DTECodMunicipio", funciones.validateJsonIsnullString(dato, "dteCodMunicipio"))
                 valor.put("DTECodPais", funciones.validateJsonIsnullString(dato, "dteCodPais"))
                 valor.put("DTEPais", funciones.validateJsonIsnullString(dato, "dtePais"))
+                valor.put("Latitud_app", funciones.validateJsonIsnullString(dato, "latitud_app"))
+                valor.put("Longitud_app", funciones.validateJsonIsnullString(dato, "longitud_app"))
 
                 bd.insert("cliente_sucursal", null, valor)
                 contador += talla
@@ -832,6 +871,8 @@ class carga_datos : AppCompatActivity() {
                 data.put("DTEPais", funciones.validate(dato.getString("dtePais")))
                 data.put("DTETelefono", funciones.validate(dato.getString("dteTelefono")))
                 data.put("DTECorreo", funciones.validate(dato.getString("dteCorreo")))
+                data.put("Latitud_app", funciones.validate(dato.getString("latitud_app")))
+                data.put("Longitud_app", funciones.validate(dato.getString("longitud_app")))
 
                 bd.insert("clientes", null, data)
                 contador += talla

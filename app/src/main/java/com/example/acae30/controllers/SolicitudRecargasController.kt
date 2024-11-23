@@ -144,13 +144,10 @@ class SolicitudRecargasController {
     private fun limpiarInventariosolicitud(context: Context) {
         val bd = funciones.getDataBase(context).writableDatabase
         try {
-            bd!!.beginTransaction()
             bd.execSQL("DELETE FROM inventario_solicitud_carga")
-            bd.setTransactionSuccessful()
         }catch (e:Exception){
             println("ERROR AL LIMPIAR LA TBL INVENTARIO SOLICITUD CARGA -> ${e.message}")
         }finally {
-            bd!!.endTransaction()
             bd.close()
         }
     }
@@ -234,7 +231,7 @@ class SolicitudRecargasController {
         var query: String = ""
 
         query = if(busqueda != ""){
-            "SELECT * FROM inventario_solicitud_carga WHERE Id IN (SELECT docid FROM virtualinventariosolicitud WHERE virtualinventariosolicitud MATCH '$busqueda') LIMIT 60"
+            "SELECT * FROM inventario_solicitud_carga WHERE Descripcion LIKE '%$busqueda%' LIMIT 60"
         }else{
             "SELECT * FROM inventario_solicitud_carga limit 60"
         }

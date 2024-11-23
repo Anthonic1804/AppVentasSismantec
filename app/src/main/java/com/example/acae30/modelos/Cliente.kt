@@ -38,5 +38,7 @@ data class Cliente (
     var DTEPais: String,
     var DTECorreo: String,
     var DTETelefono: String,
-    var DTECodGiro: String
+    var DTECodGiro: String,
+    var Latitud : String,
+    var Longitud : String
 )

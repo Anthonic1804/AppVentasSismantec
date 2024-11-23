@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -41,12 +42,17 @@ class NuevaSucursal : AppCompatActivity() {
     private var idRuta : Int = 0
     private var ruta : String = "-- SELECCIONE --"
 
+    private var latitud = ""
+    private var longitud = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNuevaSucursalBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         idcliente = intent.getIntExtra("idcliente", 0)
+        latitud = intent.getStringExtra("latitud").toString()
+        longitud = intent.getStringExtra("longitud").toString()
 
         cargarPais()
 
@@ -71,11 +77,19 @@ class NuevaSucursal : AppCompatActivity() {
             if(!funciones.isInternetAvailable(this@NuevaSucursal)){
                 funciones.mensaje(this@NuevaSucursal, "CONEXION DE INTERNET INESTABLE")
             }else{
-                CoroutineScope(Dispatchers.IO).launch {
-                    registrarsucursal()
+                if(binding.txtCodigoSucursal.text!!.isEmpty() || binding.txtCodigoSucursal.text!!.length < 2 || binding.txtNombreSucursal.text!!.isEmpty() || binding.txtNombreSucursal.text!!.length < 5){
+                    Toast.makeText(this,"VERIFIQUE EL CODIGO O EL NOMBRE DE LA SUCURSAL", Toast.LENGTH_LONG).show()
+                }else{
+                    CoroutineScope(Dispatchers.IO).launch {
+                        registrarsucursal()
+                    }
                 }
             }
         }
+
+        //SETEANDO LA LONGITUD Y LATITUD DEL CLIENTE
+        binding.txtLatitud.setText(latitud)
+        binding.txtLongitud.setText(longitud)
 
         //IMPLEMENTANDO LOGICA DEL PAIS SELECCIONADO
         binding.spPais.onItemSelectedListener = object : OnItemSelectedListener {
@@ -244,7 +258,9 @@ class NuevaSucursal : AppCompatActivity() {
             binding.txtTelefono.text.toString(),
             binding.txtCorreo.text.toString(),
             codigoDistri,
-            distrito
+            distrito,
+            latitud,
+            longitud
         )
 
         registrado = sucursalesController.enviarRegistroSucursalAlServidor(this@NuevaSucursal, sucursal)

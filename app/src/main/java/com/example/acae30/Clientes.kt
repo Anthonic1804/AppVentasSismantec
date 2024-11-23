@@ -1,9 +1,13 @@
 package com.example.acae30
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
@@ -12,6 +16,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.ClientesController
@@ -20,6 +26,8 @@ import com.example.acae30.databinding.ActivityCargaDatosBinding
 import com.example.acae30.databinding.ActivityClientesBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,6 +63,12 @@ class Clientes : AppCompatActivity() {
     private var funciones = Funciones()
 
     private lateinit var binding : ActivityClientesBinding
+
+    //VARIABLES PARA LA CAPTURA DE LA GEOLOCALIZACION
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001
+    private var latitud = "0"
+    private var longitud = "0"
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -111,9 +125,69 @@ class Clientes : AppCompatActivity() {
 
         binding.nuevoCliente.setOnClickListener {
             val intent = Intent(this@Clientes, NuevoCliente::class.java)
+            intent.putExtra("latitud", latitud)
+            intent.putExtra("longitud", longitud)
             startActivity(intent)
             finish()
         }
+
+        // OBTERNIENDO UBICACIÓN
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        capturarLocalizacion()
+    }
+
+    // Manejar el resultado de la solicitud de permisos
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permiso concedido, obtener la ubicación
+                updateGPS()
+            } else {
+                // Permiso denegado, mostrar un mensaje o realizar otra acción
+                Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    //FUNCION PARA CAPTURAR LA GEOLOCALIZACION
+    private fun capturarLocalizacion() {
+        // Verificar permisos de ubicación
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Si no hay permiso, solicitarlo
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        } else {
+            // Si ya hay permiso, obtener la ubicación
+            updateGPS()
+        }
+    }
+
+    // HACER PETICIÓN DE POSICIÓN ACTUAL DEL GPS
+    @SuppressLint("MissingPermission")
+    private fun updateGPS() {
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                // OBTENIENDO LA UBICACION ACTUAL
+                location?.let {
+                    latitud = location.latitude.toString()
+                    longitud = location.longitude.toString()
+                } ?: run {
+                    latitud = 0.toString()
+                    longitud = 0.toString()
+                }
+            }
+            .addOnFailureListener { e ->
+                // ERROR AL NO OBTENER LA UBICACION
+                Toast.makeText(this, "Error al obtener la ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun mostrarClientes() {

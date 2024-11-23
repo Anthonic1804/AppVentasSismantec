@@ -889,7 +889,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.VISIBLE
+                    binding.btnexportar.visibility = View.GONE //GONE
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE
@@ -920,7 +920,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.VISIBLE
+                    binding.btnexportar.visibility = View.GONE //VISIBLE
                     binding.spSucursal.visibility = View.GONE
                     binding.sinSucursal.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.GONE
@@ -931,7 +931,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.VISIBLE
+                    binding.btnexportar.visibility = View.GONE //visible
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE

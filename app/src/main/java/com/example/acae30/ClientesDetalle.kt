@@ -74,6 +74,13 @@ class ClientesDetalle : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+
+        binding.btnVerMapa.setOnClickListener {
+            val intent = Intent(this, ClienteGeolocalizacion::class.java)
+            intent.putExtra("idcliente", idcliente)
+            startActivity(intent)
+            finish()
+        }
     }
 
     //FUNCION PARA OBTENER LOS DATOS DEL CLIENTE

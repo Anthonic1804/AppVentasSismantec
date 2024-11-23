@@ -41,7 +41,9 @@ class Tablas {
                 "DTECodPais VARCHAR(10) NOT NULL DEFAULT ''," +
                 "DTEPais VARCHAR(50) NOT NULL DEFAULT ''," +
                 "DTECorreo VARCHAR(100) NOT NULL DEFAULT ''," +
-                "DTETelefono VARCHAR(25) NOT NULL DEFAULT ''" +
+                "DTETelefono VARCHAR(25) NOT NULL DEFAULT ''," +
+                "Latitud_app VARCHAR(100) NULL," +
+                "Longitud_app VARCHAR(100) NULL" +
                 ");"
     } //tabla cliente
 
@@ -66,7 +68,9 @@ class Tablas {
                 "DTECodMunicipio VARCHAR(10) NOT NULL DEFAULT ''," +
                 "DTECodPais VARCHAR(10) NOT NULL DEFAULT ''," +
                 "DTEPais VARCHAR(50) NOT NULL DEFAULT ''," +
-                "DTECorreo VARCHAR(100) NOT NULL DEFAULT ''" +
+                "DTECorreo VARCHAR(100) NOT NULL DEFAULT ''," +
+                "Latitud_app VARCHAR(100) NULL," +
+                "Longitud_app VARCHAR(100) NULL" +
                 ");"
     }
 

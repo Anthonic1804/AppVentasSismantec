@@ -329,6 +329,7 @@ class InventarioController {
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
+        val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
 
         try {
             bd.beginTransaction()
@@ -424,6 +425,7 @@ class InventarioController {
     //FUNCION PARA OBTENER EL INVENTARIO DESDE LA HOJA DE CARGA DE ESCARRSA
     suspend fun obtenerInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
         try {
@@ -466,7 +468,7 @@ class InventarioController {
                                         println(res)
                                         //saveInventarioDatabase(res, context, view)
                                         //VERIFICANDO SI LA HOJA CORRESPONDE AL MISMO DIA
-                                        if(!verificarFechaInventario(context)){
+                                        if(!verificarFechaInventario(context) || numero != hojaCargaActiva){
                                             //LIMPIANDO INVENTARIO YA QUE NO CORRESPONDE AL MISMO DIA
                                             limpiarInventarioHojaCarga(context) //LIMPIAR LAS TABLAS
 

@@ -22,5 +22,7 @@ data class SucursalModel (
     val DTETelefono : String,
     val DTECorreo : String,
     val DTECodDistrito : String,
-    val DTEDistrito : String
+    val DTEDistrito : String,
+    val Latitud_app : String,
+    val Longitud_app: String
 )

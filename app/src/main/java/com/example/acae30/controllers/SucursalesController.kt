@@ -175,7 +175,7 @@ class SucursalesController {
                             }
                         }
                     }else {
-                        println("ERROR NO SE LOGRO REGISTRAR EL CLIENTE EN EL SERVIDOR")
+                        println("ERROR NO SE LOGRO REGISTRAR LA SUCURSAL EN EL SERVIDOR")
                     }
 
                 } catch (e: Exception) {
@@ -218,6 +218,8 @@ class SucursalesController {
         json.addProperty("DTETelefono", sucursal.DTETelefono)
         json.addProperty("DTECodDistrito", sucursal.DTECodDistrito)
         json.addProperty("DTEDistrito", sucursal.DTEDistrito)
+        json.addProperty("Latitud_app", sucursal.Latitud_app)
+        json.addProperty("Longitud_app", sucursal.Longitud_app)
 
         return json
     }
@@ -247,6 +249,8 @@ class SucursalesController {
             data.put("DTECodPais", funciones.validate(sucursal.DTECodPais))
             data.put("DTEPais", funciones.validate(sucursal.DTEPais))
             data.put("DTECorreo", funciones.validate(sucursal.DTECorreo))
+            data.put("Latitud_app", funciones.validate(sucursal.Latitud_app))
+            data.put("Longitud_app", funciones.validate(sucursal.Longitud_app))
 
             bd.insert("cliente_sucursal", null, data)
             bd.setTransactionSuccessful()

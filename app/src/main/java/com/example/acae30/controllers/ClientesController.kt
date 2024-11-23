@@ -240,7 +240,9 @@ class ClientesController {
                     cursor.getString(35),
                     cursor.getString(36),
                     cursor.getString(37),
-                    ""
+                    "",
+                    cursor.getString(38),
+                    cursor.getString(39)
                 )
                 cursor.close()
             }
@@ -307,6 +309,8 @@ class ClientesController {
                         consulta.getFloat(25),
                         consulta.getInt(27),
                         consulta.getString(28),
+                        "",
+                        "",
                         "",
                         "",
                         "",
@@ -606,6 +610,8 @@ class ClientesController {
         json.addProperty("DTECorreo", cliente.DTECorreo)
         json.addProperty("DTETelefono", cliente.DTETelefono)
         json.addProperty("DTECodGiro", cliente.DTECodGiro)
+        json.addProperty("Latitud_app", cliente.Latitud)
+        json.addProperty("Longitud_app", cliente.Longitud)
 
         return json
     }
@@ -662,6 +668,8 @@ class ClientesController {
             data.put("DTEPais", funciones.validate(cliente.DTEPais))
             data.put("DTETelefono", funciones.validate(cliente.DTETelefono))
             data.put("DTECorreo", funciones.validate(cliente.DTECorreo))
+            data.put("Latitud_app", funciones.validate(cliente.Latitud))
+            data.put("Longitud_app", funciones.validate(cliente.Longitud))
 
             bd.insert("clientes", null, data)
             bd.setTransactionSuccessful()

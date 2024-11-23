@@ -23,6 +23,14 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ClienteGeolocalizacion"
+            android:exported="false" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
+
+        <activity
             android:name=".AgregarProductoSolicitud"
             android:exported="false" />
         <activity
