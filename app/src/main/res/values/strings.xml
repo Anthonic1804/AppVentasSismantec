@@ -177,4 +177,5 @@
     <string name="actualizar_inventario">ACTUALIZAR INVENTARIO</string>
     <string name="_2">NUEVA SOLICITUD DE CARGA</string>
     <string name="productos_agregados">PRODUCTOS AGREGADOS</string>
+    <string name="clienteinfo">ClienteInfo</string>
 </resources>

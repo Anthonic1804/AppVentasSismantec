@@ -23,4 +23,8 @@
     <!-- ALTURA DE LOS ENCABEZADOS -->
     <dimen name="alturaEncabezados">60dp</dimen>
 
+    <!-- MENU DETALLE CLIENTE -->
+    <dimen name="menuCliente">40dp</dimen>
+    <dimen name="separacion">15dp</dimen>
+
 </resources>

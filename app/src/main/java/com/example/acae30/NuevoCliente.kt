@@ -1,6 +1,10 @@
 package com.example.acae30
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -11,12 +15,15 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.databinding.ActivityNuevoClienteBinding
 import com.example.acae30.modelos.Cliente
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,16 +50,77 @@ class NuevoCliente : AppCompatActivity() {
     private var terminos : String = "Contado"
     private var codigoCliente : String = ""
 
+    //VARIABLES PARA LA CAPTURA DE LA GEOLOCALIZACION
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001
     private var latitud = ""
     private var longitud = ""
+
+    private var latitudEditada = ""
+    private var longitudEditada = ""
+
+    private var vista = ""
+    private var idcliente = 0
+    private var datosClientes : Cliente? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNuevoClienteBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        latitud = intent.getStringExtra("latitud").toString()
-        longitud = intent.getStringExtra("longitud").toString()
+        binding.btnCapturarGeo.visibility = View.GONE
+
+        vista = intent.getStringExtra("vista").toString()
+        if(vista == "editar"){
+            idcliente = intent.getIntExtra("idcliente", 0)
+
+            datosClientes = clienteController.obtenerInformacionCliente(this, idcliente)
+            latitud = datosClientes!!.Latitud.ifEmpty { "00" }
+            longitud = datosClientes!!.Longitud.ifEmpty { "00" }
+            codigoPais = datosClientes!!.DTECodPais.ifEmpty { "00" }
+            pais = datosClientes!!.DTEPais.ifEmpty{"-- SELECCIONE --"}
+            codigoDepto = datosClientes!!.DTECodDepto.ifEmpty { "00" }
+            departamento = datosClientes!!.Departamento!!.ifEmpty{"-- SELECCIONE --"}
+            codigoMuni = datosClientes!!.DTECodMunicipio.ifEmpty { "00" }
+            municipio = datosClientes!!.Municipio!!.ifEmpty{"-- SELECCIONE --"}
+            codigoDistri = datosClientes!!.DTECodDistrito.ifEmpty { "00" }
+            distrito = datosClientes!!.DTEDistrito.ifEmpty{"-- SELECCIONE --"}
+            idRuta = datosClientes!!.Id_ruta!!
+            ruta = datosClientes!!.Ruta!!
+            tipoContribuyente = datosClientes!!.Categoria_cliente!!
+
+
+            println("DATOS DEL CLIENTE -> " + datosClientes)
+
+            with(binding){
+                btnCapturarGeo.visibility = View.VISIBLE
+                btnaceptar.text = "ACTUALIZAR"
+                tvNuevoCliente.text = "ACTUALIZAR CLIENTE"
+
+                //DATOS DEL FORMULARIO
+                txtNombreCliente.setText(datosClientes!!.Cliente)
+                txtDireccion.setText(datosClientes!!.Direccion)
+                txtTelefono.setText(datosClientes!!.Telefono_1)
+                txtCorreo.setText(datosClientes!!.Correo)
+                txtContacto.setText(datosClientes!!.Contacto)
+                txtLatitud.setText(latitud)
+                txtLongitud.setText(longitud)
+                txtNombreComercial.setText(datosClientes!!.NombreComercial)
+                txtDui.setText(datosClientes!!.Dui)
+                txtNit.setText(datosClientes!!.Nit)
+                txtNrc.setText(datosClientes!!.Nrc)
+                txtCodGiro.setText(datosClientes!!.DTECodGiro)
+                txtGiro.setText(datosClientes!!.Giro)
+            }
+
+
+            // OBTERNIENDO UBICACIÓN
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+            capturarLocalizacion()
+        }else{
+            latitud = intent.getStringExtra("latitud").toString()
+            longitud = intent.getStringExtra("longitud").toString()
+        }
 
         cargarPais()
 
@@ -73,7 +141,7 @@ class NuevoCliente : AppCompatActivity() {
 
 
         binding.btnAtras.setOnClickListener {
-            mensajeCancelar()
+            mensajeCancelar(vista)
         }
 
         binding.btnaceptar.setOnClickListener {
@@ -101,6 +169,15 @@ class NuevoCliente : AppCompatActivity() {
         binding.txtLatitud.setText(latitud)
         binding.txtLongitud.setText(longitud)
 
+        binding.btnCapturarGeo.setOnClickListener {
+            //SETEANDO LA LONGITUD Y LATITUD DEL CLIENTE
+            binding.txtLatitud.setText(latitudEditada)
+            binding.txtLongitud.setText(longitudEditada)
+
+            latitud = latitudEditada
+            longitud = longitudEditada
+        }
+
         //IMPLEMENTANDO LOGICA DEL PAIS SELECCIONADO
         binding.spPais.onItemSelectedListener = object : OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?,
@@ -118,7 +195,7 @@ class NuevoCliente : AppCompatActivity() {
                         cargarMunicipio()
                         cargarDistrito()
                     }catch (e: Exception){
-                        throw Exception(e.message)
+                        println("ERROR AL CARGAR EL PAIS" + e.message)
                     }
                 }
 
@@ -156,7 +233,7 @@ class NuevoCliente : AppCompatActivity() {
                         cargarMunicipio()
                         cargarDistrito()
                     }catch (e: Exception){
-                        throw Exception(e.message)
+                        println("ERROR AL CARGAR EL DEPARTAMENTO" + e.message)
                     }
                 }
 
@@ -183,7 +260,7 @@ class NuevoCliente : AppCompatActivity() {
 
                         cargarDistrito()
                     }catch (e: Exception){
-                        throw Exception(e.message)
+                        println("ERROR AL CARGAR EL MUNICIPIO" + e.message)
                     }
                 }
 
@@ -208,7 +285,7 @@ class NuevoCliente : AppCompatActivity() {
                             catalogoController.obtenerInformacionDistrito(this@NuevoCliente, distrito)!!.codigo
                         }
                     }catch (e: Exception){
-                        throw Exception(e.message)
+                        println("ERROR AL CARGAR EL DISTRITO" + e.message)
                     }
                 }
 
@@ -233,7 +310,7 @@ class NuevoCliente : AppCompatActivity() {
                             catalogoController.obtenerInformacionRuta(this@NuevoCliente, ruta)!!.id
                         }
                     }catch (e: Exception){
-                        throw Exception(e.message)
+                        println("ERROR AL CARGAR LA RUTA DEL CIENTE " + e.message)
                     }
                 }
 
@@ -258,7 +335,7 @@ class NuevoCliente : AppCompatActivity() {
                             parent?.getItemAtPosition(position).toString()
                         }
                     }catch (e: Exception){
-                        throw Exception(e.message)
+                        println("ERROR AL CARGAR EL TIPO DE CONTRIBUYENTE" + e.message)
                     }
                 }
 
@@ -292,7 +369,7 @@ class NuevoCliente : AppCompatActivity() {
         }
 
         val cliente : Cliente = Cliente(
-            0,
+            idcliente,
             codigoCliente,
             binding.txtNombreCliente.text.toString(),
             binding.txtDui.text.toString(),
@@ -329,9 +406,12 @@ class NuevoCliente : AppCompatActivity() {
             pais,
             binding.txtCorreo.text.toString(),
             binding.txtTelefono.text.toString(),
-            binding.txtCodGiro.text.toString(),
             latitud,
-            longitud
+            longitud,
+            binding.txtNombreComercial.text.toString(),
+            binding.txtCodGiro.text.toString(),
+            distrito,
+            codigoDistri
         )
 
         registrado = clienteController.enviarRegistroClienteAlServidor(this@NuevoCliente, cliente)
@@ -344,13 +424,15 @@ class NuevoCliente : AppCompatActivity() {
     private fun cargarPais(){
         this@NuevoCliente.lifecycleScope.launch {
             try {
-                val listaPais = catalogoController.obtenerListadoPaisesSQLite(this@NuevoCliente)
+                val listaPais = catalogoController.obtenerListadoPaisesSQLite(this@NuevoCliente, vista, pais)
 
                 val adaptadorPais = ArrayAdapter(this@NuevoCliente, android.R.layout.simple_spinner_item, listaPais)
                 adaptadorPais.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
                 binding.spPais.adapter = adaptadorPais
 
-                binding.spPais.setSelection(60, true)
+                if(vista != "editar"){
+                    binding.spPais.setSelection(60, true)
+                }
 
             }catch (e:Exception){
                 throw Exception(e.message)
@@ -361,7 +443,7 @@ class NuevoCliente : AppCompatActivity() {
     private fun cargarDepartamento(){
         this@NuevoCliente.lifecycleScope.launch {
             try{
-                val listaDepartamentos = catalogoController.obtenerListadoDepartamentosSQLite(this@NuevoCliente, codigoPais)
+                val listaDepartamentos = catalogoController.obtenerListadoDepartamentosSQLite(this@NuevoCliente, codigoPais, vista, departamento)
 
                 val departamento = ArrayAdapter(this@NuevoCliente, android.R.layout.simple_spinner_item, listaDepartamentos)
                 departamento.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
@@ -375,7 +457,7 @@ class NuevoCliente : AppCompatActivity() {
     private fun cargarMunicipio(){
         this@NuevoCliente.lifecycleScope.launch {
             try{
-                val listaMunicipos = catalogoController.obtenerListadoMunicipiosSQLite(this@NuevoCliente, codigoPais, codigoDepto)
+                val listaMunicipos = catalogoController.obtenerListadoMunicipiosSQLite(this@NuevoCliente, codigoPais, codigoDepto, vista, municipio)
 
                 val adaptadorMunicipio = ArrayAdapter(this@NuevoCliente, android.R.layout.simple_spinner_item, listaMunicipos)
                 adaptadorMunicipio.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
@@ -389,7 +471,7 @@ class NuevoCliente : AppCompatActivity() {
     private fun cargarDistrito(){
         this@NuevoCliente.lifecycleScope.launch {
             try{
-                val listaDistritos = catalogoController.obtenerListadoDistritosSQLite(this@NuevoCliente, codigoDepto, codigoMuni, codigoPais)
+                val listaDistritos = catalogoController.obtenerListadoDistritosSQLite(this@NuevoCliente, codigoDepto, codigoMuni, codigoPais, vista, distrito)
 
                 val distritos = ArrayAdapter(this@NuevoCliente, android.R.layout.simple_spinner_item, listaDistritos)
                 distritos.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
@@ -403,7 +485,7 @@ class NuevoCliente : AppCompatActivity() {
     private fun cargarRutas(){
         this@NuevoCliente.lifecycleScope.launch {
             try{
-                val listaRustas = catalogoController.obtenerListadoRutaSQLite(this@NuevoCliente)
+                val listaRustas = catalogoController.obtenerListadoRutaSQLite(this@NuevoCliente, vista, ruta)
 
                 val rutas = ArrayAdapter(this@NuevoCliente, android.R.layout.simple_spinner_item, listaRustas)
                 rutas.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
@@ -417,9 +499,13 @@ class NuevoCliente : AppCompatActivity() {
     private fun cargarContribuyente(){
         this@NuevoCliente.lifecycleScope.launch {
             try {
-                val tipoContribuyente = ArrayAdapter<String>(this@NuevoCliente, android.R.layout.simple_spinner_dropdown_item)
-                tipoContribuyente.addAll(listOf("-- SELECCIONE --" ,"Pequeño Contribuyente", "Mediano Contribuyente", "Gran Contribuyente")) //LIMINADO "FACTURA EXPORTACION"
-                binding.spContribuyente.adapter = tipoContribuyente
+                val contribuyente = ArrayAdapter<String>(this@NuevoCliente, android.R.layout.simple_spinner_dropdown_item)
+                if(vista == "editar"){
+                    contribuyente.addAll(listOf(tipoContribuyente ,"Pequeño Contribuyente", "Mediano Contribuyente", "Gran Contribuyente")) //LIMINADO "FACTURA EXPORTACION"
+                }else{
+                    contribuyente.addAll(listOf("-- SELECCIONE --" ,"Pequeño Contribuyente", "Mediano Contribuyente", "Gran Contribuyente")) //LIMINADO "FACTURA EXPORTACION"
+                }
+                binding.spContribuyente.adapter = contribuyente
             }catch (e:Exception){
                 throw Exception(e.message)
             }
@@ -430,13 +516,17 @@ class NuevoCliente : AppCompatActivity() {
 
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
-    private fun mensajeCancelar(){
+    private fun mensajeCancelar(vista : String){
         val dialog = AlertDialog.Builder(this@NuevoCliente)
             .setTitle("INFORMACION")
             .setMessage("¿DESEA CANCELAR EL PROCESO?")
             .setPositiveButton("ACEPTAR") { view, _ ->
                 view.dismiss()
-                regresarMenuClientes()
+                if(vista == "editar"){
+                    regresarClienteDetalle()
+                }else{
+                    regresarMenuClientes()
+                }
             }
             .setNegativeButton("CANCELAR"){ view, _ ->
                 view.dismiss()
@@ -451,7 +541,11 @@ class NuevoCliente : AppCompatActivity() {
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
     private fun mensajeRegistrado(registrado : Boolean){
         val mensaje = if(registrado){
-            "CLIENTE REGISTRADO CORRECTAMENTE"
+            if(vista=="editar"){
+                "CLIENTE ACTUALIZADO CORRECTAMENTE"
+            }else{
+                "CLIENTE REGISTRADO CORRECTAMENTE"
+            }
         }else{
             "ERROR AL REGISTRAR EL CLIENTE"
         }
@@ -461,7 +555,12 @@ class NuevoCliente : AppCompatActivity() {
             .setPositiveButton("ACEPTAR") { view, _ ->
                 if(registrado){
                     view.dismiss()
-                    regresarMenuClientes()
+                    if(vista == "editar"){
+                        regresarClienteDetalle()
+                    }else{
+                        regresarMenuClientes()
+                    }
+
                 }else{
                     view.dismiss()
                 }
@@ -479,5 +578,65 @@ class NuevoCliente : AppCompatActivity() {
         finish()
     }
 
+    private fun regresarClienteDetalle(){
+        val intent = Intent(this, ClientesDetalle::class.java)
+        intent.putExtra("idcliente", idcliente)
+        startActivity(intent)
+        finish()
+    }
+
+    // Manejar el resultado de la solicitud de permisos
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permiso concedido, obtener la ubicación
+                updateGPS()
+            } else {
+                // Permiso denegado, mostrar un mensaje o realizar otra acción
+                Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    //FUNCION PARA CAPTURAR LA GEOLOCALIZACION
+    private fun capturarLocalizacion() {
+        // Verificar permisos de ubicación
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Si no hay permiso, solicitarlo
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        } else {
+            // Si ya hay permiso, obtener la ubicación
+            updateGPS()
+        }
+    }
+
+    // HACER PETICIÓN DE POSICIÓN ACTUAL DEL GPS
+    @SuppressLint("MissingPermission")
+    private fun updateGPS() {
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                // OBTENIENDO LA UBICACION ACTUAL
+                location?.let {
+                    latitudEditada = location.latitude.toString()
+                    longitudEditada = location.longitude.toString()
+                } ?: run {
+                    latitudEditada = 0.toString()
+                    longitudEditada = 0.toString()
+                }
+            }
+            .addOnFailureListener { e ->
+                // ERROR AL NO OBTENER LA UBICACION
+                Toast.makeText(this, "Error al obtener la ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
 
 }

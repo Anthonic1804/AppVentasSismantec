@@ -70,6 +70,8 @@ class Clientes : AppCompatActivity() {
     private var latitud = "0"
     private var longitud = "0"
 
+    private var cargarClientesPorRuta = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -84,6 +86,7 @@ class Clientes : AppCompatActivity() {
         busquedaPedido = preferences!!.getBoolean("busqueda", false)
         visita = preferences!!.getBoolean("visita", false)
         pagare = preferences!!.getBoolean("PagareObligatorio", false)
+        cargarClientesPorRuta = preferences!!.getString("cargarClientesPorRuta", "").toString()
 
         db = Database(this)
         alert = AlertDialogo(this, this)
@@ -193,7 +196,7 @@ class Clientes : AppCompatActivity() {
     private fun mostrarClientes() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val list: ArrayList<Cliente> = clienteController.obtenerListaClientes(this@Clientes, dSearch!!)
+                val list: ArrayList<Cliente> = clienteController.obtenerListaClientes(this@Clientes, dSearch!!, cargarClientesPorRuta)
                 if(list.size > 0){
                     runOnUiThread {
                         MostrarLista(list)
@@ -262,7 +265,7 @@ class Clientes : AppCompatActivity() {
             //22-08-2022
 
             override fun onQueryTextChange(texto: String): Boolean {
-                val dSearch = clienteController.obtenerListaClientes(this@Clientes ,texto.uppercase())
+                val dSearch = clienteController.obtenerListaClientes(this@Clientes ,texto.uppercase(), cargarClientesPorRuta)
                 this@Clientes.MostrarLista(dSearch)
                 return false
             }

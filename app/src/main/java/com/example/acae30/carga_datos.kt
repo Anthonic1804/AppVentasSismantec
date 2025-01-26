@@ -6,10 +6,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
+import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.ConfigController
@@ -41,14 +47,11 @@ class carga_datos : AppCompatActivity() {
     private var catalagosController = CatalogosController()
     private var funciones = Funciones()
 
-    private lateinit var tvUpdate : TextView
-    private lateinit var tvCancel : TextView
-    private lateinit var tvTitulo : TextView
-    private lateinit var tvMensaje : TextView
-
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
     private lateinit var binding : ActivityCargaDatosBinding
+    private var rutaClientes : String = "T"
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -64,6 +67,8 @@ class carga_datos : AppCompatActivity() {
 
         idVendedor = preferences.getInt("Idvendedor", 0)
 
+        rutaClientes = preferences.getString("cargarClientesPorRuta", "T").toString()
+
     }
 
     override fun onStart() {
@@ -76,60 +81,12 @@ class carga_datos : AppCompatActivity() {
 
         binding.cvClientes.setOnClickListener {
             if (funciones.isInternetAvailable(this@carga_datos)) {
-                alert!!.Cargando()
-                CoroutineScope(Dispatchers.IO).launch {
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO INFORMACION DE LOS CLIENTES")
+                when(rutaClientes){
+                    "R" -> {
+                        cargarClientesRuta()
+                    }else -> {
+                        cargaClientes()
                     }
-
-                    delay(1000)
-
-                    try {
-                        getClients()
-                    }catch (e:Exception){
-                        println("ERROR AL CARGAR LA INFORMACION DE LOS CLIENTES " + e.message)
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO PRECIOS PERSONALIZADOS")
-                    }
-
-                    try {
-                        clietnesController.obtenerPreciosPersonalizados(this@carga_datos)
-                    }catch (e:Exception){
-                        println("ERROR AL CARGAR LOS PRECIOS PERSONALIZADOS " + e.message)
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CUENTAS POR COBRAR")
-                    }
-
-                    try {
-                        getCuentas()
-                    }catch (e:Exception){
-                        println("ERROR AL CARGAR LASC CUENTAS POR COBRAR DE LOS CLIENTES " + e.message)
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("INFORMACION DE CLIENTES CARGADA CORRECTAMENTE")
-                    }
-
-                    //FIN DA LA CARGA DE DATOS
-                    delay(1500)
-
-                    withContext(Dispatchers.Main){
-                        alert!!.dismisss()
-                    }
-
                 }
             } else {
                 funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
@@ -288,6 +245,66 @@ class carga_datos : AppCompatActivity() {
         }
     }
 
+    //FUNCIONES PARA CARGA DE CLIENTES
+    private fun cargaClientes(){
+        alert!!.Cargando()
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                alert!!.changeText("CARGANDO INFORMACION DE LOS CLIENTES")
+            }
+
+            delay(1000)
+
+            try {
+                getClients()
+            }catch (e:Exception){
+                println("ERROR AL CARGAR LA INFORMACION DE LOS CLIENTES " + e.message)
+            }
+
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                alert!!.changeText("CARGANDO PRECIOS PERSONALIZADOS")
+            }
+
+            try {
+                clietnesController.obtenerPreciosPersonalizados(this@carga_datos)
+            }catch (e:Exception){
+                println("ERROR AL CARGAR LOS PRECIOS PERSONALIZADOS " + e.message)
+            }
+
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                alert!!.changeText("CARGANDO CUENTAS POR COBRAR")
+            }
+
+            try {
+                getCuentas()
+            }catch (e:Exception){
+                println("ERROR AL CARGAR LASC CUENTAS POR COBRAR DE LOS CLIENTES " + e.message)
+            }
+
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                alert!!.changeText("INFORMACION DE CLIENTES CARGADA CORRECTAMENTE")
+            }
+
+            //FIN DA LA CARGA DE DATOS
+            delay(1500)
+
+            withContext(Dispatchers.Main){
+                alert!!.dismisss()
+            }
+
+        }
+    }
+
     //FUNCION PARA MOSTRAR EL DIALOG DE INGRESO DE HOJA DE CARGA
     private fun ingresarHojaCarga() {
         val hojaCargaDialog = Dialog(this, R.style.Theme_Dialog)
@@ -299,19 +316,23 @@ class carga_datos : AppCompatActivity() {
         val btnCancelar = hojaCargaDialog.findViewById<TextView>(R.id.tvCancelar)
 
         btnAceptar.setOnClickListener {
+
             val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
             val numero = hojaCargaDialog.findViewById<TextInputEditText>(R.id.tietNumeroCarga).text.toString()
+
             if (numero.isEmpty() || numero.toInt() == 0) {
+
                 hojaCargaDialog.dismiss()
                 funciones.mensaje(this@carga_datos, "INGRESE UN NUMERO DE HOJA DE CARGA")
+
             }else if(numero.toInt() == hojaCargaActiva){
+
                 hojaCargaDialog.dismiss()
                 funciones.mensaje(this@carga_datos, "LA HOJA DE CARGA YA SE ENCUENTRA CARGADA")
+
             }else {
-                CoroutineScope(Dispatchers.IO).launch {
-                    //OBTENIENDO INVENTARIO DESDE HOJA DE CARGA
-                    inventarioController.obtenerInventarioHojaCarga(0, numero.toInt(), idVendedor, this@carga_datos)
-                }
+
+                cargarInventarioDesdeHoja(numero)
 
                 hojaCargaDialog.dismiss()
             }
@@ -322,6 +343,122 @@ class carga_datos : AppCompatActivity() {
         }
 
         hojaCargaDialog.show()
+
+    }
+
+    private fun cargarInventarioDesdeHoja(numero: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                alert!!.changeText("CARGANDO INVENTARIO...")
+            }
+
+            try {
+                //OBTENIENDO INVENTARIO DESDE HOJA DE CARGA
+                inventarioController.obtenerInventarioHojaCarga(0, numero.toInt(), idVendedor, this@carga_datos)
+            }catch (e:Exception){
+                println("ERROR AL CARGAR LA HOJA DE INVENTARIO " + e.message)
+            }
+
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                alert!!.changeText("OBTENIENDO ESCALAS DE PRECIOS")
+            }
+
+            try {
+                //OBTENIENDO ESCALAS DE PRECIOS
+                inventarioController.obtenerEscalasPrecios(this@carga_datos)
+            }catch (e:Exception){
+                println("ERROR AL CARGAR LAS ESCALAS DE PRECIOS " + e.message)
+            }
+
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                alert!!.changeText("INVENTARIO CARGADO EXITOSAMENTE")
+            }
+
+        }
+
+    }
+
+    //FUNCION PARA MOSTRAR EL DIALOG DE CARGA DE CLIENTES POR RUTA
+    private fun cargarClientesRuta() {
+        val clientesRuta = Dialog(this, R.style.Theme_Dialog)
+        clientesRuta.setCancelable(false)
+
+        clientesRuta.setContentView(R.layout.cargar_cliente_ruta)
+
+        val btnAceptar = clientesRuta.findViewById<TextView>(R.id.btnCargar)
+        val btnCancelar = clientesRuta.findViewById<TextView>(R.id.btnCancelar)
+        val spRuta = clientesRuta.findViewById<Spinner>(R.id.spRuta)
+
+        var rutaSeleccionada : String = "-- SELECCIONE --"
+        var idRutaSeleccionada : Int = 0
+
+
+        this.lifecycleScope.launch {
+            try{
+                val listaRustas = catalagosController.obtenerListadoRutaSQLite(this@carga_datos, "", "")
+
+                val rutas = ArrayAdapter(this@carga_datos, android.R.layout.simple_spinner_item, listaRustas)
+                rutas.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
+                spRuta.adapter = rutas
+            }catch (e: Exception){
+                throw Exception(e.message)
+            }
+        }
+
+        //IMPLEMENTANDO LOGICA DEL RUTA SELECCIONADO
+        spRuta.onItemSelectedListener = object : OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?,
+                                        view: View?,
+                                        position: Int,
+                                        id: Long) {
+
+                rutaSeleccionada = parent?.getItemAtPosition(position).toString()
+
+                this@carga_datos.lifecycleScope.launch {
+                    try{
+                        idRutaSeleccionada = if(rutaSeleccionada == "-- SELECCIONE --"){
+                            0
+                        }else{
+                            catalagosController.obtenerInformacionRuta(this@carga_datos, rutaSeleccionada)!!.id
+                        }
+
+                        val editor = preferences.edit()
+                        editor.putInt("idRutaSeleccionada", 0)
+                        editor.putString("rutaSeleccionada", "")
+                        editor.putInt("idRutaSeleccionada", idRutaSeleccionada)
+                        editor.putString("rutaSeleccionada", rutaSeleccionada)
+                        editor.apply()
+
+                    }catch (e: Exception){
+                        println("ERROR AL CARGAR LA RUTA DEL CIENTE " + e.message)
+                    }
+                }
+
+            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
+        }
+
+        btnAceptar.setOnClickListener {
+            if(rutaSeleccionada == "-- SELECCIONE --") {
+                Toast.makeText(this, "DEBE DE SELECCIONAR UNA RUTA", Toast.LENGTH_SHORT)
+                    .show()
+            }else{
+                clientesRuta.dismiss()
+                cargaClientes()
+            }
+        }
+
+        btnCancelar.setOnClickListener {
+            clientesRuta.dismiss()
+        }
+
+        clientesRuta.show()
 
     }
 
@@ -604,7 +741,6 @@ class carga_datos : AppCompatActivity() {
 
         // TABLA INVENTARIO PRECIOS
         try {
-
             val direccionprecioscantidad = url + "inventario/precios/cantidad"
             val urlprecioscantidad = URL(direccionprecioscantidad)
             var cantidadPreciosRegistros = 0.toInt()
@@ -873,6 +1009,10 @@ class carga_datos : AppCompatActivity() {
                 data.put("DTECorreo", funciones.validate(dato.getString("dteCorreo")))
                 data.put("Latitud_app", funciones.validate(dato.getString("latitud_app")))
                 data.put("Longitud_app", funciones.validate(dato.getString("longitud_app")))
+                //data.put("Nombre_comercial", funciones.validate(dato.getString("nombre_comercial")))
+                data.put("DTECodGiro", funciones.validate(dato.getString("dteCodGiro")))
+                //data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
+                //data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))
 
                 bd.insert("clientes", null, data)
                 contador += talla

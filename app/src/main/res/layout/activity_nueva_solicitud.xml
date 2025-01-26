@@ -35,25 +35,23 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/cvFormularioNuevaSolucitud"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_margin="@dimen/margin_default_16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lyEncabezado"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/lyEncabezado">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+
+            android:padding="@dimen/margin_default_16dp">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/lyEmpleado"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/margin_default_16dp"
-                android:layout_marginStart="@dimen/margin_default_16dp"
-                android:layout_marginTop="@dimen/margin_default_16dp"
                 android:layout_marginBottom="@dimen/margin_8dp"
                 android:hint="SOLICITANTE"
                 app:startIconDrawable="@drawable/ic_editperson"
@@ -73,16 +71,57 @@
                     android:textSize="18sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <LinearLayout
+                android:id="@+id/lyRuta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/lyEmpleado">
+
+                <TextView
+                    android:id="@+id/tvRuta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ruta"
+                    android:textColor="@color/colordark"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/lyRuta2"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:background="@drawable/spinner_bg"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <Spinner
+                        android:id="@+id/spRuta"
+                        android:layout_width="match_parent"
+                        android:layout_height="55dp"
+                        android:layout_marginStart="@dimen/margin_4dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/fechaSolicitud"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_8dp"
                 android:text="fecha"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textColor="@color/colorPrimaryDark"
-                app:layout_constraintTop_toBottomOf="@id/lyEmpleado"
+                app:layout_constraintTop_toBottomOf="@id/lyRuta"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/imgbtnadd"/>
 
@@ -90,18 +129,18 @@
                 android:id="@+id/imgbtnadd"
                 android:layout_width="55dp"
                 android:layout_height="55dp"
-                android:layout_margin="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_default_16dp"
                 android:backgroundTint="@android:color/holo_green_dark"
                 app:layout_constraintBottom_toTopOf="@+id/tvProductosSolicitados"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/lyEmpleado"
+                app:layout_constraintTop_toBottomOf="@id/lyRuta"
                 app:srcCompat="@drawable/ic_baseline_add_box_24" />
 
             <TextView
                 android:id="@+id/tvProductosSolicitados"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_8dp"
                 android:text="@string/productos_agregados"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -114,9 +153,7 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/cvProductosSolicitados"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
-                android:minHeight="300dp"
+                android:layout_height="250dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvProductosSolicitados" />
@@ -125,12 +162,12 @@
                 android:id="@+id/layout_buttons"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_8dp"
                 android:gravity="center"
                 android:orientation="horizontal"
+                app:layout_constraintTop_toBottomOf="@id/cvProductosSolicitados"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/btncancelar">
+                app:layout_constraintStart_toStartOf="parent">
 
                 <Button
                     android:id="@+id/btnenviar"
@@ -144,32 +181,18 @@
                     android:textStyle="bold"/>
 
                 <Button
-                    android:id="@+id/btnguardar"
+                    android:id="@+id/btncancelar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
-                    android:background="@drawable/border_btnenviar"
-                    android:text="ENVIAR MÁS TARDE"
+                    android:background="@drawable/btn_eliminarpedido"
+                    android:text="CANCELAR SOLICITUD"
                     android:textAlignment="center"
                     android:textColor="@color/colorAccent"
                     android:textStyle="bold" />
 
             </LinearLayout>
-
-            <Button
-                android:id="@+id/btncancelar"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
-                android:background="@drawable/btn_eliminarpedido"
-                android:text="CANCELAR SOLICITUD"
-                android:textAlignment="center"
-                android:textColor="@color/colorAccent"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

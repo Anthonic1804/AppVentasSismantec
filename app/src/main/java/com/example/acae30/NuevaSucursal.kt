@@ -274,7 +274,7 @@ class NuevaSucursal : AppCompatActivity() {
     private fun cargarPais(){
         this@NuevaSucursal.lifecycleScope.launch {
             try {
-                val listaPais = catalogoController.obtenerListadoPaisesSQLite(this@NuevaSucursal)
+                val listaPais = catalogoController.obtenerListadoPaisesSQLite(this@NuevaSucursal, "","")
 
                 val adaptadorPais = ArrayAdapter(this@NuevaSucursal, android.R.layout.simple_spinner_item, listaPais)
                 adaptadorPais.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
@@ -291,7 +291,7 @@ class NuevaSucursal : AppCompatActivity() {
     private fun cargarDepartamento(){
         this@NuevaSucursal.lifecycleScope.launch {
             try{
-                val listaDepartamentos = catalogoController.obtenerListadoDepartamentosSQLite(this@NuevaSucursal, codigoPais)
+                val listaDepartamentos = catalogoController.obtenerListadoDepartamentosSQLite(this@NuevaSucursal, codigoPais,"","")
 
                 val departamento = ArrayAdapter(this@NuevaSucursal, android.R.layout.simple_spinner_item, listaDepartamentos)
                 departamento.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
@@ -305,7 +305,7 @@ class NuevaSucursal : AppCompatActivity() {
     private fun cargarMunicipio(){
         this@NuevaSucursal.lifecycleScope.launch {
             try{
-                val listaMunicipos = catalogoController.obtenerListadoMunicipiosSQLite(this@NuevaSucursal, codigoPais, codigoDepto)
+                val listaMunicipos = catalogoController.obtenerListadoMunicipiosSQLite(this@NuevaSucursal, codigoPais, codigoDepto,"","")
 
                 val adaptadorMunicipio = ArrayAdapter(this@NuevaSucursal, android.R.layout.simple_spinner_item, listaMunicipos)
                 adaptadorMunicipio.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
@@ -319,7 +319,7 @@ class NuevaSucursal : AppCompatActivity() {
     private fun cargarDistrito(){
         this@NuevaSucursal.lifecycleScope.launch {
             try{
-                val listaDistritos = catalogoController.obtenerListadoDistritosSQLite(this@NuevaSucursal, codigoDepto, codigoMuni, codigoPais)
+                val listaDistritos = catalogoController.obtenerListadoDistritosSQLite(this@NuevaSucursal, codigoDepto, codigoMuni, codigoPais,"","")
 
                 val distritos = ArrayAdapter(this@NuevaSucursal, android.R.layout.simple_spinner_item, listaDistritos)
                 distritos.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
@@ -333,7 +333,7 @@ class NuevaSucursal : AppCompatActivity() {
     private fun cargarRutas(){
         this@NuevaSucursal.lifecycleScope.launch {
             try{
-                val listaRustas = catalogoController.obtenerListadoRutaSQLite(this@NuevaSucursal)
+                val listaRustas = catalogoController.obtenerListadoRutaSQLite(this@NuevaSucursal,"","")
 
                 val rutas = ArrayAdapter(this@NuevaSucursal, android.R.layout.simple_spinner_item, listaRustas)
                 rutas.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)

@@ -4,6 +4,7 @@ data class HojaCargaJSON(
 
     val id: Int,
     val numero: Int,
-    val id_vendedor: Int
+    val id_vendedor: Int,
+    val fecha : String
 
 )

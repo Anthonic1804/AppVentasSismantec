@@ -406,6 +406,18 @@ class SolicitudRecargasController {
         return actualizado
     }
 
+    //FUNCION PARA ACTUALIZAR LA RUTA DE LA SOLICITUD DE CARGA
+    fun actualizarRutaSolicitud(context: Context, idRuta: Int, ruta: String, idSolicitud: Int){
+        val bd = funciones.getDataBase(context).writableDatabase
+        try {
+            bd.execSQL("UPDATE solicitudCarga SET Id_ruta=$idRuta, ruta='$ruta' WHERE id = $idSolicitud")
+        }catch (e : Exception){
+            println("ERROR AL ACTUALIZAR LA RUTA DE LA SOLICITUD -> " + e.message)
+        }finally {
+            bd.close()
+        }
+    }
+
     //FUNCION PARA OBTENER EL LISTADO DE SOLICITUDES
     fun obtenerListadosolicitudes(context: Context) : ArrayList<SolicitudCarga>{
         val bd = funciones.getDataBase(context).readableDatabase

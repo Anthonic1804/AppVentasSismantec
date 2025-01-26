@@ -11,6 +11,9 @@
         <item android:id="@+id/nav_carga"
             android:title="@string/solicitud_de_carga"
             android:icon="@drawable/ic_solicitud_carga"/>
+        <item android:id="@+id/nav_devolucion"
+            android:title="DEVOLUCIONES"
+            android:icon="@drawable/ic_devoluciones"/>
     </group>
     <group android:id="@+id/group_admin">
         <item

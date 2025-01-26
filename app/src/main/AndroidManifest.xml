@@ -23,6 +23,15 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".AgregarProductosDevolucion"
+            android:exported="false" />
+        <activity
+            android:name=".NuevaDevolucion"
+            android:exported="false" />
+        <activity
+            android:name=".MenuDevoluciones"
+            android:exported="false" />
+        <activity
             android:name=".ClienteGeolocalizacion"
             android:exported="false" />
 

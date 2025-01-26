@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.acae30.controllers.ClientesController
+import com.example.acae30.controllers.SucursalesController
 import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityClientesDetalleBinding
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +44,7 @@ class ClientesDetalle : AppCompatActivity() {
 
         bd = Database(this)
         idcliente = intent.getIntExtra("idcliente", 0)
+        println("ID CLIENTE SELECCIONADO -> $idcliente")
 
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         pagareFirmado = preferences.getBoolean("PagareObligatorio", false)
@@ -78,6 +80,14 @@ class ClientesDetalle : AppCompatActivity() {
         binding.btnVerMapa.setOnClickListener {
             val intent = Intent(this, ClienteGeolocalizacion::class.java)
             intent.putExtra("idcliente", idcliente)
+            startActivity(intent)
+            finish()
+        }
+
+        binding.btnEditar.setOnClickListener {
+            val intent = Intent(this, NuevoCliente::class.java)
+            intent.putExtra("idcliente", idcliente)
+            intent.putExtra("vista", "editar")
             startActivity(intent)
             finish()
         }
@@ -128,6 +138,11 @@ class ClientesDetalle : AppCompatActivity() {
                         }else{
                             binding.personaJuridica.text = "PERSONA JURIDICA"
                         }
+
+                        if(data.Latitud == "null" || data.Longitud == "null"){
+                            binding.btnVerMapa.visibility = View.GONE
+                        }
+
                     }
                 }
             } catch (e: Exception) {

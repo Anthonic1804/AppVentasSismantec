@@ -328,8 +328,11 @@ class InventarioController {
         val bd = funciones.getDataBase(context).writableDatabase
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+
+        //VERIFICANDO SI LA HOJA DE CARGA ESTA ACTIVA PARA SU USO
         val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
-        val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
+
+        //val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
 
         try {
             bd.beginTransaction()
@@ -357,12 +360,17 @@ class InventarioController {
                 )
                 //SI HOJA DE CARGA ESTA ACTIVA, LA EXISTENCIA ES 0 Y SE CARGARA LA CANTIDAD DE LA HOJA DE CARGA
                 if(hojaCarga){
-                    data.put("Existencia", 0)
+                  data.put("Existencia", 0)
                     if(funciones.validateJsonIsNullInt(dato, "idHojaCarga") != 0){
+
+                       //ALAMACENANDO EN SHARED PREFERENCES EL ID DE LA HOJA DE CARGA ACTIVA
                         val editor = preferences.edit()
                         editor.putInt("idHojaCarga", funciones.validateJsonIsNullInt(dato, "idHojaCarga"))
+                        editor.putInt("idRutaHojaCarga", funciones.validateJsonIsNullInt(dato, "idRuta"))
+                        editor.putString("rutaHojaCarga", funciones.validateJsonIsnullString(dato, "ruta"))
                         editor.apply()
                     }
+
                 }else{
                     data.put("Existencia", funciones.validateJsonIsNullFloat(dato, "existencia"))
                 }
@@ -424,15 +432,22 @@ class InventarioController {
     //FUNCIONES PARA HOJA DE CARGA
     //FUNCION PARA OBTENER EL INVENTARIO DESDE LA HOJA DE CARGA DE ESCARRSA
     suspend fun obtenerInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context) {
+
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+
+        //OBTENIENDO HOJA DE CARGA ACTIVA
+        val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
+
+        //OBTENIENDO FECHA
+        val fecha = funciones.obtenerFecha()
 
         try {
             val datos = HojaCargaJSON(
                 id,
                 numero,
-                id_vendedor
+                id_vendedor,
+                fecha!!
             )
             val objecto =
                 Gson().toJson(datos)
@@ -465,11 +480,11 @@ class InventarioController {
                                     it.close()
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
-                                        println(res)
-                                        //saveInventarioDatabase(res, context, view)
+
                                         //VERIFICANDO SI LA HOJA CORRESPONDE AL MISMO DIA
                                         if(!verificarFechaInventario(context) || numero != hojaCargaActiva){
-                                            //LIMPIANDO INVENTARIO YA QUE NO CORRESPONDE AL MISMO DIA
+
+                                            //LIMPIANDO INVENTARIO YA QUE NO CORRESPONDE AL MISMO DIA U HOJA DE CARGA
                                             limpiarInventarioHojaCarga(context) //LIMPIAR LAS TABLAS
 
                                             //INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA
@@ -477,6 +492,7 @@ class InventarioController {
                                             saveInventarioDatabase(res, context, numero,0)
 
                                         }else{
+
                                             //AQUI SE CARGAR SOLO LAS EXISTENCIA DE ACUERDO A LA HOJA DE CARGA
                                             //INSERTANDO INSERTANDO INFORMACION SOLO EN HOJA DE CARGA Y DETALLE
                                             //ALMACENANDO INVENTARIO NUEVO
@@ -578,10 +594,13 @@ class InventarioController {
 
     //FUNCION PARA INSERTAR MAESTRO HOJA CARGA
     private fun insertarHojaDeCargar(json: JSONArray, context: Context, numeroHojaCarga:Int){
+
         val bd = funciones.getDataBase(context).writableDatabase
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         val idHojaCarga = preferences.getInt("idHojaCarga", 0)
+        val idRutaHojaCarga = preferences.getInt("idRutaHojaCarga", 0)
+        val rutaHojaCarga = preferences.getString("rutaHojaCarga", "")
         val fechaHojaCarga = funciones.obtenerFecha()
 
         try {
@@ -590,6 +609,8 @@ class InventarioController {
             data.put("idHojaCarga", idHojaCarga)
             data.put("numeroHoja", numeroHojaCarga)
             data.put("Fecha_registro", fechaHojaCarga)
+            data.put("Id_ruta", idRutaHojaCarga)
+            data.put("Ruta", rutaHojaCarga)
             bd.insert("hoja_carga", null, data)
 
             bd.setTransactionSuccessful()
@@ -610,6 +631,7 @@ class InventarioController {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         val idHojaCarga = preferences.getInt("idHojaCarga", 0)
+
         try {
             bd.beginTransaction()
             for (i in 0 until json.length()) {
@@ -634,13 +656,17 @@ class InventarioController {
         }finally {
             bd.endTransaction()
             bd.close()
+
+            //OBTENIENDO FECHA DE INVENTARIO
             CoroutineScope(Dispatchers.IO).launch {
                 obtenerFechaInventario(context)
             }
+
             //REGISTRANDO HOJA DE CARGA ACTIVA
             println("REGISTRANDO HOJA DE CARGA ACTIVA")
+
             val editor = preferences.edit()
-            editor.putInt("hojaCarga", numeroHojaCarga.toInt())
+            editor.putInt("hojaCarga", numeroHojaCarga)
             editor.apply()
 
             //funciones.mostrarMensaje("INVENTARIO CARGADO CORRECTAMENTE", context, view)
@@ -665,18 +691,19 @@ class InventarioController {
 
     //ACTUALIZAR INFORMACION DE INVENTARIO
     suspend fun actualizarInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context, view:View) {
+
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val fecha = funciones.obtenerFecha()
 
         try {
-            val datos = HojaCargaJSON(
-                id,
-                numero,
-                id_vendedor
-            )
-            val objecto =
-                Gson().toJson(datos)
-            println(objecto)
+
+            val datos = HojaCargaJSON(id, numero, id_vendedor, fecha!!)
+
+            val objecto = Gson().toJson(datos)
+
+            //println(objecto)
+
             val ruta: String = servidor + "inventario/hojacarga"
             val url = URL(ruta)
             with(withContext(Dispatchers.IO) {
@@ -702,7 +729,9 @@ class InventarioController {
                                         respuesta.append(inpuline)
                                         inpuline = it.readLine()
                                     }
+
                                     it.close()
+
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
                                         actualizarInventarioDatabase(res, context, view)
@@ -994,7 +1023,7 @@ class InventarioController {
     }
 
     //INSERTANDO INFORMACION DE LA RECARGA
-    fun insertandoInformacionRecarga(context: Context, id: Int, id_hoja: Int, id_producto: Int, codigo: String, cantidad: Float){
+    suspend fun insertandoInformacionRecarga(context: Context, id: Int, id_hoja: Int, id_producto: Int, codigo: String, cantidad: Float){
         //INSERTANDO RECARGA
         CoroutineScope(Dispatchers.IO).launch {
             hojaController.insertarRecargaProducto(context, id, id_hoja, id_producto, codigo, cantidad)
@@ -1003,6 +1032,125 @@ class InventarioController {
         //ACTUALIZANDO EXISTENCIAS
         CoroutineScope(Dispatchers.IO).launch {
             actualizarExistenciasInventario(context, cantidad, id_producto)
+        }
+    }
+
+    //FUNCION PARA OBTENER LAS ESCALAS DE PRECIOS
+    suspend fun obtenerEscalasPrecios(context: Context){
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+
+        val database = funciones.getDataBase(context)
+
+        // TABLA INVENTARIO PRECIOS
+        try {
+            val direccionprecioscantidad = servidor + "inventario/precios/cantidad"
+            val urlprecioscantidad = URL(direccionprecioscantidad)
+            var cantidadPreciosRegistros = 0.toInt()
+            with(withContext(Dispatchers.IO) {
+                urlprecioscantidad.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 30000
+                    requestMethod = "GET"
+                    if (responseCode == 200) {
+                        inputStream.bufferedReader().use { data ->
+                            val readline = data.readLine()
+
+                            cantidadPreciosRegistros = readline.toInt()
+                        }
+
+                    } else {
+                        throw Exception("Error de Comunicacion con el servidor:$responseCode")
+                    }
+                } catch (e: Exception) {
+                    throw Exception("Error #5 Linea 325:$responseCode")
+                }
+            }
+
+            val BLOQUE_PRECIOS = 1000.toInt()
+
+            //Log.d("Cantidad: ", cantidadRegistros!!.toString())
+            var inicioPrecios = 0.toInt()
+            var longitudPrecios = 0.toInt()
+            var registrosPreciosCargados = 0.toInt()
+
+            if (cantidadPreciosRegistros < BLOQUE_PRECIOS) {
+                longitudPrecios = cantidadPreciosRegistros
+                registrosPreciosCargados = cantidadPreciosRegistros
+            } else {
+                longitudPrecios = BLOQUE_PRECIOS
+                registrosPreciosCargados = BLOQUE_PRECIOS
+            }
+
+            val bd = database.writableDatabase
+            try {
+                bd!!.beginTransaction() //inicio la transaccion
+                bd.delete("inventario_precios", null, null)
+
+                val sql2 = "DELETE FROM SQLITE_SEQUENCE WHERE NAME =  'inventario_precios'"
+                bd.execSQL(sql2)
+
+                bd.setTransactionSuccessful()
+            } catch (e: Exception) {
+                throw Exception("Error #6 Linea 354")
+            } finally {
+                bd!!.endTransaction()
+                bd.close()
+            }
+
+            do {
+                var porcentaje = (100 * registrosPreciosCargados) / cantidadPreciosRegistros
+
+                if (porcentaje > 100.toInt()) {
+                    porcentaje = 100.toInt()
+                }
+
+                val direccion =
+                    servidor + "inventario/precios/" + inicioPrecios.toString() + "/" + longitudPrecios.toString()
+                val url = URL(direccion)
+                with(withContext(Dispatchers.IO) {
+                    url.openConnection()
+                } as HttpURLConnection) {
+                    try {
+                        connectTimeout = 30000
+                        requestMethod = "GET"
+                        if (responseCode == 200) {
+
+                            inputStream.bufferedReader().use { data ->
+                                val response = StringBuffer()
+                                var inputLine = data.readLine()
+                                while (inputLine != null) {
+                                    response.append(inputLine)
+                                    inputLine = data.readLine()
+                                }
+                                data.close()
+                                val respuesta = JSONArray(response.toString())
+                                if (respuesta.length() > 0) {
+                                    saveInventarioPreciosDatabase(respuesta, context)
+                                } else {
+                                    throw Exception("Servidor no Devolvio datos")
+                                } //caso que la respuesta venga vacia
+                            }
+                        } else {
+                            throw Exception("Error de Comunicacion con el servidor:$responseCode")
+                        }
+                    } catch (e: Exception) {
+                        throw Exception("Error #7 Linea 401:$responseCode")
+                    }
+                }//termina de obtener los datos
+
+                inicioPrecios += BLOQUE_PRECIOS
+                registrosPreciosCargados += longitudPrecios
+
+                if (registrosPreciosCargados > cantidadPreciosRegistros && inicioPrecios < cantidadPreciosRegistros) {
+                    longitudPrecios = cantidadPreciosRegistros
+                }
+
+            } while (inicioPrecios < cantidadPreciosRegistros)
+
+        } catch (e: Exception) {
+            println("ERROR AL CARGAR LAS ESCALAS DE PRECIOS -> " + e.message)
         }
     }
 

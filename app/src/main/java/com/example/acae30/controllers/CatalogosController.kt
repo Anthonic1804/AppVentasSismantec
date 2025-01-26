@@ -112,12 +112,15 @@ class CatalogosController {
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE PAISES.
-    fun obtenerListadoPaisesSQLite(context: Context): ArrayList<String> {
+    fun obtenerListadoPaisesSQLite(context: Context, vista: String, pais: String): ArrayList<String> {
         val db = funciones.getDataBase(context).readableDatabase
         val listadoPaises = ArrayList<String>()
         try {
             val cursor = db.rawQuery("SELECT valor FROM cat_pais", null)
             if(cursor.count > 0){
+                if(vista == "editar"){
+                    listadoPaises.add(pais)
+                }
                 cursor.moveToFirst()
                 do{
                     listadoPaises.add(cursor.getString(0))
@@ -199,7 +202,7 @@ class CatalogosController {
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE DEPARTAMENTOS.
-    fun obtenerListadoDepartamentosSQLite(context: Context, codigoPais : String): ArrayList<String> {
+    fun obtenerListadoDepartamentosSQLite(context: Context, codigoPais : String, vista: String, depto: String): ArrayList<String> {
         val db = funciones.getDataBase(context).readableDatabase
         val listadoPaises = ArrayList<String>()
 
@@ -211,7 +214,12 @@ class CatalogosController {
         try {
             val cursor = db.rawQuery(consulta, null)
             if(cursor.count > 0){
-                listadoPaises.add("-- SELECCIONE --")
+                if(vista == "editar"){
+                    listadoPaises.add(depto)
+                }else{
+                    listadoPaises.add("-- SELECCIONE --")
+                }
+
                 cursor.moveToFirst()
                 do{
                     listadoPaises.add(cursor.getString(0))
@@ -323,7 +331,7 @@ class CatalogosController {
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE MUNICIPIOS.
-    fun obtenerListadoMunicipiosSQLite(context: Context, codigoPais: String, codigoDepto : String): ArrayList<String> {
+    fun obtenerListadoMunicipiosSQLite(context: Context, codigoPais: String, codigoDepto : String, vista: String, muni: String): ArrayList<String> {
         val db = funciones.getDataBase(context).readableDatabase
         val listadoPaises = ArrayList<String>()
 
@@ -335,7 +343,12 @@ class CatalogosController {
         try {
             val cursor = db.rawQuery(consulta, null)
             if(cursor.count > 0){
-                listadoPaises.add("-- SELECCIONE --")
+                if(vista == "editar"){
+                    listadoPaises.add(muni)
+                }else{
+                    listadoPaises.add("-- SELECCIONE --")
+                }
+
                 cursor.moveToFirst()
                 do{
                     listadoPaises.add(cursor.getString(0))
@@ -449,7 +462,7 @@ class CatalogosController {
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE MUNICIPIOS.
-    fun obtenerListadoDistritosSQLite(context: Context, codigoDepto: String, codigoMuni : String, codigoPais : String): ArrayList<String> {
+    fun obtenerListadoDistritosSQLite(context: Context, codigoDepto: String, codigoMuni : String, codigoPais : String, vista: String, distrito: String): ArrayList<String> {
         val db = funciones.getDataBase(context).readableDatabase
         val listadoPaises = ArrayList<String>()
 
@@ -461,7 +474,12 @@ class CatalogosController {
         try {
             val cursor = db.rawQuery(consulta, null)
             if(cursor.count > 0){
-                listadoPaises.add("-- SELECCIONE --")
+                if(vista == "editar"){
+                    listadoPaises.add(distrito)
+                }else{
+                    listadoPaises.add("-- SELECCIONE --")
+                }
+
                 cursor.moveToFirst()
                 do{
                     listadoPaises.add(cursor.getString(0))
@@ -658,14 +676,19 @@ class CatalogosController {
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE RUTAS.
-    fun obtenerListadoRutaSQLite(context: Context): ArrayList<String> {
+    fun obtenerListadoRutaSQLite(context: Context, vista: String, ruta: String): ArrayList<String> {
         val db = funciones.getDataBase(context).readableDatabase
         val listadoRutas = ArrayList<String>()
 
         try {
             val cursor = db.rawQuery("SELECT ruta FROM cat_ruta", null)
             if(cursor.count > 0){
-                listadoRutas.add("-- SELECCIONE --")
+                if(vista == "editar"){
+                    listadoRutas.add(ruta)
+                }else{
+                    listadoRutas.add("-- SELECCIONE --")
+                }
+
                 cursor.moveToFirst()
                 do{
                     listadoRutas.add(cursor.getString(0))

@@ -350,6 +350,7 @@ class Login : AppCompatActivity() {
                                         val identidad_param: String = res.getString("identidad")
                                         val estado: String = res.getString("estado")
                                         val generaToken : Int = res.getInt("generaToken")
+                                        //val cargarClientePorRuta : String = res.getString("todos_clientes_App")
 
                                         if (coderror > 0) {
                                             val editor = preferencias!!.edit()
@@ -357,12 +358,15 @@ class Login : AppCompatActivity() {
                                             editor.putString("Vendedor", nombreEmpleado.uppercase()) //MODIFICACION OBTENIENDO EL NOMBRE DEL EMPLEADO
                                             editor.putString("Usuario", usuario.uppercase())
                                             editor.putString("Identidad", identidad)
-                                            editor.putInt("generaToken", generaToken)//VALIDACION PARA INGRESO EN MODULO DE GENERAR TOKEN 1-> SI  0->NO
+                                            editor.putInt("generaToken", generaToken)//VALIDACION TIPO ADMINISTRADOR
                                             editor.putBoolean("sesion", true)
-                                            editor.commit()
+                                            //editor.putString("cargarClientesPorRuta", cargarClientePorRuta) // VALIDACION PARA CARGAR CLIENTES POR RUTA EN APP
+                                            editor.apply()
+
                                             val inte = Intent(this@Login, Inicio::class.java)
                                             startActivity(inte)
                                             finish()
+
                                         } else {
                                             throw Exception(response)
                                         } //valida que el servidor confirmo y valido las credenciales

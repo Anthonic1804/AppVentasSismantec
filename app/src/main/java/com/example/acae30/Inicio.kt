@@ -84,11 +84,11 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         binding.includeBar.lblupdate.text = fechaInventario
 
         //PRUEBA DE COMPARACION DE FECHA
-        if(inventarioController.verificarFechaInventario(this@Inicio)){
-            println("LA FECHA ES IGUAL")
-        }else{
-            println("LA FECHA ES DIFERENTE")
-        }
+//        if(inventarioController.verificarFechaInventario(this@Inicio)){
+//            println("LA FECHA ES IGUAL")
+//        }else{
+//            println("LA FECHA ES DIFERENTE")
+//        }
 
         val nombre_vendedor =  preferencias!!.getString("Vendedor", "")
         binding.includeBar.txtvendedor.text = "BIENVENIDO ${nombre_vendedor?.trim()}"
@@ -108,6 +108,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         //OCULTANDO EL MENU TOKEN
         if(generaToken == 0){
             navigationView.menu.setGroupVisible(R.id.group_admin, false)
+            navigationView.menu.setGroupVisible(R.id.group_carga, false)
         }
 
         //FIN DE LA IMPLEAMENTACION DEL MENU
@@ -421,6 +422,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             R.id.nav_pedido -> historicoPedidos()
             R.id.nav_token -> crearTokens()
             R.id.nav_carga -> solicitudCarga()
+            R.id.nav_devolucion -> solicitudDevolucion()
             R.id.nav_gasto -> gastos()
             R.id.nav_reporte -> reportes()
             R.id.nav_configuracion -> configuracion()
@@ -479,6 +481,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
 
     private fun solicitudCarga() {
         val intento = Intent(this@Inicio, SolicitudCargaMenu::class.java)
+        startActivity(intento)
+        finish()
+    }
+
+    private fun solicitudDevolucion(){
+        val intento = Intent(this, MenuDevoluciones::class.java)
         startActivity(intento)
         finish()
     }

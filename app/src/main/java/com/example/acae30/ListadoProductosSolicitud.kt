@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivityListadoProductosSolicitudBinding
 import com.example.acae30.listas.InventarioAdapter
@@ -27,6 +28,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
 
     private lateinit var bindind : ActivityListadoProductosSolicitudBinding
     private val solicitudController = SolicitudRecargasController()
+    private val inventarioController = InventarioController()
 
     private lateinit var preferences: SharedPreferences
     private val instancia = "CONFIG_SERVIDOR"
@@ -35,6 +37,8 @@ class ListadoProductosSolicitud : AppCompatActivity() {
 
     private var idSolicitud : Int = 0
     private var proceso : String = ""
+
+    private var vista : String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +53,8 @@ class ListadoProductosSolicitud : AppCompatActivity() {
         idSolicitud = intent.getIntExtra("idSolicitud", 0)
         proceso = intent.getStringExtra("proceso").toString()
 
+        vista = intent.getStringExtra("vista").toString()
+
     }
 
     override fun onStart() {
@@ -57,7 +63,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
             mensajeCancelar()
         }
 
-        cargarInventario()
+        cargarInventario(vista)
 
         bindind.txtBusquedaProducto.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
@@ -67,24 +73,40 @@ class ListadoProductosSolicitud : AppCompatActivity() {
 
             }
             override fun afterTextChanged(string: Editable) {
-                val busqueda = solicitudController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud, string.toString())
+                val busqueda : ArrayList<Inventario> = when(vista){
+                    "devolucion" -> {
+                        inventarioController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,string.toString())
+                    }
+
+                    else -> {
+                        solicitudController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,string.toString())
+                    }
+                }
+                //val busqueda = solicitudController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud, string.toString())
                 this@ListadoProductosSolicitud.mostrarLista(busqueda)
             }
         })
     }
+
     //FUNCION PARA ACTUALIZAR LA LISTA DEL INVENTARIO
-    private fun cargarInventario(){
+    private fun cargarInventario(vista : String){
         this.lifecycleScope.launch {
             try {
-                val lista = solicitudController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,"")
+                val lista : ArrayList<Inventario> = when(vista){
+                    "devolucion" -> {
+                        inventarioController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,"")
+                    }
+
+                    else -> {
+                        solicitudController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,"")
+                    }
+                }
                 mostrarLista(lista)
             } catch (e: Exception) {
                 runOnUiThread {
                     Toast.makeText(this@ListadoProductosSolicitud, e.message, Toast.LENGTH_SHORT).show()
                 }
-
             }
-
         }
     }
 
@@ -101,19 +123,32 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                         if(sinExistencias == 0 && existeniasProducto == 0f || existeniasProducto < 0f){
                             Toast.makeText(this@ListadoProductosSolicitud, "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS", Toast.LENGTH_SHORT).show()
                         }else{
-                            val intento = Intent(this@ListadoProductosSolicitud, AgregarProductoSolicitud::class.java)
-                            intento.putExtra("proceso", proceso)
-                            intento.putExtra("idSolicitud", idSolicitud)
-                            intento.putExtra("idProducto", list[position].Id)
-                            intento.putExtra("codigo", list[position].Codigo)
-                            intento.putExtra("descripcion", list[position].descripcion)
-                            intento.putExtra("existencia", list[position].Existencia!!.toFloat())
-                            intento.putExtra("costo", list[position].Costo!!.toFloat())
-                            intento.putExtra("costoIva", list[position].costo_iva!!.toFloat())
-                            intento.putExtra("precio_u", list[position].Precio!!.toFloat())
-                            intento.putExtra("precio_u_iva", list[position].Precio_iva!!.toFloat())
-                            startActivity(intento)
-                            finish()
+                            when(vista){
+                                "devolucion" -> {
+                                    val intento = Intent(this, AgregarProductosDevolucion::class.java)
+                                    intento.putExtra("idProducto", list[position].Id)
+                                    intento.putExtra("codigo", list[position].Codigo)
+                                    intento.putExtra("descripcion", list[position].descripcion)
+                                    intento.putExtra("existencia", list[position].Existencia!!.toFloat())
+                                    startActivity(intento)
+                                    finish()
+                                }
+                                else -> {
+                                    val intento = Intent(this@ListadoProductosSolicitud, AgregarProductoSolicitud::class.java)
+                                    intento.putExtra("proceso", proceso)
+                                    intento.putExtra("idSolicitud", idSolicitud)
+                                    intento.putExtra("idProducto", list[position].Id)
+                                    intento.putExtra("codigo", list[position].Codigo)
+                                    intento.putExtra("descripcion", list[position].descripcion)
+                                    intento.putExtra("existencia", list[position].Existencia!!.toFloat())
+                                    intento.putExtra("costo", list[position].Costo!!.toFloat())
+                                    intento.putExtra("costoIva", list[position].costo_iva!!.toFloat())
+                                    intento.putExtra("precio_u", list[position].Precio!!.toFloat())
+                                    intento.putExtra("precio_u_iva", list[position].Precio_iva!!.toFloat())
+                                    startActivity(intento)
+                                    finish()
+                                }
+                            }
                         }
                     }
                     bindind.listadoInventario.adapter = adapter
@@ -126,19 +161,32 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                         if(sinExistencias == 0 && existeniasProducto == 0f || existeniasProducto < 0f){
                             Toast.makeText(this@ListadoProductosSolicitud, "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS", Toast.LENGTH_SHORT).show()
                         }else{
-                            val intento = Intent(this@ListadoProductosSolicitud, AgregarProductoSolicitud::class.java)
-                            intento.putExtra("proceso", proceso)
-                            intento.putExtra("idSolicitud", idSolicitud)
-                            intento.putExtra("idProducto", list[position].Id)
-                            intento.putExtra("codigo", list[position].Codigo)
-                            intento.putExtra("descripcion", list[position].descripcion)
-                            intento.putExtra("existencia", list[position].Existencia!!.toFloat())
-                            intento.putExtra("costo", list[position].Costo!!.toFloat())
-                            intento.putExtra("costoIva", list[position].costo_iva!!.toFloat())
-                            intento.putExtra("precio_u", list[position].Precio!!.toFloat())
-                            intento.putExtra("precio_u_iva", list[position].Precio_iva!!.toFloat())
-                            startActivity(intento)
-                            finish()
+                            when(vista){
+                                "devolucion" -> {
+                                    val intento = Intent(this, AgregarProductosDevolucion::class.java)
+                                    intento.putExtra("idProducto", list[position].Id)
+                                    intento.putExtra("codigo", list[position].Codigo)
+                                    intento.putExtra("descripcion", list[position].descripcion)
+                                    intento.putExtra("existencia", list[position].Existencia!!.toFloat())
+                                    startActivity(intento)
+                                    finish()
+                                }
+                                else -> {
+                                    val intento = Intent(this@ListadoProductosSolicitud, AgregarProductoSolicitud::class.java)
+                                    intento.putExtra("proceso", proceso)
+                                    intento.putExtra("idSolicitud", idSolicitud)
+                                    intento.putExtra("idProducto", list[position].Id)
+                                    intento.putExtra("codigo", list[position].Codigo)
+                                    intento.putExtra("descripcion", list[position].descripcion)
+                                    intento.putExtra("existencia", list[position].Existencia!!.toFloat())
+                                    intento.putExtra("costo", list[position].Costo!!.toFloat())
+                                    intento.putExtra("costoIva", list[position].costo_iva!!.toFloat())
+                                    intento.putExtra("precio_u", list[position].Precio!!.toFloat())
+                                    intento.putExtra("precio_u_iva", list[position].Precio_iva!!.toFloat())
+                                    startActivity(intento)
+                                    finish()
+                                }
+                            }
                         }
                     }
                     bindind.listadoInventario.adapter = adapter
@@ -163,7 +211,14 @@ class ListadoProductosSolicitud : AppCompatActivity() {
             .setMessage("¿DESEA CANCELAR EL PROCESO?")
             .setPositiveButton("ACEPTAR") { view, _ ->
                 view.dismiss()
-                nuevaSolicitud()
+                when(vista){
+                    "devolucion" -> {
+                        nuevadevolucion()
+                    }
+                    else -> {
+                        nuevaSolicitud()
+                    }
+                }
             }
             .setNegativeButton("CANCELAR"){view, _ ->
                 view.dismiss()
@@ -178,6 +233,12 @@ class ListadoProductosSolicitud : AppCompatActivity() {
     private fun nuevaSolicitud(){
         val intent = Intent(this, NuevaSolicitud::class.java)
         intent.putExtra("idSolicitud", idSolicitud)
+        startActivity(intent)
+        finish()
+    }
+
+    private fun nuevadevolucion(){
+        val intent = Intent(this, NuevaDevolucion::class.java)
         startActivity(intent)
         finish()
     }

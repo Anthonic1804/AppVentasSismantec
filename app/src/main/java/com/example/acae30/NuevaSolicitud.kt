@@ -4,6 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -12,6 +16,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivityNuevaSolicitudBinding
 import com.example.acae30.listas.PedidoDetalleAdapter
@@ -29,11 +34,15 @@ class NuevaSolicitud : AppCompatActivity() {
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
     private var solicitudController = SolicitudRecargasController()
+    private var catalagosController = CatalogosController()
 
     private var vendedor = ""
     private var idVendedor = 0
 
     private var idSolicitud : Int = 0
+
+    var rutaSeleccionada : String = "-- SELECCIONE --"
+    var idRutaSeleccionada : Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,9 +56,8 @@ class NuevaSolicitud : AppCompatActivity() {
         idSolicitud = intent.getIntExtra("idSolicitud", 0)
 
         cargarDetalle()
+        cargarRutas()
     }
-
-
 
     override fun onStart() {
         super.onStart()
@@ -59,9 +67,23 @@ class NuevaSolicitud : AppCompatActivity() {
         }
 
         binding.btnenviar.setOnClickListener {
-            val enviado = solicitudController.actualizarEstadoSolicitud(this, idSolicitud)
-            if(enviado){
-                mensajeConfirmacion()
+            when(idRutaSeleccionada){
+                0 -> {
+                    Toast.makeText(this,"DEBE DE SELECCIONAR UNA RUTA", Toast.LENGTH_SHORT)
+                        .show()
+                }
+                else -> {
+                    val lista = solicitudController.obtenerDetalleSolicitud(this@NuevaSolicitud, idSolicitud)
+                    if(lista.size > 0){
+                        val enviado = solicitudController.actualizarEstadoSolicitud(this, idSolicitud)
+                        if(enviado){
+                            mensajeConfirmacion()
+                        }
+                    }else{
+                        Toast.makeText(this,"EL DETALLE NO SE PUEDE ENVIAR SIN PRODUCTOS", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
             }
         }
 
@@ -75,8 +97,48 @@ class NuevaSolicitud : AppCompatActivity() {
             finish()
         }
 
+        //IMPLEMENTANDO LOGICA DEL RUTA SELECCIONADO
+        binding.spRuta.onItemSelectedListener = object : OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?,
+                                        view: View?,
+                                        position: Int,
+                                        id: Long) {
+
+                rutaSeleccionada = parent?.getItemAtPosition(position).toString()
+
+                this@NuevaSolicitud.lifecycleScope.launch {
+                    try{
+                        idRutaSeleccionada = if(rutaSeleccionada == "-- SELECCIONE --"){
+                            0
+                        }else{
+                            catalagosController.obtenerInformacionRuta(this@NuevaSolicitud, rutaSeleccionada)!!.id
+                        }
+                    }catch (e: Exception){
+                        println("ERROR AL CARGAR LA RUTA DEL CIENTE " + e.message)
+                    }
+                }
+
+            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
+        }
+
         val fecha = funciones.getFechaHoraProceso()
         binding.fechaSolicitud.text = fecha.toString()
+    }
+
+    //FUNCION PARA CARGAR LAS RUTAS
+    private fun cargarRutas(){
+        this.lifecycleScope.launch {
+            try{
+                val listaRustas = catalagosController.obtenerListadoRutaSQLite(this@NuevaSolicitud, "", "")
+
+                val rutas = ArrayAdapter(this@NuevaSolicitud, android.R.layout.simple_spinner_item, listaRustas)
+                rutas.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
+                binding.spRuta.adapter = rutas
+            }catch (e: Exception){
+                throw Exception(e.message)
+            }
+        }
     }
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
@@ -143,8 +205,7 @@ class NuevaSolicitud : AppCompatActivity() {
     }
 
     private fun armarLista(lista: ArrayList<SolicitudCargaDetalle>) {
-        //var total = 0.toFloat()
-        //val pedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
+
         val mLayoutManager = LinearLayoutManager(
             this@NuevaSolicitud,
             LinearLayoutManager.VERTICAL,

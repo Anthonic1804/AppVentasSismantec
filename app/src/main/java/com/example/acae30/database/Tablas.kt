@@ -24,8 +24,8 @@ class Tablas {
                 "Telefono_2 vARCHAR(15)  NULL," +
                 "Correo VARCHAR(200)  NULL," +
                 "Contacto VARCHAR(200)  NULL," +
-                "Id_ruta INTEGER DEFAULT '''''''0''''''' NULL," +
-                "Id_vendedor INTEGER DEFAULT '''''''0''''''' NULL," +
+                "Id_ruta INTEGER DEFAULT 0," +
+                "Id_vendedor INTEGER DEFAULT 0," +
                 "Vendedor VARCHAR(50)  NULL," +
                 "Status VARCHAR(50)  NULL," +
                 "Ultima_venta DATE  NULL," +
@@ -43,7 +43,11 @@ class Tablas {
                 "DTECorreo VARCHAR(100) NOT NULL DEFAULT ''," +
                 "DTETelefono VARCHAR(25) NOT NULL DEFAULT ''," +
                 "Latitud_app VARCHAR(100) NULL," +
-                "Longitud_app VARCHAR(100) NULL" +
+                "Longitud_app VARCHAR(100) NULL," +
+                "Nombre_comercial VARCHAR(100) NULL DEFAULT ''," +
+                "DTECodGiro VARCHAR(10) NULL DEFAULT ''," +
+                "DTEDistrito VARCHAR(70) NULL DEFAULT ''," +
+                "DTECodDistrito VARCHAR(10) NULL DEFAULT ''" +
                 ");"
     } //tabla cliente
 
@@ -220,7 +224,10 @@ class Tablas {
                 "Id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "idHojaCarga INTEGER NOT NULL DEFAULT 0," +
                 "numeroHoja INTEGER NOT NULL DEFAULT 0," +
-                "Fecha_registro DATE DEFAULT CURRENT_DATE)"
+                "Fecha_registro DATE DEFAULT CURRENT_DATE," +
+                "Id_ruta INTEGER NOT NULL DEFAULT 0," +
+                "Ruta VARCHAR(50) NULL," +
+                "Devolucion INTEGER NOT NULL DEFAULT 0)"
     }
 
     //CREADO TABLA HOJA DE CARGA DETALLE
@@ -554,7 +561,9 @@ class Tablas {
                 "Empleado VARCHAR(50) NOT NULL," +
                 "Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
                 "enviado INTEGER NOT NULL DEFAULT 0," +
-                "idServidor INTEGER NOT NULL DEFAULT 0)"
+                "idServidor INTEGER NOT NULL DEFAULT 0," +
+                "Id_ruta INTEGER NOT NULL DEFAULT 0," +
+                "Ruta VARCHAR(50) NOT NULL)"
     }
 
     //TABLA SOLICITUD DE CARGA DETALLE
@@ -571,6 +580,38 @@ class Tablas {
                 "Precio_u NUMERIC(18,4) NOT NULL," +
                 "Precio_u_iva NUMERIC(18,4) NOT NULL," +
                 "Total NUMERIC(18,4) NOT NULL)"
+    }
+
+    //TABLA PARA SOLICITUD DE DEVOLUCION
+    fun devolucion() : String{
+        return "CREATE TABLE devolucion(" +
+                "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
+                "Numero INTEGER NOT NULL," +
+                "Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
+                "Id_hoja_de_carga INTEGER NOT NULL," +
+                "Hoja_de_carga INTEGER NOT NULL," +
+                "Id_ruta INTEGER NULL," +
+                "Ruta VARCHAR(50) NULL," +
+                "Id_vendedor INTEGER NOT NULL," +
+                "Vendedor VARCHAR(50) NOT NULL," +
+                "Estado VARCHAR(25) NULL)"
+    }
+
+    //TABLA DEVOLUCION DETALLE
+    fun devolucionDetalle() : String{
+        return "CREATE TABLE devolucion_detalle(" +
+                "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
+                "Id_dev INTEGER NOT NULL," +
+                "Numero_dev INTEGER NOT NULL," +
+                "Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
+                "Id_producto INTEGER NOT NULL," +
+                "Codigo_producto VARCHAR(25) NOT NULL," +
+                "Producto VARCHAR(100) NOT NULL," +
+                "Fraccion VARCHAR(10) NOT NULL," +
+                "Cantidad NUMERIC(18,0) NOT NULL," +
+                "Bueno NUMERIC(18,0) NOT NULL," +
+                "Averia NUMERIC(18,0) NOT NULL," +
+                "Tipo_fiscal VARCHAR(10) NOT NULL)"
     }
 
     //TRIGGER PARA LA INSERCION DE DATOS EN TABLA FTS4 VIRTUAL INVENTARIO

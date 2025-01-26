@@ -20,6 +20,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
+            android:id="@+id/tvNuevoCliente"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="NUEVO CLIENTE"
@@ -441,10 +442,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Latitud"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/lyMuniDistro">
+                        android:hint="Latitud">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/txtLatitud"
@@ -466,16 +464,14 @@
                     android:layout_weight="1"
                     android:orientation="vertical">
 
+
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/lyLongitud"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="21dp"
-                        android:hint="Longitud"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/lyMuniDistro">
+                        android:hint="Longitud">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/txtLongitud"
@@ -725,6 +721,18 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnCapturarGeo"
+        android:layout_width="@dimen/estandar_55dp"
+        android:layout_height="@dimen/estandar_55dp"
+        android:backgroundTint="@color/btnVerde"
+        android:layout_marginBottom="100dp"
+        android:layout_marginEnd="@dimen/margin_default_16dp"
+        android:contentDescription="@string/nuevo_cliente"
+        android:src="@drawable/ic_address"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <LinearLayout
         android:id="@+id/layout_buttons"

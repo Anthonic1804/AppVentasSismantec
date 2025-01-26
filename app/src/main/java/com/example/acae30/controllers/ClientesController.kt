@@ -197,7 +197,49 @@ class ClientesController {
         var datosCliente: Cliente? = null
 
         try {
-            val cursor = base.rawQuery("SELECT * FROM clientes " +
+            val cursor = base.rawQuery("SELECT Id," +
+                    "Codigo," +
+                    "Cliente," +
+                    "Dui," +
+                    "Nit," +
+                    "Nrc," +
+                    "Giro," +
+                    "Categoria_cliente," +
+                    "Terminos_cliente," +
+                    "Plazo_credito, " +
+                    "Limite_credito, " +
+                    "Balance, " +
+                    "Estado_credito, " +
+                    "Direccion," +
+                    "Municipio, " +
+                    "Departamento, " +
+                    "Telefono_1," +
+                    "Telefono_2, " +
+                    "Correo, " +
+                    "Contacto, " +
+                    "Id_ruta," +
+                    "Id_vendedor," +
+                    "Vendedor, " +
+                    "Status, " +
+                    "Ultima_venta, " +
+                    "Aporte_mensual," +
+                    "Firmar_pagare_app, " +
+                    "Persona_juridica, " +
+                    "dteGiro," +
+                    "Ruta, " +
+                    "DTEDireccion, " +
+                    "DTECodDepto," +
+                    "DTECodMunicipio, " +
+                    "DTECodPais, " +
+                    "DTEPais ," +
+                    "DTECorreo, " +
+                    "DTETelefono , " +
+                    "Latitud_app," +
+                    "Longitud_app, " +
+                    "Nombre_comercial , " +
+                    "DTECodGiro, " +
+                    "DTEDistrito, " +
+                    "DTECodDistrito FROM clientes " +
                     "WHERE id=$idCliente", null)
 
             if (cursor.count > 0) {
@@ -229,7 +271,8 @@ class ClientesController {
                     cursor.getString(23),
                     cursor.getString(24),
                     cursor.getFloat(25),
-                    cursor.getInt(27),
+                    cursor.getInt(26),
+                    cursor.getString(27),
                     cursor.getString(28),
                     cursor.getString(29),
                     cursor.getString(30),
@@ -240,9 +283,11 @@ class ClientesController {
                     cursor.getString(35),
                     cursor.getString(36),
                     cursor.getString(37),
-                    "",
                     cursor.getString(38),
-                    cursor.getString(39)
+                    cursor.getString(39),
+                    cursor.getString(40),
+                    cursor.getString(41),
+                    cursor.getString(42)
                 )
                 cursor.close()
             }
@@ -257,21 +302,33 @@ class ClientesController {
     }
 
     //FUNCION PARA OBTENER TODOS LOS CLIENTES
-    fun obtenerListaClientes(context: Context, busqueda: String): ArrayList<Cliente>{
+    fun obtenerListaClientes(context: Context, busqueda: String, rutaClientes: String): ArrayList<Cliente>{
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val base = funciones.getDataBase(context).readableDatabase
         val listaClientes = ArrayList<Cliente>()
         var consutaSql: String = ""
 
         /*
-        * VERIFICAR ESTA CONSULTA
-        * "SELECT * FROM Clientes C " +
-                    "INNER JOIN cliente_sucursal S ON C.id = S.id_cliente" +
-                    " WHERE C.Cliente LIKE '%$busqueda%' OR C.Codigo LIKE '%$busqueda' OR S.codigo_sucursal LIKE '%$busqueda' "*/
-
-        consutaSql = if (busqueda != "") {
-            "SELECT * FROM Clientes WHERE Cliente LIKE '%$busqueda%' OR Codigo LIKE '%$busqueda'"
-        } else {
-            "SELECT * FROM Clientes LIMIT 50"
+        * VALIDACION PARA LA CARGA DE CLIENTES
+        * R-> POR RUTA CARGADA
+        * TODOS LOS CLIENTES
+        * */
+        when(rutaClientes){
+            "R" -> {
+                val idRuta = preferences.getInt("idRutaSeleccionada", 0)
+                consutaSql = if (busqueda != "") {
+                    "SELECT * FROM Clientes WHERE Id_ruta=$idRuta AND Cliente LIKE '%$busqueda%' OR Codigo LIKE '%$busqueda'"
+                } else {
+                    "SELECT * FROM Clientes WHERE Id_ruta=$idRuta LIMIT 50"
+                }
+            }
+            else -> {
+                consutaSql = if (busqueda != "") {
+                    "SELECT * FROM Clientes WHERE Cliente LIKE '%$busqueda%' OR Codigo LIKE '%$busqueda'"
+                } else {
+                    "SELECT * FROM Clientes LIMIT 50"
+                }
+            }
         }
 
         try {
@@ -309,6 +366,9 @@ class ClientesController {
                         consulta.getFloat(25),
                         consulta.getInt(27),
                         consulta.getString(28),
+                        "",
+                        "",
+                        "",
                         "",
                         "",
                         "",
@@ -506,6 +566,7 @@ class ClientesController {
         var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val clienteJson = convertirClienteToJson(context, cliente)
+        println("JSON GENERADO: " + clienteJson)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
         try {
             val objecto =
@@ -539,11 +600,17 @@ class ClientesController {
                                 val res: JSONObject = JSONObject(respuesta.toString())
                                 if (res.getInt("idCliente") > 0 && !res.isNull("respuesta")) {
                                     val idCliente: Int = res.getInt("idCliente")
+                                    val respues : String = res.getString("respuesta")
                                     if(idCliente == 0){
                                         println("ERROR")
                                     }else{
-                                        println("RESPUESTA DEL SERIVDOR -> $idCliente")
-                                        registrarClienteDataBase(cliente, idCliente, context)
+                                        println("ID CLIENTE SERVIDOR -> $idCliente")
+                                        if(respues == "CLIENTE_REGISTRADO"){
+                                            registrarClienteDataBase(cliente, idCliente, context)
+                                        }else{
+                                            actualizarClienteDataBase(cliente, idCliente, context)
+                                        }
+
                                         envio = true
                                     }
                                 }
@@ -612,6 +679,10 @@ class ClientesController {
         json.addProperty("DTECodGiro", cliente.DTECodGiro)
         json.addProperty("Latitud_app", cliente.Latitud)
         json.addProperty("Longitud_app", cliente.Longitud)
+        json.addProperty("Nombre_comercial", cliente.NombreComercial)
+        json.addProperty("DTEDistrito", cliente.DTEDistrito)
+        json.addProperty("DTECodDistrito", cliente.DTECodDistrito)
+
 
         return json
     }
@@ -670,8 +741,83 @@ class ClientesController {
             data.put("DTECorreo", funciones.validate(cliente.DTECorreo))
             data.put("Latitud_app", funciones.validate(cliente.Latitud))
             data.put("Longitud_app", funciones.validate(cliente.Longitud))
+            data.put("Nombre_comercial", funciones.validate(cliente.NombreComercial))
+            data.put("DTECodGiro", funciones.validate(cliente.DTECodGiro))
+            data.put("DTEDistrito", funciones.validate(cliente.DTEDistrito))
+            data.put("DTECodDistrito", funciones.validate(cliente.DTECodDistrito))
 
             bd.insert("clientes", null, data)
+            bd.setTransactionSuccessful()
+
+        } catch (e: Exception) {
+            println("ERROR AL REGISTRAR EL CLIENTE EN SQLITE -> " + e.message)
+        } finally {
+            bd!!.endTransaction()
+            bd.close()
+        }
+    }
+
+    //FUNINON PARA ACTUALIZAR EL NUEVO CLIENTE EN SLITE
+    private fun actualizarClienteDataBase(cliente: Cliente, idCliente: Int, context: Context) {
+        val bd = funciones.getDataBase(context).writableDatabase
+        try {
+            bd!!.beginTransaction()
+
+            val data = ContentValues()
+            data.put("Id", idCliente)
+            data.put("Codigo", funciones.validate(cliente.Codigo))
+            data.put("Cliente", funciones.validate(cliente.Cliente))
+            data.put("Dui", funciones.validate(cliente.Dui))
+            data.put("Nit", funciones.validate(cliente.Nit))
+            data.put("Nrc", funciones.validate(cliente.Nrc))
+            data.put("Giro", funciones.validate(cliente.Giro))
+            data.put(
+                "Categoria_cliente",
+                funciones.validate(cliente.Categoria_cliente)
+            )
+            data.put(
+                "Terminos_cliente",
+                funciones.validate(cliente.Terminos_cliente)
+            )
+            data.put("Plazo_credito", funciones.validate(cliente.Plazo_credito))
+            data.put("Limite_credito",
+                funciones.validate(cliente.Limite_credito)
+            )
+            data.put("Balance", funciones.validate(cliente.Balance))
+            data.put("Estado_credito", funciones.validate(cliente.Estado_credito))
+            data.put("Direccion", funciones.validate(cliente.Direccion))
+            data.put("Municipio", funciones.validate(cliente.Municipio))
+            data.put("Departamento", funciones.validate(cliente.Departamento))
+            data.put("Telefono_1", funciones.validate(cliente.Telefono_1))
+            data.put("Telefono_2", funciones.validate(cliente.Telefono_2))
+            data.put("Correo", funciones.validate(cliente.Correo))
+            data.put("Contacto", funciones.validate((cliente.Contacto)))
+            data.put("Id_ruta", funciones.validate(cliente.Id_ruta))
+            data.put("Status", funciones.validate(cliente.Status))
+            data.put(
+                "Aporte_mensual",
+                funciones.validate(cliente.Aporte_mensual)
+            )
+            data.put("Firmar_pagare_app", funciones.validate(cliente.Firmar_pagare_app))
+            data.put("Persona_juridica", funciones.validate(cliente.Persona_juridica))
+            data.put("dteGiro", funciones.validate(cliente.dteGiro))
+            data.put("Ruta", funciones.validate(cliente.Ruta))
+            data.put("DTECodDepto", funciones.validate(cliente.DTECodDepto))
+            data.put("DTECodMunicipio", funciones.validate(cliente.DTECodDepto))
+            data.put("DTECodPais", funciones.validate(cliente.DTECodPais))
+            data.put("DTEDireccion", funciones.validate(cliente.DTEDireccion))
+            data.put("DTEPais", funciones.validate(cliente.DTEPais))
+            data.put("DTETelefono", funciones.validate(cliente.DTETelefono))
+            data.put("DTECorreo", funciones.validate(cliente.DTECorreo))
+            data.put("Latitud_app", funciones.validate(cliente.Latitud))
+            data.put("Longitud_app", funciones.validate(cliente.Longitud))
+            data.put("Nombre_comercial", funciones.validate(cliente.NombreComercial))
+            data.put("DTECodGiro", funciones.validate(cliente.DTECodGiro))
+            data.put("DTEDistrito", funciones.validate(cliente.DTEDistrito))
+            data.put("DTECodDistrito", funciones.validate(cliente.DTECodDistrito))
+
+            bd.update("clientes", data, "Id = ?", arrayOf(idCliente.toString()))
+
             bd.setTransactionSuccessful()
 
         } catch (e: Exception) {
