@@ -55,7 +55,10 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
 
     private var inventarioController = InventarioController()
 
-    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
+    @Deprecated("This method has been deprecated in favor of using the\n      " +
+            "{@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n     " +
+            " The OnBackPressedDispatcher controls how back button events are dispatched\n      " +
+            "to one or more {@link OnBackPressedCallback} objects.")
     override fun onBackPressed() {
         super.onBackPressed()
     }
@@ -108,7 +111,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         //OCULTANDO EL MENU TOKEN
         if(generaToken == 0){
             navigationView.menu.setGroupVisible(R.id.group_admin, false)
-            navigationView.menu.setGroupVisible(R.id.group_carga, false)
+            //navigationView.menu.setGroupVisible(R.id.group_carga, false)
         }
 
         //FIN DE LA IMPLEAMENTACION DEL MENU
@@ -189,13 +192,13 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         dialogo.setContentView(R.layout.alert_cerrar_sesion_usuario)
         dialogo.findViewById<Button>(R.id.btncerrar).setOnClickListener {
             //FUNCION PARA ALIMINAR LA INFORMACION DE TABLAS MAESTRAS
-            /*CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 funciones!!.eliminarInformacion(this@Inicio)
             }
 
             val editor = preferencias!!.edit()
             editor.putString("fechaInventario", "NULL")
-            editor.apply()*/
+            editor.apply()
 
             updateSesionServer()
             cerrarSesion()
@@ -456,11 +459,13 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         startActivity(intent)
         finish()
     }
+
     private fun crearTokens(){
         val intent = Intent(this@Inicio, PreciosAutorizados::class.java)
         startActivity(intent)
         finish()
     }
+
     private fun configuracion(){
         val intento = Intent(this@Inicio, Configuracion::class.java)
         startActivity(intento)

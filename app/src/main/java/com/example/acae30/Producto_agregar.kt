@@ -197,6 +197,7 @@ class Producto_agregar : AppCompatActivity() {
         //09/01/2024
         cantidadEscala = seleccionarCantidadenEscala(idpedido, idproducto!!)
 
+        listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, FacturaExportacion)
 
         // Validar que la cantidad sea con hasta dos decimales
         //ACTUALIZADOS LA VALIDACION QUE SEA HASTA CON 4 DECIMAES
@@ -343,7 +344,7 @@ class Producto_agregar : AppCompatActivity() {
             }
         }//cuando se carga los inventarios
 
-        listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, FacturaExportacion)
+
 
 
         // ACTUALIZAR EL CAMPO TOTAL AL MODIFICAR LA CANTIDAD
@@ -614,6 +615,8 @@ class Producto_agregar : AppCompatActivity() {
         } else {
 
         }
+
+
         CambioCantidad()
     }
 
@@ -932,10 +935,10 @@ class Producto_agregar : AppCompatActivity() {
         } else {
             listPrecios!!.forEach {
 
-                var valorPrecio = "${String.format("%.2f".format(it.Precio_iva) )}"
+                var valorPrecio = "${String.format("%.4f".format(it.Precio_iva) )}"
                 var unidad_cantidad = ""
                 if (it.Cantidad!! > 0.toFloat()) {
-                    unidad_cantidad = " (" + "${String.format("%.2f".format(it.Cantidad) )}" + ")"
+                    unidad_cantidad = " (" + "${String.format("%.4f".format(it.Cantidad) )}" + ")"
 
                 }
                 if (cadena == valorPrecio + " ${it.Nombre}" + unidad_cantidad) {
@@ -1271,11 +1274,15 @@ class Producto_agregar : AppCompatActivity() {
     private fun agregarProducto(){
 
         var bonificacion = txtCantBonificados.text.toString().toInt()
+        var precio_provisional = 0.toFloat()
 
         // Validar si la cantidad corresponde al precio
         var esCorrecto = true
 
-        var precio_provisional = 0.toFloat()
+        //AGREGADA VALIDACION PARA EVITAR PROBLEMA CON PRECIOS PERSONALIZADOS
+        if(precioIvaPersonalizado > 0 ){
+            precio_provisional = precioIvaPersonalizado
+        }
 
         var cadena_numero = spprecio!!.selectedItem.toString()
 

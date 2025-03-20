@@ -350,7 +350,7 @@ class Login : AppCompatActivity() {
                                         val identidad_param: String = res.getString("identidad")
                                         val estado: String = res.getString("estado")
                                         val generaToken : Int = res.getInt("generaToken")
-                                        //val cargarClientePorRuta : String = res.getString("todos_clientes_App")
+                                        val cargarClientePorRuta : String = res.getString("todos_clientes_App")
 
                                         if (coderror > 0) {
                                             val editor = preferencias!!.edit()
@@ -360,7 +360,7 @@ class Login : AppCompatActivity() {
                                             editor.putString("Identidad", identidad)
                                             editor.putInt("generaToken", generaToken)//VALIDACION TIPO ADMINISTRADOR
                                             editor.putBoolean("sesion", true)
-                                            //editor.putString("cargarClientesPorRuta", cargarClientePorRuta) // VALIDACION PARA CARGAR CLIENTES POR RUTA EN APP
+                                            editor.putString("cargarClientesPorRuta", cargarClientePorRuta) // VALIDACION PARA CARGAR CLIENTES POR RUTA EN APP
                                             editor.apply()
 
                                             val inte = Intent(this@Login, Inicio::class.java)

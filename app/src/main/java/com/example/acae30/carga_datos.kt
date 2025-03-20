@@ -1009,10 +1009,10 @@ class carga_datos : AppCompatActivity() {
                 data.put("DTECorreo", funciones.validate(dato.getString("dteCorreo")))
                 data.put("Latitud_app", funciones.validate(dato.getString("latitud_app")))
                 data.put("Longitud_app", funciones.validate(dato.getString("longitud_app")))
-                //data.put("Nombre_comercial", funciones.validate(dato.getString("nombre_comercial")))
+                data.put("Nombre_comercial", funciones.validate(dato.getString("nombre_comercial")))
                 data.put("DTECodGiro", funciones.validate(dato.getString("dteCodGiro")))
-                //data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
-                //data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))
+                data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
+                data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))
 
                 bd.insert("clientes", null, data)
                 contador += talla

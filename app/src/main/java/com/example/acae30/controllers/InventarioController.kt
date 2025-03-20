@@ -734,7 +734,21 @@ class InventarioController {
 
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
-                                        actualizarInventarioDatabase(res, context, view)
+
+                                        try{
+                                            actualizarInventarioDatabase(res, context, view)
+                                        }catch (e:Exception){
+                                            println("ERROR AL ACTUALIZAR EL INVENTARIO -> ${e.message}")
+                                        }
+
+                                        delay(1000)
+
+                                        try{
+                                            obtenerEscalasPrecios(context)
+                                        }catch (e:Exception){
+                                            println("ERROR AL ACTUALIZAR LAS ESCALAS DE PRECIO -> ${e.message}")
+                                        }
+
                                         withContext(Dispatchers.Main){
                                             Toast.makeText(context, "INFORMACION DE INVENTARIO ACTUALIZADOS", Toast.LENGTH_SHORT).show()
 
@@ -777,7 +791,7 @@ class InventarioController {
         }
     }
 
-    private fun actualizarInventarioDatabase(json: JSONArray, context: Context, view:View) {
+    private suspend fun actualizarInventarioDatabase(json: JSONArray, context: Context, view:View) {
         val bd = funciones.getDataBase(context).writableDatabase
 
         try {

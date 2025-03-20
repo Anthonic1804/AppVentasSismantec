@@ -149,13 +149,13 @@ class NuevoCliente : AppCompatActivity() {
                 funciones.mensaje(this@NuevoCliente, "CONEXION DE INTERNET INESTABLE")
             }else{
 
-                codigoCliente = if(binding.txtNrc.text.isNullOrEmpty()){
-                    binding.txtDui.text.toString()
-                }else{
-                    binding.txtNrc.text.toString()
-                }
+//                codigoCliente = if(binding.txtNrc.text.isNullOrEmpty()){
+//                    binding.txtDui.text.toString()
+//                }else{
+//                    binding.txtNrc.text.toString()
+//                }
 
-                if(binding.txtNombreCliente.text!!.isEmpty() || binding.txtNombreCliente.text!!.length < 10 || codigoCliente == ""){
+                if(binding.txtNombreCliente.text!!.isEmpty() || binding.txtNombreCliente.text!!.length < 10){
                     Toast.makeText(this,"VERIFIQUE DATOS IMPORTANTES, NOMBRE, DUI, NRC, NIT, ETC \n CORRESPONDIENTE AL TIPO DE CLIENTE", Toast.LENGTH_LONG).show()
                 }else{
                     CoroutineScope(Dispatchers.IO).launch {

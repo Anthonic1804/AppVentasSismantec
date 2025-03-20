@@ -306,33 +306,47 @@ class ClientesController {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val base = funciones.getDataBase(context).readableDatabase
         val listaClientes = ArrayList<Cliente>()
-        var consutaSql: String = ""
+        val consultaSql: String
+        val argumentos: Array<String>
 
         /*
         * VALIDACION PARA LA CARGA DE CLIENTES
         * R-> POR RUTA CARGADA
         * TODOS LOS CLIENTES
         * */
-        when(rutaClientes){
+        when (rutaClientes) {
             "R" -> {
                 val idRuta = preferences.getInt("idRutaSeleccionada", 0)
-                consutaSql = if (busqueda != "") {
-                    "SELECT * FROM Clientes WHERE Id_ruta=$idRuta AND Cliente LIKE '%$busqueda%' OR Codigo LIKE '%$busqueda'"
+
+                if (busqueda.isNotEmpty()) {
+                    consultaSql = """
+                SELECT * FROM Clientes 
+                WHERE Id_ruta = ? 
+                AND (Cliente LIKE ? OR Codigo LIKE ? OR Nombre_comercial LIKE ?)
+            """.trimIndent()
+                    argumentos = arrayOf(idRuta.toString(), "%$busqueda%", "%$busqueda%", "%$busqueda%")
                 } else {
-                    "SELECT * FROM Clientes WHERE Id_ruta=$idRuta LIMIT 50"
+                    consultaSql = "SELECT * FROM Clientes WHERE Id_ruta = ? LIMIT 50"
+                    argumentos = arrayOf(idRuta.toString())
                 }
             }
+
             else -> {
-                consutaSql = if (busqueda != "") {
-                    "SELECT * FROM Clientes WHERE Cliente LIKE '%$busqueda%' OR Codigo LIKE '%$busqueda'"
+                if (busqueda.isNotEmpty()) {
+                    consultaSql = """
+                SELECT * FROM Clientes 
+                WHERE Cliente LIKE ? OR Codigo LIKE ? OR Nombre_comercial LIKE ?
+            """.trimIndent()
+                    argumentos = arrayOf("%$busqueda%", "%$busqueda%", "%$busqueda%")
                 } else {
-                    "SELECT * FROM Clientes LIMIT 50"
+                    consultaSql = "SELECT * FROM Clientes LIMIT 50"
+                    argumentos = emptyArray()
                 }
             }
         }
 
         try {
-            val consulta = base.rawQuery(consutaSql, null)
+            val consulta = base.rawQuery(consultaSql, argumentos)
 
             if (consulta.count > 0) {
                 consulta.moveToFirst()
@@ -566,7 +580,6 @@ class ClientesController {
         var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val clienteJson = convertirClienteToJson(context, cliente)
-        println("JSON GENERADO: " + clienteJson)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
         try {
             val objecto =
@@ -601,12 +614,12 @@ class ClientesController {
                                 if (res.getInt("idCliente") > 0 && !res.isNull("respuesta")) {
                                     val idCliente: Int = res.getInt("idCliente")
                                     val respues : String = res.getString("respuesta")
+                                    val codCliente : String = res.getString("codigo")
                                     if(idCliente == 0){
                                         println("ERROR")
                                     }else{
-                                        println("ID CLIENTE SERVIDOR -> $idCliente")
                                         if(respues == "CLIENTE_REGISTRADO"){
-                                            registrarClienteDataBase(cliente, idCliente, context)
+                                            registrarClienteDataBase(cliente, idCliente, codCliente, context)
                                         }else{
                                             actualizarClienteDataBase(cliente, idCliente, context)
                                         }
@@ -688,14 +701,14 @@ class ClientesController {
     }
 
     //FUNINON PARA REGISTRAR EL NUEVO CLIENTE EN SLITE
-    private fun registrarClienteDataBase(cliente: Cliente, idCliente: Int, context: Context) {
+    private fun registrarClienteDataBase(cliente: Cliente, idCliente: Int, codigo: String, context: Context) {
         val bd = funciones.getDataBase(context).writableDatabase
         try {
             bd!!.beginTransaction()
 
             val data = ContentValues()
             data.put("Id", idCliente)
-            data.put("Codigo", funciones.validate(cliente.Codigo))
+            data.put("Codigo", codigo)
             data.put("Cliente", funciones.validate(cliente.Cliente))
             data.put("Dui", funciones.validate(cliente.Dui))
             data.put("Nit", funciones.validate(cliente.Nit))
@@ -765,7 +778,6 @@ class ClientesController {
 
             val data = ContentValues()
             data.put("Id", idCliente)
-            data.put("Codigo", funciones.validate(cliente.Codigo))
             data.put("Cliente", funciones.validate(cliente.Cliente))
             data.put("Dui", funciones.validate(cliente.Dui))
             data.put("Nit", funciones.validate(cliente.Nit))
