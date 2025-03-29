@@ -5,21 +5,27 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.acae30.controllers.SolicitudDevolucionesController
 import com.example.acae30.databinding.ActivityMenuDevolucionesBinding
+import com.example.acae30.listas.DevolucionAdapter
+import com.example.acae30.listas.SolicitudAdapter
+import com.example.acae30.modelos.SolcitudDevolucion.SolicitudDevolucion
+import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Async.Execute
 
 class MenuDevoluciones : AppCompatActivity() {
 
     private lateinit var binding : ActivityMenuDevolucionesBinding
-    private var funciones = Funciones()
-
-    private lateinit var preferences: SharedPreferences
-    private var instancia = "CONFIG_SERVIDOR"
-
+    private var solicitudDevoluciones = SolicitudDevolucionesController()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,54 +42,26 @@ class MenuDevoluciones : AppCompatActivity() {
         }
 
         binding.nuevaDevolucion.setOnClickListener {
-            nuevaDevolucion()
-        }
-    }
+            this@MenuDevoluciones.lifecycleScope.launch {
+                val idDevolucion = solicitudDevoluciones.crearDevolucion(this@MenuDevoluciones)
 
-    //FUNCION PARA CREAR UNA NUEVA DEVOLUCION
-    private fun crearDevolucion(context: Context) : Int{
-        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val idVendedor = preferences.getInt("Idvendedor", 0)
-        val nombreVendedor =  preferences.getString("Vendedor", "")
-        val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
-        val idHojaCarga = preferences.getInt("idHojaCarga", 0)
-
-
-
-        val base = funciones.getDataBase(context).writableDatabase
-        val fecha = funciones.obtenerFecha()
-        var idDevolucion : Int = 0
-
-        try{
-            base.beginTransaction()
-            val contenido = ContentValues()
-            contenido.put("Numero" , 0)
-            contenido.put("Fecha", fecha)
-            contenido.put("Id_hoja_de_carga", 0)
-            contenido.put("Hoja_de_carga", 0)
-            contenido.put("Id_ruta", 0)
-            contenido.put("Ruta", "RutaNombre")
-            contenido.put("Id_vendedor", 0)
-            contenido.put("Vendedor", "VendedorNombre")
-            contenido.put("Estado", "PROCESADO")
-            val id = base.insert("devolucion", null, contenido)
-            idDevolucion = id.toInt()
-
-            base.setTransactionSuccessful()
-
-        }catch (e: Exception){
-            idDevolucion = 0
-            println("ERROR AL CREAR LA NUEVA DEVOLUCION " + e.message)
-        }finally {
-            base.endTransaction()
-            base.close()
+                if(idDevolucion > 0){
+                    runOnUiThread {
+                        nuevaDevolucion(idDevolucion)
+                    }
+                }else{
+                    Toast.makeText(this@MenuDevoluciones, "Error al crear la devolucion", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
         }
 
-        return  idDevolucion
+        mostrarDatos()
     }
 
-    private fun nuevaDevolucion(){
+    private fun nuevaDevolucion(idDevolucion : Int){
         val intento = Intent(this, NuevaDevolucion::class.java)
+        intento.putExtra("idDevolucion", idDevolucion)
         startActivity(intento)
         finish()
     }
@@ -92,6 +70,110 @@ class MenuDevoluciones : AppCompatActivity() {
         val intento = Intent(this, Inicio::class.java)
         startActivity(intento)
         finish()
+    }
+
+    //FUNCION MARA MOSTRAR LA LISTA DE ABONOS EN LA ACTIVIDAD
+    private fun mostrarDatos(){
+        this@MenuDevoluciones.lifecycleScope.launch {
+            try{
+                val lista = solicitudDevoluciones.obtenerListadoDevoluciones(this@MenuDevoluciones)
+                if(lista.size > 0){
+                    armarLista(lista)
+                }
+            }catch (e: Exception){
+                throw Exception(e.message)
+            }
+        }
+    }
+
+    //FUNCION PARA ARMAR EL LISTADO EN EL RECYCLERVIEW
+    private fun armarLista(lista : ArrayList<SolicitudDevolucion>) {
+        val mLayoutManager = LinearLayoutManager(
+            this@MenuDevoluciones,
+            LinearLayoutManager.VERTICAL,
+            false
+        )
+        binding.listaDevoluciones.layoutManager = mLayoutManager
+        val adapter = DevolucionAdapter(lista, this@MenuDevoluciones){ i ->
+            /* if(pedido!!.Enviado != 1 && from == "visita"){
+                 val data = lista[i]
+                 val intento = Intent(this@Detallepedido, Producto_agregar::class.java)
+                 intento.putExtra("idpedidodetalle", data.Id)
+                 intento.putExtra("idpedido", data.Id_pedido)
+                 intento.putExtra("idcliente", idcliente)
+                 intento.putExtra("nombrecliente", nombre)
+                 intento.putExtra("idproducto", data.Id_producto)
+                 intento.putExtra("proviene", "editar")
+                 intento.putExtra("total_param", data.Total_iva)
+                 intento.putExtra("sucursalPosition", getSucursalPosition)
+                 intento.putExtra("facturaExportacion", FacturaExportacion)
+                 startActivity(intento)
+                 finish()
+             }*/
+            val data = lista[i]
+            if(data.Numero == 0){
+                mensajeEnvio(data.Id)
+            }
+        }
+        binding.listaDevoluciones.adapter = adapter
+
+    }
+
+    //FUNCION DE MENSAJES DE ENVIO
+    fun mensajeEnvio(idDevolucion : Int){
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("INFORMACION")
+            .setMessage("¿DESEA ENVIAR LA DEVOLUCION AL SERVIDOR?")
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                view.dismiss()
+                enviarSolicitudCargaServidor(idDevolucion)
+            }
+            .setNegativeButton("CANCELAR"){view, _ ->
+                view.dismiss()
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
+
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    fun mensajeConfirmacion(enviado : Boolean){
+        val mensaje = if(enviado){
+            "DEVOLUCION ENVIADA CORRECTAMENTE"
+        }else{
+            "ERROR PROBLEMAS DE CONEXION \n" +
+                    " DEVOLUCION ALMACENADA, TRATE DE ENVIAR MAS TARDE"
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("INFORMACION")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                view.dismiss()
+                val intent = Intent(this, MenuDevoluciones::class.java)
+                startActivity(intent)
+                finish()
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
+
+    //Funcion para envio de solicitud
+    private fun enviarSolicitudCargaServidor(idDevolucion: Int){
+        this@MenuDevoluciones.lifecycleScope.launch {
+            var enviado = false
+
+            enviado = solicitudDevoluciones.enviarDevolucionAlServidor(this@MenuDevoluciones, idDevolucion)
+
+            runOnUiThread {
+                mensajeConfirmacion(enviado)
+            }
+        }
     }
 
 

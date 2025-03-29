@@ -8,5 +8,9 @@ data class SolicitudCarga (
     val empleado : String,
     val fecha : String,
     val enviado : Int,
-    val idServidor : Int
+    val idServidor : Int,
+    val idRuta : Int,
+    val ruta : String,
+    val estado : String,
+    val numHoja: Float
 )

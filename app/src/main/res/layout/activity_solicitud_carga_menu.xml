@@ -28,15 +28,30 @@
             app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/margin_4dp"
             android:layout_marginStart="@dimen/margin_4dp"
-            android:text="SOLICITUD DE RECARGAS"
+            android:text="SOLICITUD DE CARGA"
             android:textSize="@dimen/FuenteEncabezado"
             android:textStyle="bold"
             android:textAlignment="center"
             android:textColor="@color/colorAccent" />
+
+        <Button
+            android:id="@+id/btnsincronizar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="@dimen/margin_default_16dp"
+            android:backgroundTint="@color/SEGUNDOCOLORLOGO"
+            android:text="SINCRONIZAR"
+            android:textColor="@color/colorAccent"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/titulo"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </LinearLayout>
 

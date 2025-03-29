@@ -4,38 +4,41 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.R
-import com.example.acae30.modelos.DetallePedido
-import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
-import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
+import com.example.acae30.modelos.SolcitudDevolucion.SolicitudDevolucion
+import org.w3c.dom.Text
 
-class SolicitudAdapter(
-    private var list: ArrayList<SolicitudCarga>, private var context: Context,
+class DevolucionAdapter (
+    private var list: ArrayList<SolicitudDevolucion>, private var context: Context,
     val itemClick: (Int) -> Unit
-) : RecyclerView.Adapter<SolicitudAdapter.MyViewHolder>() {
+) : RecyclerView.Adapter<DevolucionAdapter.MyViewHolder>() {
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): SolicitudAdapter.MyViewHolder {
+    ): DevolucionAdapter.MyViewHolder {
         val vista =
             LayoutInflater.from(parent.context).inflate(R.layout.tarjeta_solicitud, parent, false)
         return MyViewHolder(vista)
     }
 
-    override fun onBindViewHolder(vista: SolicitudAdapter.MyViewHolder, position: Int) {
+
+    override fun onBindViewHolder(vista: DevolucionAdapter.MyViewHolder, position: Int) {
         val data = list[position]
-        vista.empleado.text = data.empleado
-        vista.fecha.text = data.fecha
-        vista.estado.text = data.estado
-        vista.hoja.text = data.numHoja.toInt().toString()
+        vista.empleado.text = data.Vendedor
+        vista.fecha.text = data.Fecha
+        vista.header.text = "SOLICITUD DE DEVOLUCION"
+        vista.estado.visibility = View.GONE
+        vista.numHoja.text = "NUM. DEVOLUCION"
+        vista.txtNumHoja.text = data.Numero.toString()
 
 
         //SI LA SOLICITUD HA SIDO ENVIADA CORRECTAMENTE
-        if(data.enviado == 0){
+        if(data.Numero == 0){
             vista.card.setCardBackgroundColor(
                 ContextCompat.getColor(vista.itemView.context, R.color.moderado)
             )
@@ -52,15 +55,19 @@ class SolicitudAdapter(
         internal var empleado: TextView
         internal var fecha: TextView
         internal var card : CardView
-        internal var estado : TextView
-        internal var hoja : TextView
+        internal var header : TextView
+        internal var estado : LinearLayout
+        internal var numHoja : TextView
+        internal  var txtNumHoja : TextView
 
         init {
             empleado = itemView.findViewById(R.id.tvEmpleadoSolicitud)
             fecha = itemView.findViewById(R.id.tvFechaSolicitud)
             card = itemView.findViewById(R.id.colorCard)
-            estado = itemView.findViewById(R.id.txtEstadoSolicitud)
-            hoja = itemView.findViewById(R.id.txtNumHoja)
+            header = itemView.findViewById(R.id.txtcodigo)
+            estado = itemView.findViewById(R.id.lyEstadosolicitud)
+            numHoja = itemView.findViewById(R.id.tvNumHoja)
+            txtNumHoja = itemView.findViewById(R.id.txtNumHoja)
             itemView.setOnClickListener({ itemClick(layoutPosition) })
 
         }

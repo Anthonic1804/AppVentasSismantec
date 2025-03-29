@@ -91,6 +91,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
                 codigo,
                 descripcion,
                 cantidad,
+                0f,
                 costo,
                 costoIva,
                 precio,
@@ -104,7 +105,17 @@ class AgregarProductoSolicitud : AppCompatActivity() {
     }
 
     private fun registrarDetalle(obj: SolicitudCargaDetalle) {
-        val registro = solicitudController.insertarDetalleSolicitud(this, obj)
+        val encontrado = solicitudController.validarProductoDetalle(this@AgregarProductoSolicitud, obj)
+        var registro : Boolean = false
+        registro = if(encontrado){
+            //ACTUALIZAREMOS LAS EXISTENCIAS
+            solicitudController.actualizarCantidadProductoDetalle(this@AgregarProductoSolicitud, obj)
+        }else{
+            //REGISTRAREMOS EL NUEVO PRODUCTO
+            solicitudController.insertarDetalleSolicitud(this@AgregarProductoSolicitud, obj)
+        }
+
+
         if(registro){
 
             Toast.makeText(this,"PRODUCTO AGREGADO CORRECTAMENTE", Toast.LENGTH_LONG).show()

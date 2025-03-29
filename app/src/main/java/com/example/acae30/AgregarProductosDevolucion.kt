@@ -2,11 +2,16 @@ package com.example.acae30
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.acae30.controllers.SolicitudDevolucionesController
 import com.example.acae30.databinding.ActivityAgregarProductosDevolucionBinding
+import com.example.acae30.modelos.SolcitudDevolucion.SolicitudDevolucionDetalle
+import kotlinx.coroutines.launch
 
 class AgregarProductosDevolucion : AppCompatActivity() {
 
@@ -16,6 +21,10 @@ class AgregarProductosDevolucion : AppCompatActivity() {
     private var codigo : String = ""
     private var descripcion : String = ""
     private var existencia : Float = 0f
+    private var idDevolucion : Int = 0
+    private var bueno : Float = 0f
+    private var averia : Float = 0f
+    private var solicitudDevolucion = SolicitudDevolucionesController()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,7 +35,28 @@ class AgregarProductosDevolucion : AppCompatActivity() {
         codigo = intent.getStringExtra("codigo").toString()
         descripcion = intent.getStringExtra("descripcion").toString()
         existencia = intent.getFloatExtra("existencia", 0f)
+        idDevolucion = intent.getIntExtra("idDevolucion", 0)
+    }
 
+    //FUNCION PARA VALIDAR LAS CANTIDAD INGRESADAS
+    private fun validarDevolucion() : Boolean{
+        var verificacion : Boolean = false
+        bueno = if(binding.txtBueno.text.toString() == ""){
+            0f
+        }else{
+            binding.txtBueno.text.toString().toFloat()
+        }
+
+
+        averia = if(binding.txtAveria.text.toString() == ""){
+            0f
+        }else{
+            binding.txtAveria.text.toString().toFloat()
+        }
+
+        verificacion = existencia == (bueno + averia)
+
+        return verificacion
     }
 
     override fun onStart() {
@@ -40,11 +70,54 @@ class AgregarProductosDevolucion : AppCompatActivity() {
             listadoProductos()
         }
 
+        binding.btnaceptar.setOnClickListener {
+            val verificar = validarDevolucion()
+            if(!verificar){
+                Toast.makeText(this@AgregarProductosDevolucion,"Las cantidad ingresadas no concuerdan", Toast.LENGTH_SHORT)
+                    .show()
+            }else{
+                this@AgregarProductosDevolucion.lifecycleScope.launch {
+                    val obj : SolicitudDevolucionDetalle = SolicitudDevolucionDetalle(
+                        idDevolucion,
+                        0,
+                        "",
+                        idProducto,
+                        codigo,
+                        descripcion,
+                        "",
+                        existencia,
+                        bueno,
+                        averia,
+                        ""
+                    )
+
+                    val registrado = solicitudDevolucion.agregarProductoDetalleDevolucion(this@AgregarProductosDevolucion, obj)
+
+                    if(registrado){
+                        runOnUiThread {
+                            Toast.makeText(this@AgregarProductosDevolucion, "PRODUCTO AGREGADO CORRECTAMENTE", Toast.LENGTH_SHORT)
+                                .show()
+                            nuevaDevolucion()
+                        }
+                    }
+                }
+
+            }
+        }
+
     }
 
     private fun listadoProductos(){
         val intento = Intent(this, ListadoProductosSolicitud::class.java)
         intento.putExtra("vista", "devolucion")
+        intento.putExtra("idDevolucion", idDevolucion)
+        startActivity(intento)
+        finish()
+    }
+
+    private fun nuevaDevolucion(){
+        val intento = Intent(this, NuevaDevolucion::class.java)
+        intento.putExtra("idDevolucion", idDevolucion)
         startActivity(intento)
         finish()
     }

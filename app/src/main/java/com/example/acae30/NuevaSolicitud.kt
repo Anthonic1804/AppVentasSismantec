@@ -23,10 +23,12 @@ import com.example.acae30.listas.PedidoDetalleAdapter
 import com.example.acae30.listas.SolicitudDetalleAdapter
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
+import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDTO
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class NuevaSolicitud : AppCompatActivity() {
     private lateinit var binding : ActivityNuevaSolicitudBinding
@@ -43,6 +45,7 @@ class NuevaSolicitud : AppCompatActivity() {
 
     var rutaSeleccionada : String = "-- SELECCIONE --"
     var idRutaSeleccionada : Int = 0
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,14 +77,24 @@ class NuevaSolicitud : AppCompatActivity() {
                 }
                 else -> {
                     val lista = solicitudController.obtenerDetalleSolicitud(this@NuevaSolicitud, idSolicitud)
-                    if(lista.size > 0){
-                        val enviado = solicitudController.actualizarEstadoSolicitud(this, idSolicitud)
-                        if(enviado){
-                            mensajeConfirmacion()
+                    if (lista != null) {
+                        if(lista.size > 0){
+                            this@NuevaSolicitud.lifecycleScope.launch {
+                                var enviado = false
+
+                                enviado = solicitudController.enviarSolicitudCargaAlServidor(this@NuevaSolicitud, idSolicitud)
+
+                                runOnUiThread {
+                                    mensajeConfirmacion(enviado)
+                                }
+                            }
+                            CoroutineScope(Dispatchers.IO).launch {
+
+                            }
+                        }else{
+                            Toast.makeText(this,"EL DETALLE NO SE PUEDE ENVIAR SIN PRODUCTOS", Toast.LENGTH_SHORT)
+                                .show()
                         }
-                    }else{
-                        Toast.makeText(this,"EL DETALLE NO SE PUEDE ENVIAR SIN PRODUCTOS", Toast.LENGTH_SHORT)
-                            .show()
                     }
                 }
             }
@@ -117,6 +130,8 @@ class NuevaSolicitud : AppCompatActivity() {
                         println("ERROR AL CARGAR LA RUTA DEL CIENTE " + e.message)
                     }
                 }
+
+                solicitudController.actualizarRuta(this@NuevaSolicitud, idRutaSeleccionada, rutaSeleccionada, idSolicitud)
 
             }
             override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -164,10 +179,16 @@ class NuevaSolicitud : AppCompatActivity() {
     }
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
-    fun mensajeConfirmacion(){
+    fun mensajeConfirmacion(enviado : Boolean){
+        val mensaje = if(enviado){
+            "SOLICITUD ENVIADA CORRECTAMENTE"
+        }else{
+            "ERROR PROBLEMAS DE CONEXION \n SOLICITUD ALMACENADA, TRATE DE ENVIAR MAS TARDE"
+        }
+
         val dialog = AlertDialog.Builder(this)
             .setTitle("INFORMACION")
-            .setMessage("SOLICITUD ENVIADA CORRECTAMENTE")
+            .setMessage(mensaje)
             .setPositiveButton("ACEPTAR") { view, _ ->
                 view.dismiss()
                 solicitudListado()
@@ -195,8 +216,10 @@ class NuevaSolicitud : AppCompatActivity() {
         this.lifecycleScope.launch {
             try {
                 val lista = solicitudController.obtenerDetalleSolicitud(this@NuevaSolicitud, idSolicitud)
-                if(lista.size > 0){
-                    armarLista(lista)
+                if (lista != null) {
+                    if(lista.size > 0){
+                        armarLista(lista)
+                    }
                 }
             }catch (e: Exception){
                 Toast.makeText(this@NuevaSolicitud,"ERROR AL MOSTRAR EL DETALLE DE LA SOLICITUD", Toast.LENGTH_LONG).show()

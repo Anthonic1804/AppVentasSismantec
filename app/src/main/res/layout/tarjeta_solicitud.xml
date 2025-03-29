@@ -10,7 +10,7 @@
         android:id="@+id/card_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="120dp"
+        android:minHeight="150dp"
         android:layout_marginTop="@dimen/margin_4dp"
         android:layout_marginStart="@dimen/margin_8dp"
         android:layout_marginEnd="@dimen/margin_8dp"
@@ -18,9 +18,10 @@
         app:cardCornerRadius="@dimen/borderRadius">
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="120dp"
+            android:layout_height="150dp"
             android:orientation="horizontal">
             <androidx.cardview.widget.CardView
+                android:id="@+id/colorCard"
                 android:layout_width="0dp"
                 android:layout_weight="0.40"
                 android:layout_height="match_parent"
@@ -65,6 +66,61 @@
                     android:textColor="@color/colordark"
                     android:textSize="18sp"
                     android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/lyEstadosolicitud"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/margin_4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ESTADO: "
+                        android:textAlignment="textStart"
+                        android:layout_marginEnd="@dimen/margin_8dp"
+                        android:textColor="@color/black"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtEstadoSolicitud"
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="txtestado"
+                        android:textAlignment="center"
+                        android:textColor="@color/moderado"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/lyNumHoja"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/margin_4dp">
+
+                    <TextView
+                        android:id="@+id/tvNumHoja"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="NUM. HOJA DE CARGA: "
+                        android:textAlignment="textStart"
+                        android:layout_marginEnd="@dimen/margin_8dp"
+                        android:textColor="@color/black"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtNumHoja"
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="txthoja"
+                        android:textAlignment="center"
+                        android:textColor="@color/moderado"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvFechaSolicitud"

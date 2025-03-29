@@ -37,6 +37,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/margin_default_16dp"
+        app:cardCornerRadius="@dimen/corner_radious_card_15dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/lyEncabezado">
@@ -122,19 +123,7 @@
                 android:textStyle="bold"
                 android:textColor="@color/colorPrimaryDark"
                 app:layout_constraintTop_toBottomOf="@id/lyRuta"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/imgbtnadd"/>
-
-            <ImageButton
-                android:id="@+id/imgbtnadd"
-                android:layout_width="55dp"
-                android:layout_height="55dp"
-                android:layout_marginTop="@dimen/margin_default_16dp"
-                android:backgroundTint="@android:color/holo_green_dark"
-                app:layout_constraintBottom_toTopOf="@+id/tvProductosSolicitados"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/lyRuta"
-                app:srcCompat="@drawable/ic_baseline_add_box_24" />
+                app:layout_constraintStart_toStartOf="parent"/>
 
             <TextView
                 android:id="@+id/tvProductosSolicitados"
@@ -198,6 +187,15 @@
 
     </androidx.cardview.widget.CardView>
 
-
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/imgbtnadd"
+        android:layout_width="@dimen/estandar_55dp"
+        android:layout_height="@dimen/estandar_55dp"
+        android:backgroundTint="@color/btnVerde"
+        android:layout_margin="@dimen/margin_default_16dp"
+        android:contentDescription="AGREGAR PRODUCTO"
+        android:src="@drawable/ic_baseline_add_24"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -889,7 +889,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.GONE //GONE
+                    binding.btnexportar.visibility = View.VISIBLE //GONE
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE
@@ -931,7 +931,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.GONE //visible
+                    binding.btnexportar.visibility = View.VISIBLE //visible
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE
@@ -1473,12 +1473,12 @@ class Detallepedido : AppCompatActivity() {
 
         // Draw title
         paint.isFakeBoldText = true
-        canvas.drawText("ESCARRSA, DE C.V", 50f, 50f, paint)
-        canvas.drawText("FINAL AV. PERALTA Y 38A AV. NORTE, BO. LOURDES", 50f, 70f, paint)
-        canvas.drawText("SAN SALVADOR, SAN SALVADOR", 50f, 90f, paint)
-        canvas.drawText("N.R.C : 133843-2", 50f, 110f, paint)
-        canvas.drawText("N.I.T : 0614-300801-101-7", 50f, 130f, paint)
-        canvas.drawText("GIRO: VENTA AL POR MAYOR DE HIELO", 50f, 150f, paint)
+        canvas.drawText("TORTISAL", 50f, 50f, paint)
+        canvas.drawText("CARR. RUTA MILITAR, COL. SANTA LUISA, #7", 50f, 70f, paint)
+        canvas.drawText("SAN MIGUEL, SAN MIGUEL", 50f, 90f, paint)
+        canvas.drawText("N.R.C : 1466850", 50f, 110f, paint)
+        canvas.drawText("N.I.T : 14012909771014", 50f, 130f, paint)
+        canvas.drawText("GIRO: Venta al por menor de \n otros productos n.c.p.", 50f, 150f, paint)
 
         //DATOS DEL CLIENTE
         paint.isFakeBoldText = true
@@ -1608,41 +1608,13 @@ class Detallepedido : AppCompatActivity() {
             e.printStackTrace()
         }
 
-
-        paint.isFakeBoldText = true
-        canvas.drawText("-- VERIFICACION CON ESCARRSA --", 50f, 745f, paint)
-
-        val qrSize2 = 150 // Tamaño del lado del QR (cuadrado)
-        // Posición donde se dibujará el QR en el Canvas
-        val qrX2 = 80f // Posición X
-        val qrY2 = 755f // Posición Y
-
-        // GENERAR EL QR PARA ESCARRSA
-        val writer2 = QRCodeWriter()
-        try{
-            val bitMatrix = writer2.encode(qrEscarrsa, BarcodeFormat.QR_CODE, 100,100)
-            val width = bitMatrix.width
-            val height = bitMatrix.height
-            val qrBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-            for(x in 0 until width){
-                for(y in 0 until height){
-                    qrBitmap.setPixel(x, y, if (bitMatrix[x,y]) Color.BLACK else Color.WHITE)
-                }
-            }
-
-            // Dibujar el QR en el Canvas en la posición especificada
-            canvas.drawBitmap(qrBitmap, null, RectF(qrX2, qrY2, qrX2 + qrSize2, qrY2 + qrSize2), null)
-        }catch (e:WriterException){
-            e.printStackTrace()
-        }
-
         //ESPACIO PARA EL QR
         paint.isFakeBoldText = true
-        canvas.drawLine(50f, 905f, canvas.width - 50f, 905f, paint)
+        canvas.drawLine(50f, 745f, canvas.width - 50f, 745f, paint)
 
         // Draw column headers
         val columnWidths = floatArrayOf(20f, 100f, 60f) // Ancho fijo para cada columna
-        val startY = 915f
+        val startY = 755f
         var y = startY
         val columnX = floatArrayOf(
             50f,
@@ -1765,14 +1737,15 @@ class Detallepedido : AppCompatActivity() {
         }
 
         val texts = listOf(
-            "ESCARRSA, DE C.V",
-            "FINAL AV. PERALTA Y 38A AV. NORTE,",
-            "BO. LOURDES",
-            "SAN SALVADOR, SAN SALVADOR",
-            "N.R.C : 133843-2",
-            "N.I.T : 0614-300801-101-7",
-            "GIRO: VENTA AL POR MAYOR ",
-            "DE HIELO"
+            "TORTISAL",
+            "JUAN GABRIEL ROMERO HERNANDEZ",
+            "CARR. RUTA MILITAR,",
+            "COL. SANTA LUISA, #7",
+            "SAN MIGUEL, SAN MIGUEL",
+            "N.R.C : 1466850",
+            "N.I.T : 14012909771014",
+            "GIRO: Venta al por menor de otros ",
+            "productos n.c.p."
         )
 
         val startY2= 50f

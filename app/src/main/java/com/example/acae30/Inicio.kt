@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.StrictMode
 import android.view.MenuItem
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -53,7 +54,8 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var ip = ""
     private var puerto = 0
 
-    private var inventarioController = InventarioController()
+    //private var inventarioController = InventarioController()
+    var fechaInventario : String = ""
 
     @Deprecated("This method has been deprecated in favor of using the\n      " +
             "{@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n     " +
@@ -83,7 +85,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             inventarioController.obtenerFechaInventario(this@Inicio)
         }*/
 
-        val fechaInventario: String? = preferencias!!.getString("fechaInventario", "NULL")
+        fechaInventario = preferencias!!.getString("fechaInventario", "NULL").toString()
         binding.includeBar.lblupdate.text = fechaInventario
 
         //PRUEBA DE COMPARACION DE FECHA
@@ -141,7 +143,6 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
 
     } //relacianomos los widgets y inicializamos la variables
 
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onResume() {
         super.onResume()
         menu() //llama los botones de menu

@@ -8,6 +8,7 @@ data class SolicitudCargaDetalle (
     val codigoProducto : String,
     val descripcion : String,
     val cantidad : Float,
+    val fraccion : Float,
     val costo : Float,
     val costoIva : Float,
     val precio : Float,

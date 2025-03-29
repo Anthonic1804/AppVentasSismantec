@@ -4,17 +4,30 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.contentValuesOf
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
 import com.example.acae30.modelos.Inventario
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
+import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDTO
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.charset.StandardCharsets
 
 class SolicitudRecargasController {
 
@@ -312,17 +325,26 @@ class SolicitudRecargasController {
         return  idSolicitud
     }
 
-    //FUNCION PARA ELIMINAR UNA SOLICITUD Y SU DETALLE
-    fun eliminarSolicitud(context: Context, id: Int){
-        val bd = funciones.getDataBase(context).writableDatabase
+    //FUNCION PARA VALIDAR PRODUCTO EN SOLICITUD DETALLE
+    fun validarProductoDetalle(context: Context, detalle: SolicitudCargaDetalle) : Boolean{
+        var encontrado : Boolean = false
+
+        val bd = funciones.getDataBase(context).readableDatabase
         try {
-            bd.execSQL("DELETE FROM solicitudCarga WHERE id=$id")
-            bd.execSQL("DELETE FROM solicitudCargaDetalle WHERE Id_solicitud_carga=$id")
-        }catch (e:Exception){
-            println("ERROR AL ELIMINAR LA NUEVA SOLICITUD -> ${e.message}")
+            val cursor = bd.rawQuery("SELECT Id_Producto FROM solicitudCargaDetalle WHERE Id_producto = ${detalle.idProducto} " +
+                    "AND Id_solicitud_carga = ${detalle.idSolicitudCarga}", null)
+            if(cursor.count > 0){
+                encontrado = true
+            }
+            cursor.close()
+        }catch (e : Exception){
+            println("ERROR AL BUSCAR EL PRODUCTO EN DETALLE DE CARGA -> ${e.message}")
+            encontrado = false
         }finally {
             bd.close()
         }
+
+        return encontrado
     }
 
     //FUNCION PARA INSERTAR EL DETALLE DE UNA SOLICITUD
@@ -355,8 +377,191 @@ class SolicitudRecargasController {
         return registrado
     }
 
+    //FUNCION PARA ACTUALIZAR LA CANTIDAD DEL PRODUCTO EN DETALLE
+    fun actualizarCantidadProductoDetalle(context: Context, detalle: SolicitudCargaDetalle) : Boolean{
+        var actualizado : Boolean = false
+        val bd = funciones.getDataBase(context).writableDatabase
+
+        try{
+            bd.execSQL("UPDATE solicitudCargaDetalle SET Cantidad = (Cantidad + ${detalle.cantidad}) " +
+                    "WHERE Id_solicitud_carga = ${detalle.idSolicitudCarga} ")
+
+            actualizado = true
+        }catch (e : Exception){
+            println("ERROR AL ACTUALIZAR LA CANTIDAD DE PRODUCTO EN DETALLE -> ${e.message}")
+
+            actualizado = false
+        }finally {
+            bd.close()
+        }
+
+        return actualizado
+    }
+
+    //Funcion para enviar la solicitud de carga al servidor
+    suspend fun enviarSolicitudCargaAlServidor(context : Context, idSolicitud : Int) : Boolean{
+        var envio = false
+        preferences  = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+
+        val solicitudJson = convertirSolicitudJSON(context, idSolicitud)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+
+        try {
+            val objecto =
+                Gson().toJson(solicitudJson)
+            val ruta: String = servidor + "Solicitudes/registrar_solicitud"
+            val url = URL(ruta)
+
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 10000
+                    setRequestProperty(
+                        "Content-Type",
+                        "application/json;charset=utf-8"
+                    )
+                    requestMethod = "POST"
+                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+                    or.write(objecto) //escribo el json
+                    or.flush() //se envia el json
+                    if (responseCode == 201) {
+                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                            try {
+                                val respuesta = StringBuffer()
+                                var inpuline = it.readLine()
+                                while (inpuline != null) {
+                                    respuesta.append(inpuline)
+                                    inpuline = it.readLine()
+                                }
+                                it.close()
+
+                                val res: JSONObject = JSONObject(respuesta.toString())
+                                if (res.getInt("error") > 0) {
+                                    val idServidor = res.getInt("error")
+                                    actualizarEstadoSolicitud(context, idSolicitud, idServidor)
+                                    envio = true
+                                }
+                            } catch (e: Exception) {
+                                println("ERROR DE LECTURA EN LA RESPUESTA 201 " + e.message)
+                                envio = false
+                            }
+                        }
+                    }else {
+                        println("ERROR NO SE LOGRO REGISTRAR EL ABONO EN EL SERVIDOR")
+                        envio = false
+                    }
+
+                } catch (e: Exception) {
+                    println("INESTABILIDAD DE CONEXION")
+                    envio = false
+                }
+            }
+        } catch (e: Exception) {
+            println("PROBLEMAS DE CONEXION CON EL SERVIDOR")
+            envio = false
+        }
+        return envio
+    }
+
+    //Funcion para convertir la solicitud en JSON
+    private fun convertirSolicitudJSON(context: Context, idSolicitud: Int) : JsonObject{
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val puntoVenta = preferences.getString("puntoVenta","").toString()
+
+        val solicitud = obtenerEncabezadoSolicitud(context, idSolicitud)
+
+        val json = JsonObject()
+        json.addProperty("id_empleado", solicitud!!.id_empleado)
+        json.addProperty("empleado", solicitud.empleado)
+        json.addProperty("fecha", solicitud.fecha)
+        json.addProperty("punto_venta", puntoVenta)
+        json.addProperty("id_ruta", solicitud.id_ruta)
+        json.addProperty("ruta", solicitud.ruta)
+
+        val detalle = JsonArray()
+        for(i in 0..<solicitud.detalle!!.size){
+            val data = solicitud.detalle!![i]
+            val d = JsonObject()
+
+            d.addProperty("id", data.id)
+            d.addProperty("id_solicitud_carga", data.idSolicitudCarga)
+            d.addProperty("id_producto", data.idProducto)
+            d.addProperty("codigo_producto", data.codigoProducto)
+            d.addProperty("descripcion", data.descripcion)
+            d.addProperty("cantidad", data.cantidad)
+            d.addProperty("fraccion", data.fraccion)
+            d.addProperty("costo", data.costo)
+            d.addProperty("costo_iva", data.costoIva)
+            d.addProperty("precio_u", data.precio)
+            d.addProperty("precio_u_iva", data.precio_iva)
+            d.addProperty("total", data.total)
+
+            detalle.add(d)
+        }
+
+        json.add("detalle", detalle)
+
+        return  json
+    }
+
+    //Funcion actualizar ruta de solicitud
+    fun actualizarRuta(context: Context, idRuta: Int, ruta: String, idSolicitud: Int){
+        val bd = funciones .getDataBase(context).writableDatabase
+        try {
+            bd.execSQL("UPDATE solicitudCarga SET Id_ruta = $idRuta, ruta = '$ruta' WHERE id = $idSolicitud")
+        }catch (e:Exception){
+            println("ERROR AL ACTUALIZAR LA RUTA DE LA SOLICITUD -> ${e.message}")
+        }finally {
+            bd.close()
+        }
+    }
+
+    //FUNCION PARA ELIMINAR UNA SOLICITUD Y SU DETALLE
+    fun eliminarSolicitud(context: Context, id: Int){
+        val bd = funciones.getDataBase(context).writableDatabase
+        try {
+            bd.execSQL("DELETE FROM solicitudCarga WHERE id=$id")
+            bd.execSQL("DELETE FROM solicitudCargaDetalle WHERE Id_solicitud_carga=$id")
+        }catch (e:Exception){
+            println("ERROR AL ELIMINAR LA NUEVA SOLICITUD -> ${e.message}")
+        }finally {
+            bd.close()
+        }
+    }
+
+    //FUNCION PARA OBTENER EL ENCABEZADO DE LA SOLICITUD
+    private fun obtenerEncabezadoSolicitud(context: Context, idSolicitud: Int): SolicitudCargaDTO? {
+
+        val bd = funciones.getDataBase(context).readableDatabase
+        var solicitud : SolicitudCargaDTO? = null
+        try {
+            val cursor = bd.rawQuery("SELECT * FROM solicitudCarga WHERE Id = $idSolicitud", null)
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                solicitud = SolicitudCargaDTO(
+                    cursor.getInt(1),
+                    cursor.getString(2),
+                    cursor.getString(3),
+                    "",
+                    cursor.getInt(6),
+                    cursor.getString(7),
+                    null
+                )
+                cursor.close()
+                val cdetalle = obtenerDetalleSolicitud(context, idSolicitud)
+                solicitud.detalle = cdetalle
+            }
+        }catch (e: Exception){
+            println("ERROR AL OBTENER EL ENCABEZADO DE LA SOLICITUDA -> ${e.message}")
+        }finally {
+            bd.close()
+        }
+        return solicitud
+    }
+
     //FUNCION PARA MOSTRAR EL DETALLE DE LA SOLICITUD
-    fun obtenerDetalleSolicitud(context: Context, idSolicitud : Int) : ArrayList<SolicitudCargaDetalle>{
+    fun obtenerDetalleSolicitud(context: Context, idSolicitud : Int) : ArrayList<SolicitudCargaDetalle>?{
         val bd = funciones.getDataBase(context).readableDatabase
         val detalleSolicitud = ArrayList<SolicitudCargaDetalle>()
         try{
@@ -371,6 +576,7 @@ class SolicitudRecargasController {
                         cursor.getString(3),
                         cursor.getString(4),
                         cursor.getFloat(5),
+                        0f,
                         cursor.getFloat(6),
                         cursor.getFloat(7),
                         cursor.getFloat(8),
@@ -390,12 +596,12 @@ class SolicitudRecargasController {
     }
 
     //FUNCION PARA ACTUALIZAR EL ESTADO DE LA SOLICITUD
-    fun actualizarEstadoSolicitud(context: Context, idSolicitud : Int) : Boolean{
+    fun actualizarEstadoSolicitud(context: Context, idSolicitud : Int, idServidor : Int) : Boolean{
         val bd = funciones.getDataBase(context).writableDatabase
         var actualizado : Boolean = false
 
         try {
-            bd.execSQL("UPDATE solicitudCarga SET enviado = 1 WHERE id = $idSolicitud")
+            bd.execSQL("UPDATE solicitudCarga SET enviado = 1, idServidor = $idServidor WHERE id = $idSolicitud")
             actualizado = true
         }catch (e:Exception){
             actualizado = false
@@ -406,24 +612,12 @@ class SolicitudRecargasController {
         return actualizado
     }
 
-    //FUNCION PARA ACTUALIZAR LA RUTA DE LA SOLICITUD DE CARGA
-    fun actualizarRutaSolicitud(context: Context, idRuta: Int, ruta: String, idSolicitud: Int){
-        val bd = funciones.getDataBase(context).writableDatabase
-        try {
-            bd.execSQL("UPDATE solicitudCarga SET Id_ruta=$idRuta, ruta='$ruta' WHERE id = $idSolicitud")
-        }catch (e : Exception){
-            println("ERROR AL ACTUALIZAR LA RUTA DE LA SOLICITUD -> " + e.message)
-        }finally {
-            bd.close()
-        }
-    }
-
     //FUNCION PARA OBTENER EL LISTADO DE SOLICITUDES
     fun obtenerListadosolicitudes(context: Context) : ArrayList<SolicitudCarga>{
         val bd = funciones.getDataBase(context).readableDatabase
         val listaSolicitud = ArrayList<SolicitudCarga>()
         try {
-            val cursor = bd.rawQuery("SELECT * FROM solicitudCarga WHERE enviado = 1 ORDER BY id DESC", null)
+            val cursor = bd.rawQuery("SELECT * FROM solicitudCarga ORDER BY id DESC LIMIT 20", null)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -433,7 +627,11 @@ class SolicitudRecargasController {
                         cursor.getString(2),
                         cursor.getString(3),
                         cursor.getInt(4),
-                        cursor.getInt(5)
+                        cursor.getInt(5),
+                        cursor.getInt(6),
+                        cursor.getString(7),
+                        cursor.getString(8),
+                        cursor.getFloat(9)
                     )
                     listaSolicitud.add(listado)
                 }while (cursor.moveToNext())

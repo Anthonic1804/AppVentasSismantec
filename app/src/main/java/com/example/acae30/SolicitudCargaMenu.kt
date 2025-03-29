@@ -78,7 +78,11 @@ class SolicitudCargaMenu : AppCompatActivity() {
             vendedor,
             fecha!!,
             0,
-            0
+            0,
+            0,
+            "N",
+            "",
+            0f
         )
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -158,9 +162,69 @@ class SolicitudCargaMenu : AppCompatActivity() {
                  startActivity(intento)
                  finish()
              }*/
+            val data = lista[i]
+            if(data.enviado == 0){
+                mensajeEnvio(data.id)
+            }
         }
         binding.listaSolicitud.adapter = adapter
 
     }
 
+    //Funcion para envio de solicitud
+    private fun enviarSolicitudCargaServidor(idSolicitudCarga: Int){
+        this@SolicitudCargaMenu.lifecycleScope.launch {
+            var enviado = false
+
+            enviado = solicitudController.enviarSolicitudCargaAlServidor(this@SolicitudCargaMenu, idSolicitudCarga)
+
+            runOnUiThread {
+                mensajeConfirmacion(enviado)
+            }
+        }
+    }
+
+    //FUNCION DE MENSAJES DE ENVIO
+    fun mensajeEnvio(idSolicitudCarga : Int){
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("INFORMACION")
+            .setMessage("¿DESEA ENVIAR LA SOLICITUD DE CARGA AL SERVIDOR?")
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                view.dismiss()
+                enviarSolicitudCargaServidor(idSolicitudCarga)
+            }
+            .setNegativeButton("CANCELAR"){view, _ ->
+                view.dismiss()
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
+
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    fun mensajeConfirmacion(enviado : Boolean){
+        val mensaje = if(enviado){
+            "SOLICITUD ENVIADA CORRECTAMENTE"
+        }else{
+            "ERROR PROBLEMAS DE CONEXION \n" +
+                    " SOLICITUD ALMACENADA, TRATE DE ENVIAR MAS TARDE"
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("INFORMACION")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                view.dismiss()
+                val intent = Intent(this, SolicitudCargaMenu::class.java)
+                startActivity(intent)
+                finish()
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
 }

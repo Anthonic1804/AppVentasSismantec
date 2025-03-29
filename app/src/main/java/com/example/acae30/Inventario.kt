@@ -181,6 +181,7 @@ class Inventario : AppCompatActivity() {
         if(idcliente != 0){
             scanner!!.visibility = View.GONE
             btnActualizarInventario.visibility = View.GONE
+            btnBuscarRecargas.visibility = View.GONE
         }
 
         //SETEA LA BUSQUEDA DEL SEARCHVIEW
@@ -204,7 +205,7 @@ class Inventario : AppCompatActivity() {
     private fun actualizarListadeInventario(){
         this@Inventario.lifecycleScope.launch {
             try {
-                val lista = inventarioController.obtenerInformacionProductoPorString(this@Inventario, "")
+                val lista = inventarioController.obtenerInformacionProductoPorString(this@Inventario, "", "")
                 MostrarLista(lista)
             } catch (e: Exception) {
                 runOnUiThread {
@@ -230,7 +231,7 @@ class Inventario : AppCompatActivity() {
                 }
             } else {
                 val busqueda = result.contents.toString().trim()
-                val item = inventarioController.obtenerInformacionProductoPorString(this@Inventario, busqueda)
+                val item = inventarioController.obtenerInformacionProductoPorString(this@Inventario, busqueda, "")
 
                 if(item.size > 0){
                     var id : Int = 0
@@ -408,7 +409,7 @@ class Inventario : AppCompatActivity() {
             }
 
             override fun onQueryTextChange(texto: String): Boolean {
-                val dSearch = inventarioController.obtenerInformacionProductoPorString(this@Inventario ,texto.uppercase())
+                val dSearch = inventarioController.obtenerInformacionProductoPorString(this@Inventario ,texto.uppercase(), "")
                 this@Inventario.MostrarLista(dSearch)
                 return false
             }

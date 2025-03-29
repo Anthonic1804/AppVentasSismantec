@@ -563,7 +563,9 @@ class Tablas {
                 "enviado INTEGER NOT NULL DEFAULT 0," +
                 "idServidor INTEGER NOT NULL DEFAULT 0," +
                 "Id_ruta INTEGER NOT NULL DEFAULT 0," +
-                "Ruta VARCHAR(50) NOT NULL)"
+                "Ruta VARCHAR(50) NOT NULL DEFAULT ''," +
+                "Estado VARCHAR(25) NOT NULL DEFAULT 'EMITIDO'," +
+                "NumHoja NUMERIC(18,0) NOT NULL DEFAULT 0)"
     }
 
     //TABLA SOLICITUD DE CARGA DETALLE

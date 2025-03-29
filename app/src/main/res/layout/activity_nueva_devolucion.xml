@@ -70,17 +70,17 @@
                         android:id="@+id/tvIdHeader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ID: "
+                        android:text="EMPLEADO: "
                         android:textStyle="bold"
                         android:textColor="@color/black"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"/>
 
                     <TextView
-                        android:id="@+id/tvIdHojaCarga"
+                        android:id="@+id/tvEmpleadoDevolucion"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ID HOJA DE CARGA"
+                        android:text="NOMBRE DEL EMPLEADO"
                         android:textColor="@color/moderado"
                         app:layout_constraintStart_toEndOf="@id/tvIdHeader"
                         app:layout_constraintTop_toTopOf="parent"/>
@@ -102,7 +102,7 @@
                         android:text="NUMERO HOJA DE CARGA"
                         android:textColor="@color/moderado"
                         app:layout_constraintStart_toEndOf="@id/tvHojaHeader"
-                        app:layout_constraintTop_toBottomOf="@id/tvIdHojaCarga"/>
+                        app:layout_constraintTop_toBottomOf="@id/tvEmpleadoDevolucion"/>
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -113,33 +113,41 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="250dp"
+        android:minHeight="350dp"
         android:layout_margin="@dimen/margin_default_16dp"
-        app:cardCornerRadius="@dimen/margin_default_16dp"
+        app:cardCornerRadius="@dimen/corner_radious_card_15dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cvHoja">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:minHeight="300dp"
             android:layout_margin="@dimen/margin_default_16dp"
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvheaderDevolucion"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:text="DETALLE DE DEVOLUCIÓN"
                 android:layout_margin="@dimen/margin_8dp"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="@color/black"/>
+                android:textColor="@color/black"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvDetalleDevolucion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="100dp"/>
+                android:minHeight="250dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvheaderDevolucion"/>
 
             <LinearLayout
                 android:id="@+id/layout_buttons"
@@ -150,7 +158,8 @@
                 android:orientation="horizontal"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/rvDetalleDevolucion">
 
                 <Button
                     android:id="@+id/btnaceptar"
@@ -177,7 +186,7 @@
 
             </LinearLayout>
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
 
     </androidx.cardview.widget.CardView>

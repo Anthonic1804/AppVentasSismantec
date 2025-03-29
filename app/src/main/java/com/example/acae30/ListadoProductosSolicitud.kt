@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.acae30.controllers.InventarioController
+import com.example.acae30.controllers.SolicitudDevolucionesController
 import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivityListadoProductosSolicitudBinding
 import com.example.acae30.listas.InventarioAdapter
@@ -29,6 +30,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
     private lateinit var bindind : ActivityListadoProductosSolicitudBinding
     private val solicitudController = SolicitudRecargasController()
     private val inventarioController = InventarioController()
+    private var solicitudDevolucion = SolicitudDevolucionesController()
 
     private lateinit var preferences: SharedPreferences
     private val instancia = "CONFIG_SERVIDOR"
@@ -37,6 +39,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
 
     private var idSolicitud : Int = 0
     private var proceso : String = ""
+    private var idDevolucion : Int = 0
 
     private var vista : String = ""
 
@@ -51,6 +54,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
         vistaInventario = preferences.getInt("vistaInventario", 0)
 
         idSolicitud = intent.getIntExtra("idSolicitud", 0)
+        idDevolucion = intent.getIntExtra("idDevolucion", 0)
         proceso = intent.getStringExtra("proceso").toString()
 
         vista = intent.getStringExtra("vista").toString()
@@ -75,7 +79,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
             override fun afterTextChanged(string: Editable) {
                 val busqueda : ArrayList<Inventario> = when(vista){
                     "devolucion" -> {
-                        inventarioController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,string.toString())
+                        inventarioController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,string.toString(),"devolucion")
                     }
 
                     else -> {
@@ -94,7 +98,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
             try {
                 val lista : ArrayList<Inventario> = when(vista){
                     "devolucion" -> {
-                        inventarioController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,"")
+                        inventarioController.obtenerInformacionProductoPorString(this@ListadoProductosSolicitud,"", "devolucion")
                     }
 
                     else -> {
@@ -125,13 +129,22 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                         }else{
                             when(vista){
                                 "devolucion" -> {
-                                    val intento = Intent(this, AgregarProductosDevolucion::class.java)
-                                    intento.putExtra("idProducto", list[position].Id)
-                                    intento.putExtra("codigo", list[position].Codigo)
-                                    intento.putExtra("descripcion", list[position].descripcion)
-                                    intento.putExtra("existencia", list[position].Existencia!!.toFloat())
-                                    startActivity(intento)
-                                    finish()
+                                    val encontrado = solicitudDevolucion.obtenerProductoEnDevolucion(this@ListadoProductosSolicitud,
+                                            list[position].Id!!, idDevolucion)
+                                    if(encontrado){
+                                        Toast.makeText(this@ListadoProductosSolicitud, "EL PRODUCTO YA ESTÁ AGREGADO AL DETALLE DE LA DEVOLUCION", Toast.LENGTH_SHORT)
+                                            .show()
+                                    }else{
+                                        val intento = Intent(this, AgregarProductosDevolucion::class.java)
+                                        intento.putExtra("idProducto", list[position].Id)
+                                        intento.putExtra("codigo", list[position].Codigo)
+                                        intento.putExtra("descripcion", list[position].descripcion)
+                                        intento.putExtra("existencia", list[position].Existencia!!.toFloat())
+                                        intento.putExtra("idDevolucion", idDevolucion)
+                                        startActivity(intento)
+                                        finish()
+                                    }
+
                                 }
                                 else -> {
                                     val intento = Intent(this@ListadoProductosSolicitud, AgregarProductoSolicitud::class.java)
@@ -163,13 +176,21 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                         }else{
                             when(vista){
                                 "devolucion" -> {
-                                    val intento = Intent(this, AgregarProductosDevolucion::class.java)
-                                    intento.putExtra("idProducto", list[position].Id)
-                                    intento.putExtra("codigo", list[position].Codigo)
-                                    intento.putExtra("descripcion", list[position].descripcion)
-                                    intento.putExtra("existencia", list[position].Existencia!!.toFloat())
-                                    startActivity(intento)
-                                    finish()
+                                    val encontrado = solicitudDevolucion.obtenerProductoEnDevolucion(this@ListadoProductosSolicitud,
+                                        list[position].Id!!, idDevolucion)
+                                    if(encontrado){
+                                        Toast.makeText(this@ListadoProductosSolicitud, "EL PRODUCTO YA ESTÁ AGREGADO AL DETALLE DE LA DEVOLUCION", Toast.LENGTH_SHORT)
+                                            .show()
+                                    }else{
+                                        val intento = Intent(this, AgregarProductosDevolucion::class.java)
+                                        intento.putExtra("idProducto", list[position].Id)
+                                        intento.putExtra("codigo", list[position].Codigo)
+                                        intento.putExtra("descripcion", list[position].descripcion)
+                                        intento.putExtra("existencia", list[position].Existencia!!.toFloat())
+                                        intento.putExtra("idDevolucion", idDevolucion)
+                                        startActivity(intento)
+                                        finish()
+                                    }
                                 }
                                 else -> {
                                     val intento = Intent(this@ListadoProductosSolicitud, AgregarProductoSolicitud::class.java)
@@ -239,6 +260,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
 
     private fun nuevadevolucion(){
         val intent = Intent(this, NuevaDevolucion::class.java)
+        intent.putExtra("idDevolucion", idDevolucion)
         startActivity(intent)
         finish()
     }

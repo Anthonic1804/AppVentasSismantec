@@ -191,16 +191,25 @@ class InventarioController {
     }
 
     //FUNCION PARA OBTENER LA INFORMACION DEL PRODUCTO POR CODIGO O POR NOMBRE
-    fun obtenerInformacionProductoPorString(context: Context, busqueda: String): ArrayList<Inventario>{
+    fun obtenerInformacionProductoPorString(context: Context, busqueda: String, vista:String): ArrayList<Inventario>{
         val base = funciones.getDataBase(context).readableDatabase
         val lista = ArrayList<Inventario>()
         var query: String = ""
 
-        query = if(busqueda != ""){
-            "SELECT * FROM inventario WHERE Id IN (SELECT docid FROM virtualinventario WHERE virtualinventario MATCH '$busqueda') LIMIT 60"
+        query = if(vista == "devolucion"){
+            if(busqueda != ""){
+                "SELECT * FROM inventario WHERE Existencia > 0 AND Id IN (SELECT docid FROM virtualinventario WHERE virtualinventario MATCH '$busqueda') LIMIT 60"
+            }else{
+                "SELECT * FROM inventario WHERE Existencia > 0 limit 60"
+            }
         }else{
-            "SELECT * FROM inventario limit 60"
+            if(busqueda != ""){
+                "SELECT * FROM inventario WHERE Id IN (SELECT docid FROM virtualinventario WHERE virtualinventario MATCH '$busqueda') LIMIT 60"
+            }else{
+                "SELECT * FROM inventario limit 60"
+            }
         }
+
 
         try {
             val cursor = base.rawQuery(query, null)
@@ -427,7 +436,6 @@ class InventarioController {
             }
         }
     }
-
 
     //FUNCIONES PARA HOJA DE CARGA
     //FUNCION PARA OBTENER EL INVENTARIO DESDE LA HOJA DE CARGA DE ESCARRSA
@@ -791,7 +799,7 @@ class InventarioController {
         }
     }
 
-    private suspend fun actualizarInventarioDatabase(json: JSONArray, context: Context, view:View) {
+    private fun actualizarInventarioDatabase(json: JSONArray, context: Context, view:View) {
         val bd = funciones.getDataBase(context).writableDatabase
 
         try {
@@ -1037,7 +1045,7 @@ class InventarioController {
     }
 
     //INSERTANDO INFORMACION DE LA RECARGA
-    suspend fun insertandoInformacionRecarga(context: Context, id: Int, id_hoja: Int, id_producto: Int, codigo: String, cantidad: Float){
+    private fun insertandoInformacionRecarga(context: Context, id: Int, id_hoja: Int, id_producto: Int, codigo: String, cantidad: Float){
         //INSERTANDO RECARGA
         CoroutineScope(Dispatchers.IO).launch {
             hojaController.insertarRecargaProducto(context, id, id_hoja, id_producto, codigo, cantidad)

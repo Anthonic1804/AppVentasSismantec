@@ -54,6 +54,9 @@ class Database(context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.virtualInventarioSolicitud())
         db?.execSQL(tbl.triggerInventarioSolicitudVirtual())
 
+        db?.execSQL(tbl.devolucion())
+        db?.execSQL(tbl.devolucionDetalle())
+
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
