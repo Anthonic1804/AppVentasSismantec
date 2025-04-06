@@ -194,25 +194,38 @@ class InventarioController {
     fun obtenerInformacionProductoPorString(context: Context, busqueda: String, vista:String): ArrayList<Inventario>{
         val base = funciones.getDataBase(context).readableDatabase
         val lista = ArrayList<Inventario>()
-        var query: String = ""
 
-        query = if(vista == "devolucion"){
-            if(busqueda != ""){
-                "SELECT * FROM inventario WHERE Existencia > 0 AND Id IN (SELECT docid FROM virtualinventario WHERE virtualinventario MATCH '$busqueda') LIMIT 60"
-            }else{
-                "SELECT * FROM inventario WHERE Existencia > 0 limit 60"
+        val query: String = when (vista) {
+            "devolucion" -> {
+                if (busqueda.isNotEmpty()) {
+                    """
+            SELECT * FROM inventario 
+            WHERE Existencias > 0 
+              AND (Descripcion LIKE '%' || ? || '%' OR Codigo LIKE '%' || ? || '%')
+            """
+                } else {
+                    "SELECT * FROM inventario WHERE Existencias > 0 LIMIT 60"
+                }
             }
-        }else{
-            if(busqueda != ""){
-                "SELECT * FROM inventario WHERE Id IN (SELECT docid FROM virtualinventario WHERE virtualinventario MATCH '$busqueda') LIMIT 60"
-            }else{
-                "SELECT * FROM inventario limit 60"
+            else -> {
+                if (busqueda.isNotEmpty()) {
+                    """
+            SELECT * FROM inventario 
+            WHERE Descripcion LIKE '%' || ? || '%' OR Codigo LIKE '%' || ? || '%'
+            """
+                } else {
+                    "SELECT * FROM inventario LIMIT 60"
+                }
             }
         }
 
 
         try {
-            val cursor = base.rawQuery(query, null)
+            val cursor = if (busqueda.isNotEmpty()) {
+                base.rawQuery(query, arrayOf(busqueda, busqueda))
+            } else {
+                base.rawQuery(query, null)
+            }
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 do {
@@ -1174,6 +1187,32 @@ class InventarioController {
         } catch (e: Exception) {
             println("ERROR AL CARGAR LAS ESCALAS DE PRECIOS -> " + e.message)
         }
+    }
+
+    //FUNCION PARA OBTENER LA CANTIDAD DE LA ESCALA SELECCIONADA
+    fun obtenerEscalaSeleccionada(context: Context, idProducto: Int, precio: Float): Int {
+        val bd = funciones.getDataBase(context).readableDatabase
+        var cantidadEscala = 0
+        try {
+            val query = """
+            SELECT Cantidad 
+            FROM inventario_precios 
+            WHERE id_inventario = ? 
+            AND ROUND(Precio_iva, 2) = ROUND(?, 2)
+        """.trimIndent()
+
+            val cursor = bd.rawQuery(query, arrayOf(idProducto.toString(), precio.toString()))
+
+            if (cursor.moveToFirst()) {
+                cantidadEscala = cursor.getInt(0)
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            println("ERROR AL OBTENER LA CANTIDAD DE LA ESCALA SELECCIONADA: ${e.message}")
+        } finally {
+            bd.close()
+        }
+        return cantidadEscala
     }
 
 }

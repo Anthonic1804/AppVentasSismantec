@@ -19,6 +19,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.lifecycleScope
@@ -94,7 +95,7 @@ class Producto_agregar : AppCompatActivity() {
     /*Variable para restriccion
     * de seleccion de escalas de precios
     * y unidades vendidas*/
-    private var cantidadEscala: Int? = null
+    private var cantidadEscala = 0
     private var idEscala: Int = 0
 
     private lateinit var tvUpdate : TextView
@@ -319,17 +320,21 @@ class Producto_agregar : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
-//                val toast = Toast.makeText(applicationContext, "Valor: "+parent!!.getItemAtPosition(position).toString(), Toast.LENGTH_LONG)
-//                toast.show()
+                //Toast.makeText(applicationContext, "Valor: "+parent!!.getItemAtPosition(position).toString(), Toast.LENGTH_LONG).show()
 
                 val nuevaCadena = parent!!.getItemAtPosition(position).toString()
+
+                val valor = nuevaCadena.substringBefore(" ").toDoubleOrNull()
 
                 if (nuevaCadena.last() == '*') {
                     precio_iva = precioEditado
                 } else {
-                    var nuevoValor = precioFromList(nuevaCadena)
+                    val nuevoValor = precioFromList(valor.toString())
                     precio_iva = nuevoValor
                 }
+
+                cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar,
+                    idproducto!!, precio_iva)
 
                 Totalizar(cantidad)
 
@@ -934,7 +939,6 @@ class Producto_agregar : AppCompatActivity() {
             nuevoValor = cadena.toFloat()
         } else {
             listPrecios!!.forEach {
-
                 var valorPrecio = "${String.format("%.4f".format(it.Precio_iva) )}"
                 var unidad_cantidad = ""
                 if (it.Cantidad!! > 0.toFloat()) {
@@ -943,10 +947,6 @@ class Producto_agregar : AppCompatActivity() {
                 }
                 if (cadena == valorPrecio + " ${it.Nombre}" + unidad_cantidad) {
                     nuevoValor = valorPrecio.toFloat()
-
-                    /*Asignado la canditada para validar Escala*/
-                    cantidadEscala = it.Cantidad!!.toInt()
-                    idEscala = it.Id!!.toInt()
                 }
             }
         }
@@ -1273,7 +1273,7 @@ class Producto_agregar : AppCompatActivity() {
     //FUNCION PARA AGREGAR EL PRODUCTO SELECCIONADO AL PEDIDO
     private fun agregarProducto(){
 
-        var bonificacion = txtCantBonificados.text.toString().toInt()
+        val bonificacion = txtCantBonificados.text.toString().toInt()
         var precio_provisional = 0.toFloat()
 
         // Validar si la cantidad corresponde al precio
@@ -1284,17 +1284,20 @@ class Producto_agregar : AppCompatActivity() {
             precio_provisional = precioIvaPersonalizado
         }
 
-        var cadena_numero = spprecio!!.selectedItem.toString()
+        //Obtenemos el valor el valor del Spinner de Escalas
+        val valor = spprecio!!.selectedItem.toString()
 
-        var longitud = cadena_numero.length
+        //Hacemos el SubString para obtener el valor del precio
+        val cadena_numero = valor.substringBefore(" ").toDoubleOrNull()
 
-        if (cadena_numero.last() == '*') {
-            precio_provisional = precioEditado
+        //Verificamos si el precio es editado
+        precio_provisional = if (valor.last() == '*') {
+            precioEditado
         } else {
-            precio_provisional = precioFromList(cadena_numero)
+            precioFromList(cadena_numero.toString())
         }
 
-        var cantidad_provisional = txtcantidad!!.text.toString().toFloat()
+        val cantidad_provisional = txtcantidad!!.text.toString().toFloat()
 
         var cant_superior = 0.toFloat()
         var precio_superior = 0.toFloat()
@@ -1446,7 +1449,7 @@ class Producto_agregar : AppCompatActivity() {
         }
 
         var esPrecioEditado = false
-        if (cadena_numero.last() == '*') {
+        if (valor.last() == '*') {
             esCorrecto = true
             esPrecioEditado = true
         }
