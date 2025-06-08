@@ -104,7 +104,56 @@ class carga_datos : AppCompatActivity() {
                     * Carga el inventario Completo
                     * */
                     CoroutineScope(Dispatchers.IO).launch {
-                        getInventario()
+
+                        delay(1000)
+
+                        withContext(Dispatchers.Main){
+                            alert!!.changeText("CARGANDO INFORMACION DE INVENTARIO")
+                        }
+
+                        delay(1000)
+
+                        try {
+                            getInventario()
+                        }catch (e:Exception){
+                            println("ERROR AL CARGAR LA INFORMACION DE INVENTARIO " + e.message)
+                        }
+
+                        delay(1000)
+
+                        withContext(Dispatchers.Main){
+                            alert!!.changeText("CARGANDO ESCALAS DE PRECIOS")
+                        }
+
+                        delay(1000)
+
+                        try {
+                            inventarioController.obtenerEscalasPrecios(this@carga_datos)
+                        }catch (e:Exception){
+                            println("ERROR AL CARGAR LAS ESCALAS DE INVENTARIO " + e.message)
+                        }
+
+                        delay(1000)
+
+                        withContext(Dispatchers.Main){
+                            alert!!.changeText("INVENTARIO CARGADO CORRECTAMENTE")
+                        }
+
+                        delay(1000)
+
+                        try {
+                            inventarioController.obtenerFechaInventario(this@carga_datos)
+                        }catch (e:Exception){
+                            println("ERROR AL CARGAR LA FECHA DE INVENTARIO " + e.message)
+                        }
+
+                        //FIN DA LA CARGA DE DATOS
+                        delay(1500)
+
+                        withContext(Dispatchers.Main){
+                            alert!!.dismisss()
+                        }
+
                     }
                 }else{
                     /*
@@ -504,12 +553,12 @@ class carga_datos : AppCompatActivity() {
                         throw Exception("Error de Comunicacion con el servidor:$responseCode")
                     }
                 } catch (e: Exception) {
-                    alert!!.dismisss()
+                   /// alert!!.dismisss()
                     funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
                 }
             } //ABRIMOS LA CONEXION
         } catch (e: Exception) {
-            alert!!.dismisss()
+            //alert!!.dismisss()
             funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
         }
 
@@ -563,8 +612,9 @@ class carga_datos : AppCompatActivity() {
                 }
             }//termina de obtener los datos
         } catch (e: Exception) {
-            alert!!.dismisss()
-            funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
+           // alert!!.dismisss()
+            //funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
+            println("NO SE ENCONTRARON DATOS REGISTRADOS DE SUCURSALES")
         }
     } //obtiene los clientes del servidor
 
@@ -616,259 +666,75 @@ class carga_datos : AppCompatActivity() {
         }
     } //INSERTANDO DATOS EN LA TABLA SUCURSALES EN SQLITE
 
-    private suspend fun getInventario() {
-        // TABLA INVENTARIO
-        try {
-            val direccioncantidad = url + "inventario/cantidad"
-            val urlcantidad = URL(direccioncantidad)
-            var cantidadRegistros = 0.toInt()
-            with(withContext(Dispatchers.IO) {
-                urlcantidad.openConnection()
-            } as HttpURLConnection) {
-                try {
-                    connectTimeout = 30000
-                    requestMethod = "GET"
-                    if (responseCode == 200) {
-                        inputStream.bufferedReader().use { data ->
-                            val readline = data.readLine()
+    //FUNCION PARA LA LECTURA DEL ENDPOINT DE INVENTARIO
+   private suspend fun getInventario() = withContext(Dispatchers.IO) {
+       val baseUrl = url+"inventario"
+       val bloque = 2000
 
-                            cantidadRegistros = readline.toInt()
-                        }
+       try {
+           // Obtener cantidad total de registros
+           val cantidadRegistros = runCatching {
+               URL("$baseUrl/cantidad").readText().toInt()
+           }.getOrElse {
+               throw Exception("Error al obtener la cantidad de inventario: ${it.message}")
+           }
 
-                    } else {
-                        throw Exception("Error de Comunicacion con el servidor:$responseCode")
-                    }
-                } catch (e: Exception) {
-                    throw Exception("Error #1 Linea 207:$responseCode")
-                }
-            }
+           // Preparar la base de datos
+           database?.writableDatabase?.use { db ->
+               db.beginTransaction()
+               try {
+                   db.delete("inventario", null, null)
+                   db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = 'inventario'")
+                   db.setTransactionSuccessful()
+               } finally {
+                   db.endTransaction()
+               }
+           }
 
-            val BLOQUE = 1000.toInt()
+           var inicio = 0
+           var registrosCargados = 0
 
-            //Log.d("Cantidad: ", cantidadRegistros!!.toString())
-            var inicio = 0.toInt()
-            var longitud = 0.toInt()
-            var registrosCargados = 0.toInt()
+           var shouldStop = false
 
-            if (cantidadRegistros < BLOQUE) {
-                longitud = cantidadRegistros
-                registrosCargados = cantidadRegistros
-            } else {
-                longitud = BLOQUE
-                registrosCargados = BLOQUE
-            }
+           while (inicio < cantidadRegistros && !shouldStop) {
+               val longitud = minOf(bloque, cantidadRegistros - inicio)
 
-            val bd = database!!.writableDatabase
-            try {
-                bd!!.beginTransaction() //inicio la transaccion
-                //bd!!.execSQL("DELETE FROM inventario") //limpiamos los registros viejos par obtener los nuevos
-                bd.delete("inventario", null, null)
+               val response = runCatching {
+                   URL("$baseUrl/$inicio/$longitud").readText()
+               }.getOrElse {
+                   println("Error al obtener bloque desde el servidor: ${it.message}")
+                   shouldStop = true
+                   "" // Devuelve una cadena vacía
+               }
 
-                val sql2 = "DELETE FROM SQLITE_SEQUENCE WHERE NAME =  'inventario'"
-                bd.execSQL(sql2)
+               if (shouldStop) break
 
-                bd.setTransactionSuccessful()
-            } catch (e: Exception) {
-                throw Exception("Error #2 Linea 237")
-            } finally {
-                bd!!.endTransaction()
-                bd.close()
-            }
+               val dataArray = try {
+                   JSONArray(response)
+               } catch (e: Exception) {
+                   println("Respuesta inválida del servidor")
+                   break
+               }
 
-            //var porcentaje = (100 * registrosCargados) / cantidadRegistros
-            var porcentaje = 2
+               if (dataArray.length() > 0) {
+                   inventarioController.saveInventarioDatabase(dataArray, this@carga_datos, 0, 0)
+               } else {
+                   println("Bloque vacío recibido")
+               }
 
-            do {
+               registrosCargados += longitud
+               inicio += longitud
 
-                if (porcentaje <= 99.toInt()) {
-                    messageAsync("Cargando " + porcentaje.toString() + "%")
-                }else{
-                    messageAsync("Cargando 100%")
-                }
+               val porcentaje = (100 * registrosCargados) / cantidadRegistros
+               messageAsync("Cargando ${porcentaje.coerceAtMost(100)}%")
+           }
 
-                porcentaje += 13
+       } catch (e: Exception) {
+           alert?.dismisss()
+           println("Error general: ${e.message}")
+       }
+   }
 
-                val direccion =
-                    url + "inventario/" + inicio.toString() + "/" + longitud.toString()
-                val url = URL(direccion)
-                with(withContext(Dispatchers.IO) {
-                    url.openConnection()
-                } as HttpURLConnection) {
-                    try {
-                        connectTimeout = 30000
-                        requestMethod = "GET"
-                        if (responseCode == 200) {
-
-                            inputStream.bufferedReader().use { data ->
-                                val response = StringBuffer()
-                                var inputLine = data.readLine()
-                                while (inputLine != null) {
-                                    response.append(inputLine)
-                                    inputLine = data.readLine()
-                                }
-                                //messageAsync("Cargando 45%")
-                                data.close()
-//                                messageAsync("Cargando 50%")
-                                val respuesta = JSONArray(response.toString())
-                                if (respuesta.length() > 0) {
-                                    inventarioController.saveInventarioDatabase(respuesta, this@carga_datos,0,0)
-                                    //println("DATOS ALMACENADOS CORRECTAMEMENTE")
-                                } else {
-                                    throw Exception("Servidor no Devolvio datos")
-                                } //caso que la respuesta venga vacia
-                            }
-                        } else {
-                            throw Exception("Error de Comunicacion con el servidor:$responseCode")
-                        }
-                    } catch (e: Exception) {
-                        throw Exception("Error #3 Linea 285:$responseCode")
-                    }
-                }//termina de obtener los datos
-
-                inicio += BLOQUE
-                registrosCargados += longitud
-
-                if (registrosCargados > cantidadRegistros && inicio < cantidadRegistros) {
-                    longitud = cantidadRegistros
-                }
-
-            } while (inicio < cantidadRegistros)
-
-        } catch (e: Exception) {
-            alert!!.dismisss()
-            //ShowAlert("Error #4 Linea 301")
-        }
-
-        // TABLA INVENTARIO PRECIOS
-        try {
-            val direccionprecioscantidad = url + "inventario/precios/cantidad"
-            val urlprecioscantidad = URL(direccionprecioscantidad)
-            var cantidadPreciosRegistros = 0.toInt()
-            with(withContext(Dispatchers.IO) {
-                urlprecioscantidad.openConnection()
-            } as HttpURLConnection) {
-                try {
-                    connectTimeout = 30000
-                    requestMethod = "GET"
-                    if (responseCode == 200) {
-                        inputStream.bufferedReader().use { data ->
-                            val readline = data.readLine()
-
-                            cantidadPreciosRegistros = readline.toInt()
-                        }
-
-                    } else {
-                        throw Exception("Error de Comunicacion con el servidor:$responseCode")
-                    }
-                } catch (e: Exception) {
-                    throw Exception("Error #5 Linea 325:$responseCode")
-                }
-            }
-
-            val BLOQUE_PRECIOS = 1000.toInt()
-
-            //Log.d("Cantidad: ", cantidadRegistros!!.toString())
-            var inicioPrecios = 0.toInt()
-            var longitudPrecios = 0.toInt()
-            var registrosPreciosCargados = 0.toInt()
-
-            if (cantidadPreciosRegistros < BLOQUE_PRECIOS) {
-                longitudPrecios = cantidadPreciosRegistros
-                registrosPreciosCargados = cantidadPreciosRegistros
-            } else {
-                longitudPrecios = BLOQUE_PRECIOS
-                registrosPreciosCargados = BLOQUE_PRECIOS
-            }
-
-            val bd = database!!.writableDatabase
-            try {
-                bd!!.beginTransaction() //inicio la transaccion
-                bd.delete("inventario_precios", null, null)
-
-                val sql2 = "DELETE FROM SQLITE_SEQUENCE WHERE NAME =  'inventario_precios'"
-                bd.execSQL(sql2)
-
-                bd.setTransactionSuccessful()
-            } catch (e: Exception) {
-                throw Exception("Error #6 Linea 354")
-            } finally {
-                bd!!.endTransaction()
-                bd.close()
-            }
-
-            do {
-                var porcentaje = (100 * registrosPreciosCargados) / cantidadPreciosRegistros
-
-                if (porcentaje > 100.toInt()) {
-                    porcentaje = 100.toInt()
-                }
-
-                if (porcentaje > 50.toInt()) {
-                    messageAsync("Cargando " + porcentaje.toString() + "%")
-                }
-
-                val direccion =
-                    url!! + "inventario/precios/" + inicioPrecios.toString() + "/" + longitudPrecios.toString()
-                val url = URL(direccion)
-                with(withContext(Dispatchers.IO) {
-                    url.openConnection()
-                } as HttpURLConnection) {
-                    try {
-                        connectTimeout = 30000
-                        requestMethod = "GET"
-                        if (responseCode == 200) {
-
-                            inputStream.bufferedReader().use { data ->
-                                val response = StringBuffer()
-                                var inputLine = data.readLine()
-                                while (inputLine != null) {
-                                    response.append(inputLine)
-                                    inputLine = data.readLine()
-                                }
-                                //messageAsync("Cargando 45%")
-                                data.close()
-//                                messageAsync("Cargando 50%")
-                                val respuesta = JSONArray(response.toString())
-                                if (respuesta.length() > 0) {
-                                    inventarioController.saveInventarioPreciosDatabase(respuesta, this@carga_datos)
-                                } else {
-                                    throw Exception("Servidor no Devolvio datos")
-                                } //caso que la respuesta venga vacia
-                            }
-                        } else {
-                            throw Exception("Error de Comunicacion con el servidor:$responseCode")
-                        }
-                    } catch (e: Exception) {
-                        throw Exception("Error #7 Linea 401:$responseCode")
-                    }
-                }//termina de obtener los datos
-
-                inicioPrecios += BLOQUE_PRECIOS
-                registrosPreciosCargados += longitudPrecios
-
-                if (registrosPreciosCargados > cantidadPreciosRegistros && inicioPrecios < cantidadPreciosRegistros) {
-                    longitudPrecios = cantidadPreciosRegistros
-                }
-
-            } while (inicioPrecios < cantidadPreciosRegistros)
-
-            messageAsync("Cargando 100%")
-            delay(1000)
-            messageAsync("Inventario Almacenado Exitosamente")
-            delay(1500)
-            alert!!.dismisss()
-
-        } catch (e: Exception) {
-            //alert!!.dismisss()
-            //ShowAlert("NO SE ENCONTRARON ESCALAS REGISTRADAS")
-           // ShowAlert("INVENTARIO GARGADO CORRECTAMENTE")
-            messageAsync("Inventario Almacenado Exitosamente")
-            delay(1500)
-            alert!!.dismisss()
-        }finally {
-            inventarioController.obtenerFechaInventario(this@carga_datos)
-        }
-    }
 
     private suspend fun getCuentas() {
         try {
@@ -904,13 +770,13 @@ class carga_datos : AppCompatActivity() {
                                 delay(1000)
                                 messageAsync("Cuentas Almacenadas Exitosamente")
                                 delay(1500)
-                                alert!!.dismisss()
+                                //alert!!.dismisss()
                             } else {
                                 messageAsync("Cargando 100%")
                                 delay(1000)
                                 messageAsync("Cuentas Almacenados Exitosamente")
                                 delay(1500)
-                                alert!!.dismisss()
+                                //alert!!.dismisss()
                             } //caso que la respuesta venga vacia
                         }
                     } else {
@@ -921,7 +787,7 @@ class carga_datos : AppCompatActivity() {
                 }
             }//termina de obtener los datos
         } catch (e: Exception) {
-            alert!!.dismisss()
+            //alert!!.dismisss()
             funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
         }
     }
@@ -1010,6 +876,7 @@ class carga_datos : AppCompatActivity() {
                 data.put("Latitud_app", funciones.validate(dato.getString("latitud_app")))
                 data.put("Longitud_app", funciones.validate(dato.getString("longitud_app")))
                 data.put("Nombre_comercial", funciones.validate(dato.getString("nombre_comercial")))
+                data.put("Mayorista", funciones.validate(dato.getString("mayorista")))
                 data.put("DTECodGiro", funciones.validate(dato.getString("dteCodGiro")))
                 data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
                 data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))

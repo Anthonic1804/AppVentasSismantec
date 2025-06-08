@@ -80,20 +80,10 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         puerto = preferencias!!.getInt("puerto", 0)
         generaToken = preferencias!!.getInt("generaToken", 0)
 
-        //FUNCION PARA OBTENER LA FECHA DEL INVENTARIO
-        /*CoroutineScope(Dispatchers.IO).launch {
-            inventarioController.obtenerFechaInventario(this@Inicio)
-        }*/
 
         fechaInventario = preferencias!!.getString("fechaInventario", "NULL").toString()
         binding.includeBar.lblupdate.text = fechaInventario
 
-        //PRUEBA DE COMPARACION DE FECHA
-//        if(inventarioController.verificarFechaInventario(this@Inicio)){
-//            println("LA FECHA ES IGUAL")
-//        }else{
-//            println("LA FECHA ES DIFERENTE")
-//        }
 
         val nombre_vendedor =  preferencias!!.getString("Vendedor", "")
         binding.includeBar.txtvendedor.text = "BIENVENIDO ${nombre_vendedor?.trim()}"
@@ -113,7 +103,9 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         //OCULTANDO EL MENU TOKEN
         if(generaToken == 0){
             navigationView.menu.setGroupVisible(R.id.group_admin, false)
-            //navigationView.menu.setGroupVisible(R.id.group_carga, false)
+            navigationView.menu.setGroupVisible(R.id.group_carga, false)
+            navigationView.menu.setGroupVisible(R.id.group_gasto, false)
+            navigationView.menu.setGroupVisible(R.id.group_reporte, false)
         }
 
         //FIN DE LA IMPLEAMENTACION DEL MENU
@@ -158,9 +150,11 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             }
 
             cvAbonos.setOnClickListener {
-                val intento = Intent(this@Inicio, AbonosCxc::class.java)
+                Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
+                    .show()
+                /*val intento = Intent(this@Inicio, AbonosCxc::class.java)
                 startActivity(intento)
-                finish()
+                finish()*/
             }
 
             cvcliente.setOnClickListener {
@@ -180,10 +174,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 finish()
             }
             cvcuentas.setOnClickListener {
-                val intento = Intent(this@Inicio, Cuentas_list::class.java)
+                Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
+                    .show()
+                /*val intento = Intent(this@Inicio, Cuentas_list::class.java)
                 intento.putExtra("cuentas", true)
                 startActivity(intento)
-                finish()
+                finish()*/
             }
         }
     }//acciones de los botones del menu

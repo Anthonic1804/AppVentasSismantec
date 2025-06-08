@@ -198,7 +198,7 @@ class Detallepedido : AppCompatActivity() {
         cargarSucursales()
 
         //FUNCION PARA DESHABILITAR FUNCIONES SEGUN PROCESO
-        validarProcesoPedidos()
+        validarProcesoPedidos(codigo)
 
         //COMPLETANDO SPINNER TERMINOS ENVIO
         terminosDelCliente()
@@ -215,7 +215,7 @@ class Detallepedido : AppCompatActivity() {
 
         //COMPLETANDO SPINNER DOCUMENTO
         val tipoDocumentoAdaptador = ArrayAdapter<String>(this@Detallepedido, android.R.layout.simple_spinner_dropdown_item)
-        tipoDocumentoAdaptador.addAll(listOf("FACTURA", "CREDITO FISCAL", "REMISIÓN")) //LIMINADO "FACTURA EXPORTACION"
+        tipoDocumentoAdaptador.addAll(listOf("FACTURA", "CREDITO FISCAL")) //LIMINADO "FACTURA EXPORTACION" , "REMISION"
         binding.spDocumento.adapter = tipoDocumentoAdaptador
 
         //COMPLETANDO TVTIPODOCUMENTO
@@ -239,13 +239,12 @@ class Detallepedido : AppCompatActivity() {
                 //actualizarTotales()
             }
             "RE" -> {
-                binding.tvDocumentoSeleccionado.text = getString(R.string.remisi_n)
+               /* binding.tvDocumentoSeleccionado.text = getString(R.string.remisi_n)
                 binding.spDocumento.setSelection(2, true)
                 actualizarVistaTotales()
-                actualizarTotales()
+                actualizarTotales()*/
             }
         }
-
 
         //CARTURANDO LA SUCURSAL SELECCIONADA
          getSucursalPosition = intento.getIntExtra("sucursalPosition", 0)
@@ -317,6 +316,14 @@ class Detallepedido : AppCompatActivity() {
 
         //EVENTRO CLIC DEL BOTON ENVIAR
         binding.btnenviar.setOnClickListener {
+
+            if(codigo == "01"){
+                nombre = binding.txtCliente.text.toString()
+                CoroutineScope(Dispatchers.IO).launch {
+                    pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
+                }
+            }
+
             if (ConfirmarDetallePedido() > 0) {
                 val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
                 enviandoPedido = true
@@ -446,7 +453,7 @@ class Detallepedido : AppCompatActivity() {
                         actualizarTotales()
                     }
                     "FACTURA EXPORTACION" -> {
-                        Toast.makeText(this@Detallepedido, "OPCION EN REVISION", Toast.LENGTH_SHORT).show()
+                        //Toast.makeText(this@Detallepedido, "OPCION EN REVISION", Toast.LENGTH_SHORT).show()
                         /*
                         pedidosController.updateTipoDocumento("FE", idpedido, this@Detallepedido)
                         tipoDocumento = "FE"
@@ -459,7 +466,7 @@ class Detallepedido : AppCompatActivity() {
                         actualizarTotales()*/
                     }
                     "REMISIÓN" -> {
-                        pedidosController.updateTipoDocumento("RE", idpedido, this@Detallepedido)
+                        /*pedidosController.updateTipoDocumento("RE", idpedido, this@Detallepedido)
                         tipoDocumento = "RE"
                         FacturaExportacion = false
                         precioConIVA = true
@@ -468,7 +475,7 @@ class Detallepedido : AppCompatActivity() {
                         pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
                         actualizarVistaTotales()
 
-                        actualizarTotales()
+                        actualizarTotales()*/
                     }
                 }
             }
@@ -860,7 +867,7 @@ class Detallepedido : AppCompatActivity() {
     }
 
     //FUNCION PARA DESHABILITAR OPCIONES SEGUN VISTA EN PEDIDOS
-    private fun validarProcesoPedidos(){
+    private fun validarProcesoPedidos( codigoCliente: String){
         binding.txtCliente.setText(nombre)
         val pedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
         this@Detallepedido.lifecycleScope.launch {
@@ -889,7 +896,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.VISIBLE //GONE
+                    binding.btnexportar.visibility = View.GONE //GONE
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE
@@ -931,14 +938,14 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.VISIBLE //visible
+                    binding.btnexportar.visibility = View.GONE //visible
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE
                     binding.sinSucursal.visibility = View.VISIBLE
                     binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
                     binding.tvTipoenvio.visibility = View.VISIBLE
-                    binding.btnInvalidar.visibility = View.VISIBLE
+                    binding.btnInvalidar.visibility = View.GONE //visible
 
                     idPedidoServidor = pedido.Id_pedido_sistema!!
                 }
@@ -946,7 +953,6 @@ class Detallepedido : AppCompatActivity() {
             "visita" -> {
                 //RUTINA PARA AGREGAR NUEVO PEDIDO
 
-                binding.txtCliente.isEnabled = false
                 binding.imgbtnadd.visibility = View.VISIBLE
                 binding.btnenviar.visibility = View.VISIBLE
                 binding.imbtnatras.visibility = View.VISIBLE
@@ -954,6 +960,11 @@ class Detallepedido : AppCompatActivity() {
                 binding.btnexportar.visibility = View.GONE
                 binding.imbtnatras.visibility = View.GONE
                 binding.btnInvalidar.visibility = View.GONE
+
+                if(codigoCliente == "01"){
+                    binding.txtCliente.isEnabled = true
+                }
+
             }
         }
     }

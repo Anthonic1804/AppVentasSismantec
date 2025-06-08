@@ -506,4 +506,16 @@ class PedidosController {
 
     }
 
+    //FUNCION PARA ACTUALIZAR EL NOMBRE DEL CLIENTE EN CODIGO 01 -> CLIENTE VARIOS
+    fun actualizarNombreClientePedido(context: Context, nombre: String, idPedido: Int){
+        val bd = funciones.getDataBase(context).writableDatabase
+        try{
+            bd.execSQL("UPDATE pedidos SET Nombre_cliente='$nombre' WHERE Id=$idPedido")
+        }catch (e:Exception){
+            println("ERROR: NO SE LOGRO ACTUALIZAR EL NOMBRE DEL CLIENTE EN LE PEDIDO -> " + e.message)
+        }finally {
+            bd.close()
+        }
+    }
+
 }

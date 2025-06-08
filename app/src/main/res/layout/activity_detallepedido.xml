@@ -91,11 +91,11 @@
                         android:id="@+id/txtCliente"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:enabled="false"
                         android:inputType="text"
-                        android:textSize="16sp"
-                        android:focusable="false"
-                        android:clickable="false"
-                        android:textColor="@color/colorHint"/>
+                        android:textAllCaps="true"
+                        android:textColor="@color/colorHint"
+                        android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView

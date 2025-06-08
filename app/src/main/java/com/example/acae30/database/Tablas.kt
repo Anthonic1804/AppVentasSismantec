@@ -45,6 +45,7 @@ class Tablas {
                 "Latitud_app VARCHAR(100) NULL," +
                 "Longitud_app VARCHAR(100) NULL," +
                 "Nombre_comercial VARCHAR(100) NULL DEFAULT ''," +
+                "Mayorista VARCHAR(1) NOT NULL DEFAULT 'N',"+
                 "DTECodGiro VARCHAR(10) NULL DEFAULT ''," +
                 "DTEDistrito VARCHAR(70) NULL DEFAULT ''," +
                 "DTECodDistrito VARCHAR(10) NULL DEFAULT ''" +
@@ -148,8 +149,6 @@ class Tablas {
                 "Id INTEGER  PRIMARY KEY NOT NULL," +
                 "Codigo VARCHAR(100)  NULL," +
                 "Tipo VARCHAR(50)  NULL," +
-                "Id_linea INTEGER  NULL," +
-                "Linea VARCHAR(100)  NULL," +
                 "Descripcion VaRCHAR(150)  NULL," +
                 "Unidad_medida VARCHAR(25) NULL," +
                 "Fraccion NUMERIC(20,6) NULL," +
@@ -157,27 +156,12 @@ class Tablas {
                 "Existencia NUMERIC(20,6)  NULL," +
                 "Costo NUMERIC(20,6) NOT NULL," +
                 "costo_iva NUMERIC(20,6) NOT NULL," +
-                "Precio_oferta NUMERIC(12,2)  NULL," +
                 "Precio_iva NUMERIC(20,6)  NULL," +
                 "Precio NUMERIC(20,6)," +
                 "Precio_u NUMERIC(20,6)," +
                 "Precio_u_iva NUMERIC(20,6)," +
-                "Status VARCHAR(50)  NULL," +
                 "Fecha_inventario DATE DEFAULT CURRENT_DATE NOT NULL," +
-                "Id_productor INTEGER  NULL," +
-                "Productor VARCHAR(200)  NULL," +
-                "Id_proveedor INTEGER DEFAULT '0' NULL," +
-                "Proveedor VARCHAR(200)  NULL," +
-                "Cesc varchar(1) not null," +
-                "Combustible varchar(1) not null," +
-                "Imagen TEXT NULL," +
-                "Rubro VARCHAR(50)," +
-                "Marca VARCHAR(50)," +
-                "Id_sublinea INTEGER," +
-                "Sublinea VARCHAR(50)," +
-                "Desc_automatico NUMERIC(20,6)," +
                 "Bonificado NUMERIC(20,6)," +
-                "Id_rubro INTEGER," +
                 "Existencia_u NUMERIC(20,6)," +
                 "codigo_de_barra VARCHAR(25) NOT NULL DEFAULT '')"
     } //tabla inventario

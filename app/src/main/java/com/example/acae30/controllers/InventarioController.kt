@@ -47,76 +47,42 @@ class InventarioController {
                         cursor.getInt(0),
                         cursor.getString(1),
                         cursor.getString(2),
-                        cursor.getInt(3),
+                        cursor.getString(3),
                         cursor.getString(4),
-                        cursor.getString(5),
+                        cursor.getFloat(5),
                         cursor.getString(6),
-                        cursor.getFloat(7),
-                        cursor.getString(8),
-                        cursor.getInt(9),
-                        cursor.getFloat(10), //COSTO
-                        cursor.getFloat(11), //COSTO_IVA
-                        cursor.getFloat(12),
-                        cursor.getFloat(14), //PRECIO_IVA
-                        cursor.getFloat(14)/1.13F, //PRECIO
-                        cursor.getFloat(15)/1.13F,//PRECIO_U
-                        cursor.getFloat(15),//PRECIO_U_IVA
-                        cursor.getString(17),
-                        cursor.getString(18),
-                        cursor.getInt(19),
-                        cursor.getString(20),
-                        cursor.getInt(21),
-                        cursor.getString(22),
-                        cursor.getString(23),
-                        cursor.getString(24),
-                        cursor.getString(25),
-                        cursor.getString(26),
-                        cursor.getString(27),
-                        cursor.getInt(28),
-                        cursor.getString(29),
-                        cursor.getFloat(30),
-                        cursor.getDouble(31),
-                        cursor.getInt(32),
-                        cursor.getFloat(33),
-                        cursor.getString(34)
+                        cursor.getInt(7),
+                        cursor.getFloat(8),
+                        cursor.getFloat(9),
+                        cursor.getFloat(10),
+                        cursor.getFloat(11)/1.13F,
+                        cursor.getFloat(12)/1.13F,
+                        cursor.getFloat(13),
+                        cursor.getString(14),
+                        cursor.getFloat(15),
+                        cursor.getFloat(16),
+                        cursor.getString(17)
                     )
                 }else{
                     datos = Inventario(
                         cursor.getInt(0),
                         cursor.getString(1),
                         cursor.getString(2),
-                        cursor.getInt(3),
+                        cursor.getString(3),
                         cursor.getString(4),
-                        cursor.getString(5),
+                        cursor.getFloat(5),
                         cursor.getString(6),
-                        cursor.getFloat(7),
-                        cursor.getString(8),
-                        cursor.getInt(9),
+                        cursor.getInt(7),
+                        cursor.getFloat(8),
+                        cursor.getFloat(9),
                         cursor.getFloat(10),
                         cursor.getFloat(11),
                         cursor.getFloat(12),
                         cursor.getFloat(13),
-                        cursor.getFloat(14),
+                        cursor.getString(14),
                         cursor.getFloat(15),
                         cursor.getFloat(16),
-                        cursor.getString(17),
-                        cursor.getString(18),
-                        cursor.getInt(19),
-                        cursor.getString(20),
-                        cursor.getInt(21),
-                        cursor.getString(22),
-                        cursor.getString(23),
-                        cursor.getString(24),
-                        cursor.getString(25),
-                        cursor.getString(26),
-                        cursor.getString(27),
-                        cursor.getInt(28),
-                        cursor.getString(29),
-                        cursor.getFloat(30),
-                        cursor.getDouble(31),
-                        cursor.getInt(32),
-                        cursor.getFloat(33),
-                        cursor.getString(34)
+                        cursor.getString(17)
                     )
                 }
             }
@@ -233,38 +199,21 @@ class InventarioController {
                         cursor.getInt(0),
                         cursor.getString(1),
                         cursor.getString(2),
-                        cursor.getInt(3),
+                        cursor.getString(3),
                         cursor.getString(4),
-                        cursor.getString(5),
+                        cursor.getFloat(5),
                         cursor.getString(6),
-                        cursor.getFloat(7),
-                        cursor.getString(8),
-                        cursor.getInt(9),
+                        cursor.getInt(7),
+                        cursor.getFloat(8),
+                        cursor.getFloat(9),
                         cursor.getFloat(10),
                         cursor.getFloat(11),
                         cursor.getFloat(12),
                         cursor.getFloat(13),
-                        cursor.getFloat(14),
+                        cursor.getString(14),
                         cursor.getFloat(15),
                         cursor.getFloat(16),
-                        cursor.getString(17),
-                        cursor.getString(18),
-                        cursor.getInt(19),
-                        cursor.getString(20),
-                        cursor.getInt(21),
-                        cursor.getString(22),
-                        cursor.getString(23),
-                        cursor.getString(24),
-                        cursor.getString(25),
-                        cursor.getString(26),
-                        cursor.getString(27),
-                        cursor.getInt(28),
-                        cursor.getString(29),
-                        cursor.getFloat(30),
-                        cursor.getDouble(31),
-                        cursor.getInt(32),
-                        cursor.getFloat(33),
-                        cursor.getString(34)
+                        cursor.getString(17)
                     )
                     lista.add(arreglo)
                 } while (cursor.moveToNext())
@@ -346,109 +295,92 @@ class InventarioController {
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    suspend fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, recarga: Int) {
+    fun saveInventarioDatabase(
+        json: JSONArray,
+        context: Context,
+        numeroHojaCarga: Int,
+        recarga: Int
+    ) {
         val bd = funciones.getDataBase(context).writableDatabase
-
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
-        //VERIFICANDO SI LA HOJA DE CARGA ESTA ACTIVA PARA SU USO
         val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
-
-        //val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
+        var idHojaCarga = 0
+        var idRutaHojaCarga = 0
+        var rutaHojaCarga = ""
 
         try {
             bd.beginTransaction()
+
+            val sql = """
+            INSERT INTO inventario (
+                Id, Codigo, codigo_de_barra, Tipo, Descripcion, Unidad_medida,
+                Fraccion, Nombre_fraccion, Existencia, Costo, costo_iva, Precio_iva,
+                Precio_u, Precio_u_iva, Precio, Bonificado, Existencia_u
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """.trimIndent()
+
+            val stmt = bd.compileStatement(sql)
+
             for (i in 0 until json.length()) {
                 val dato = json.getJSONObject(i)
+                stmt.clearBindings()
 
-                val data = ContentValues()
-                data.put("Id", dato.getInt("id"))
-                data.put("Codigo", funciones.validateJsonIsnullString(dato, "codigo"))
-                data.put("codigo_de_barra", funciones.validateJsonIsnullString(dato, "codigo_de_barra"))
-                data.put("Tipo", funciones.validateJsonIsnullString(dato, "tipo"))
-                data.put("Id_linea", funciones.validateJsonIsNullInt(dato, "id_linea"))
-                data.put("Linea", funciones.validateJsonIsnullString(dato, "linea"))
-                data.put("Descripcion", funciones.validateJsonIsnullString(dato, "descripcion"))
-                data.put(
-                    "Unidad_medida",
-                    funciones.validateJsonIsnullString(dato, "unidad_medida")
-                )
-                data.put("Fraccion", funciones.validateJsonIsNullFloat(dato, "fraccion"))
-                data.put(
-                    "Nombre_fraccion", funciones.validateJsonIsnullString(
-                        dato,
-                        "nombre_fraccion"
-                    )
-                )
-                //SI HOJA DE CARGA ESTA ACTIVA, LA EXISTENCIA ES 0 Y SE CARGARA LA CANTIDAD DE LA HOJA DE CARGA
-                if(hojaCarga){
-                  data.put("Existencia", 0)
-                    if(funciones.validateJsonIsNullInt(dato, "idHojaCarga") != 0){
+                stmt.bindLong(1, dato.optInt("id").toLong())
+                stmt.bindString(2, funciones.validateJsonIsnullString(dato, "codigo"))
+                stmt.bindString(3, funciones.validateJsonIsnullString(dato, "codigo_de_barra"))
+                stmt.bindString(4, funciones.validateJsonIsnullString(dato, "tipo"))
+                stmt.bindString(5, funciones.validateJsonIsnullString(dato, "descripcion"))
+                stmt.bindString(6, funciones.validateJsonIsnullString(dato, "unidad_medida"))
+                stmt.bindDouble(7, funciones.validateJsonIsNullFloat(dato, "fraccion").toDouble())
+                stmt.bindString(8, funciones.validateJsonIsnullString(dato, "nombre_fraccion"))
 
-                       //ALAMACENANDO EN SHARED PREFERENCES EL ID DE LA HOJA DE CARGA ACTIVA
-                        val editor = preferences.edit()
-                        editor.putInt("idHojaCarga", funciones.validateJsonIsNullInt(dato, "idHojaCarga"))
-                        editor.putInt("idRutaHojaCarga", funciones.validateJsonIsNullInt(dato, "idRuta"))
-                        editor.putString("rutaHojaCarga", funciones.validateJsonIsnullString(dato, "ruta"))
-                        editor.apply()
+                if (hojaCarga) {
+                    stmt.bindDouble(9, 0.0)
+                    // Solo capturar valores si no lo hemos hecho antes
+                    if (idHojaCarga == 0 && funciones.validateJsonIsNullInt(dato, "idHojaCarga") != 0) {
+                        idHojaCarga = funciones.validateJsonIsNullInt(dato, "idHojaCarga")
+                        idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")
+                        rutaHojaCarga = funciones.validateJsonIsnullString(dato, "ruta")
                     }
-
-                }else{
-                    data.put("Existencia", funciones.validateJsonIsNullFloat(dato, "existencia"))
+                } else {
+                    stmt.bindDouble(9, funciones.validateJsonIsNullFloat(dato, "existencia").toDouble())
                 }
 
-                data.put("Costo", funciones.validateJsonIsNullFloat(dato, "costo"))
-                data.put("costo_iva", funciones.validateJsonIsNullFloat(dato, "costo_iva"))
-                data.put(
-                    "Precio_oferta",
-                    funciones.validateJsonIsNullFloat(dato, "precio_oferta")
-                )
-                data.put("Precio_iva", funciones.validateJsonIsNullFloat(dato, "precio_iva"))
-                data.put("Precio_u", funciones.validateJsonIsNullFloat(dato, "precio_u"))
-                data.put("Precio_u_iva", funciones.validateJsonIsNullFloat(dato, "precio_u_iva"))
-                data.put("Precio", funciones.validateJsonIsNullFloat(dato, "precio"))
-                data.put("Status", funciones.validateJsonIsnullString(dato, "status"))
-                data.put("Id_productor", funciones.validateJsonIsNullInt(dato, "id_productor"))
-                data.put("Productor", funciones.validateJsonIsnullString(dato, "productor"))
-                data.put("Id_proveedor", funciones.validateJsonIsNullInt(dato, "id_proveedor"))
-                data.put("Proveedor", funciones.validateJsonIsnullString(dato, "proveedor"))
-                data.put("Cesc", "N")
-                data.put("Combustible", "N")
-                data.put("Imagen", "")
-                data.put("Rubro", funciones.validateJsonIsnullString(dato, "rubro"))
-                data.put("Marca", funciones.validateJsonIsnullString(dato, "marca"))
-                data.put("Sublinea", funciones.validateJsonIsnullString(dato, "sublinea"))
-                data.put("Bonificado", funciones.validateJsonIsNullFloat(dato, "bonificado"))
-                data.put(
-                    "Desc_automatico", funciones.validateJsonIsNullFloat(
-                        dato,
-                        "desc_automatico"
-                    )
-                )
-                data.put("Id_sublinea", funciones.validateJsonIsNullInt(dato, "id_sublinea"))
-                data.put("Id_rubro", funciones.validateJsonIsNullInt(dato, "id_rubro"))
-                data.put("Existencia_u", funciones.validateJsonIsNullFloat(dato, "existencia_u"))
-                bd.insert("inventario", null, data)
+                stmt.bindDouble(10, funciones.validateJsonIsNullFloat(dato, "costo").toDouble())
+                stmt.bindDouble(11, funciones.validateJsonIsNullFloat(dato, "costo_iva").toDouble())
+                stmt.bindDouble(12, funciones.validateJsonIsNullFloat(dato, "precio_iva").toDouble())
+                stmt.bindDouble(13, funciones.validateJsonIsNullFloat(dato, "precio_u").toDouble())
+                stmt.bindDouble(14, funciones.validateJsonIsNullFloat(dato, "precio_u_iva").toDouble())
+                stmt.bindDouble(15, funciones.validateJsonIsNullFloat(dato, "precio").toDouble())
+                stmt.bindDouble(16, funciones.validateJsonIsNullFloat(dato, "bonificado").toDouble())
+                stmt.bindDouble(17, funciones.validateJsonIsNullFloat(dato, "existencia_u").toDouble())
+
+                stmt.executeInsert()
             }
+
             bd.setTransactionSuccessful()
         } catch (e: Exception) {
-            throw Exception(e.message)
+            throw Exception("Error al insertar inventario: ${e.message}")
         } finally {
-            bd!!.endTransaction()
+            bd.endTransaction()
             bd.close()
-            if(recarga == 0){
-                if(hojaCarga){
-                    CoroutineScope(Dispatchers.IO).launch {
-                        insertarHojaDeCargar(json, context, numeroHojaCarga)
-                    }
-                }else{
-                    withContext(Dispatchers.Main){
-                        funciones.mensaje(context, "INVENTARIO CARGADO CORRECTAMENTE")
-                    }
+
+            if (recarga == 0 && hojaCarga && idHojaCarga != 0) {
+                // Solo guardar una vez fuera del bucle
+                val editor = preferences.edit()
+                editor.putInt("idHojaCarga", idHojaCarga)
+                editor.putInt("idRutaHojaCarga", idRutaHojaCarga)
+                editor.putString("rutaHojaCarga", rutaHojaCarga)
+                editor.apply()
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    insertarHojaDeCargar(json, context, numeroHojaCarga)
                 }
             }
         }
     }
+
 
     //FUNCIONES PARA HOJA DE CARGA
     //FUNCION PARA OBTENER EL INVENTARIO DESDE LA HOJA DE CARGA DE ESCARRSA
