@@ -1,7 +1,7 @@
 package com.example.acae30.modelos
 
 data class Cliente (
-    var  Id:Int?,
+    var Id:Int?,
     var Codigo:String?,
     var Cliente:String?,
     var Dui:String?,
@@ -41,6 +41,7 @@ data class Cliente (
     var Latitud : String,
     var Longitud : String,
     var NombreComercial : String,
+    //var Mayorista : String,
     var DTECodGiro: String,
     var DTEDistrito : String,
     var DTECodDistrito : String

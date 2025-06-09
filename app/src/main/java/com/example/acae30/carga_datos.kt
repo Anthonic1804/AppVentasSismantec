@@ -16,6 +16,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
 import androidx.lifecycle.lifecycleScope
+import com.example.acae30.Entities.InventarioEntity
+import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.ConfigController
@@ -23,6 +25,7 @@ import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityCargaDatosBinding
+import com.example.acae30.modelos.Inventario
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +33,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import retrofit2.Response
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -668,71 +672,64 @@ class carga_datos : AppCompatActivity() {
 
     //FUNCION PARA LA LECTURA DEL ENDPOINT DE INVENTARIO
    private suspend fun getInventario() = withContext(Dispatchers.IO) {
-       val baseUrl = url+"inventario"
-       val bloque = 2000
+        val bd = funciones.getDataBase(this@carga_datos)
+        val room = bd.roomDb
+        val baseUrl = url
+        val dao = room.inventarioDao()
 
-       try {
-           // Obtener cantidad total de registros
-           val cantidadRegistros = runCatching {
-               URL("$baseUrl/cantidad").readText().toInt()
-           }.getOrElse {
-               throw Exception("Error al obtener la cantidad de inventario: ${it.message}")
-           }
+       //val bloque = 2000
 
-           // Preparar la base de datos
-           database?.writableDatabase?.use { db ->
-               db.beginTransaction()
-               try {
-                   db.delete("inventario", null, null)
-                   db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = 'inventario'")
-                   db.setTransactionSuccessful()
-               } finally {
-                   db.endTransaction()
-               }
-           }
+        val api = RetrofitCliente.obtenerApi(baseUrl)
 
-           var inicio = 0
-           var registrosCargados = 0
+        val limite = 1000
+        var offset = 0
+        var hayMas = true
+        var totalInsertados = 0
 
-           var shouldStop = false
+        try {
 
-           while (inicio < cantidadRegistros && !shouldStop) {
-               val longitud = minOf(bloque, cantidadRegistros - inicio)
+            while (hayMas) {
+                val respuesta = api.obtenerInventario(offset, limite)
 
-               val response = runCatching {
-                   URL("$baseUrl/$inicio/$longitud").readText()
-               }.getOrElse {
-                   println("Error al obtener bloque desde el servidor: ${it.message}")
-                   shouldStop = true
-                   "" // Devuelve una cadena vacía
-               }
+                println("REGISTROS CARGADOS ->  ${respuesta}")
 
-               if (shouldStop) break
+                if (respuesta.isNotEmpty()) {
+                    val entidades = respuesta.map {
+                        InventarioEntity(
+                            it.bonificado,
+                            it.codigo!!,
+                            it.costo,
+                            it.costo_iva,
+                            it.descripcion!!,
+                            it.existencia,
+                            it.existencia_u,
+                            it.fraccion,
+                            it.id,
+                            it.precio,
+                            it.precio2,
+                            it.precio2_iva,
+                            it.precio_iva,
+                            it.precio_u,
+                            it.precio_u2,
+                            it.precio_u2_iva,
+                            it.precio_u_iva,
+                            it.precio_viñeta,
+                            it.precio_viñeta_iva
+                        )
+                    }
 
-               val dataArray = try {
-                   JSONArray(response)
-               } catch (e: Exception) {
-                   println("Respuesta inválida del servidor")
-                   break
-               }
+                    dao.insertarTodos(entidades)
+                    offset += limite
+                    totalInsertados += entidades.size
+                } else {
+                    hayMas = false
+                }
+            }
 
-               if (dataArray.length() > 0) {
-                   inventarioController.saveInventarioDatabase(dataArray, this@carga_datos, 0, 0)
-               } else {
-                   println("Bloque vacío recibido")
-               }
 
-               registrosCargados += longitud
-               inicio += longitud
-
-               val porcentaje = (100 * registrosCargados) / cantidadRegistros
-               messageAsync("Cargando ${porcentaje.coerceAtMost(100)}%")
-           }
-
-       } catch (e: Exception) {
-           alert?.dismisss()
-           println("Error general: ${e.message}")
-       }
+        } catch (e: Exception) {
+            println("Error general: ${e.message}")
+        }
    }
 
 

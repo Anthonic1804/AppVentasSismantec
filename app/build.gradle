@@ -1,8 +1,17 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-//apply plugin: 'kotlin-android-extensions'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.devtools.ksp' version '1.9.10-1.0.13' // Usa la versión compatible con tu Kotlin
+}
+
 
 android {
+
+    ksp {
+        arg("room.incremental", "true")
+        arg("room.expandProjection", "true")
+    }
+
     compileSdkVersion 34
 
     buildFeatures {
@@ -76,6 +85,16 @@ dependencies {
 
     //GOOGLE MAPS
     implementation "com.google.android.gms:play-services-maps:19.0.0"
+
+    //RETROFIT
+    implementation "com.squareup.retrofit2:retrofit:2.9.0"
+    implementation "com.squareup.retrofit2:converter-gson:2.9.0"
+
+    //ROOM
+    implementation "androidx.room:room-runtime:2.6.1"
+    //kapt "androidx.room:room-compiler:2.6.1"
+    ksp "androidx.room:room-compiler:2.6.1"
+    implementation "androidx.room:room-ktx:2.6.1"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'

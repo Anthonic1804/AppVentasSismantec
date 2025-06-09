@@ -3,8 +3,13 @@ package com.example.acae30.database
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.acae30.Migration.MIGRATION_1_2
 
-class Database(context: Context) : SQLiteOpenHelper(
+class Database(val context: Context) : SQLiteOpenHelper(
     context,
     DATABASE_NAME,
     null,
@@ -13,18 +18,30 @@ class Database(context: Context) : SQLiteOpenHelper(
     private var tbl: Tablas = Tablas()
 
     companion object {
-        private const val DATABASE_VERSION = 1 //version de la base
+        private const val DATABASE_VERSION = 2 //version de la base
         private const val DATABASE_NAME = "Acae.db" //nombre de la bd
+
+    }
+
+    val roomDb: AppDatabase by lazy {
+        Room.databaseBuilder(
+            context.applicationContext,
+            AppDatabase::class.java,
+            DATABASE_NAME // usa el mismo nombre si quieres compartir archivo
+        )
+            .createFromAsset("Acae.db") // si usas una base pre-cargada
+            .addMigrations(MIGRATION_1_2) // ← aquí aplicas la migración
+            .build()
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
         db?.execSQL(tbl.cliente()) //ejecuta la tabla clientes
         db?.execSQL(tbl.clienteSucursal()) //CREACION DE LA TABLA CLIENTES SUCURSALES -> 25/01/2023
         db?.execSQL(tbl.clientePrecios()) //CREACION DE LA TABLA CLIENTES PRECIOS -> 19/03/2024
-        db?.execSQL(tbl.inventario())
+       // db?.execSQL(tbl.inventario())
         db?.execSQL(tbl.inventarioPrecios())
         db?.execSQL(tbl.inventarioUnidades())
-        db?.execSQL(tbl.virtualInventario()) //TABLA FTS4 VIRTUAL INVENTARIO
+        //db?.execSQL(tbl.virtualInventario()) //TABLA FTS4 VIRTUAL INVENTARIO
         db?.execSQL(tbl.hojaCarga())//TBL HOJA DE CARGA MAESTRO
         db?.execSQL(tbl.hojaCargaDetalle())//TBL HOJA DE CARGA DETALLE
         db?.execSQL(tbl.hojaDetalleRecargas())
@@ -33,7 +50,7 @@ class Database(context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.visitas())
         db?.execSQL(tbl.detallePedidos())
         db?.execSQL(tbl.vistaDetallePedidos())
-        db?.execSQL(tbl.triggerInventarioVirtual())//TRIGGER PARA INSERCION DE DATOS EN LA TABLA VIRTUAL INVENTARIO
+        //db?.execSQL(tbl.triggerInventarioVirtual())//TRIGGER PARA INSERCION DE DATOS EN LA TABLA VIRTUAL INVENTARIO
         db?.execSQL(tbl.empleados()) //CREANDO LA TABLA EMPLEADOS
         db?.execSQL(tbl.preciosAutorizados()) // CREANDO LA TABLA PRECIOS AUTORIZADOS
         db?.execSQL(tbl.ventasTemp())//CREANDO LA TABLA VENTAS TEMP
@@ -51,8 +68,8 @@ class Database(context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.inventariosolicitudCarga())
         db?.execSQL(tbl.solicitudCarga())
         db?.execSQL(tbl.solicitudCargaDetalle())
-        db?.execSQL(tbl.virtualInventarioSolicitud())
-        db?.execSQL(tbl.triggerInventarioSolicitudVirtual())
+        //db?.execSQL(tbl.virtualInventarioSolicitud())
+        //db?.execSQL(tbl.triggerInventarioSolicitudVirtual())
 
         db?.execSQL(tbl.devolucion())
         db?.execSQL(tbl.devolucionDetalle())

@@ -286,6 +286,7 @@ class Tablas {
                 "idServidor INTEGER NOT NULL DEFAULT 0);"
     }
 
+    //-----------------------------------------------POR AQUI VOY EN LA MIGRACION -----------------------------------------
     //CREANDO LA TABLA TOKENAPP
     fun preciosAutorizados(): String {
         return "CREATE TABLE preciosAutorizados(" +

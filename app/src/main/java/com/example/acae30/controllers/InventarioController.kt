@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.view.View
 import android.widget.Toast
 import com.example.acae30.Funciones
+import com.example.acae30.listas.InventarioRetrofit
 import com.example.acae30.modelos.Inventario
 import com.example.acae30.modelos.InventarioPrecios
 import com.example.acae30.modelos.JSONmodels.HojaCargaJSON
@@ -295,19 +296,12 @@ class InventarioController {
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    fun saveInventarioDatabase(
-        json: JSONArray,
-        context: Context,
-        numeroHojaCarga: Int,
-        recarga: Int
+    fun guardarInventarioRetrofit(
+        inventarioList: List<InventarioRetrofit>,
+        context: Context
     ) {
         val bd = funciones.getDataBase(context).writableDatabase
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-
-        val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
-        var idHojaCarga = 0
-        var idRutaHojaCarga = 0
-        var rutaHojaCarga = ""
 
         try {
             bd.beginTransaction()
@@ -322,62 +316,35 @@ class InventarioController {
 
             val stmt = bd.compileStatement(sql)
 
-            for (i in 0 until json.length()) {
-                val dato = json.getJSONObject(i)
+            for (item in inventarioList) {
                 stmt.clearBindings()
 
-                stmt.bindLong(1, dato.optInt("id").toLong())
-                stmt.bindString(2, funciones.validateJsonIsnullString(dato, "codigo"))
-                stmt.bindString(3, funciones.validateJsonIsnullString(dato, "codigo_de_barra"))
-                stmt.bindString(4, funciones.validateJsonIsnullString(dato, "tipo"))
-                stmt.bindString(5, funciones.validateJsonIsnullString(dato, "descripcion"))
-                stmt.bindString(6, funciones.validateJsonIsnullString(dato, "unidad_medida"))
-                stmt.bindDouble(7, funciones.validateJsonIsNullFloat(dato, "fraccion").toDouble())
-                stmt.bindString(8, funciones.validateJsonIsnullString(dato, "nombre_fraccion"))
-
-                if (hojaCarga) {
-                    stmt.bindDouble(9, 0.0)
-                    // Solo capturar valores si no lo hemos hecho antes
-                    if (idHojaCarga == 0 && funciones.validateJsonIsNullInt(dato, "idHojaCarga") != 0) {
-                        idHojaCarga = funciones.validateJsonIsNullInt(dato, "idHojaCarga")
-                        idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")
-                        rutaHojaCarga = funciones.validateJsonIsnullString(dato, "ruta")
-                    }
-                } else {
-                    stmt.bindDouble(9, funciones.validateJsonIsNullFloat(dato, "existencia").toDouble())
-                }
-
-                stmt.bindDouble(10, funciones.validateJsonIsNullFloat(dato, "costo").toDouble())
-                stmt.bindDouble(11, funciones.validateJsonIsNullFloat(dato, "costo_iva").toDouble())
-                stmt.bindDouble(12, funciones.validateJsonIsNullFloat(dato, "precio_iva").toDouble())
-                stmt.bindDouble(13, funciones.validateJsonIsNullFloat(dato, "precio_u").toDouble())
-                stmt.bindDouble(14, funciones.validateJsonIsNullFloat(dato, "precio_u_iva").toDouble())
-                stmt.bindDouble(15, funciones.validateJsonIsNullFloat(dato, "precio").toDouble())
-                stmt.bindDouble(16, funciones.validateJsonIsNullFloat(dato, "bonificado").toDouble())
-                stmt.bindDouble(17, funciones.validateJsonIsNullFloat(dato, "existencia_u").toDouble())
+                stmt.bindLong(1, item.id!!.toLong())
+                stmt.bindString(2, item.codigo)
+                //stmt.bindString(3, item.codigo_de_barra ?: "")
+                //stmt.bindString(4, item.tipo ?: "") // Nullable campo
+                stmt.bindString(5, item.descripcion)
+                //stmt.bindString(6, item.unidad_medida ?: "")
+                stmt.bindDouble(7, item.fraccion!!.toDouble())
+               // stmt.bindString(8, item.nombre_fraccion ?: "")
+                stmt.bindString(9, item.existencia!!.toFloat().toString())
+                stmt.bindDouble(10, item.costo!!.toDouble())
+                stmt.bindDouble(11, item.costo_iva!!.toDouble())
+                stmt.bindDouble(12, item.precio_iva!!.toDouble())
+                stmt.bindDouble(13, item.precio_u!!.toDouble())
+                stmt.bindDouble(14, item.precio_u_iva!!.toDouble())
+                stmt.bindDouble(15, item.precio!!.toDouble())
+                stmt.bindDouble(16, item.bonificado!!.toDouble())
+                stmt.bindDouble(17, item.existencia_u.toDouble())
 
                 stmt.executeInsert()
             }
-
             bd.setTransactionSuccessful()
         } catch (e: Exception) {
             throw Exception("Error al insertar inventario: ${e.message}")
         } finally {
             bd.endTransaction()
             bd.close()
-
-            if (recarga == 0 && hojaCarga && idHojaCarga != 0) {
-                // Solo guardar una vez fuera del bucle
-                val editor = preferences.edit()
-                editor.putInt("idHojaCarga", idHojaCarga)
-                editor.putInt("idRutaHojaCarga", idRutaHojaCarga)
-                editor.putString("rutaHojaCarga", rutaHojaCarga)
-                editor.apply()
-
-                CoroutineScope(Dispatchers.IO).launch {
-                    insertarHojaDeCargar(json, context, numeroHojaCarga)
-                }
-            }
         }
     }
 
@@ -442,7 +409,7 @@ class InventarioController {
 
                                             //INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA
                                             //ALMACENANDO INVENTARIO NUEVO
-                                            saveInventarioDatabase(res, context, numero,0)
+                                            //saveInventarioDatabase(res, context, numero,0)
 
                                         }else{
 
@@ -955,7 +922,7 @@ class InventarioController {
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
                                         //Almacenar registro en tbl inventario
-                                        saveInventarioDatabase(res, context, 0,1)
+                                       // saveInventarioDatabase(res, context, 0,1)
                                         encontrado = 1
                                     }
                                 } catch (e: Exception) {
