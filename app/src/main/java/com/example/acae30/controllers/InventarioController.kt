@@ -47,43 +47,43 @@ class InventarioController {
                     datos = Inventario(
                         cursor.getInt(0),
                         cursor.getString(1),
-                        cursor.getString(2),
                         cursor.getString(3),
                         cursor.getString(4),
-                        cursor.getFloat(5),
-                        cursor.getString(6),
-                        cursor.getInt(7),
+                        cursor.getString(5),
+                        cursor.getFloat(6),
+                        cursor.getString(7),
+                        cursor.getInt(12),
                         cursor.getFloat(8),
                         cursor.getFloat(9),
-                        cursor.getFloat(10),
-                        cursor.getFloat(11)/1.13F,
-                        cursor.getFloat(12)/1.13F,
-                        cursor.getFloat(13),
-                        cursor.getString(14),
-                        cursor.getFloat(15),
+                        cursor.getFloat(17),
+                        cursor.getFloat(14)/1.13f,
+                        cursor.getFloat(15)/1.13f,
                         cursor.getFloat(16),
-                        cursor.getString(17)
+                        cursor.getString(27),
+                        cursor.getFloat(18),
+                        cursor.getFloat(13),
+                        cursor.getString(2)
                     )
                 }else{
                     datos = Inventario(
                         cursor.getInt(0),
                         cursor.getString(1),
-                        cursor.getString(2),
                         cursor.getString(3),
                         cursor.getString(4),
-                        cursor.getFloat(5),
-                        cursor.getString(6),
-                        cursor.getInt(7),
+                        cursor.getString(5),
+                        cursor.getFloat(6),
+                        cursor.getString(7),
+                        cursor.getInt(12),
                         cursor.getFloat(8),
                         cursor.getFloat(9),
-                        cursor.getFloat(10),
-                        cursor.getFloat(11),
-                        cursor.getFloat(12),
-                        cursor.getFloat(13),
-                        cursor.getString(14),
+                        cursor.getFloat(17),
+                        cursor.getFloat(14),
                         cursor.getFloat(15),
                         cursor.getFloat(16),
-                        cursor.getString(17)
+                        cursor.getString(27),
+                        cursor.getFloat(18),
+                        cursor.getFloat(13),
+                        cursor.getString(2)
                     )
                 }
             }
@@ -199,22 +199,22 @@ class InventarioController {
                     val arreglo = Inventario(
                         cursor.getInt(0),
                         cursor.getString(1),
-                        cursor.getString(2),
                         cursor.getString(3),
                         cursor.getString(4),
-                        cursor.getFloat(5),
-                        cursor.getString(6),
-                        cursor.getInt(7),
+                        cursor.getString(5),
+                        cursor.getFloat(6),
+                        cursor.getString(7),
+                        cursor.getInt(12),
                         cursor.getFloat(8),
                         cursor.getFloat(9),
-                        cursor.getFloat(10),
-                        cursor.getFloat(11),
-                        cursor.getFloat(12),
-                        cursor.getFloat(13),
-                        cursor.getString(14),
+                        cursor.getFloat(17),
+                        cursor.getFloat(14),
                         cursor.getFloat(15),
                         cursor.getFloat(16),
-                        cursor.getString(17)
+                        cursor.getString(27),
+                        cursor.getFloat(18),
+                        cursor.getFloat(13),
+                        cursor.getString(2)
                     )
                     lista.add(arreglo)
                 } while (cursor.moveToNext())
@@ -296,7 +296,7 @@ class InventarioController {
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    fun guardarInventarioRetrofit(
+    /*fun guardarInventarioRetrofit(
         inventarioList: List<InventarioRetrofit>,
         context: Context
     ) {
@@ -335,7 +335,7 @@ class InventarioController {
                 stmt.bindDouble(14, item.precio_u_iva!!.toDouble())
                 stmt.bindDouble(15, item.precio!!.toDouble())
                 stmt.bindDouble(16, item.bonificado!!.toDouble())
-                stmt.bindDouble(17, item.existencia_u.toDouble())
+                stmt.bindDouble(17, item.existencia_u!!.toDouble())
 
                 stmt.executeInsert()
             }
@@ -346,7 +346,7 @@ class InventarioController {
             bd.endTransaction()
             bd.close()
         }
-    }
+    }*/
 
 
     //FUNCIONES PARA HOJA DE CARGA

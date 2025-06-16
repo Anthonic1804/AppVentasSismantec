@@ -6,16 +6,16 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "inventario_precios")
 data class InventarioPreciosEntity(
-    @PrimaryKey var Id:Int?,
-    var Id_inventario:Int,
-    var Codigo_producto:String,
-    var Nombre:String,
-    var Terminos:String?,
-    var Plazo:Float,
-    var Unidad:String,
-    var Cantidad:Float,
-    var Porcentaje:Float,
-    var Precio:Float,
-    var Precio_iva:Float,
-    @ColumnInfo(name = "Id_inventario_unidad", defaultValue = "0") var Id_inventario_unidad:Int
+    @PrimaryKey var id : Int,
+    var id_inventario : Int,
+    var codigo_producto : String,
+    var nombre : String,
+    var terminos : String,
+    var plazo : Float,
+    var unidad : String,
+    var cantidad : Float,
+    var porcentaje : Float,
+    var precio : Float,
+    var precio_iva : Float,
+    var id_inventario_unidad : Int
 )

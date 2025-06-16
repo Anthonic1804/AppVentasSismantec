@@ -16,15 +16,19 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
 import androidx.lifecycle.lifecycleScope
+import com.example.acae30.DAO.InventarioDao
 import com.example.acae30.Entities.InventarioEntity
+import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.ConfigController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
+import com.example.acae30.database.AppDatabase
 import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityCargaDatosBinding
+import com.example.acae30.listas.InventarioRetrofit
 import com.example.acae30.modelos.Inventario
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +40,7 @@ import org.json.JSONArray
 import retrofit2.Response
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.LocalDate
 
 class carga_datos : AppCompatActivity() {
 
@@ -56,11 +61,20 @@ class carga_datos : AppCompatActivity() {
     private lateinit var binding : ActivityCargaDatosBinding
     private var rutaClientes : String = "T"
 
+
+    private lateinit var inventarioDao: InventarioDao
+
+    private lateinit var db : AppDatabase
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         binding = ActivityCargaDatosBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        db = AppDatabase.getInstance(this@carga_datos)
 
         preferences = this@carga_datos.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
@@ -132,7 +146,8 @@ class carga_datos : AppCompatActivity() {
                         delay(1000)
 
                         try {
-                            inventarioController.obtenerEscalasPrecios(this@carga_datos)
+                            //inventarioController.obtenerEscalasPrecios(this@carga_datos)
+                            obtenerEscalasPrecios()
                         }catch (e:Exception){
                             println("ERROR AL CARGAR LAS ESCALAS DE INVENTARIO " + e.message)
                         }
@@ -672,13 +687,8 @@ class carga_datos : AppCompatActivity() {
 
     //FUNCION PARA LA LECTURA DEL ENDPOINT DE INVENTARIO
    private suspend fun getInventario() = withContext(Dispatchers.IO) {
-        val bd = funciones.getDataBase(this@carga_datos)
-        val room = bd.roomDb
         val baseUrl = url
-        val dao = room.inventarioDao()
-
-       //val bloque = 2000
-
+        inventarioDao = db.inventarioDao()
         val api = RetrofitCliente.obtenerApi(baseUrl)
 
         val limite = 1000
@@ -688,39 +698,64 @@ class carga_datos : AppCompatActivity() {
 
         try {
 
-            while (hayMas) {
-                val respuesta = api.obtenerInventario(offset, limite)
+            val totalRegistros = try {
+                api.obtenerTotalRegistrosInventario()
+            }catch (e: Exception){
+                println("No se pudo obtener el total de inventario -> ${e.message}")
+                null
+            }
 
-                println("REGISTROS CARGADOS ->  ${respuesta}")
+            while (hayMas) {
+                val respuesta = api. obtenerInventario(offset, limite)
 
                 if (respuesta.isNotEmpty()) {
                     val entidades = respuesta.map {
                         InventarioEntity(
-                            it.bonificado,
-                            it.codigo!!,
-                            it.costo,
-                            it.costo_iva,
-                            it.descripcion!!,
-                            it.existencia,
-                            it.existencia_u,
-                            it.fraccion,
-                            it.id,
-                            it.precio,
-                            it.precio2,
-                            it.precio2_iva,
-                            it.precio_iva,
-                            it.precio_u,
-                            it.precio_u2,
-                            it.precio_u2_iva,
-                            it.precio_u_iva,
-                            it.precio_viñeta,
-                            it.precio_viñeta_iva
+                            id = it.id,
+                            codigo = it.codigo ?: "",
+                            codigo_de_barra = it.codigo_de_barra ?: " ",
+                            tipo = it.tipo ?: "",
+                            descripcion = it.descripcion ?: "",
+                            unidad_medida = it.unidad_medida ?: " ",
+                            fraccion = it.fraccion ?: 0f,
+                            nombre_fraccion = it.nombre_fraccion ?: " ",
+                            costo = it.costo ?: 0f,
+                            costo_iva = it.costo_iva ?: 0f,
+                            ult_costo = it.ult_costo ?: 0f,
+                            ult_costo_iva = it.ult_costo_iva ?: 0f,
+                            existencia = it.existencia ?: 0f,
+                            existencia_u = it.existencia_u ?: 0f,
+                            precio = it.precio ?: 0f,
+                            precio_u = it.precio_u ?: 0f,
+                            precio_u_iva = it.precio_u_iva ?: 0f,
+                            precio_iva = it.precio_iva ?: 0f,
+                            bonificado = it.bonificado ?: 0f,
+                            lote = it.lote ?: " ",
+                            fecha_vencimiento = it.fecha_vencimiento ?: " ",
+                            precio2 = it.precio2 ?: 0f,
+                            precio2_iva = it.precio2_iva ?: 0f,
+                            precio_u2 = it.precio_u2 ?: 0f,
+                            precio_u2_iva = it.precio_u2_iva ?: 0f,
+                            precio_viñeta = it.precio_viñeta ?: 0f,
+                            precio_viñeta_iva = it.precio_viñeta_iva ?: 0f,
+                            fecha_inventario = LocalDate.now().toString()
                         )
                     }
 
-                    dao.insertarTodos(entidades)
-                    offset += limite
+                    inventarioDao.insertarTodos(entidades)
                     totalInsertados += entidades.size
+
+                    //Calculando el porcentaje
+                    if(totalRegistros != null && totalRegistros > 0){
+                        val progreso = (totalInsertados * 100) / totalRegistros
+
+                        withContext(Dispatchers.Main){
+                            messageAsync("Cargando Inventario: ${progreso} %")
+                        }
+                    }
+
+                    offset += limite
+
                 } else {
                     hayMas = false
                 }
@@ -731,6 +766,73 @@ class carga_datos : AppCompatActivity() {
             println("Error general: ${e.message}")
         }
    }
+
+    private suspend fun obtenerEscalasPrecios() = withContext(Dispatchers.IO){
+        val baseUrl = url
+
+        inventarioDao = db.inventarioDao()
+
+        val api = RetrofitCliente.obtenerApi(baseUrl)
+
+        val limite = 1000
+        var offset = 0
+        var hayMas = true
+        var totalInsertados = 0
+
+        try {
+            val totalEscalas = try {
+                api.obtenerTotalRegistrosPrecios()
+            }catch (e: Exception){
+                println("No se pudo obtener el total de Escalas -> ${e.message}")
+                null
+            }
+
+            while(hayMas){
+                val respuesta = api.obtenerEscalasPrecios(offset, limite)
+
+                println(respuesta)
+
+                if (respuesta.isNotEmpty()) {
+                    val entidades = respuesta.map {
+                        InventarioPreciosEntity(
+                            id = it.id,
+                            id_inventario = it.id_inventario ?: 0,
+                            codigo_producto = it.codigo_producto ?: " ",
+                            nombre = it.nombre ?: "",
+                            terminos = it.terminos ?: "",
+                            plazo = it.plazo ?: 0f,
+                            unidad = it.unidad ?: " ",
+                            cantidad = it.cantidad ?: 0f,
+                            porcentaje = it.porcentaje ?: 0f,
+                            precio = it.precio ?: 0f,
+                            precio_iva = it.precio_iva ?: 0f,
+                            id_inventario_unidad = it.id_inventario_unidad ?: 0
+                        )
+                    }
+
+                    inventarioDao.insertarEscalas(entidades)
+                    totalInsertados += entidades.size
+
+                    //Calculando el porcentaje
+                    if(totalEscalas != null && totalEscalas > 0){
+                        val progreso = (totalInsertados * 100) / totalEscalas
+
+                        withContext(Dispatchers.Main){
+                            messageAsync("Cargando Escalas: ${progreso} %")
+                        }
+                    }
+
+                    offset += limite
+
+                } else {
+                    hayMas = false
+                }
+            }
+        }catch (e:Exception){
+            println("Error de Escalas General: ${e.message}")
+        }
+
+    }
 
 
     private suspend fun getCuentas() {
@@ -873,7 +975,7 @@ class carga_datos : AppCompatActivity() {
                 data.put("Latitud_app", funciones.validate(dato.getString("latitud_app")))
                 data.put("Longitud_app", funciones.validate(dato.getString("longitud_app")))
                 data.put("Nombre_comercial", funciones.validate(dato.getString("nombre_comercial")))
-                data.put("Mayorista", funciones.validate(dato.getString("mayorista")))
+                //data.put("Mayorista", funciones.validate(dato.getString("mayorista")))
                 data.put("DTECodGiro", funciones.validate(dato.getString("dteCodGiro")))
                 data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
                 data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))

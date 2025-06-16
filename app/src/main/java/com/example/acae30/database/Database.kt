@@ -18,27 +18,16 @@ class Database(val context: Context) : SQLiteOpenHelper(
     private var tbl: Tablas = Tablas()
 
     companion object {
-        private const val DATABASE_VERSION = 2 //version de la base
+        private const val DATABASE_VERSION = 1 //version de la base
         private const val DATABASE_NAME = "Acae.db" //nombre de la bd
 
-    }
-
-    val roomDb: AppDatabase by lazy {
-        Room.databaseBuilder(
-            context.applicationContext,
-            AppDatabase::class.java,
-            DATABASE_NAME // usa el mismo nombre si quieres compartir archivo
-        )
-            .createFromAsset("Acae.db") // si usas una base pre-cargada
-            .addMigrations(MIGRATION_1_2) // ← aquí aplicas la migración
-            .build()
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
         db?.execSQL(tbl.cliente()) //ejecuta la tabla clientes
         db?.execSQL(tbl.clienteSucursal()) //CREACION DE LA TABLA CLIENTES SUCURSALES -> 25/01/2023
         db?.execSQL(tbl.clientePrecios()) //CREACION DE LA TABLA CLIENTES PRECIOS -> 19/03/2024
-       // db?.execSQL(tbl.inventario())
+        db?.execSQL(tbl.inventario())
         db?.execSQL(tbl.inventarioPrecios())
         db?.execSQL(tbl.inventarioUnidades())
         //db?.execSQL(tbl.virtualInventario()) //TABLA FTS4 VIRTUAL INVENTARIO

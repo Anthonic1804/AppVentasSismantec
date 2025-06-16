@@ -144,29 +144,72 @@ class Tablas {
                 "Ruta VARCHAR(50) NULL)"
     }
 
+    /*fun inventario(): String {
+        return "CREATE TABLE inventario (" +
+                "id INTEGER  PRIMARY KEY NOT NULL," +
+                "codigo VARCHAR(100) NOT NULL," +
+                "codigo_de_barra VARCHAR(25) NOT NULL," +
+                "tipo VARCHAR(50) NOT NULL," +
+                "descripcion VARCHAR(150) NOT NULL," +
+                "unidad_medida VARCHAR(25) NOT NULL," +
+                "fraccion NUMERIC(20,6) NOT NULL," +
+                "nombre_fraccion VARCHAR(50) NOT NULL," +
+                "costo NUMERIC(20,6) NOT NULL," +
+                "costo_iva NUMERIC(20,6) NOT NULL," +
+                "ult_costo NUMERIC(20,6) NOT NULL," +
+                "ult_costo_iva NUMERIC(20,6) NOT NULL," +
+                "existencia NUMERIC(20,6) NOT NULL," +
+                "existencia_u NUMERIC(20,6) NOT NULL," +
+                "precio NUMERIC(20,6) NOT NULL," +
+                "precio_u NUMERIC(20,6) NOT NULL," +
+                "precio_u_iva NUMERIC(20,6) NOT NULL," +
+                "precio_iva NUMERIC(20,6) NOT NULL," +
+                "bonificado NUMERIC(20,6) NOT NULL," +
+                "lote VARCHAR(50) NOT NULL," +
+                "fecha_vencimiento VARCHAR(50) NOT NULL," +
+                "precio2 NUMERIC(20,6) NOT NULL," +
+                "precio2_iva NUMERIC(20,6) NOT NULL," +
+                "precio_u2 NUMERIC(20,6) NOT NULL," +
+                "precio_u2_iva NUMERIC(20,6) NOT NULL," +
+                "precio_viñeta NUMERIC(20,6) NOT NULL," +
+                "precio_viñeta_iva NUMERIC(20,6) NOT NULL," +
+                "fechaInventario VARCHAR(25) NOT NULL)"
+    } //tabla inventario*/
+
     fun inventario(): String {
         return "CREATE TABLE inventario (" +
-                "Id INTEGER  PRIMARY KEY NOT NULL," +
-                "Codigo VARCHAR(100)  NULL," +
-                "Tipo VARCHAR(50)  NULL," +
-                "Descripcion VaRCHAR(150)  NULL," +
-                "Unidad_medida VARCHAR(25) NULL," +
-                "Fraccion NUMERIC(20,6) NULL," +
-                "Nombre_fraccion VARCHAR(50) NULL," +
-                "Existencia NUMERIC(20,6)  NULL," +
-                "Costo NUMERIC(20,6) NOT NULL," +
-                "costo_iva NUMERIC(20,6) NOT NULL," +
-                "Precio_iva NUMERIC(20,6)  NULL," +
-                "Precio NUMERIC(20,6)," +
-                "Precio_u NUMERIC(20,6)," +
-                "Precio_u_iva NUMERIC(20,6)," +
-                "Fecha_inventario DATE DEFAULT CURRENT_DATE NOT NULL," +
-                "Bonificado NUMERIC(20,6)," +
-                "Existencia_u NUMERIC(20,6)," +
-                "codigo_de_barra VARCHAR(25) NOT NULL DEFAULT '')"
+                "id INTEGER PRIMARY KEY NOT NULL," +
+                "codigo TEXT NOT NULL," +
+                "codigo_de_barra TEXT NOT NULL," +
+                "tipo TEXT NOT NULL," +
+                "descripcion TEXT NOT NULL," +
+                "unidad_medida TEXT NOT NULL," +
+                "fraccion REAL NOT NULL," +
+                "nombre_fraccion TEXT NOT NULL," +
+                "costo REAL NOT NULL," +
+                "costo_iva REAL NOT NULL," +
+                "ult_costo REAL NOT NULL," +
+                "ult_costo_iva REAL NOT NULL," +
+                "existencia REAL NOT NULL," +
+                "existencia_u REAL NOT NULL," +
+                "precio REAL NOT NULL," +
+                "precio_u REAL NOT NULL," +
+                "precio_u_iva REAL NOT NULL," +
+                "precio_iva REAL NOT NULL," +
+                "bonificado REAL NOT NULL," +
+                "lote TEXT NOT NULL," +
+                "fecha_vencimiento TEXT NOT NULL," +
+                "precio2 REAL NOT NULL," +
+                "precio2_iva REAL NOT NULL," +
+                "precio_u2 REAL NOT NULL," +
+                "precio_u2_iva REAL NOT NULL," +
+                "precio_viñeta REAL NOT NULL," +
+                "precio_viñeta_iva REAL NOT NULL," +
+                "fecha_inventario TEXT NOT NULL)"
+
     } //tabla inventario
 
-    fun inventarioPrecios(): String {
+    /*fun inventarioPrecios(): String {
 
         return "CREATE TABLE inventario_precios(" +
                 "Id INTEGER NOT NULL," +
@@ -181,6 +224,23 @@ class Tablas {
                 "Precio NUMERIC(18,6) NOT NULL," +
                 "Precio_iva NUMERIC(18,6) NOT NULL," +
                 "Id_inventario_unidad INTEGER NOT NULL DEFAULT 0)"
+    } //tabla inventario precios*/
+
+    fun inventarioPrecios(): String {
+
+        return "CREATE TABLE inventario_precios(" +
+                "id INTEGER PRIMARY KEY NOT NULL," +
+                "id_inventario INTEGER NOT NULL," +
+                "codigo_producto TEXT NOT NULL," +
+                "nombre TEXT NOT NULL," +
+                "terminos TEXT NOT NULL," +
+                "plazo REAL NOT NULL," +
+                "unidad TEXT NOT NULL," +
+                "cantidad REAL NOT NULL," +
+                "porcentaje REAL NOT NULL," +
+                "precio REAL NOT NULL," +
+                "precio_iva REAL NOT NULL," +
+                "id_inventario_unidad INTEGER NOT NULL)"
     } //tabla inventario precios
 
     fun inventarioUnidades(): String {
