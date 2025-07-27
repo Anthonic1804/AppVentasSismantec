@@ -25,6 +25,18 @@ class ConfigController {
         var sinExistencias: String = ""
         var network: Boolean
         var hojaCarga: Boolean
+        var mostrarPrecioApp = 0
+
+        //Acceso a modulos de la app
+        var M_Historio: Boolean
+        var M_HojaCarga: Boolean
+        var M_Gastos: Boolean
+        var M_Reportes: Boolean
+        var M_CxC: Boolean
+        var M_Abonos: Boolean
+        var P_Mantto_Clientes: Boolean
+        var P_Imprimir_TK_Venta: Boolean
+
         try {
             val direccion = url + "config"
             val url2 = URL(direccion)
@@ -53,8 +65,20 @@ class ConfigController {
                                     sinExistencias = dato.getString("pedidos_sin_existencia")
                                     network = dato.getBoolean("networkProvider_app")
                                     hojaCarga = dato.getBoolean("hoja_carga_inventario_app")
+                                    mostrarPrecioApp = dato.getInt("precio_mostrar_app")
 
-                                    confirmarPagareObligatorio(confirmar, modificarPrecio, sinExistencias, network, hojaCarga, context)
+                                    //Acceso a modulos de la app y permisos
+                                    M_Historio = dato.getBoolean("m_Historico")
+                                    M_HojaCarga = dato.getBoolean("m_HojaCarga")
+                                    M_Gastos = dato.getBoolean("m_Gastos")
+                                    M_Reportes = dato.getBoolean("m_Reportes")
+                                    M_CxC = dato.getBoolean("m_CxC")
+                                    M_Abonos = dato.getBoolean("m_Abonos")
+                                    P_Mantto_Clientes = dato.getBoolean("p_Mantto_Clientes")
+                                    P_Imprimir_TK_Venta = dato.getBoolean("p_Imprimir_TK_Venta")
+
+                                    confirmarPagareObligatorio(confirmar, modificarPrecio, sinExistencias, network, hojaCarga, mostrarPrecioApp,
+                                        M_Historio, M_HojaCarga, M_Gastos, M_Reportes, M_CxC, M_Abonos, P_Mantto_Clientes, P_Imprimir_TK_Venta, context)
                                 }
                             } else {
                                 println("ERROR AL LEER EL JSON CONFIG")
@@ -73,7 +97,9 @@ class ConfigController {
     }
 
     //FUNCION PARA SETEAR LA FORMA DEL PAGARE EN SHAREDPREFERENCES
-    private fun confirmarPagareObligatorio(confirmar: Boolean, modificar:Boolean, sinExistencia:String, network:Boolean, hojaCarga:Boolean, context: Context){
+    private fun confirmarPagareObligatorio(confirmar: Boolean, modificar:Boolean, sinExistencia:String, network:Boolean, hojaCarga:Boolean, mostrarPrecioApp:Int,
+                                           M_Historio:Boolean, M_HojaCarga:Boolean, M_Gastos:Boolean, M_Reportes:Boolean, M_CxC:Boolean, M_Abonos:Boolean,
+                                           P_Mantto_Clientes:Boolean, P_Imprimir_TK_Venta:Boolean, context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val editor = preferences.edit()
         editor.remove("PagareObligatorio")
@@ -84,6 +110,17 @@ class ConfigController {
         editor.putBoolean("Hoja_carga_inventario_app", hojaCarga)
         editor.putInt("vistaInventario", 2)
         editor.putFloat("versionActualApp", 1.0f)
+        editor.putInt("precio_mostrar_app", mostrarPrecioApp)
+
+        editor.putBoolean("M_Historio", M_Historio)
+        editor.putBoolean("M_HojaCarga", M_HojaCarga)
+        editor.putBoolean("M_Gastos", M_Gastos)
+        editor.putBoolean("M_Reportes", M_Reportes)
+        editor.putBoolean("M_CxC", M_CxC)
+        editor.putBoolean("M_Abonos", M_Abonos)
+        editor.putBoolean("P_Mantto_Clientes", P_Mantto_Clientes)
+        editor.putBoolean("P_Imprimir_TK_Venta", P_Imprimir_TK_Venta)
+
         editor.apply()
     }
 }

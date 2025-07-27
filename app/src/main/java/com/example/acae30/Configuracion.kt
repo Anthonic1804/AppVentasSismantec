@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.dcastalia.localappupdate.DownloadApk
+import com.example.acae30.controllers.ConfigController
 import com.example.acae30.database.Database
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +41,7 @@ class Configuracion : AppCompatActivity() {
     private lateinit var tvCancel : TextView
     private var versionActual : Float = 0f
     private lateinit var tvVersionActual : TextView
+    private lateinit var btnConfig : Button
 
     private var atras: ImageButton? = null
     private var ip: TextView? = null
@@ -52,6 +54,8 @@ class Configuracion : AppCompatActivity() {
     private var alerta: AlertDialogo? = null
 
     private lateinit var puntoVenta : TextView
+
+    private var configController = ConfigController()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,6 +82,8 @@ class Configuracion : AppCompatActivity() {
         tvVersionActual = findViewById(R.id.tvVersionActualApp)
 
         btnBuscarUpdate = findViewById(R.id.btnBuscarUpdate)
+
+        btnConfig = findViewById(R.id.btnCargarConfig)
 
         //OBTENIENDO LA URL DEL SERVIDOR
         getApiUrl()
@@ -156,6 +162,41 @@ class Configuracion : AppCompatActivity() {
             }
 
         }//guarda los datos del servidor
+
+        btnConfig.setOnClickListener {
+            if (funciones!!.isInternetAvailable(this@Configuracion)) {
+                alerta!!.Cargando()
+                CoroutineScope(Dispatchers.IO).launch {
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alerta!!.changeText("CARGANDO CONFIGURACIONES INICIALES")
+                    }
+
+                    try {
+                        configController.obtenerConfigPagareObligatorio(this@Configuracion)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR LAS CONFIGURACIONES INICIALES " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alerta!!.changeText("CONFIGURACIONES INICIALES CARGADAS CORRECTAMENTE")
+                    }
+
+                    //FIN DA LA CARGA DE DATOS
+                    delay(1500)
+
+                    withContext(Dispatchers.Main){
+                        alerta!!.dismisss()
+                    }
+                }
+            } else {
+                ShowAlert("ENCIENDE TUS DATOS O EL WIFI")
+            }
+        }
     }
 
     //FUNCION PARA OBTENER LA IP DEL SERVIDOR Y EL PUERTO DE CONEXION

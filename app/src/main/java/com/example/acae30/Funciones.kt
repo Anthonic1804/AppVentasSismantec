@@ -27,6 +27,8 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
@@ -162,6 +164,21 @@ class Funciones {
             ""
         } else {
             json.getString(campo).trim()
+        }
+    }
+
+    fun validateJsonDate(json: JSONObject, campo: String): String {
+        val fechaPorDefecto = "1900-01-01T00:00:00"
+        return if (json.isNull(campo) || json.getString(campo).trim().isEmpty()) {
+            fechaPorDefecto
+        } else {
+            try {
+                val input = json.getString(campo).trim()
+                val fecha = LocalDateTime.parse(input, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                fecha.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+            } catch (e: Exception) {
+                fechaPorDefecto
+            }
         }
     }
     /**

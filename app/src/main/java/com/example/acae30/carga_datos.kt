@@ -273,18 +273,6 @@ class carga_datos : AppCompatActivity() {
                     delay(1000)
 
                     withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CONFIGURACIONES INICIALES")
-                    }
-
-                    try {
-                        configController.obtenerConfigPagareObligatorio(this@carga_datos)
-                    }catch (e:Exception){
-                        println("ERROR AL CARGAR LAS CONFIGURACIONES INICIALES " + e.message)
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
                         alert!!.changeText("CATALOGOS CARGADOS EXITOSAMENTE")
                     }
 
@@ -706,7 +694,7 @@ class carga_datos : AppCompatActivity() {
             }
 
             while (hayMas) {
-                val respuesta = api. obtenerInventario(offset, limite)
+                val respuesta = api.obtenerInventario(offset, limite)
 
                 if (respuesta.isNotEmpty()) {
                     val entidades = respuesta.map {

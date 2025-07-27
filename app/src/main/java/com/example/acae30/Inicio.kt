@@ -57,6 +57,14 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     //private var inventarioController = InventarioController()
     var fechaInventario : String = ""
 
+    //Acceso a modulos de la app
+    private var M_Historio: Boolean = false
+    private var M_HojaCarga: Boolean = false
+    private var M_Gastos: Boolean = false
+    private var M_Reportes: Boolean = false
+    private var M_CxC: Boolean = false
+    private var M_Abonos: Boolean = false
+
     @Deprecated("This method has been deprecated in favor of using the\n      " +
             "{@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n     " +
             " The OnBackPressedDispatcher controls how back button events are dispatched\n      " +
@@ -80,6 +88,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         puerto = preferencias!!.getInt("puerto", 0)
         generaToken = preferencias!!.getInt("generaToken", 0)
 
+        M_Historio = preferencias!!.getBoolean("M_Historio", false)
+        M_HojaCarga = preferencias!!.getBoolean("M_HojaCarga", false)
+        M_Gastos = preferencias!!.getBoolean("M_Gastos", false)
+        M_Reportes = preferencias!!.getBoolean("M_Reportes", false)
+        M_CxC = preferencias!!.getBoolean("M_CxC", false)
+        M_Abonos = preferencias!!.getBoolean("M_Abonos", false)
 
         fechaInventario = preferencias!!.getString("fechaInventario", "NULL").toString()
         binding.includeBar.lblupdate.text = fechaInventario
@@ -103,8 +117,21 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         //OCULTANDO EL MENU TOKEN
         if(generaToken == 0){
             navigationView.menu.setGroupVisible(R.id.group_admin, false)
+        }
+
+        if(!M_Historio){
+            navigationView.menu.setGroupVisible(R.id.group_historico, false)
+        }
+
+        if(!M_HojaCarga){
             navigationView.menu.setGroupVisible(R.id.group_carga, false)
+        }
+
+        if(!M_Gastos){
             navigationView.menu.setGroupVisible(R.id.group_gasto, false)
+        }
+
+        if(!M_Reportes){
             navigationView.menu.setGroupVisible(R.id.group_reporte, false)
         }
 
@@ -150,11 +177,14 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             }
 
             cvAbonos.setOnClickListener {
-                Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
-                    .show()
-                /*val intento = Intent(this@Inicio, AbonosCxc::class.java)
-                startActivity(intento)
-                finish()*/
+                if(!M_Abonos){
+                    Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
+                        .show()
+                }else{
+                    val intento = Intent(this@Inicio, AbonosCxc::class.java)
+                    startActivity(intento)
+                    finish()
+                }
             }
 
             cvcliente.setOnClickListener {
@@ -162,24 +192,30 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 startActivity(intento)
                 finish()
             }
+
             cvinventario.setOnClickListener {
                 val intento = Intent(this@Inicio, Inventario::class.java)
                 startActivity(intento)
                 finish()
             }
+
             cvpedido.setOnClickListener {
                 val intento = Intent(this@Inicio, Pedido::class.java)
                 intento.putExtra("proviene", "inicio")
                 startActivity(intento)
                 finish()
             }
+
             cvcuentas.setOnClickListener {
-                Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
-                    .show()
-                /*val intento = Intent(this@Inicio, Cuentas_list::class.java)
-                intento.putExtra("cuentas", true)
-                startActivity(intento)
-                finish()*/
+                if(!M_CxC){
+                    Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
+                        .show()
+                }else{
+                    val intento = Intent(this@Inicio, Cuentas_list::class.java)
+                    intento.putExtra("cuentas", true)
+                    startActivity(intento)
+                    finish()
+                }
             }
         }
     }//acciones de los botones del menu

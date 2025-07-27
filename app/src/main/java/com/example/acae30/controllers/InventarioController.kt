@@ -26,6 +26,8 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import java.time.LocalDate
+import androidx.core.content.edit
 
 class InventarioController {
 
@@ -167,11 +169,11 @@ class InventarioController {
                 if (busqueda.isNotEmpty()) {
                     """
             SELECT * FROM inventario 
-            WHERE Existencias > 0 
+            WHERE Existencia > 0 
               AND (Descripcion LIKE '%' || ? || '%' OR Codigo LIKE '%' || ? || '%')
             """
                 } else {
-                    "SELECT * FROM inventario WHERE Existencias > 0 LIMIT 60"
+                    "SELECT * FROM inventario WHERE Existencia > 0 LIMIT 60"
                 }
             }
             else -> {
@@ -295,60 +297,6 @@ class InventarioController {
         }
     }
 
-    //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    /*fun guardarInventarioRetrofit(
-        inventarioList: List<InventarioRetrofit>,
-        context: Context
-    ) {
-        val bd = funciones.getDataBase(context).writableDatabase
-        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-
-        try {
-            bd.beginTransaction()
-
-            val sql = """
-            INSERT INTO inventario (
-                Id, Codigo, codigo_de_barra, Tipo, Descripcion, Unidad_medida,
-                Fraccion, Nombre_fraccion, Existencia, Costo, costo_iva, Precio_iva,
-                Precio_u, Precio_u_iva, Precio, Bonificado, Existencia_u
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """.trimIndent()
-
-            val stmt = bd.compileStatement(sql)
-
-            for (item in inventarioList) {
-                stmt.clearBindings()
-
-                stmt.bindLong(1, item.id!!.toLong())
-                stmt.bindString(2, item.codigo)
-                //stmt.bindString(3, item.codigo_de_barra ?: "")
-                //stmt.bindString(4, item.tipo ?: "") // Nullable campo
-                stmt.bindString(5, item.descripcion)
-                //stmt.bindString(6, item.unidad_medida ?: "")
-                stmt.bindDouble(7, item.fraccion!!.toDouble())
-               // stmt.bindString(8, item.nombre_fraccion ?: "")
-                stmt.bindString(9, item.existencia!!.toFloat().toString())
-                stmt.bindDouble(10, item.costo!!.toDouble())
-                stmt.bindDouble(11, item.costo_iva!!.toDouble())
-                stmt.bindDouble(12, item.precio_iva!!.toDouble())
-                stmt.bindDouble(13, item.precio_u!!.toDouble())
-                stmt.bindDouble(14, item.precio_u_iva!!.toDouble())
-                stmt.bindDouble(15, item.precio!!.toDouble())
-                stmt.bindDouble(16, item.bonificado!!.toDouble())
-                stmt.bindDouble(17, item.existencia_u!!.toDouble())
-
-                stmt.executeInsert()
-            }
-            bd.setTransactionSuccessful()
-        } catch (e: Exception) {
-            throw Exception("Error al insertar inventario: ${e.message}")
-        } finally {
-            bd.endTransaction()
-            bd.close()
-        }
-    }*/
-
-
     //FUNCIONES PARA HOJA DE CARGA
     //FUNCION PARA OBTENER EL INVENTARIO DESDE LA HOJA DE CARGA DE ESCARRSA
     suspend fun obtenerInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context) {
@@ -409,7 +357,7 @@ class InventarioController {
 
                                             //INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA
                                             //ALMACENANDO INVENTARIO NUEVO
-                                            //saveInventarioDatabase(res, context, numero,0)
+                                            saveInventarioDatabase(res, context, numero,0)
 
                                         }else{
 
@@ -453,6 +401,87 @@ class InventarioController {
         } catch (e: Exception) {
             withContext(Dispatchers.Main){
                 funciones.mensaje(context, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
+            }
+        }
+    }
+
+    //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
+    private fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, recarga: Int) {
+        val bd = funciones.getDataBase(context).writableDatabase
+
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+
+        var idHojaCarga : Int = 0
+        var idRutaHojaCarga : Int = 0
+        var rutaHojaCarga : String = ""
+
+        try {
+            bd.beginTransaction()
+            for (i in 0 until json.length()) {
+                val dato = json.getJSONObject(i)
+
+                val data = ContentValues()
+                data.put("id", dato.getInt("id"))
+                data.put("codigo", funciones.validateJsonIsnullString(dato, "codigo"))
+                data.put("codigo_de_barra", funciones.validateJsonIsnullString(dato, "codigo_de_barra"))
+                data.put("tipo", funciones.validateJsonIsnullString(dato, "tipo"))
+                data.put("descripcion", funciones.validateJsonIsnullString(dato, "descripcion"))
+                data.put(
+                    "unidad_medida",
+                    funciones.validateJsonIsnullString(dato, "unidad_medida")
+                )
+                data.put("fraccion", funciones.validateJsonIsNullFloat(dato, "fraccion"))
+                data.put(
+                    "nombre_fraccion", funciones.validateJsonIsnullString(
+                        dato,
+                        "nombre_fraccion"
+                    )
+                )
+                data.put("costo", funciones.validateJsonIsNullFloat(dato, "costo"))
+                data.put("costo_iva", funciones.validateJsonIsNullFloat(dato, "costo_iva"))
+                data.put("ult_costo", funciones.validateJsonIsNullFloat(dato, "ult_costo"))
+                data.put("ult_costo_iva", funciones.validateJsonIsNullFloat(dato, "ult_costo_iva"))
+                data.put("existencia", 0)
+                data.put("existencia_u", funciones.validateJsonIsNullFloat(dato, "existencia_u"))
+                data.put("precio", funciones.validateJsonIsNullFloat(dato, "precio"))
+                data.put("precio_u", funciones.validateJsonIsNullFloat(dato, "precio_u"))
+                data.put("precio_u_iva", funciones.validateJsonIsNullFloat(dato, "precio_u_iva"))
+                data.put("precio_iva", funciones.validateJsonIsNullFloat(dato, "precio_iva"))
+                data.put("bonificado", funciones.validateJsonIsNullFloat(dato, "bonificado"))
+                data.put("lote", funciones.validateJsonIsnullString(dato, "lote"))
+                data.put("fecha_vencimiento", funciones.validateJsonDate(dato, "fecha_vencimiento"))
+                data.put("precio2", funciones.validateJsonIsNullFloat(dato, "precio2"))
+                data.put("precio2_iva", funciones.validateJsonIsNullFloat(dato, "precio2_iva"))
+                data.put("precio_u2", funciones.validateJsonIsNullFloat(dato, "precio_u2"))
+                data.put("precio_u2_iva", funciones.validateJsonIsNullFloat(dato, "precio_u2_iva"))
+                data.put("precio_viñeta", funciones.validateJsonIsNullFloat(dato, "precio_viñeta"))
+                data.put("precio_viñeta_iva", funciones.validateJsonIsNullFloat(dato, "precio_viñeta_iva"))
+                data.put("fecha_inventario", LocalDate.now().toString())
+
+                idHojaCarga = funciones.validateJsonIsNullInt(dato, "idHojaCarga")
+                idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")
+                rutaHojaCarga = funciones.validateJsonIsnullString(dato, "ruta")
+
+                bd.insert("inventario", null, data)
+            }
+
+            //ALAMACENANDO EN SHARED PREFERENCES EL ID DE LA HOJA DE CARGA ACTIVA
+            preferences.edit {
+                putInt("idHojaCarga", idHojaCarga)
+                putInt("idRutaHojaCarga", idRutaHojaCarga)
+                putString("rutaHojaCarga", rutaHojaCarga)
+            }
+
+            bd.setTransactionSuccessful()
+        } catch (e: Exception) {
+            throw Exception(e.message)
+        } finally {
+            bd!!.endTransaction()
+            bd.close()
+            if(recarga == 0){
+                CoroutineScope(Dispatchers.IO).launch {
+                    insertarHojaDeCargar(json, context, numeroHojaCarga)
+                }
             }
         }
     }
@@ -922,7 +951,7 @@ class InventarioController {
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
                                         //Almacenar registro en tbl inventario
-                                       // saveInventarioDatabase(res, context, 0,1)
+                                        saveInventarioDatabase(res, context, 0,1)
                                         encontrado = 1
                                     }
                                 } catch (e: Exception) {

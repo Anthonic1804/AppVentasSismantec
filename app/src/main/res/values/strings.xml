@@ -178,4 +178,5 @@
     <string name="_2">NUEVA SOLICITUD DE CARGA</string>
     <string name="productos_agregados">PRODUCTOS AGREGADOS</string>
     <string name="clienteinfo">ClienteInfo</string>
+    <string name="recibo">RECIBO</string>
 </resources>

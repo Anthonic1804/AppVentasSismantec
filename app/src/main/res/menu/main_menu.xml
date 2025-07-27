@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <group>
+    <group android:id="@+id/group_historico">
         <item
             android:id="@+id/nav_pedido"
             android:icon="@drawable/historial_pedido"

@@ -37,6 +37,9 @@ class ClientesDetalle : AppCompatActivity() {
 
     private var clienteController = ClientesController()
 
+    //Variable para controlar el Mantenimiento de Clientes
+    private var P_Mantto_Clientes: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityClientesDetalleBinding.inflate(layoutInflater)
@@ -49,7 +52,13 @@ class ClientesDetalle : AppCompatActivity() {
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         pagareFirmado = preferences.getBoolean("PagareObligatorio", false)
 
+        P_Mantto_Clientes = preferences.getBoolean("P_Mantto_Clientes", false)
+
         funciones = Funciones()
+
+        if(!P_Mantto_Clientes){
+            binding.btnEditar.visibility = View.GONE
+        }
 
         obtenerDatosCliente()
 

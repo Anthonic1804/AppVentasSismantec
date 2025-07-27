@@ -72,6 +72,9 @@ class Clientes : AppCompatActivity() {
 
     private var cargarClientesPorRuta = ""
 
+    //Variable para controlar el Mantenimiento de Clientes
+    private var P_Mantto_Clientes: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -88,6 +91,8 @@ class Clientes : AppCompatActivity() {
         pagare = preferences!!.getBoolean("PagareObligatorio", false)
         cargarClientesPorRuta = preferences!!.getString("cargarClientesPorRuta", "").toString()
 
+        P_Mantto_Clientes = preferences!!.getBoolean("P_Mantto_Clientes", false)
+
         db = Database(this)
         alert = AlertDialogo(this, this)
         busqueda = findViewById(R.id.busquedainv)
@@ -98,6 +103,10 @@ class Clientes : AppCompatActivity() {
         tvListadoClientes = findViewById(R.id.tvListadoClientes)
 
         if(visita){
+            binding.nuevoCliente.visibility = View.GONE
+        }
+
+        if(!P_Mantto_Clientes){
             binding.nuevoCliente.visibility = View.GONE
         }
 

@@ -151,6 +151,8 @@ class Detallepedido : AppCompatActivity() {
     private lateinit var binding: ActivityDetallepedidoBinding
     private var clienteMosoro = 0
 
+    private var P_Imprimir_TK_Venta: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -167,7 +169,6 @@ class Detallepedido : AppCompatActivity() {
         idapi = intento.getIntExtra("idapi", 0)
         from = intento.getStringExtra("from").toString()
         FacturaExportacion = intento.getBooleanExtra("facturaExportacion", false)
-
         db = Database(this)
 
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
@@ -176,7 +177,7 @@ class Detallepedido : AppCompatActivity() {
         ip = preferencias.getString("ip", "").toString()
         puerto = preferencias.getInt("puerto", 0)
         clienteMosoro = preferencias.getInt("clienteMoroso", 0)
-        println("DATOS DEL CLIENTE MOROS -> $clienteMosoro")
+        P_Imprimir_TK_Venta = preferencias.getBoolean("P_Imprimir_TK_Venta", false)
 
         visita_enviada = false
 
@@ -215,7 +216,7 @@ class Detallepedido : AppCompatActivity() {
 
         //COMPLETANDO SPINNER DOCUMENTO
         val tipoDocumentoAdaptador = ArrayAdapter<String>(this@Detallepedido, android.R.layout.simple_spinner_dropdown_item)
-        tipoDocumentoAdaptador.addAll(listOf("FACTURA", "CREDITO FISCAL")) //LIMINADO "FACTURA EXPORTACION" , "REMISION"
+        tipoDocumentoAdaptador.addAll(listOf("FACTURA", "CREDITO FISCAL", "RECIBO", "REMISIÓN")) //LIMINADO "FACTURA EXPORTACION" , "REMISION"
         binding.spDocumento.adapter = tipoDocumentoAdaptador
 
         //COMPLETANDO TVTIPODOCUMENTO
@@ -238,11 +239,17 @@ class Detallepedido : AppCompatActivity() {
                 //actualizarVistaTotales()
                 //actualizarTotales()
             }
-            "RE" -> {
-               /* binding.tvDocumentoSeleccionado.text = getString(R.string.remisi_n)
+            "RC" -> {
+                binding.tvDocumentoSeleccionado.text = getString(R.string.recibo)
                 binding.spDocumento.setSelection(2, true)
                 actualizarVistaTotales()
-                actualizarTotales()*/
+                actualizarTotales()
+            }
+            "RE" -> {
+                binding.tvDocumentoSeleccionado.text = getString(R.string.remisi_n)
+                binding.spDocumento.setSelection(3, true)
+                actualizarVistaTotales()
+                actualizarTotales()
             }
         }
 
@@ -465,8 +472,19 @@ class Detallepedido : AppCompatActivity() {
 
                         actualizarTotales()*/
                     }
+                    "RECIBO" -> {
+                        pedidosController.updateTipoDocumento("RC", idpedido, this@Detallepedido)
+                        tipoDocumento = "RC"
+                        FacturaExportacion = false
+                        precioConIVA = true
+
+                        pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
+                        actualizarVistaTotales()
+
+                        actualizarTotales()
+                    }
                     "REMISIÓN" -> {
-                        /*pedidosController.updateTipoDocumento("RE", idpedido, this@Detallepedido)
+                        pedidosController.updateTipoDocumento("RE", idpedido, this@Detallepedido)
                         tipoDocumento = "RE"
                         FacturaExportacion = false
                         precioConIVA = true
@@ -475,7 +493,7 @@ class Detallepedido : AppCompatActivity() {
                         pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
                         actualizarVistaTotales()
 
-                        actualizarTotales()*/
+                        actualizarTotales()
                     }
                 }
             }
@@ -896,7 +914,6 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.GONE //GONE
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE
@@ -905,6 +922,12 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvTipoenvio.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.GONE
 
+                    if(!P_Imprimir_TK_Venta){
+                        binding.btnexportar.visibility = View.GONE //visible
+                    }else{
+                        binding.btnexportar.visibility = View.VISIBLE //visible
+                    }
+
                 }else if(pedido.pedido_dte_error == 2){
                     binding.txtCliente.isEnabled = false
                     binding.imgbtnadd.visibility = View.GONE
@@ -912,7 +935,6 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.GONE
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE
@@ -920,6 +942,13 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
                     binding.tvTipoenvio.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.GONE
+
+                    if(!P_Imprimir_TK_Venta){
+                        binding.btnexportar.visibility = View.GONE //visible
+                    }else{
+                        binding.btnexportar.visibility = View.VISIBLE //visible
+                    }
+
                 }else if(pedido.Enviado == 0 && pedido.Cerrado == 1){
                     binding.txtCliente.isEnabled = false
                     binding.imgbtnadd.visibility = View.GONE
@@ -938,14 +967,19 @@ class Detallepedido : AppCompatActivity() {
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.GONE //visible
                     binding.spDocumento.visibility = View.GONE
                     binding.spTipoEnvio.visibility = View.GONE
                     binding.spSucursal.visibility = View.GONE
                     binding.sinSucursal.visibility = View.VISIBLE
                     binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
                     binding.tvTipoenvio.visibility = View.VISIBLE
-                    binding.btnInvalidar.visibility = View.GONE //visible
+                    binding.btnInvalidar.visibility = View.VISIBLE //visible
+
+                    if(!P_Imprimir_TK_Venta){
+                        binding.btnexportar.visibility = View.GONE //visible
+                    }else{
+                        binding.btnexportar.visibility = View.VISIBLE //visible
+                    }
 
                     idPedidoServidor = pedido.Id_pedido_sistema!!
                 }

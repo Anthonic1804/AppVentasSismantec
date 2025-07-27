@@ -117,6 +117,9 @@ class Producto_agregar : AppCompatActivity() {
 
     private var FacturaExportacion = false
 
+    //variable que controla el precio a mostrar el la lista esplegable
+    private var mostrarPrecioApp : Int = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -142,6 +145,9 @@ class Producto_agregar : AppCompatActivity() {
 
         sinExistencias = if(preferencias!!.getString("pedidos_sin_existencia", "") == "S") 1 else 0
         modificarPrecio = preferencias!!.getBoolean("modificar_precio_app", false)
+
+        //Asignado el indice que se mostrara de los precios en el listado
+        mostrarPrecioApp = preferencias!!.getInt("precio_mostrar_app", 0)
 
         //CAPTURANDO SUCURSAL
         getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
@@ -308,38 +314,7 @@ class Producto_agregar : AppCompatActivity() {
             }
         }
 
-        // Actualizar el total cuando cambie el precio
-        spprecio?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) {
 
-            }
-
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                //Toast.makeText(applicationContext, "Valor: "+parent!!.getItemAtPosition(position).toString(), Toast.LENGTH_LONG).show()
-
-                val nuevaCadena = parent!!.getItemAtPosition(position).toString()
-
-                val valor = nuevaCadena.substringBefore(" ").toDoubleOrNull()
-
-                if (nuevaCadena.last() == '*') {
-                    precio_iva = precioEditado
-                } else {
-                    val nuevoValor = precioFromList(valor.toString())
-                    precio_iva = nuevoValor
-                }
-
-                cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar,
-                    idproducto!!, precio_iva)
-
-                Totalizar(cantidad)
-
-            }
-        }
 
         btneditarprecio!!.setOnClickListener {
             if(modificarPrecio){
@@ -407,6 +382,44 @@ class Producto_agregar : AppCompatActivity() {
     //23-08-2022
     override fun onStart() {
         super.onStart()
+
+        // Actualizar el total cuando cambie el precio
+        spprecio?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+
+            }
+
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                //MUESTRA EL VALOR SELECCIONADO EN EL PRECIO
+                //Toast.makeText(applicationContext, "Valor: "+parent!!.getItemAtPosition(position).toString(), Toast.LENGTH_LONG).show()
+
+                val nuevaCadena = parent!!.getItemAtPosition(position).toString()
+
+                val valor = nuevaCadena.substringBefore(" ").toDoubleOrNull()
+
+                //MUESTRA EL VALOR SELECCIONADO DEL PRECIO
+                //Toast.makeText(applicationContext, "Valor Seleccionado: "+ valor.toString(), Toast.LENGTH_LONG).show()
+
+                if (nuevaCadena.last() == '*') {
+                    precio_iva = precioEditado
+                } else {
+                    val nuevoValor = precioFromList(valor.toString())
+                    precio_iva = nuevoValor
+                }
+
+                cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar,
+                    idproducto!!, precio_iva)
+
+                Totalizar(cantidad)
+
+            }
+        }
+
 //        visor!!.text=cantidad.toString()
         txtcantidad!!.setText(String.format("%.0f".format(cantidad)))
         //txttotal!!.text="0.00"
@@ -604,6 +617,13 @@ class Producto_agregar : AppCompatActivity() {
 
                         adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
                         spprecio!!.adapter = adapterPrecios
+
+                        val totalIndices = spprecio!!.adapter?.count ?: 0
+                        if(mostrarPrecioApp in 0 until totalIndices){
+                            spprecio!!.setSelection(mostrarPrecioApp, true)
+                        }else{
+                            spprecio!!.setSelection(0, true)
+                        }
 
                     } else {
                         throw Exception("No se Han encontrado los datos")
@@ -1274,192 +1294,22 @@ class Producto_agregar : AppCompatActivity() {
     private fun agregarProducto(){
 
         val bonificacion = txtCantBonificados.text.toString().toInt()
-        var precio_provisional = 0.toFloat()
-
-        // Validar si la cantidad corresponde al precio
-        var esCorrecto = true
-
-        //AGREGADA VALIDACION PARA EVITAR PROBLEMA CON PRECIOS PERSONALIZADOS
-        if(precioIvaPersonalizado > 0 ){
-            precio_provisional = precioIvaPersonalizado
-        }
 
         //Obtenemos el valor el valor del Spinner de Escalas
         val valor = spprecio!!.selectedItem.toString()
 
-        //Hacemos el SubString para obtener el valor del precio
-        val cadena_numero = valor.substringBefore(" ").toDoubleOrNull()
+        val precio = valor.substringBefore(" ").toDouble()
 
-        //Verificamos si el precio es editado
-        precio_provisional = if (valor.last() == '*') {
-            precioEditado
-        } else {
-            precioFromList(cadena_numero.toString())
-        }
-
-        val cantidad_provisional = txtcantidad!!.text.toString().toFloat()
-
-        var cant_superior = 0.toFloat()
-        var precio_superior = 0.toFloat()
-        var cant_inferior = 0.toFloat()
-        var precio_inferior = 0.toFloat()
-
-        listPrecios!!.forEach { element ->
-            if (element.Cantidad!! > 0.toFloat()) {
-                var precio_iva_element =
-                    "${String.format("%.2f".format(element.Precio_iva!!) )}".toFloat()
-                // Obtener precio y cantidad superior
-                if (precio_iva_element != 0.toFloat()) {
-
-                    // Obtener precio y cantidad superior
-                    if (precio_superior > 0.toFloat()) {
-
-                        if (precio_iva_element < precio_superior && precio_iva_element > precio_provisional) {
-                            precio_superior = precio_iva_element
-                            // determinar si la cantidad es diferente de null o cero
-                            if (element.Cantidad!! != 0.toFloat()) {
-                                cant_superior = element.Cantidad!!
-                            }
-                        }
-
-                    } else if (precio_superior == 0.toFloat()) {
-
-                        if (precio_iva_element > precio_provisional) {
-                            precio_superior = precio_iva_element
-                            // determinar si la cantidad es diferente de null o cero
-                            if (element.Cantidad!! != 0.toFloat()) {
-                                cant_superior = element.Cantidad!!
-                            }
-                        }
-
-                    }
-
-                    // Obtener precio y cantidad inferior
-                    if (precio_inferior > 0.toFloat()) {
-
-                        if (precio_iva_element > precio_inferior && precio_iva_element < precio_provisional) {
-                            precio_inferior = precio_iva_element
-                            // determinar si la cantidad es diferente de null o cero
-                            if (element.Cantidad != 0.toFloat()) {
-                                cant_inferior = element.Cantidad!!
-                            }
-                        }
-                    } else if (precio_inferior == 0.toFloat()) {
-
-                        if (precio_iva_element < precio_provisional) {
-                            precio_inferior = precio_iva_element
-                            // determinar si la cantidad es diferente de null o cero
-                            if (element.Cantidad != 0.toFloat()) {
-                                cant_inferior = element.Cantidad!!
-                            }
-                        }
-
-                    }
-
-                }
-            }
-        }
-
-        // Evluar si precio y cantidad provisional son cero
-        if (precio_provisional == 0.toFloat() || cantidad_provisional == 0.toFloat()) {
-            esCorrecto = false
-        }
-
-        // Repetidos
-        var cant_repetidos = 0.toInt()
-        var cant_repetida = 0.toFloat()
-
-        listPrecios!!.forEach {
-            if (it.Cantidad!! > 0.toFloat()) {
-                if (it.Cantidad!! == cant_repetida) {
-                    cant_repetida = it.Cantidad!!
-                    cant_repetidos++
-                }
-                if (cant_repetida == 0.toFloat() || cant_repetidos == 0) {
-                    cant_repetida = it.Cantidad!!
-                }
-            }
-        }
-
-        if (cant_repetidos == 0) {
-            // Evaluar si el precio es igual a algun item de la lista
-            if (esCorrecto) {
-                listPrecios!!.forEach { element ->
-                    if (element.Cantidad!! > 0.toFloat()) {
-                        var precio_iva_element =
-                            "${String.format("%.2f".format(element.Precio_iva!!) )}".toFloat()
-                        if (precio_iva_element != 0.toFloat()) {
-                            if (precio_provisional == precio_iva_element) {
-
-                                // Evaluar si la cantidad es valida
-                                if (element.Cantidad!! > 0.toFloat()) {
-                                    // evaluar que no se pase de la cantidad superior
-                                    //                                            if (cant_superior > 0.toFloat()) {
-                                    //                                                if (cantidad_provisional <= cant_superior) {
-                                    //                                                    esCorrecto = false
-                                    //                                                }
-                                    if (cantidad_provisional < element.Cantidad!!) {
-                                        esCorrecto = false
-                                    }
-                                    //                                            }
-
-                                    // Evaluar que no se pase de la cantidad inferior
-                                    if (cant_inferior > 0.toFloat()) {
-                                        if (cantidad_provisional >= cant_inferior) {
-                                            esCorrecto = false
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Validar en caso de que el precio sea diferente a un elemento de la lista
-            if (esCorrecto) {
-                // Validar con respecto al precio superior
-                if (precio_superior > 0.toFloat()) {
-                    // Validar la cantidad superior
-                    if (cantidad_provisional <= cant_superior && cant_superior > 0.toFloat()) {
-                        esCorrecto = false
-                    }
-
-                    // Validar la cantidad inferior
-                    if (cantidad_provisional >= cant_inferior && cant_inferior > 0.toFloat()) {
-                        esCorrecto = false
-                    }
-
-                }
-
-                // Validar con respecto al precio inferior
-                if (precio_inferior > 0.toFloat()) {
-                    // Validar la cantidad superior
-                    if (cantidad_provisional <= cant_superior && cant_superior > 0.toFloat()) {
-                        esCorrecto = false
-                    }
-
-                    // Validar la cantidad inferior
-                    if (cantidad_provisional >= cant_inferior && cant_inferior > 0.toFloat()) {
-                        esCorrecto = false
-                    }
-
-                }
-            }
-        }
 
         var esPrecioEditado = false
         if (valor.last() == '*') {
-            esCorrecto = true
             esPrecioEditado = true
         }
 
-        // Verificar si es correcto la validación en caso de que no, mostrar mensaje de error
-        if (esCorrecto) {
+        // Verificamos que la cantidad si corresponda a la escala seleccionada
+        if (cantidad >= cantidadEscala && precio > 0) {
 
             try {
-
-                cantidad = txtcantidad!!.text.toString().toFloat()
 
                 if (idpedido > 0) {
                     if (idpedidodetalle!! > 0) {
@@ -1468,7 +1318,7 @@ class Producto_agregar : AppCompatActivity() {
                         val id = validateProduct(idproducto!!)
                         if (id > 0) {
                             val data = getPedidodetalle(id)
-                            cantidad = cantidad + data!!.Cantidad!!
+                            cantidad += data!!.Cantidad!!
                             var t =
                                 ((txttotal!!.text.toString().toFloat()) + data.Total_iva!!)
                             txttotal!!.text = "${String.format("%.2f".format(t) )}"
@@ -1478,8 +1328,6 @@ class Producto_agregar : AppCompatActivity() {
                         }
                     }
 
-                } else {
-                    //CreatePedido()
                 }
                 runOnUiThread {
                     provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)

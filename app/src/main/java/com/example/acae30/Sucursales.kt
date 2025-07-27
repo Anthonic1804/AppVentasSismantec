@@ -2,10 +2,13 @@ package com.example.acae30
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -32,12 +35,26 @@ class Sucursales : AppCompatActivity() {
     private var latitud = "0"
     private var longitud = "0"
 
+    private lateinit var preferences: SharedPreferences
+    private var instancia = "CONFIG_SERVIDOR"
+
+    //Variable para controlar el Mantenimiento de Clientes
+    private var P_Mantto_Clientes: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySucursalesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
+
         idcliente = intent.getIntExtra("idcliente", 0)
+
+        P_Mantto_Clientes = preferences.getBoolean("P_Mantto_Clientes", false)
+
+        if(!P_Mantto_Clientes){
+            binding.btnNuevaSucursal.visibility = View.GONE
+        }
 
         mostrarDatos()
 
