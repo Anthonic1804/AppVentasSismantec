@@ -44,6 +44,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.text.DecimalFormatSymbols
+import androidx.core.content.edit
 
 
 class Producto_agregar : AppCompatActivity() {
@@ -747,14 +748,14 @@ class Producto_agregar : AppCompatActivity() {
             base.endTransaction()
             base.close()
 
-            val editor = preferencias!!.edit()
-            if(FacturaExportacion){
-                editor.putBoolean("precioConIva", false)
-            }else{
-                editor.putBoolean("precioConIva", true)
-            }
+            preferencias!!.edit {
+                if (FacturaExportacion) {
+                    putBoolean("precioConIva", false)
+                } else {
+                    putBoolean("precioConIva", true)
+                }
 
-            editor.apply()
+            }
 
         }
     } //agrega el producto al pedido y actualiza el total
