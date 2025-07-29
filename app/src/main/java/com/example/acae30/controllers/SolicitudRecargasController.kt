@@ -28,6 +28,7 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import java.time.LocalDate
 
 class SolicitudRecargasController {
 
@@ -175,58 +176,45 @@ class SolicitudRecargasController {
                 val dato = json.getJSONObject(i)
 
                 val data = ContentValues()
-                data.put("Id", dato.getInt("id"))
-                data.put("Codigo", funciones.validateJsonIsnullString(dato, "codigo"))
+                data.put("id", dato.getInt("id"))
+                data.put("codigo", funciones.validateJsonIsnullString(dato, "codigo"))
                 data.put("codigo_de_barra", funciones.validateJsonIsnullString(dato, "codigo_de_barra"))
-                data.put("Tipo", funciones.validateJsonIsnullString(dato, "tipo"))
-                data.put("Id_linea", funciones.validateJsonIsNullInt(dato, "id_linea"))
-                data.put("Linea", funciones.validateJsonIsnullString(dato, "linea"))
-                data.put("Descripcion", funciones.validateJsonIsnullString(dato, "descripcion"))
+                data.put("tipo", funciones.validateJsonIsnullString(dato, "tipo"))
+                data.put("descripcion", funciones.validateJsonIsnullString(dato, "descripcion"))
                 data.put(
-                    "Unidad_medida",
+                    "unidad_medida",
                     funciones.validateJsonIsnullString(dato, "unidad_medida")
                 )
-                data.put("Fraccion", funciones.validateJsonIsNullFloat(dato, "fraccion"))
+                data.put("fraccion", funciones.validateJsonIsNullFloat(dato, "fraccion"))
                 data.put(
-                    "Nombre_fraccion", funciones.validateJsonIsnullString(
+                    "nombre_fraccion", funciones.validateJsonIsnullString(
                         dato,
                         "nombre_fraccion"
                     )
                 )
-                data.put("Existencia", funciones.validateJsonIsNullFloat(dato, "existencia"))
-
-                data.put("Costo", funciones.validateJsonIsNullFloat(dato, "costo"))
+                data.put("costo", funciones.validateJsonIsNullFloat(dato, "costo"))
                 data.put("costo_iva", funciones.validateJsonIsNullFloat(dato, "costo_iva"))
-                data.put(
-                    "Precio_oferta",
-                    funciones.validateJsonIsNullFloat(dato, "precio_oferta")
-                )
-                data.put("Precio_iva", funciones.validateJsonIsNullFloat(dato, "precio_iva"))
-                data.put("Precio_u", funciones.validateJsonIsNullFloat(dato, "precio_u"))
-                data.put("Precio_u_iva", funciones.validateJsonIsNullFloat(dato, "precio_u_iva"))
-                data.put("Precio", funciones.validateJsonIsNullFloat(dato, "precio"))
-                data.put("Status", funciones.validateJsonIsnullString(dato, "status"))
-                data.put("Id_productor", funciones.validateJsonIsNullInt(dato, "id_productor"))
-                data.put("Productor", funciones.validateJsonIsnullString(dato, "productor"))
-                data.put("Id_proveedor", funciones.validateJsonIsNullInt(dato, "id_proveedor"))
-                data.put("Proveedor", funciones.validateJsonIsnullString(dato, "proveedor"))
-                data.put("Cesc", "N")
-                data.put("Combustible", "N")
-                data.put("Imagen", "")
-                data.put("Rubro", funciones.validateJsonIsnullString(dato, "rubro"))
-                data.put("Marca", funciones.validateJsonIsnullString(dato, "marca"))
-                data.put("Sublinea", funciones.validateJsonIsnullString(dato, "sublinea"))
-                data.put("Bonificado", funciones.validateJsonIsNullFloat(dato, "bonificado"))
-                data.put(
-                    "Desc_automatico", funciones.validateJsonIsNullFloat(
-                        dato,
-                        "desc_automatico"
-                    )
-                )
-                data.put("Id_sublinea", funciones.validateJsonIsNullInt(dato, "id_sublinea"))
-                data.put("Id_rubro", funciones.validateJsonIsNullInt(dato, "id_rubro"))
-                data.put("Existencia_u", funciones.validateJsonIsNullFloat(dato, "existencia_u"))
-                bd.insert("inventario_solicitud_carga", null, data)
+                data.put("ult_costo", funciones.validateJsonIsNullFloat(dato, "ult_costo"))
+                data.put("ult_costo_iva", funciones.validateJsonIsNullFloat(dato, "ult_costo_iva"))
+                data.put("existencia", 0)
+                data.put("existencia_u", funciones.validateJsonIsNullFloat(dato, "existencia_u"))
+                data.put("precio", funciones.validateJsonIsNullFloat(dato, "precio"))
+                data.put("precio_u", funciones.validateJsonIsNullFloat(dato, "precio_u"))
+                data.put("precio_u_iva", funciones.validateJsonIsNullFloat(dato, "precio_u_iva"))
+                data.put("precio_iva", funciones.validateJsonIsNullFloat(dato, "precio_iva"))
+                data.put("bonificado", funciones.validateJsonIsNullFloat(dato, "bonificado"))
+                data.put("lote", funciones.validateJsonIsnullString(dato, "lote"))
+                data.put("fecha_vencimiento", funciones.validateJsonDate(dato, "fecha_vencimiento"))
+                data.put("precio2", funciones.validateJsonIsNullFloat(dato, "precio2"))
+                data.put("precio2_iva", funciones.validateJsonIsNullFloat(dato, "precio2_iva"))
+                data.put("precio_u2", funciones.validateJsonIsNullFloat(dato, "precio_u2"))
+                data.put("precio_u2_iva", funciones.validateJsonIsNullFloat(dato, "precio_u2_iva"))
+                data.put("precio_viñeta", funciones.validateJsonIsNullFloat(dato, "precio_viñeta"))
+                data.put("precio_viñeta_iva", funciones.validateJsonIsNullFloat(dato, "precio_viñeta_iva"))
+                data.put("fecha_inventario", LocalDate.now().toString())
+
+
+                bd.insert("inventario", null, data)
             }
             bd.setTransactionSuccessful()
         } catch (e: Exception) {
