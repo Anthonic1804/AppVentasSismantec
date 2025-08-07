@@ -167,6 +167,11 @@ class ConfigController {
             remove("Doc_Recibo")
             remove("Doc_Remision")
             remove("Doc_FacExportacion")
+            remove("empresa")
+            remove("direccion")
+            remove("nrc")
+            remove("nit")
+            remove("giro")
         }
     }
 }
