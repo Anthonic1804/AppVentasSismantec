@@ -8,6 +8,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
+import androidx.core.content.edit
+import com.example.acae30.modelos.PermisosApp.PermisosApp
 
 class ConfigController {
 
@@ -20,22 +22,9 @@ class ConfigController {
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
-        var confirmar: Boolean
-        var modificarPrecio: Boolean
-        var sinExistencias: String = ""
-        var network: Boolean
-        var hojaCarga: Boolean
-        var mostrarPrecioApp = 0
 
-        //Acceso a modulos de la app
-        var M_Historio: Boolean
-        var M_HojaCarga: Boolean
-        var M_Gastos: Boolean
-        var M_Reportes: Boolean
-        var M_CxC: Boolean
-        var M_Abonos: Boolean
-        var P_Mantto_Clientes: Boolean
-        var P_Imprimir_TK_Venta: Boolean
+        //ELIMINANDO CONFIGURACION
+        eliminarConfiguracionApp(context)
 
         try {
             val direccion = url + "config"
@@ -60,25 +49,38 @@ class ConfigController {
 
                                 for (i in 0 until respuesta.length()){
                                     val dato = respuesta.getJSONObject(i)
-                                    confirmar = dato.getBoolean("pagare_obligatorio_app")
-                                    modificarPrecio = dato.getBoolean("modificar_precio_app")
-                                    sinExistencias = dato.getString("pedidos_sin_existencia")
-                                    network = dato.getBoolean("networkProvider_app")
-                                    hojaCarga = dato.getBoolean("hoja_carga_inventario_app")
-                                    mostrarPrecioApp = dato.getInt("precio_mostrar_app")
 
-                                    //Acceso a modulos de la app y permisos
-                                    M_Historio = dato.getBoolean("m_Historico")
-                                    M_HojaCarga = dato.getBoolean("m_HojaCarga")
-                                    M_Gastos = dato.getBoolean("m_Gastos")
-                                    M_Reportes = dato.getBoolean("m_Reportes")
-                                    M_CxC = dato.getBoolean("m_CxC")
-                                    M_Abonos = dato.getBoolean("m_Abonos")
-                                    P_Mantto_Clientes = dato.getBoolean("p_Mantto_Clientes")
-                                    P_Imprimir_TK_Venta = dato.getBoolean("p_Imprimir_TK_Venta")
+                                    val item = PermisosApp(
 
-                                    confirmarPagareObligatorio(confirmar, modificarPrecio, sinExistencias, network, hojaCarga, mostrarPrecioApp,
-                                        M_Historio, M_HojaCarga, M_Gastos, M_Reportes, M_CxC, M_Abonos, P_Mantto_Clientes, P_Imprimir_TK_Venta, context)
+                                        pagareObligarotio = dato.getBoolean("pagare_obligatorio_app"),
+                                        modificarPrecio = dato.getBoolean("modificar_precio_app"),
+                                        pedidoSinExistencia = dato.getString("pedidos_sin_existencia"),
+                                        networkProvider = dato.getBoolean("networkProvider_app"),
+                                        usarHojaCarga = dato.getBoolean("hoja_carga_inventario_app"),
+                                        mostrarPrecioApp = dato.getInt("precio_mostrar_app"),
+                                        mHistorio = dato.getBoolean("m_Historico"),
+                                        mHojaCarga = dato.getBoolean("m_HojaCarga"),
+                                        mGastos = dato.getBoolean("m_Gastos"),
+                                        mReportes = dato.getBoolean("m_Reportes"),
+                                        mCxC = dato.getBoolean("m_CxC"),
+                                        mAbonos = dato.getBoolean("m_Abonos"),
+                                        pMantto_Clientes = dato.getBoolean("p_Mantto_Clientes"),
+                                        pImprimirTKVenta = dato.getBoolean("p_Imprimir_TK_Venta"),
+                                        solicitudCargaSinExistencia = dato.getBoolean("solicitud_Carga_SinExistencia"),
+                                        docFactura = dato.getBoolean("doc_Factura"),
+                                        docCreFiscal = dato.getBoolean("doc_CreFiscal"),
+                                        docRecibo = dato.getBoolean("doc_Recibo"),
+                                        docRemision = dato.getBoolean("doc_Remision"),
+                                        docFacExportacion = dato.getBoolean("doc_FacExportacion"),
+                                        empresa = dato.getString("empresa"),
+                                        direccion = dato.getString("direccion"),
+                                        nrc = dato.getString("nrc"),
+                                        nit = dato.getString("nit"),
+                                        giro = dato.getString("giro")
+
+                                    )
+
+                                    confirmarPagareObligatorio(item, context)
                                 }
                             } else {
                                 println("ERROR AL LEER EL JSON CONFIG")
@@ -97,30 +99,74 @@ class ConfigController {
     }
 
     //FUNCION PARA SETEAR LA FORMA DEL PAGARE EN SHAREDPREFERENCES
-    private fun confirmarPagareObligatorio(confirmar: Boolean, modificar:Boolean, sinExistencia:String, network:Boolean, hojaCarga:Boolean, mostrarPrecioApp:Int,
-                                           M_Historio:Boolean, M_HojaCarga:Boolean, M_Gastos:Boolean, M_Reportes:Boolean, M_CxC:Boolean, M_Abonos:Boolean,
-                                           P_Mantto_Clientes:Boolean, P_Imprimir_TK_Venta:Boolean, context: Context){
+    private fun confirmarPagareObligatorio(obj: PermisosApp, context: Context){
+
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val editor = preferences.edit()
-        editor.remove("PagareObligatorio")
-        editor.putBoolean("PagareObligatorio", confirmar)
-        editor.putBoolean("modificar_precio_app", modificar)
-        editor.putString("pedidos_sin_existencia", sinExistencia)
-        editor.putBoolean("NetworkProvider_app", network)
-        editor.putBoolean("Hoja_carga_inventario_app", hojaCarga)
-        editor.putInt("vistaInventario", 2)
-        editor.putFloat("versionActualApp", 1.0f)
-        editor.putInt("precio_mostrar_app", mostrarPrecioApp)
+        preferences.edit {
 
-        editor.putBoolean("M_Historio", M_Historio)
-        editor.putBoolean("M_HojaCarga", M_HojaCarga)
-        editor.putBoolean("M_Gastos", M_Gastos)
-        editor.putBoolean("M_Reportes", M_Reportes)
-        editor.putBoolean("M_CxC", M_CxC)
-        editor.putBoolean("M_Abonos", M_Abonos)
-        editor.putBoolean("P_Mantto_Clientes", P_Mantto_Clientes)
-        editor.putBoolean("P_Imprimir_TK_Venta", P_Imprimir_TK_Venta)
+            putBoolean("PagareObligatorio", obj.pagareObligarotio)
+            putBoolean("modificar_precio_app", obj.modificarPrecio)
+            putString("pedidos_sin_existencia", obj.pedidoSinExistencia)
+            putBoolean("NetworkProvider_app", obj.networkProvider)
+            putBoolean("Hoja_carga_inventario_app", obj.usarHojaCarga)
+            putInt("vistaInventario", 2)
+            putFloat("versionActualApp", 1.0f)
+            putInt("precio_mostrar_app", obj.mostrarPrecioApp)
 
-        editor.apply()
+            //Permisos de los Modulos
+            putBoolean("M_Historio", obj.mHistorio)
+            putBoolean("M_HojaCarga", obj.mHojaCarga)
+            putBoolean("M_Gastos", obj.mGastos)
+            putBoolean("M_Reportes", obj.mReportes)
+            putBoolean("M_CxC", obj.mCxC)
+            putBoolean("M_Abonos", obj.mAbonos)
+            putBoolean("P_Mantto_Clientes", obj.pMantto_Clientes)
+            putBoolean("P_Imprimir_TK_Venta", obj.pImprimirTKVenta)
+            putBoolean("Solicitud_Carga_SinExistencia", obj.solicitudCargaSinExistencia)
+
+            //Documentos de Facturacion Permitidos
+            putBoolean("Doc_Factura", obj.docFactura)
+            putBoolean("Doc_CreFiscal", obj.docCreFiscal)
+            putBoolean("Doc_Recibo", obj.docRecibo)
+            putBoolean("Doc_Remision", obj.docRemision)
+            putBoolean("Doc_FacExportacion", obj.docFacExportacion)
+
+            //Datos de la empresa para el TK
+            putString("empresa", obj.empresa)
+            putString("direccion", obj.direccion)
+            putString("nrc", obj.nrc)
+            putString("nit", obj.nit)
+            putString("giro", obj.giro)
+
+        }
+    }
+
+    private fun eliminarConfiguracionApp(context: Context){
+
+        preferences = context.getSharedPreferences(instancia,Context.MODE_PRIVATE)
+        preferences.edit{
+            remove("PagareObligatorio")
+            remove("modificar_precio_app")
+            remove("pedidos_sin_existencia")
+            remove("NetworkProvider_app")
+            remove("Hoja_carga_inventario_app")
+            remove("vistaInventario")
+            remove("versionActualApp")
+            remove("precio_mostrar_app")
+            remove("M_Historio")
+            remove("M_HojaCarga")
+            remove("M_Gastos")
+            remove("M_Reportes")
+            remove("M_CxC")
+            remove("M_Abonos")
+            remove("P_Mantto_Clientes")
+            remove("P_Imprimir_TK_Venta")
+            remove("Solicitud_Carga_SinExistencia")
+            remove("Doc_Factura")
+            remove("Doc_CreFiscal")
+            remove("Doc_Recibo")
+            remove("Doc_Remision")
+            remove("Doc_FacExportacion")
+        }
     }
 }

@@ -181,22 +181,14 @@ class SolicitudRecargasController {
                 data.put("codigo_de_barra", funciones.validateJsonIsnullString(dato, "codigo_de_barra"))
                 data.put("tipo", funciones.validateJsonIsnullString(dato, "tipo"))
                 data.put("descripcion", funciones.validateJsonIsnullString(dato, "descripcion"))
-                data.put(
-                    "unidad_medida",
-                    funciones.validateJsonIsnullString(dato, "unidad_medida")
-                )
+                data.put("unidad_medida", funciones.validateJsonIsnullString(dato, "unidad_medida"))
                 data.put("fraccion", funciones.validateJsonIsNullFloat(dato, "fraccion"))
-                data.put(
-                    "nombre_fraccion", funciones.validateJsonIsnullString(
-                        dato,
-                        "nombre_fraccion"
-                    )
-                )
+                data.put("nombre_fraccion", funciones.validateJsonIsnullString(dato, "nombre_fraccion"))
                 data.put("costo", funciones.validateJsonIsNullFloat(dato, "costo"))
                 data.put("costo_iva", funciones.validateJsonIsNullFloat(dato, "costo_iva"))
                 data.put("ult_costo", funciones.validateJsonIsNullFloat(dato, "ult_costo"))
                 data.put("ult_costo_iva", funciones.validateJsonIsNullFloat(dato, "ult_costo_iva"))
-                data.put("existencia", 0)
+                data.put("existencia", funciones.validateJsonIsNullFloat(dato, "existencia"))
                 data.put("existencia_u", funciones.validateJsonIsNullFloat(dato, "existencia_u"))
                 data.put("precio", funciones.validateJsonIsNullFloat(dato, "precio"))
                 data.put("precio_u", funciones.validateJsonIsNullFloat(dato, "precio_u"))
@@ -211,10 +203,10 @@ class SolicitudRecargasController {
                 data.put("precio_u2_iva", funciones.validateJsonIsNullFloat(dato, "precio_u2_iva"))
                 data.put("precio_viñeta", funciones.validateJsonIsNullFloat(dato, "precio_viñeta"))
                 data.put("precio_viñeta_iva", funciones.validateJsonIsNullFloat(dato, "precio_viñeta_iva"))
-                data.put("fecha_inventario", LocalDate.now().toString())
+                data.put("fechaInventario", LocalDate.now().toString())
 
 
-                bd.insert("inventario", null, data)
+                bd.insert("inventario_solicitud_carga", null, data)
             }
             bd.setTransactionSuccessful()
         } catch (e: Exception) {
@@ -229,9 +221,8 @@ class SolicitudRecargasController {
     fun obtenerInformacionProductoPorString(context: Context, busqueda: String): ArrayList<Inventario>{
         val base = funciones.getDataBase(context).readableDatabase
         val lista = ArrayList<Inventario>()
-        var query: String = ""
 
-        query = if(busqueda != ""){
+        val query: String = if(busqueda != ""){
             "SELECT * FROM inventario_solicitud_carga WHERE Descripcion LIKE '%$busqueda%' LIMIT 60"
         }else{
             "SELECT * FROM inventario_solicitud_carga limit 60"

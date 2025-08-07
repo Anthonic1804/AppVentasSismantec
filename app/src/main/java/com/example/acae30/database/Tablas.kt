@@ -552,51 +552,44 @@ class Tablas {
 
     fun inventariosolicitudCarga(): String {
         return "CREATE TABLE inventario_solicitud_carga (" +
-                "Id INTEGER  PRIMARY KEY NOT NULL," +
-                "Codigo VARCHAR(100)  NULL," +
-                "Tipo VARCHAR(50)  NULL," +
-                "Id_linea INTEGER  NULL," +
-                "Linea VARCHAR(100)  NULL," +
-                "Descripcion VaRCHAR(150)  NULL," +
-                "Unidad_medida VARCHAR(25) NULL," +
-                "Fraccion NUMERIC(20,6) NULL," +
-                "Nombre_fraccion VARCHAR(50) NULL," +
-                "Existencia NUMERIC(20,6)  NULL," +
-                "Costo NUMERIC(20,6) NOT NULL," +
+                "id INTEGER  PRIMARY KEY NOT NULL," +
+                "codigo VARCHAR(100) NOT NULL," +
+                "codigo_de_barra VARCHAR(25) NOT NULL," +
+                "tipo VARCHAR(50) NOT NULL," +
+                "descripcion VARCHAR(150) NOT NULL," +
+                "unidad_medida VARCHAR(25) NOT NULL," +
+                "fraccion NUMERIC(20,6) NOT NULL," +
+                "nombre_fraccion VARCHAR(50) NOT NULL," +
+                "costo NUMERIC(20,6) NOT NULL," +
                 "costo_iva NUMERIC(20,6) NOT NULL," +
-                "Precio_oferta NUMERIC(12,2)  NULL," +
-                "Precio_iva NUMERIC(20,6)  NULL," +
-                "Precio NUMERIC(20,6)," +
-                "Precio_u NUMERIC(20,6)," +
-                "Precio_u_iva NUMERIC(20,6)," +
-                "Status VARCHAR(50)  NULL," +
-                "Fecha_inventario DATE DEFAULT CURRENT_DATE NOT NULL," +
-                "Id_productor INTEGER  NULL," +
-                "Productor VARCHAR(200)  NULL," +
-                "Id_proveedor INTEGER DEFAULT '0' NULL," +
-                "Proveedor VARCHAR(200)  NULL," +
-                "Cesc varchar(1) not null," +
-                "Combustible varchar(1) not null," +
-                "Imagen TEXT NULL," +
-                "Rubro VARCHAR(50)," +
-                "Marca VARCHAR(50)," +
-                "Id_sublinea INTEGER," +
-                "Sublinea VARCHAR(50)," +
-                "Desc_automatico NUMERIC(20,6)," +
-                "Bonificado NUMERIC(20,6)," +
-                "Id_rubro INTEGER," +
-                "Existencia_u NUMERIC(20,6)," +
-                "codigo_de_barra VARCHAR(25) NOT NULL DEFAULT '')"
+                "ult_costo NUMERIC(20,6) NOT NULL," +
+                "ult_costo_iva NUMERIC(20,6) NOT NULL," +
+                "existencia NUMERIC(20,6) NOT NULL," +
+                "existencia_u NUMERIC(20,6) NOT NULL," +
+                "precio NUMERIC(20,6) NOT NULL," +
+                "precio_u NUMERIC(20,6) NOT NULL," +
+                "precio_u_iva NUMERIC(20,6) NOT NULL," +
+                "precio_iva NUMERIC(20,6) NOT NULL," +
+                "bonificado NUMERIC(20,6) NOT NULL," +
+                "lote VARCHAR(50) NOT NULL," +
+                "fecha_vencimiento VARCHAR(50) NOT NULL," +
+                "precio2 NUMERIC(20,6) NOT NULL," +
+                "precio2_iva NUMERIC(20,6) NOT NULL," +
+                "precio_u2 NUMERIC(20,6) NOT NULL," +
+                "precio_u2_iva NUMERIC(20,6) NOT NULL," +
+                "precio_viñeta NUMERIC(20,6) NOT NULL," +
+                "precio_viñeta_iva NUMERIC(20,6) NOT NULL," +
+                "fechaInventario VARCHAR(25) NOT NULL)"
     } //tabla inventario
 
     //CREANDO LA TABLA VIRTUAL INVENTARIO
-    fun virtualInventarioSolicitud(): String {
-        return "CREATE VIRTUAL TABLE virtualinventariosolicitud USING FTS4 (" +
-                "CONTENT='inventario_solicitud_carga'," +
-                "Codigo," +
-                "Descripcion" +
-                ") "
-    }
+//    fun virtualInventarioSolicitud(): String {
+//        return "CREATE VIRTUAL TABLE virtualinventariosolicitud USING FTS4 (" +
+//                "CONTENT='inventario_solicitud_carga'," +
+//                "Codigo," +
+//                "Descripcion" +
+//                ") "
+//    }
 
     //TABLA SOLICITUD DE CARGA
     fun solicitudCarga() : String{
@@ -661,19 +654,19 @@ class Tablas {
                 "Tipo_fiscal VARCHAR(10) NOT NULL)"
     }
 
-    //TRIGGER PARA LA INSERCION DE DATOS EN TABLA FTS4 VIRTUAL INVENTARIO
-    fun triggerInventarioVirtual(): String {
-        return "CREATE TRIGGER triggerInventarioVirtual AFTER INSERT ON inventario BEGIN" +
-                " INSERT INTO virtualinventario(virtualinventario) VALUES ('rebuild');" +
-                "END;"
-
-    }
-
-    //TRIGGER PARA LA INSERCION DE DATOS EN TABLA FTS4 VIRTUAL INVENTARIO_SOLICITUD
-    fun triggerInventarioSolicitudVirtual(): String {
-        return "CREATE TRIGGER triggerInventarioSolicitudVirtual AFTER INSERT ON inventario_solicitud_carga BEGIN" +
-                " INSERT INTO virtualinventariosolicitud(virtualinventariosolicitud) VALUES ('rebuild');" +
-                "END;"
-
-    }
+//    //TRIGGER PARA LA INSERCION DE DATOS EN TABLA FTS4 VIRTUAL INVENTARIO
+//    fun triggerInventarioVirtual(): String {
+//        return "CREATE TRIGGER triggerInventarioVirtual AFTER INSERT ON inventario BEGIN" +
+//                " INSERT INTO virtualinventario(virtualinventario) VALUES ('rebuild');" +
+//                "END;"
+//
+//    }
+//
+//    //TRIGGER PARA LA INSERCION DE DATOS EN TABLA FTS4 VIRTUAL INVENTARIO_SOLICITUD
+//    fun triggerInventarioSolicitudVirtual(): String {
+//        return "CREATE TRIGGER triggerInventarioSolicitudVirtual AFTER INSERT ON inventario_solicitud_carga BEGIN" +
+//                " INSERT INTO virtualinventariosolicitud(virtualinventariosolicitud) VALUES ('rebuild');" +
+//                "END;"
+//
+//    }
 }

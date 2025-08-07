@@ -31,6 +31,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
+import androidx.core.content.edit
 
 
 class Funciones {
@@ -243,9 +244,9 @@ class Funciones {
             db.close()
         }
 
-        val editor = preferences.edit()
-        editor.remove("hojaCarga")
-        editor.apply()
+        preferences.edit {
+            remove("hojaCarga")
+        }
     }
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
@@ -263,26 +264,34 @@ class Funciones {
         dialog.show()
     }
 
-    //FUNCION TOAST ACEPTADO
-    fun toastMensaje(context: Context, msj: String, tipo: Int){
-        val inflater = LayoutInflater.from(context)
-        var layout: View? = null
-        layout = when(tipo){
-            0 -> {
-                inflater.inflate(R.layout.toast_error, null)
-            }else ->{
-                inflater.inflate(R.layout.toast_correcto, null)
-            }
+    // FUNCIÓN PARA GENERAR EL LISTADO DE DOCUMENTOS AUTORIZADOS
+    fun documentosDeFacturacion(context: Context): ArrayList<String> {
+        val listado = ArrayList<String>()
+
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+
+        val docFactura = preferences.getBoolean("Doc_Factura", false)
+        val docCreFiscal = preferences.getBoolean("Doc_CreFiscal", false)
+        val docRecibo = preferences.getBoolean("Doc_Recibo", false)
+        val docRemision = preferences.getBoolean("Doc_Remision", false)
+        val docFacExportacion = preferences.getBoolean("Doc_FacExportacion", false)
+
+        if (docFactura) {
+            listado.add("FACTURA")
+        }
+        if (docCreFiscal) {
+            listado.add("CREDITO FISCAL")
+        }
+        if (docRecibo) {
+            listado.add("RECIBO")
+        }
+        if (docRemision) {
+            listado.add("REMISIÓN")
+        }
+        if (docFacExportacion) {
+            listado.add("FACTURA EXPORTACION")
         }
 
-        val txtMensaje = layout.findViewById<TextView>(R.id.tvMensaje)
-        txtMensaje.text = msj
-
-        val toast = Toast(context)
-        toast.duration = Toast.LENGTH_SHORT
-        toast.view= layout
-        toast.setGravity(Gravity.BOTTOM, 0,100)
-        toast.show()
+        return listado
     }
-
 }

@@ -49,7 +49,6 @@ class carga_datos : AppCompatActivity() {
     private var alert: AlertDialogo? = null
     private var database: Database? = null
 
-    private var configController = ConfigController()
     private var inventarioController = InventarioController()
     private var clietnesController = ClientesController()
     private var pedidosController = PedidosController()
@@ -65,8 +64,6 @@ class carga_datos : AppCompatActivity() {
     private lateinit var inventarioDao: InventarioDao
 
     private lateinit var db : AppDatabase
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
 

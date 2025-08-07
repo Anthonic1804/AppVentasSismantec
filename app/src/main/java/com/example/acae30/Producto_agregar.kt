@@ -1298,13 +1298,14 @@ class Producto_agregar : AppCompatActivity() {
 
         //Obtenemos el valor el valor del Spinner de Escalas
         val valor = spprecio!!.selectedItem.toString()
-
-        val precio = valor.substringBefore(" ").toDouble()
-
+        var precio: Double = 0.0
 
         var esPrecioEditado = false
         if (valor.last() == '*') {
             esPrecioEditado = true
+            precio = valor.substringBefore('*').toDouble()
+        }else{
+            precio = valor.substringBefore(" ").toDouble()
         }
 
         // Verificamos que la cantidad si corresponda a la escala seleccionada

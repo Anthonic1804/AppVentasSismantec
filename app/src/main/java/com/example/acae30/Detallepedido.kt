@@ -215,8 +215,11 @@ class Detallepedido : AppCompatActivity() {
         }
 
         //COMPLETANDO SPINNER DOCUMENTO
+
+        val documentoAutorizados = funciones.documentosDeFacturacion(this@Detallepedido)
+
         val tipoDocumentoAdaptador = ArrayAdapter<String>(this@Detallepedido, android.R.layout.simple_spinner_dropdown_item)
-        tipoDocumentoAdaptador.addAll(listOf("FACTURA", "CREDITO FISCAL", "RECIBO", "REMISIÓN")) //LIMINADO "FACTURA EXPORTACION" , "REMISION"
+        tipoDocumentoAdaptador.addAll(documentoAutorizados)
         binding.spDocumento.adapter = tipoDocumentoAdaptador
 
         //COMPLETANDO TVTIPODOCUMENTO
@@ -233,12 +236,6 @@ class Detallepedido : AppCompatActivity() {
                 actualizarVistaTotales()
                 actualizarTotales()
             }
-            "FE" -> {
-                //binding.tvDocumentoSeleccionado.text = getString(R.string.factura_exportacion)
-                //binding.spDocumento.setSelection(2, true)
-                //actualizarVistaTotales()
-                //actualizarTotales()
-            }
             "RC" -> {
                 binding.tvDocumentoSeleccionado.text = getString(R.string.recibo)
                 binding.spDocumento.setSelection(2, true)
@@ -248,6 +245,12 @@ class Detallepedido : AppCompatActivity() {
             "RE" -> {
                 binding.tvDocumentoSeleccionado.text = getString(R.string.remisi_n)
                 binding.spDocumento.setSelection(3, true)
+                actualizarVistaTotales()
+                actualizarTotales()
+            }
+            "FE" -> {
+                binding.tvDocumentoSeleccionado.text = getString(R.string.factura_exportacion)
+                binding.spDocumento.setSelection(4, true)
                 actualizarVistaTotales()
                 actualizarTotales()
             }
@@ -460,9 +463,9 @@ class Detallepedido : AppCompatActivity() {
                         actualizarTotales()
                     }
                     "FACTURA EXPORTACION" -> {
-                        //Toast.makeText(this@Detallepedido, "OPCION EN REVISION", Toast.LENGTH_SHORT).show()
-                        /*
-                        pedidosController.updateTipoDocumento("FE", idpedido, this@Detallepedido)
+                        Toast.makeText(this@Detallepedido, "OPCION EN REVISION", Toast.LENGTH_SHORT).show()
+
+                        /*pedidosController.updateTipoDocumento("FE", idpedido, this@Detallepedido)
                         tipoDocumento = "FE"
                         FacturaExportacion = true
                         precioConIVA = false
@@ -1503,6 +1506,12 @@ class Detallepedido : AppCompatActivity() {
         val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
         val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
 
+        val empresa = preferencias.getString("empresa", "").toString()
+        val direccion = preferencias.getString("direccion", "").toString()
+        val nrc = preferencias.getString("nrc", "").toString()
+        val nit = preferencias.getString("nit", "").toString()
+        val giro = preferencias.getString("giro", "").toString()
+
         // Tamaños de letra específicos para cada columna
         val textSizeCantidad = 10f
         val textSizeCodigo = 10f
@@ -1518,34 +1527,33 @@ class Detallepedido : AppCompatActivity() {
 
         // Draw title
         paint.isFakeBoldText = true
-        canvas.drawText("TORTISAL", 50f, 50f, paint)
-        canvas.drawText("CARR. RUTA MILITAR, COL. SANTA LUISA, #7", 50f, 70f, paint)
-        canvas.drawText("SAN MIGUEL, SAN MIGUEL", 50f, 90f, paint)
-        canvas.drawText("N.R.C : 1466850", 50f, 110f, paint)
-        canvas.drawText("N.I.T : 14012909771014", 50f, 130f, paint)
-        canvas.drawText("GIRO: Venta al por menor de \n otros productos n.c.p.", 50f, 150f, paint)
+        canvas.drawText("$empresa", 50f, 50f, paint)
+        canvas.drawText("$direccion", 50f, 70f, paint)
+        canvas.drawText("N.R.C : $nrc", 50f, 90f, paint)
+        canvas.drawText("N.I.T : $nit", 50f, 110f, paint)
+        canvas.drawText("GIRO: $giro", 50f, 130f, paint)
 
         //DATOS DEL CLIENTE
         paint.isFakeBoldText = true
-        canvas.drawLine(50f, 160f, canvas.width - 50f, 160f, paint)
+        canvas.drawLine(50f, 140f, canvas.width - 50f, 140f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("---- DATOS DEL CLIENTE ----", 50f, 175f, paint)
+        canvas.drawText("---- DATOS DEL CLIENTE ----", 50f, 155f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("NOMBRE DEL CLIENTE", 50f, 195f, paint)
+        canvas.drawText("NOMBRE DEL CLIENTE", 50f, 175f, paint)
         paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido!!.Nombre_cliente}", 50f, 205f, paint)
+        canvas.drawText("${infoPedido!!.Nombre_cliente}", 50f, 195f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("N.I.T / D.U.I", 50f, 225f, paint)
+        canvas.drawText("N.I.T / D.U.I", 50f, 215f, paint)
         paint.isFakeBoldText = false
         canvas.drawText("${infoCliente!!.Dui}  ${infoCliente.Nit}", 50f, 235f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("N.R.C", 50f, 255f, paint)
+        canvas.drawText("N.R.C", 50f, 250f, paint)
         paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente.Nrc}", 50f, 265f, paint)
+        canvas.drawText("${infoCliente.Nrc}", 50f, 270f, paint)
 
         paint.isFakeBoldText = true
         canvas.drawText("ACTIVIDAD ECONOMICA", 50f, 285f, paint)
@@ -1760,6 +1768,12 @@ class Detallepedido : AppCompatActivity() {
         val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
         val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
 
+        val empresa = preferencias.getString("empresa", "").toString()
+        val direccion = preferencias.getString("direccion", "").toString()
+        val nrc = preferencias.getString("nrc", "").toString()
+        val nit = preferencias.getString("nit", "").toString()
+        val giro = preferencias.getString("giro", "").toString()
+
         // Tamaños de letra específicos para cada columna
         val textSizeCantidad = 10f
         val textSizeCodigo = 10f
@@ -1770,85 +1784,63 @@ class Detallepedido : AppCompatActivity() {
 
         // Paint para el texto
         val paint = TextPaint().apply {
-            textSize = 12f // Tamaño predeterminado para el título y la división
+            textSize = 9f // Tamaño predeterminado para el título y la división
         }
 
-        // Asumiendo que el canvas ya está inicializado y el paint también
-        val canvasWidth = canvas.width.toFloat()
-        val paint2 = Paint().apply {
-            isFakeBoldText = true
-            textSize = 14f // Ajusta el tamaño del texto según sea necesario
-            textAlign = Paint.Align.CENTER
-        }
+        // Draw title
+        paint.isFakeBoldText = true
+        canvas.drawText("$empresa", 50f, 50f, paint)
+        canvas.drawText("$direccion", 50f, 70f, paint)
+        canvas.drawText("N.R.C : $nrc", 50f, 90f, paint)
+        canvas.drawText("N.I.T : $nit", 50f, 110f, paint)
+        canvas.drawText("GIRO: $giro", 50f, 130f, paint)
 
-        val texts = listOf(
-            "TORTISAL",
-            "JUAN GABRIEL ROMERO HERNANDEZ",
-            "CARR. RUTA MILITAR,",
-            "COL. SANTA LUISA, #7",
-            "SAN MIGUEL, SAN MIGUEL",
-            "N.R.C : 1466850",
-            "N.I.T : 14012909771014",
-            "GIRO: Venta al por menor de otros ",
-            "productos n.c.p."
-        )
-
-        val startY2= 50f
-        val lineHeight = paint.fontMetrics.descent - paint2.fontMetrics.ascent
-
-        texts.forEachIndexed { index, text ->
-            val textWidth = paint.measureText(text)
-            val x = canvasWidth / 2
-            val y = startY2 + index * lineHeight
-            canvas.drawText(text, x, y, paint2)
-        }
-
-        // Draw divider line
-        paint.isFakeBoldText = false
-        canvas.drawLine(50f, 185f, canvas.width - 50f, 185f, paint)
+        //DATOS DEL CLIENTE
+        paint.isFakeBoldText = true
+        canvas.drawLine(50f, 140f, canvas.width - 50f, 140f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("---- DATOS DEL CLIENTE ----", 50f, 200f, paint)
+        canvas.drawText("---- DATOS DEL CLIENTE ----", 50f, 155f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("NOMBRE DEL CLIENTE", 50f, 215f, paint)
+        canvas.drawText("NOMBRE DEL CLIENTE", 50f, 175f, paint)
         paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido!!.Nombre_cliente}", 50f, 230f, paint)
+        canvas.drawText("${infoPedido!!.Nombre_cliente}", 50f, 195f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("N.I.T / D.U.I", 50f, 245f, paint)
+        canvas.drawText("N.I.T / D.U.I", 50f, 215f, paint)
         paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente!!.Dui}  ${infoCliente.Nit}", 50f, 260f, paint)
+        canvas.drawText("${infoCliente!!.Dui}  ${infoCliente.Nit}", 50f, 235f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("N.R.C", 50f, 275f, paint)
+        canvas.drawText("N.R.C", 50f, 250f, paint)
         paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente.Nrc}", 50f, 290f, paint)
+        canvas.drawText("${infoCliente.Nrc}", 50f, 270f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("ACTIVIDAD ECONOMICA", 50f, 305f, paint)
+        canvas.drawText("ACTIVIDAD ECONOMICA", 50f, 285f, paint)
         paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente.Giro}", 50f, 320f, paint)
+        canvas.drawText("${infoCliente.dteGiro}", 50f, 295f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("NOMBRE SUCURSAL", 50f, 335f, paint)
+        canvas.drawText("NOMBRE SUCURSAL", 50f, 315f, paint)
         paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.Nombre_sucursal}", 50f, 350f, paint)
+        canvas.drawText("${infoPedido.Nombre_sucursal}", 50f, 325f, paint)
 
         paint.isFakeBoldText = true
-        canvas.drawText("DIRECCION", 50f, 365f, paint)
+        canvas.drawText("DIRECCION SUCURSAL", 50f, 345f, paint)
         paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente.Direccion}", 50f, 380f, paint)
+        canvas.drawText("${infoPedido.Sucursal_Direccion}", 50f, 355f, paint)
 
         //FIN DATOS DEL CLIENTE
 
         // Draw divider line
         paint.isFakeBoldText = false
-        canvas.drawLine(50f, 390f, canvas.width - 50f, 390f, paint)
+        canvas.drawLine(50f, 365f, canvas.width - 50f, 365f, paint)
 
         // Draw column headers
         val columnWidths = floatArrayOf(20f, 100f, 60f) // Ancho fijo para cada columna
-        val startY = 400f
+        val startY = 375f
         var y = startY
         val columnX = floatArrayOf(
             50f,

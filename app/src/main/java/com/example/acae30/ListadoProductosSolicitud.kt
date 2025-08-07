@@ -35,7 +35,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
     private lateinit var preferences: SharedPreferences
     private val instancia = "CONFIG_SERVIDOR"
     private var vistaInventario: Int = 0 //INVENTARIO 1 -> VISTA MINIATURA  2-> VISTA EN LISTA
-    private var sinExistencias: Int = 0  // 1 -> Si    0 -> no
+    private var pedidoSinExistencia: Boolean = false
 
     private var idSolicitud : Int = 0
     private var proceso : String = ""
@@ -50,7 +50,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
 
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
-        sinExistencias = if(preferences.getString("pedidos_sin_existencia", "") == "S") 1 else 0
+        pedidoSinExistencia = preferences.getBoolean("Solicitud_Carga_SinExistencia", false)
         vistaInventario = preferences.getInt("vistaInventario", 0)
 
         idSolicitud = intent.getIntExtra("idSolicitud", 0)
@@ -124,7 +124,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                     bindind.listadoInventario.layoutManager = mLayoutManager
                     val adapter = InventarioAdapter(list, this, vistaInventario) { position ->
                         val existeniasProducto = list[position].Existencia!!.toFloat()
-                        if(sinExistencias == 0 && existeniasProducto == 0f || existeniasProducto < 0f){
+                        if(!pedidoSinExistencia && existeniasProducto <= 0f){
                             Toast.makeText(this@ListadoProductosSolicitud, "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS", Toast.LENGTH_SHORT).show()
                         }else{
                             when(vista){
@@ -171,7 +171,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                     bindind.listadoInventario.layoutManager = gridLayoutManayer
                     val adapter = InventarioAdapter(list, this, vistaInventario) { position ->
                         val existeniasProducto = list[position].Existencia!!.toFloat()
-                        if(sinExistencias == 0 && existeniasProducto == 0f || existeniasProducto < 0f){
+                        if(!pedidoSinExistencia && existeniasProducto <= 0f){
                             Toast.makeText(this@ListadoProductosSolicitud, "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS", Toast.LENGTH_SHORT).show()
                         }else{
                             when(vista){

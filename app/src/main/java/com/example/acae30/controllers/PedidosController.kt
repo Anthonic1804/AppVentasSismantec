@@ -22,6 +22,7 @@ import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import androidx.core.content.edit
 
 class PedidosController {
 
@@ -358,10 +359,10 @@ class PedidosController {
                         actualizarTotalPedido(context, idPedido)
                         println("SE AGREGO IVA")
                     }
-                    val editor = preferences.edit()
-                    editor.remove("precioConIva")
-                    editor.putBoolean("precioConIva",precioConIVASeleccionado)
-                    editor.apply()
+                    preferences.edit {
+                        remove("precioConIva")
+                        putBoolean("precioConIva", precioConIVASeleccionado)
+                    }
                 }
             }
             cursor.close()
