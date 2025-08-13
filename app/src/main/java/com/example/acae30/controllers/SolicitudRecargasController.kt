@@ -346,7 +346,7 @@ class SolicitudRecargasController {
 
         try{
             bd.execSQL("UPDATE solicitudCargaDetalle SET Cantidad = (Cantidad + ${detalle.cantidad}) " +
-                    "WHERE Id_solicitud_carga = ${detalle.idSolicitudCarga} ")
+                    "WHERE Id_solicitud_carga = ${detalle.idSolicitudCarga} AND Id_producto=${detalle.idProducto}")
 
             actualizado = true
         }catch (e : Exception){

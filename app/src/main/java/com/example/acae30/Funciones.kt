@@ -274,7 +274,7 @@ class Funciones {
         val docCreFiscal = preferences.getBoolean("Doc_CreFiscal", false)
         val docRecibo = preferences.getBoolean("Doc_Recibo", false)
         val docRemision = preferences.getBoolean("Doc_Remision", false)
-        val docFacExportacion = preferences.getBoolean("Doc_FacExportacion", false)
+        //val docFacExportacion = preferences.getBoolean("Doc_FacExportacion", false)
 
         if (docFactura) {
             listado.add("FACTURA")
@@ -288,9 +288,9 @@ class Funciones {
         if (docRemision) {
             listado.add("REMISIÓN")
         }
-        if (docFacExportacion) {
-            listado.add("FACTURA EXPORTACION")
-        }
+//        if (docFacExportacion) {
+//            //listado.add("FACTURA EXPORTACION")
+//        }
 
         return listado
     }

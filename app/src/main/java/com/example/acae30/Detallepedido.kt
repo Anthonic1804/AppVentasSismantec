@@ -248,12 +248,12 @@ class Detallepedido : AppCompatActivity() {
                 actualizarVistaTotales()
                 actualizarTotales()
             }
-            "FE" -> {
-                binding.tvDocumentoSeleccionado.text = getString(R.string.factura_exportacion)
-                binding.spDocumento.setSelection(4, true)
-                actualizarVistaTotales()
-                actualizarTotales()
-            }
+//            "FE" -> {
+//                binding.tvDocumentoSeleccionado.text = getString(R.string.factura_exportacion)
+//                binding.spDocumento.setSelection(4, true)
+//                actualizarVistaTotales()
+//                actualizarTotales()
+//            }
         }
 
         //CARTURANDO LA SUCURSAL SELECCIONADA
@@ -463,7 +463,7 @@ class Detallepedido : AppCompatActivity() {
                         actualizarTotales()
                     }
                     "FACTURA EXPORTACION" -> {
-                        Toast.makeText(this@Detallepedido, "OPCION EN REVISION", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(this@Detallepedido, "OPCION EN REVISION", Toast.LENGTH_SHORT).show()
 
                         /*pedidosController.updateTipoDocumento("FE", idpedido, this@Detallepedido)
                         tipoDocumento = "FE"
@@ -1718,8 +1718,18 @@ class Detallepedido : AppCompatActivity() {
             canvas.restore()
 
             paint.textSize = textSizeTotal
-            val totalWidth = paint.measureText("$ ${data.Total_iva}")
-            canvas.drawText("$ ${data.Total_iva}", columnX[2] + columnWidths[2] - totalWidth, y + 15f, paint)
+
+            //Si el documento seleccionado el CF
+            //me imprimira el detalle sin iva
+            val totalVenta = if(documento.contentEquals("CF")){
+                data.Total_iva!!.toDouble() / 1.13
+            }else{
+                data.Total_iva
+            }
+
+            paint.textSize = textSizeTotal
+            val totalWidth = paint.measureText("$ ${String.format("%.4f".format((totalVenta)))}")
+            canvas.drawText("$ ${String.format("%.4f".format((totalVenta)))}", columnX[2] + columnWidths[2] - totalWidth, y + 15f, paint)
 
 
             y += descripcionLayout.height.toFloat() + 20f
@@ -1874,9 +1884,17 @@ class Detallepedido : AppCompatActivity() {
             descripcionLayout.draw(canvas)
             canvas.restore()
 
+            //Si el documento seleccionado el CF
+            //me imprimira el detalle sin iva
+            val totalVenta = if(infoPedido.Iva!!.toDouble() > 0){
+                data.Total_iva!!.toDouble() / 1.13
+            }else{
+                data.Total_iva
+            }
+
             paint.textSize = textSizeTotal
-            val totalWidth = paint.measureText("$ ${data.Total_iva}")
-            canvas.drawText("$ ${data.Total_iva}", columnX[2] + columnWidths[2] - totalWidth, y + 15f, paint)
+            val totalWidth = paint.measureText("$ ${String.format("%.4f".format((totalVenta)))}")
+            canvas.drawText("$ ${String.format("%.4f".format((totalVenta)))}", columnX[2] + columnWidths[2] - totalWidth, y + 15f, paint)
 
             y += descripcionLayout.height.toFloat() + 20f
             total += data.Total_iva!!
