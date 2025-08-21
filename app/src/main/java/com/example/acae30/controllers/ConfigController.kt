@@ -76,8 +76,9 @@ class ConfigController {
                                         direccion = dato.getString("direccion"),
                                         nrc = dato.getString("nrc"),
                                         nit = dato.getString("nit"),
-                                        giro = dato.getString("giro")
-
+                                        giro = dato.getString("giro"),
+                                        dteUrlQRHacienda = dato.getString("dteUrlQR_Hacienda"),
+                                        dteUrlQRempresa = dato.getString("dteUrlQR_empresa")
                                     )
 
                                     confirmarPagareObligatorio(item, context)
@@ -138,6 +139,11 @@ class ConfigController {
             putString("nit", obj.nit)
             putString("giro", obj.giro)
 
+            //Datos Qr
+            putString("dteUrlQRHacienda", obj.dteUrlQRHacienda)
+            putString("dteUrlQRempresa", obj.dteUrlQRempresa)
+
+
         }
     }
 
@@ -172,6 +178,8 @@ class ConfigController {
             remove("nrc")
             remove("nit")
             remove("giro")
+            remove("dteUrlQR_Hacienda")
+            remove("dteUrlQR_empresa")
         }
     }
 }

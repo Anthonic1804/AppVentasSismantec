@@ -32,5 +32,9 @@ data class PermisosApp(
     var direccion: String,
     var nrc: String,
     var nit: String,
-    var giro: String
+    var giro: String,
+
+    //datos Qr
+    var dteUrlQRHacienda: String,
+    var dteUrlQRempresa: String
 )
