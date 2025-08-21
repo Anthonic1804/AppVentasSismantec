@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -36,6 +37,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.dantsu.escposprinter.EscPosPrinter
+import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
 import com.example.acae30.R
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
@@ -75,6 +78,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Timer
 import kotlin.concurrent.schedule
 import com.example.acae30.R as R1
+import androidx.core.graphics.scale
+import com.dantsu.escposprinter.textparser.PrinterTextParserImg
 
 
 class Detallepedido : AppCompatActivity() {
@@ -1427,557 +1432,6 @@ class Detallepedido : AppCompatActivity() {
     }
     //convierte el pedido a json
 
-
-
-    //FUNCION PARA IMPRIMIR EL RECIBO
-    private fun imprimirRecibo(){
-        val printManager = getSystemService(Context.PRINT_SERVICE) as PrintManager
-        val jobName = getString(R.string.app_name) + " Document"
-
-        printManager.print(jobName, object : PrintDocumentAdapter() {
-            override fun onLayout(
-                oldAttributes: PrintAttributes?,
-                newAttributes: PrintAttributes?,
-                cancellationSignal: CancellationSignal?,
-                callback: LayoutResultCallback?,
-                extras: Bundle?
-            ) {
-                if (cancellationSignal?.isCanceled == true) {
-                    callback?.onLayoutCancelled()
-                    return
-                }
-
-                val builder = PrintDocumentInfo.Builder(jobName)
-                    .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                    .setPageCount(1)
-                    .build()
-
-                callback?.onLayoutFinished(builder, true)
-            }
-
-            override fun onWrite(
-                pages: Array<out PageRange>?,
-                destination: ParcelFileDescriptor?,
-                cancellationSignal: CancellationSignal?,
-                callback: WriteResultCallback?
-            ) {
-                try {
-                    val os = FileOutputStream(destination?.fileDescriptor)
-                    val pdfDocument = PdfDocument()
-                    //VERICIACION PARA LA IMPRESION DE LOS PEDIDOS
-                    val pedido = pedidosController.obtenerInformacionPedido(idpedido,this@Detallepedido)
-                    var medidaTk : Float = 0f
-
-                    medidaTk = if(pedido!!.Enviado == 1 && pedido.pedido_dte == 1){
-                        calcularLargoTicketDTE()
-                    }else{
-                        calcularLargoTicketNotmal()
-                    }
-
-                    // Create a page
-                    val pageInfo = PdfDocument.PageInfo.Builder(280, medidaTk.toInt(), 1).create()
-                    val page = pdfDocument.startPage(pageInfo)
-
-                    // Draw the ticket content on the canvas
-                    val canvas = page.canvas
-
-                    if(pedido.Enviado == 1 && pedido.pedido_dte == 1){
-                        crearTicketDTE(canvas)
-                    }else{
-                        crearTicketNormal(canvas)
-                    }
-
-                    pdfDocument.finishPage(page)
-                    pdfDocument.writeTo(os)
-                    pdfDocument.close()
-
-                    callback?.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
-                } catch (e: Exception) {
-                    Log.e("ERROR IMPRESION", "ERROR AL IMPRIMIR EL TICKET", e)
-                    callback?.onWriteFailed(e.message)
-                }
-            }
-        }, null)
-    }
-
-    //FUNCION PARA DIBUJAR EL TIKET DTE
-    private fun crearTicketDTE(canvas: Canvas) {
-
-        val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-        val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
-
-        val empresa = preferencias.getString("empresa", "").toString()
-        val direccion = preferencias.getString("direccion", "").toString()
-        val nrc = preferencias.getString("nrc", "").toString()
-        val nit = preferencias.getString("nit", "").toString()
-        val giro = preferencias.getString("giro", "").toString()
-
-        // Tamaños de letra específicos para cada columna
-        val textSizeCantidad = 10f
-        val textSizeCodigo = 10f
-        val textSizeTotal = 10f
-
-        // Espacio entre las columnas
-        val columnSpacing = 10f
-
-        // Paint para el texto
-        val paint = TextPaint().apply {
-            textSize = 9f // Tamaño predeterminado para el título y la división
-        }
-
-        // Draw title
-        paint.isFakeBoldText = true
-        canvas.drawText("$empresa", 50f, 50f, paint)
-        canvas.drawText("$direccion", 50f, 70f, paint)
-        canvas.drawText("N.R.C : $nrc", 50f, 90f, paint)
-        canvas.drawText("N.I.T : $nit", 50f, 110f, paint)
-        canvas.drawText("GIRO: $giro", 50f, 130f, paint)
-
-        //DATOS DEL CLIENTE
-        paint.isFakeBoldText = true
-        canvas.drawLine(50f, 140f, canvas.width - 50f, 140f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("---- DATOS DEL CLIENTE ----", 50f, 155f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("NOMBRE DEL CLIENTE", 50f, 175f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido!!.Nombre_cliente}", 50f, 195f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("N.I.T / D.U.I", 50f, 215f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente!!.Dui}  ${infoCliente.Nit}", 50f, 235f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("N.R.C", 50f, 250f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente.Nrc}", 50f, 270f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("ACTIVIDAD ECONOMICA", 50f, 285f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente.dteGiro}", 50f, 295f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("NOMBRE SUCURSAL", 50f, 315f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.Nombre_sucursal}", 50f, 325f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("DIRECCION SUCURSAL", 50f, 345f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.Sucursal_Direccion}", 50f, 355f, paint)
-
-        //FIN DATOS DEL CLIENTE
-
-        // Draw divider line
-        paint.isFakeBoldText = true
-        canvas.drawLine(50f, 365f, canvas.width - 50f, 365f, paint)
-
-        val fecha = infoPedido.Fecha_creado?.substring(0, 10)
-        val documento = when(infoPedido.Tipo_documento){
-            "CF" -> {
-                "CREDITO FISCAL"
-            }
-            "FC" -> {
-                "FACTURA"
-            }
-            "RE" -> {
-                "REMISIÓN"
-            }
-            else -> {
-                "FACTURA DE EXPORTACION"
-            }
-        }
-        // Formato de entrada
-
-        //COMPROBANTE DE PAGO
-        paint.isFakeBoldText = true
-        canvas.drawText("---- DOCUMENTO TRIBUTARIO ELECTRONICO ----", 50f, 385f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("TIPO DE DOCUMENTO", 50f, 405f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("$documento", 50f, 415f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("FECHA EMISION", 50f, 435f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.Fecha_creado}", 50f, 445f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("CODIGO DE GENERACION", 50f, 465f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.dteCodigoGeneracion}", 50f, 475f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("NUMERO DE CONTROL", 50f, 495f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.dteNumeroControl}", 50f, 505f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("SELLO DE VALIDACION", 50f, 525f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.dteSelloRecibido}", 50f, 535f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("TERMINOS", 50f, 555f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.Terminos}", 50f, 565f, paint)
-
-        //ESPACIO PARA EL QR
-        //ENLACE CON HACIENDA
-        val qrText = "https://webapp.dtes.mh.gob.sv/consultaPublica?ambiente=${infoPedido.dteAmbiente}&codGen=${infoPedido.dteCodigoGeneracion}&fechaEmi=$fecha"
-
-        //ENLACE PARA ESCARRSA
-        val qrEscarrsa = "https://escarrsa-dte.com/ventas_view.php?editid1=${infoPedido.dteCodigoGeneracion}"
-
-        paint.isFakeBoldText = true
-        canvas.drawText("-- VERIFICACION CON HACIENDA --", 50f, 575f, paint)
-
-        val qrSize = 150 // Tamaño del lado del QR (cuadrado)
-        // Posición donde se dibujará el QR en el Canvas
-        val qrX = 80f // Posición X
-        val qrY = 585f // Posición Y
-
-        // GENERAR EL QR PARA HACIENDA
-        val writer = QRCodeWriter()
-        try{
-            val bitMatrix = writer.encode(qrText, BarcodeFormat.QR_CODE, 100,100)
-            val width = bitMatrix.width
-            val height = bitMatrix.height
-            val qrBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-            for(x in 0 until width){
-                for(y in 0 until height){
-                    qrBitmap.setPixel(x, y, if (bitMatrix[x,y]) Color.BLACK else Color.WHITE)
-                }
-            }
-
-            // Dibujar el QR en el Canvas en la posición especificada
-            canvas.drawBitmap(qrBitmap, null, RectF(qrX, qrY, qrX + qrSize, qrY + qrSize), null)
-        }catch (e:WriterException){
-            e.printStackTrace()
-        }
-
-        //ESPACIO PARA EL QR
-        paint.isFakeBoldText = true
-        canvas.drawLine(50f, 745f, canvas.width - 50f, 745f, paint)
-
-        // Draw column headers
-        val columnWidths = floatArrayOf(20f, 100f, 60f) // Ancho fijo para cada columna
-        val startY = 755f
-        var y = startY
-        val columnX = floatArrayOf(
-            50f,
-            50f + columnWidths[0] + columnSpacing,
-            50f + columnWidths[0] + columnWidths[1] + columnSpacing
-        )
-
-        y += 20f
-        val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-        var total = 0f
-
-        for (data in lista) {
-            val infoProducto = inventarioController.obtenerInformacionProductoPorId(this@Detallepedido, data.Id_producto!!,false)
-
-            // Draw text in each column with specific text sizes
-            paint.textSize = textSizeCantidad
-            canvas.drawText("${data.Cantidad}", columnX[0] + 5f, y + 25f, paint)
-
-            paint.textSize = textSizeCodigo
-            val descripcionLayout : StaticLayout = if(data.Bonificado!! > 0){
-                if(idcliente == 13128){
-                    StaticLayout(
-                         "${infoProducto!!.codigo_de_barra}\n ${data.Descripcion} - BONIFICADOS: +${data.Bonificado}", paint, columnWidths[1].toInt(),
-                        Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false
-                    )
-                }else{
-                    StaticLayout(
-                        "${data.Descripcion} - BONIFICADOS: +${data.Bonificado}", paint, columnWidths[1].toInt(),
-                        Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false
-                    )
-                }
-            }else{
-                if(idcliente == 13128){
-                    StaticLayout(
-                        "${infoProducto!!.codigo_de_barra} \n ${data.Descripcion}", paint, columnWidths[1].toInt(),
-                        Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false
-                    )
-                }else{
-                    StaticLayout(
-                        data.Descripcion, paint, columnWidths[1].toInt(),
-                        Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false
-                    )
-                }
-            }
-            canvas.save()
-            canvas.translate(columnX[1] + 10f, y)
-            descripcionLayout.draw(canvas)
-            canvas.restore()
-
-            paint.textSize = textSizeTotal
-
-            //Si el documento seleccionado el CF
-            //me imprimira el detalle sin iva
-            val totalVenta = if(documento.contentEquals("CF")){
-                data.Total_iva!!.toDouble() / 1.13
-            }else{
-                data.Total_iva
-            }
-
-            paint.textSize = textSizeTotal
-            val totalWidth = paint.measureText("$ ${String.format("%.4f".format((totalVenta)))}")
-            canvas.drawText("$ ${String.format("%.4f".format((totalVenta)))}", columnX[2] + columnWidths[2] - totalWidth, y + 15f, paint)
-
-
-            y += descripcionLayout.height.toFloat() + 20f
-            total += data.Total_iva!!
-        }
-
-        // Draw divider line
-        y+=20
-        paint.isFakeBoldText = false
-        canvas.drawLine(50f, y, canvas.width - 50f, y, paint)
-
-        // Draw total
-        y+= 20f
-        paint.textSize = 12f
-        canvas.drawText("SUBTOTAL:", 50f, y, paint)
-        val subTotalText = paint.measureText("${infoPedido.Suma}")
-        canvas.drawText("$ ${infoPedido.Suma}", canvas.width - subTotalText - 50f, y, paint)
-
-        y+= 20f
-        paint.textSize = 12f
-        canvas.drawText("IVA:", 50f, y, paint)
-        val ivaText = paint.measureText("${infoPedido.Iva}")
-        canvas.drawText("$ ${infoPedido.Iva}", canvas.width - ivaText - 50f, y, paint)
-
-        y+= 20f
-        paint.textSize = 12f
-        canvas.drawText("IVA/RET:", 50f, y, paint)
-        val perciText = paint.measureText("{${infoPedido.Iva_Percibido}}")
-        canvas.drawText("$ ${infoPedido.Iva_Percibido}", canvas.width - perciText - 50f, y, paint)
-
-        y += 20f
-        paint.textSize = 12f // Restaurar el tamaño de letra predeterminado
-        canvas.drawText("TOTAL:", 50f, y, paint)
-        val totalTextWidth = paint.measureText("$total")
-        canvas.drawText("$ " + binding.txttotal.text.toString(), canvas.width - totalTextWidth - 50f, y, paint)
-
-        // Draw divider line after the table
-        canvas.drawLine(50f, y + 20f, canvas.width - 50f, y + 20f, paint)
-        canvas.drawText("VENDIDO POR: $vendedor", 50f, y + 40f, paint)
-        canvas.drawText("FECHA: $fecha", 50f,  y + 60f, paint)
-    }
-
-    //FUNCION PARA DIBUJAR EL TIKET
-    private fun crearTicketNormal(canvas: Canvas) {
-
-        val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-        val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
-
-        val empresa = preferencias.getString("empresa", "").toString()
-        val direccion = preferencias.getString("direccion", "").toString()
-        val nrc = preferencias.getString("nrc", "").toString()
-        val nit = preferencias.getString("nit", "").toString()
-        val giro = preferencias.getString("giro", "").toString()
-
-        // Tamaños de letra específicos para cada columna
-        val textSizeCantidad = 10f
-        val textSizeCodigo = 10f
-        val textSizeTotal = 10f
-
-        // Espacio entre las columnas
-        val columnSpacing = 10f
-
-        // Paint para el texto
-        val paint = TextPaint().apply {
-            textSize = 9f // Tamaño predeterminado para el título y la división
-        }
-
-        // Draw title
-        paint.isFakeBoldText = true
-        canvas.drawText("$empresa", 50f, 50f, paint)
-        canvas.drawText("$direccion", 50f, 70f, paint)
-        canvas.drawText("N.R.C : $nrc", 50f, 90f, paint)
-        canvas.drawText("N.I.T : $nit", 50f, 110f, paint)
-        canvas.drawText("GIRO: $giro", 50f, 130f, paint)
-
-        //DATOS DEL CLIENTE
-        paint.isFakeBoldText = true
-        canvas.drawLine(50f, 140f, canvas.width - 50f, 140f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("---- DATOS DEL CLIENTE ----", 50f, 155f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("NOMBRE DEL CLIENTE", 50f, 175f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido!!.Nombre_cliente}", 50f, 195f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("N.I.T / D.U.I", 50f, 215f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente!!.Dui}  ${infoCliente.Nit}", 50f, 235f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("N.R.C", 50f, 250f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente.Nrc}", 50f, 270f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("ACTIVIDAD ECONOMICA", 50f, 285f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoCliente.dteGiro}", 50f, 295f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("NOMBRE SUCURSAL", 50f, 315f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.Nombre_sucursal}", 50f, 325f, paint)
-
-        paint.isFakeBoldText = true
-        canvas.drawText("DIRECCION SUCURSAL", 50f, 345f, paint)
-        paint.isFakeBoldText = false
-        canvas.drawText("${infoPedido.Sucursal_Direccion}", 50f, 355f, paint)
-
-        //FIN DATOS DEL CLIENTE
-
-        // Draw divider line
-        paint.isFakeBoldText = false
-        canvas.drawLine(50f, 365f, canvas.width - 50f, 365f, paint)
-
-        // Draw column headers
-        val columnWidths = floatArrayOf(20f, 100f, 60f) // Ancho fijo para cada columna
-        val startY = 375f
-        var y = startY
-        val columnX = floatArrayOf(
-            50f,
-            50f + columnWidths[0] + columnSpacing,
-            50f + columnWidths[0] + columnWidths[1] + columnSpacing
-        )
-
-        y += 20f
-        val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-        var total = 0f
-
-        for (data in lista) {
-            // Draw text in each column with specific text sizes
-            paint.textSize = textSizeCantidad
-            canvas.drawText("${data.Cantidad}", columnX[0] + 5f, y + 25f, paint)
-
-            paint.textSize = textSizeCodigo
-            val descripcionLayout : StaticLayout = if(data.Bonificado!! > 0){
-                StaticLayout(
-                    "${data.Descripcion} - BONIFICADOS: +${data.Bonificado}", paint, columnWidths[1].toInt(),
-                    Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false
-                )
-            }else{
-                StaticLayout(
-                    data.Descripcion, paint, columnWidths[1].toInt(),
-                    Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false
-                )
-            }
-            canvas.save()
-            canvas.translate(columnX[1] + 10f, y)
-            descripcionLayout.draw(canvas)
-            canvas.restore()
-
-            paint.textSize = textSizeTotal
-            val totalWidth = paint.measureText("$ ${String.format("%.4f".format((data.Total_iva)))}")
-            canvas.drawText("$ ${String.format("%.4f".format((data.Total_iva)))}", columnX[2] + columnWidths[2] - totalWidth, y + 15f, paint)
-
-            y += descripcionLayout.height.toFloat() + 20f
-            total += data.Total_iva!!
-        }
-
-        // Draw divider line
-        y+=20
-        paint.isFakeBoldText = false
-        canvas.drawLine(50f, y, canvas.width - 50f, y, paint)
-
-        // Draw total
-        y+= 20f
-        paint.textSize = 12f
-        canvas.drawText("SUBTOTAL:", 50f, y, paint)
-        val subTotalText = paint.measureText("${infoPedido!!.Suma}")
-        canvas.drawText("$ ${infoPedido.Suma}", canvas.width - subTotalText - 50f, y, paint)
-
-        y+= 20f
-        paint.textSize = 12f
-        canvas.drawText("IVA:", 50f, y, paint)
-        val ivaText = paint.measureText("${infoPedido.Iva}")
-        canvas.drawText("$ ${infoPedido.Iva}", canvas.width - ivaText - 50f, y, paint)
-
-        y+= 20f
-        paint.textSize = 12f
-        canvas.drawText("IVA/RET:", 50f, y, paint)
-        val perciText = paint.measureText("{${infoPedido.Iva_Percibido}}")
-        canvas.drawText("$ ${infoPedido.Iva_Percibido}", canvas.width - perciText - 50f, y, paint)
-
-        y += 20f
-        paint.textSize = 12f // Restaurar el tamaño de letra predeterminado
-        canvas.drawText("TOTAL:", 50f, y, paint)
-        val totalTextWidth = paint.measureText("$total")
-        canvas.drawText("$ " + binding.txttotal.text.toString(), canvas.width - totalTextWidth - 50f, y, paint)
-
-        // Draw divider line after the table
-        canvas.drawLine(50f, y + 20f, canvas.width - 50f, y + 20f, paint)
-        canvas.drawText("VENDIDO POR: $vendedor", 50f, y + 40f, paint)
-        canvas.drawText("FECHA: $fecha", 50f,  y + 60f, paint)
-    }
-
-    //FUNCION PARA CALCULAR EL LARGO DEL TICKET DTE
-    private fun calcularLargoTicketDTE(): Float {
-
-        val paint = TextPaint().apply {
-            textSize = 12f
-        }
-
-        var ticketHeight = 900f // Altura del título y la división inicialmente
-
-        // Altura de cada fila de datos
-        val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-        for (data in lista) {
-            val descripcionLayout = StaticLayout(
-                data.Descripcion, paint, 100,
-                Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false
-            )
-            ticketHeight += descripcionLayout.height.toFloat() + 20f
-        }
-
-        // Altura del total
-        ticketHeight += 280f
-
-        return ticketHeight
-    }
-
-    //FUNCION PARA CALCULAR EL LARGO DEL TICKET NORMAL
-    private fun calcularLargoTicketNotmal(): Float {
-
-        val paint = TextPaint().apply {
-            textSize = 12f
-        }
-
-        var ticketHeight = 385f // Altura del título y la división inicialmente
-
-        // Altura de cada fila de datos
-        val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-        for (data in lista) {
-            val descripcionLayout = StaticLayout(
-                data.Descripcion, paint, 100,
-                Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false
-            )
-            ticketHeight += descripcionLayout.height.toFloat() + 20f
-        }
-
-        // Altura del total
-        ticketHeight += 220f
-
-        return ticketHeight
-    }
-
     //FUNCION PARA MOSTRAR VENTANA DE PAGO
     private fun alertaPago(total: Float){
         val dialogo = Dialog(this@Detallepedido)
@@ -2180,6 +1634,123 @@ class Detallepedido : AppCompatActivity() {
             dialogo.dismiss()
         }
 
+    }
+
+
+
+    //FUNCION PARA IMPRIMIR EL RECIBO
+    private fun imprimirRecibo(){
+
+        val empresa = preferencias.getString("empresa", "").toString()
+        val direccion = preferencias.getString("direccion", "").toString()
+        val nrc = preferencias.getString("nrc", "").toString()
+        val nit = preferencias.getString("nit", "").toString()
+        val giro = preferencias.getString("giro", "").toString()
+
+        val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
+        val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
+
+         try{
+
+             val printerConnection = BluetoothPrintersConnections.selectFirstPaired()
+             if(printerConnection == null){
+                 Toast.makeText(this@Detallepedido, "NO HAY IMPRESORA SELECCIONADA", Toast.LENGTH_SHORT)
+                     .show()
+
+                 return
+             }
+
+             val printer = EscPosPrinter(printerConnection, 203,48f,32)
+
+             //Redimencionado Logo
+             val logoOriginal = BitmapFactory.decodeResource(resources, R.drawable.sinlogo)
+             val logoRedimensionado = redimensionarLogo(logoOriginal, 384)
+
+             val direccionFormateada = dividirEnLineas(direccion, 32)
+             val empresaFormateada = dividirEnLineas(empresa, 32)
+             val giroFormateada = dividirEnLineas(giro, 32)
+
+             val fecha = infoPedido!!.Fecha_creado?.substring(0, 10)
+             val documento = when(infoPedido.Tipo_documento){
+                 "CF" -> {
+                     "CREDITO FISCAL"
+                 }
+                 "FC" -> {
+                     "FACTURA"
+                 }
+                 "RE" -> {
+                     "REMISIÓN"
+                 }
+                 else -> {
+                     "FACTURA DE EXPORTACION"
+                 }
+             }
+
+             //ENLACE CON HACIENDA
+             val qrHacienda = "https://webapp.dtes.mh.gob.sv/consultaPublica?ambiente=${infoPedido.dteAmbiente}&codGen=${infoPedido.dteCodigoGeneracion}&fechaEmi=$fecha"
+
+             val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
+             var total = 0f
+
+
+             //Construyendo Ticket
+             val ticket = StringBuilder()
+                 .append("[C]<img>")
+                 .append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado))
+                 .append("</img>\n")
+                 .append("[C]$empresaFormateada\n")
+                 .append("[C]$direccionFormateada\n")
+                 .append("[C]$nit\n")
+                 .append("[C]$nrc\n")
+                 .append("[C]$giroFormateada\n")
+                 .append("[L]--------------------------------\n")
+                 .append("[C]DATOS DEL CLIENTE\n")
+                 .append("[L]--------------------------------\n")
+                 .append("[L]NOMBRE:\n")
+                 .append("[C]${infoCliente!!.Cliente}\n")
+                 .append("[L]--------------------------------\n")
+                 .append("[C]DOCUMENTO TRIBUTARIO ELECTRONICO\n")
+                 .append("[L]--------------------------------\n")
+                 .append("[L]TIPO DOCUMENTO:\n")
+                 .append("[C]$documento \n")
+                 .append("[L]FECHA DE EMISION\n")
+                 .append("[C]${infoPedido.Fecha_creado} \n")
+                 .append("[L]--------------------------------\n")
+                 .append("[C]<qrcode size='20'>$qrHacienda</qrcode>\n")
+                 .append("[C] Verificación con Hacienda \n")
+                 .append("[L]--------------------------------\n")
+                 .append("[C]DETALLE DEL PEDIDO\n")
+                 .append("[C]variabble del detalle \n")
+                 .append("[L]--------------------------------\n")
+                 .append("[R]TOTAL: ")
+                 .append("[L]VENDIDO POR:\n")
+                 .append("[C]$vendedor \n")
+                 .append("[L]FECHA: $ ${String.format("%.2f".format(total))}\n")
+                 .append("[C]$fecha")
+                 .append("[C]¡GRACIAS POR SU COMPRA! \n")
+                 .append("[C]<b>ESTE DOCUMENTO NO TIENE VALIDES FISCAL</b>\n\n")
+
+
+
+             printer.printFormattedText(ticket.toString())
+
+         }catch(e:Exception){
+             e.printStackTrace()
+         }
+
+    }
+
+    //Funcion para redimencionar el logo
+    private fun redimensionarLogo(bitmap: Bitmap, anchoMaximo: Int) : Bitmap {
+        val proporcion = anchoMaximo.toFloat() / bitmap.width
+        val altoNuevo = (bitmap.height * proporcion).toInt()
+
+        return bitmap.scale(anchoMaximo, altoNuevo)
+    }
+
+    //Funcion para dividir en lineas
+    private fun dividirEnLineas(texto: String, maxCaracteres: Int): String {
+        return texto.chunked(maxCaracteres).joinToString("\n[C]")
     }
 
 }
