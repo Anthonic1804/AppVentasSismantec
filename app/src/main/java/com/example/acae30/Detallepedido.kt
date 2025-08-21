@@ -1884,17 +1884,9 @@ class Detallepedido : AppCompatActivity() {
             descripcionLayout.draw(canvas)
             canvas.restore()
 
-            //Si el documento seleccionado el CF
-            //me imprimira el detalle sin iva
-            val totalVenta = if(infoPedido.Iva!!.toDouble() > 0){
-                data.Total_iva!!.toDouble() / 1.13
-            }else{
-                data.Total_iva
-            }
-
             paint.textSize = textSizeTotal
-            val totalWidth = paint.measureText("$ ${String.format("%.4f".format((totalVenta)))}")
-            canvas.drawText("$ ${String.format("%.4f".format((totalVenta)))}", columnX[2] + columnWidths[2] - totalWidth, y + 15f, paint)
+            val totalWidth = paint.measureText("$ ${String.format("%.4f".format((data.Total_iva)))}")
+            canvas.drawText("$ ${String.format("%.4f".format((data.Total_iva)))}", columnX[2] + columnWidths[2] - totalWidth, y + 15f, paint)
 
             y += descripcionLayout.height.toFloat() + 20f
             total += data.Total_iva!!
