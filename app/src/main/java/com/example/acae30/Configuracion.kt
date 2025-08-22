@@ -4,13 +4,16 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.dcastalia.localappupdate.DownloadApk
@@ -23,8 +26,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import java.io.File
+import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import androidx.core.content.edit
 
 
 class Configuracion : AppCompatActivity() {
@@ -52,6 +58,8 @@ class Configuracion : AppCompatActivity() {
     private var vista: View? = null
     private var funciones: Funciones? = null
     private var alerta: AlertDialogo? = null
+
+    private var logoEmpresa : ImageView? = null
 
     private lateinit var puntoVenta : TextView
 
@@ -84,6 +92,8 @@ class Configuracion : AppCompatActivity() {
         btnBuscarUpdate = findViewById(R.id.btnBuscarUpdate)
 
         btnConfig = findViewById(R.id.btnCargarConfig)
+
+        logoEmpresa = findViewById(R.id.imgLogoEmpresa)
 
         //OBTENIENDO LA URL DEL SERVIDOR
         getApiUrl()
@@ -143,6 +153,24 @@ class Configuracion : AppCompatActivity() {
             }
         }
 
+        // Recuperar la imagen guardada al iniciar
+        val prefs = getSharedPreferences("MisImagenes", MODE_PRIVATE)
+        val filePath = prefs.getString("imagenFile", null)
+
+        if (filePath != null) {
+            val file = File(filePath)
+            if (file.exists()) {
+                logoEmpresa!!.setImageURI(Uri.fromFile(file))
+            }
+        }else{
+            val nombreImagen = "sinlogo"
+            val resId = resources.getIdentifier(nombreImagen, "drawable", packageName)
+
+            val drawable = ContextCompat.getDrawable(this, resId)
+            logoEmpresa!!.setImageDrawable(drawable)
+        }
+
+
     } //funcion que inicializa las variables
 
     override fun onStart() {
@@ -196,6 +224,53 @@ class Configuracion : AppCompatActivity() {
             } else {
                 ShowAlert("ENCIENDE TUS DATOS O EL WIFI")
             }
+        }
+
+        logoEmpresa!!.setOnClickListener {
+            seleccionarImagen()
+        }
+
+
+    }
+
+    private fun seleccionarImagen() {
+        seleccionarImagenLauncher.launch("image/*") // solo permite imágenes
+    }
+
+    // Launcher para seleccionar imagen
+
+    private val seleccionarImagenLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri != null) {
+                val fileName = "logoEmpresaSeleccionado.jpg" // puedes hacerlo dinámico
+                val savedFile = guardarImagenEnInterno(uri, fileName)
+
+                if (savedFile != null) {
+                    logoEmpresa!!.setImageURI(Uri.fromFile(savedFile))
+
+                    // Guardar en SharedPreferences
+                    val prefs = getSharedPreferences("MisImagenes", MODE_PRIVATE)
+                    prefs.edit { putString("imagenFile", savedFile.absolutePath) }
+                }
+            }
+        }
+
+    // 🔹 Copiar imagen seleccionada a almacenamiento interno
+    private fun guardarImagenEnInterno(uri: Uri, fileName: String): File? {
+        return try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val file = File(filesDir, fileName) // guardado en /data/data/tu.app/files/
+            val outputStream = FileOutputStream(file)
+
+            inputStream?.copyTo(outputStream)
+
+            inputStream?.close()
+            outputStream.close()
+
+            file
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 

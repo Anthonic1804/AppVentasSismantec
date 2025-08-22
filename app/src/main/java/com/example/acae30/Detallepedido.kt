@@ -63,6 +63,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.io.Reader
@@ -1713,7 +1714,22 @@ class Detallepedido : AppCompatActivity() {
         // ===============================
         // Preparar logo y texto
         // ===============================
-        val logoOriginal = BitmapFactory.decodeResource(resources, R.drawable.logotortisal)
+        val prefs = getSharedPreferences("MisImagenes", MODE_PRIVATE)
+        val filePath = prefs.getString("imagenFile", null)
+
+        // Variable para el logo final
+        val logoOriginal: Bitmap = if (filePath != null) {
+            val file = File(filePath)
+            if (file.exists()) {
+                BitmapFactory.decodeFile(file.absolutePath)
+            } else {
+                BitmapFactory.decodeResource(resources, R.drawable.nologo)
+            }
+        } else {
+            BitmapFactory.decodeResource(resources, R.drawable.nologo)
+        }
+
+        // Redimensionar
         val logoRedimensionado = redimensionarLogo(logoOriginal, 384)
 
         val direccionFormateada = dividirEnLineas(direccion, 32)
@@ -1811,6 +1827,8 @@ class Detallepedido : AppCompatActivity() {
 
             total += item.Total_iva ?: 0f
         }
+
+        total -= infoPedido.Iva_Percibido!!
 
         if(infoPedido.Enviado == 1 && infoPedido.pedido_dte == 1){
             // ===============================
