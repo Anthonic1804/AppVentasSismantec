@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -45,6 +46,8 @@ class SolicitudCargaMenu : AppCompatActivity() {
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         vendedor =  preferencias!!.getString("Vendedor", "").toString()
         idVendedor = preferencias!!.getInt("Idvendedor", 0)
+
+        binding.btnsincronizar.visibility = View.GONE
 
     }
 

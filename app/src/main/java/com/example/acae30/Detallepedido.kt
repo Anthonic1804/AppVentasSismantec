@@ -1720,8 +1720,16 @@ class Detallepedido : AppCompatActivity() {
         val empresaFormateada = dividirEnLineas(empresa, 32)
         val giroFormateada = dividirEnLineas(giro, 32)
         val textoPieFormateado = dividirEnLineas(textoPie, 32)
-        val giroCliente = dividirEnLineas(infoCliente!!.Giro!!, 32)
+        val giroCliente = dividirEnLineas(infoCliente!!.dteGiro!!, 32)
         val direccionCliente = dividirEnLineas(infoPedido!!.Sucursal_Direccion!!,32)
+
+        // ===============================
+        // Formateando Datos Fiscales DTE
+        // ===============================
+
+        val codigoGeneracion = dividirEnLineas(infoPedido.dteCodigoGeneracion!!, 32)
+        val numeroControl = dividirEnLineas(infoPedido.dteNumeroControl!!, 32)
+        val selloRecepcion = dividirEnLineas(infoPedido.dteSelloRecibido!!, 32)
 
         val fecha = infoPedido.Fecha_creado?.substring(0, 10).orEmpty()
         val documento = when(infoPedido.Tipo_documento){
@@ -1731,10 +1739,10 @@ class Detallepedido : AppCompatActivity() {
             else -> "RECIBO"
         }
 
-        //ENLACE PARA HACIENDA
+        // ===============================
+        // Configurando la impresion de los Qr
+        // ===============================
         val qrHacienda = dteUrlQRHacienda + "${infoPedido.dteAmbiente}&codGen=${infoPedido.dteCodigoGeneracion}&fechaEmi=$fecha"
-
-        //ENLACE PARA EMPRESA
         val qrEmpresa = dteUrlQRempresa + "${infoPedido.dteCodigoGeneracion}"
 
         val textoVerificacion = dividirEnLineas("Verificacion con $empresa",32)
@@ -1757,6 +1765,9 @@ class Detallepedido : AppCompatActivity() {
         var total = 0f
         val detalleBuilder = StringBuilder()
 
+        // ===============================
+        // Concatenando a la Descripcion, la Cantidad, Codigo de Barra y Bonificados
+        // ===============================
         listaDetalle.forEach { item ->
             val descripcionPartes = if(item.Bonificado!! > 0){
                 if(infoCliente.Nrc == "193-7" || infoCliente.Nrc == "1937"){
@@ -1780,20 +1791,20 @@ class Detallepedido : AppCompatActivity() {
                 }
             }
 
-            //Si el documento seleccionado el CF
-            //me imprimira el detalle sin iva
-            val totalVenta = if(documento.contentEquals("CF")){
+            // ===============================
+            // Calculo del detalle para mostrar precio sin iva
+            // ===============================
+            val totalVenta = if(documento.contentEquals("CREDITO FISCAL")){
                 item.Total_iva!!.toDouble() / 1.13
             }else{
                 item.Total_iva
             }
 
+            //Funcion para cortar la descripcion en varias lineas
             descripcionPartes.forEachIndexed { index, parte ->
                 if (index == 0) {
-                    // Primera línea: Descripción + precio alineado
                     detalleBuilder.append("[L]- $parte [R]$ ${String.format("%.4f", totalVenta)}\n")
                 } else {
-                    // Líneas siguientes solo la descripción (alineada a la izquierda)
                     detalleBuilder.append("[L]$parte\n")
                 }
             }
@@ -1836,11 +1847,11 @@ class Detallepedido : AppCompatActivity() {
                 .append("[L]FECHA DE EMISIÓN\n")
                 .append("[C]${infoPedido.Fecha_creado} \n")
                 .append("[L]CODIGO DE GENERACION \n")
-                .append("[C]${infoPedido.dteCodigoGeneracion} \n")
+                .append("[C]$codigoGeneracion \n")
                 .append("[L]NUMERO DE CONTROL \n")
-                .append("[C]${infoPedido.dteNumeroControl} \n")
+                .append("[C]$numeroControl \n")
                 .append("[L]SELLO DE RECEPCION\n")
-                .append("[C]${infoPedido.dteSelloRecibido} \n")
+                .append("[C]$selloRecepcion \n")
                 .append("[C]TERMINOS: ${infoPedido.Terminos}\n")
                 .append("[L]--------------------------------\n")
                 .append(qr)
