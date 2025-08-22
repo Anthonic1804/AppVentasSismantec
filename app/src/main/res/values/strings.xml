@@ -179,4 +179,5 @@
     <string name="productos_agregados">PRODUCTOS AGREGADOS</string>
     <string name="clienteinfo">ClienteInfo</string>
     <string name="recibo">RECIBO</string>
+    <string name="abonos_cxc">ABONOS CxC</string>
 </resources>

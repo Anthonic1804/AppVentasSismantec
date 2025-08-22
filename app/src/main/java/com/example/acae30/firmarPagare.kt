@@ -1,5 +1,6 @@
 package com.example.acae30
 
+import android.Manifest
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.Dialog
 import android.content.Context
@@ -7,6 +8,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
@@ -69,17 +71,6 @@ class firmarPagare : AppCompatActivity() {
     private var funciones = Funciones()
 
     private lateinit var binding : ActivityFirmarPagareBinding
-
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ){
-        isAceptado ->
-        if(isAceptado){
-            Toast.makeText(this, "PERMISOS CONCEDIDOS", Toast.LENGTH_LONG).show()
-        }else{
-            Toast.makeText(this, "PERMISOS DENEGADOS", Toast.LENGTH_LONG).show()
-        }
-    }
 
     //private val tituloText = "PAGARÉ SIN PROTESTO"
     private val tituloText = ""
@@ -177,6 +168,8 @@ class firmarPagare : AppCompatActivity() {
             }
         }
 
+        solicitarPermisos()
+
     }
 
     private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
@@ -186,35 +179,21 @@ class firmarPagare : AppCompatActivity() {
     }
 
     private fun verificarPermisos(view: View) {
-        when{
-            ContextCompat.checkSelfPermission(
-                this,
-                WRITE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED -> {
+        generarPDF(nombreCliente, direccionCliente, duiCliente)
+    }
 
-                /*
-                * ACTUALIZANDO EL PAGARE FIRMADO DEL CLIENTE
-                * SQLITE Y SQLSERVER*/
-                clienteController.actualizarPagareFirmadoSqlServer(this@firmarPagare, idcliente, binding.vista)
-
-                /*
-                * GENERANDO EL ARCHIVO PDF DEL PAGARE*/
-                generarPDF(nombreCliente, direccionCliente, duiCliente)
-            }
-
-            ActivityCompat.shouldShowRequestPermissionRationale(
-                this,
-                WRITE_EXTERNAL_STORAGE
-            ) -> {
-                Snackbar.make(view, "ESTE PERMISO ES NECESARIO PARA CREAR EL ARCHIVO", Snackbar.LENGTH_INDEFINITE).setAction("Ok"){
-                    requestPermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
-                }.show()
-            }
-
-            else -> {
-                requestPermissionLauncher.launch(WRITE_EXTERNAL_STORAGE)
-            }
-        }
+    private fun solicitarPermisos() {
+        // SOLICITAR
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ),  /* Este codigo es para identificar tu request */
+            1
+        )
     }
 
     private fun generarPDF(nombreCliente : String, direccionCliente : String, duiCliente : String) {

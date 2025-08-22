@@ -176,15 +176,10 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 finish()
             }
 
-            cvAbonos.setOnClickListener {
-                if(!M_Abonos){
-                    Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
-                        .show()
-                }else{
-                    val intento = Intent(this@Inicio, AbonosCxc::class.java)
-                    startActivity(intento)
-                    finish()
-                }
+            cvConfiguracion.setOnClickListener {
+                val intento = Intent(this@Inicio, Configuracion::class.java)
+                startActivity(intento)
+                finish()
             }
 
             cvcliente.setOnClickListener {
@@ -460,6 +455,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             R.id.nav_carga -> solicitudCarga()
             R.id.nav_devolucion -> solicitudDevolucion()
             R.id.nav_gasto -> gastos()
+            R.id.nav_abonos -> abonos()
             R.id.nav_reporte -> reportes()
             R.id.nav_configuracion -> configuracion()
             R.id.nav_salir -> salir()
@@ -515,6 +511,17 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         val intent = Intent(this@Inicio, MenuGasto::class.java)
         startActivity(intent)
         finish()
+    }
+
+    private fun abonos(){
+        if(!M_Abonos){
+            Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
+                .show()
+        }else{
+            val intento = Intent(this@Inicio, AbonosCxc::class.java)
+            startActivity(intento)
+            finish()
+        }
     }
 
     private fun solicitudCarga() {
