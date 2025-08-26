@@ -33,7 +33,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.scale
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.dantsu.escposprinter.EscPosCharsetEncoding
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
@@ -47,7 +46,6 @@ import com.example.acae30.controllers.VisitaController
 import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityDetallepedidoBinding
 import com.example.acae30.listas.PedidoDetalleAdapter
-import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.InformacionSucursal
 import com.example.acae30.modelos.JSONmodels.CabezeraPedidoSend
@@ -1223,8 +1221,6 @@ class Detallepedido : AppCompatActivity() {
             val objecto = convertToJson(pedido, idpedido) //convertimos a json el objecto pedido
             val ruta: String = "http://$ip:$puerto/pedido" //ruta para enviar el pedido
 
-            println("JSON GENERADO: /n $objecto")
-            //val ruta="http://192.168.0.103:53272/pedido"
             val url = URL(ruta)
             with(url.openConnection() as HttpURLConnection) {
                 try {

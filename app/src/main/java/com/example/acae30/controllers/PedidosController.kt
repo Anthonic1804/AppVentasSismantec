@@ -519,4 +519,50 @@ class PedidosController {
         }
     }
 
+    //FUNCION PARA ELIMINAR EL PEDIDO AL CERRAR LA APP COMPLETAMENTE
+    fun eliminarPedidoConError(context: Context){
+        val bd = funciones.getDataBase(context).writableDatabase
+        try {
+            // 1. Buscar los Id de los pedidos que cumplen la condición
+            val idsPedidos = mutableListOf<String>()
+            val cursor = bd.query(
+                "Pedidos",
+                arrayOf("Id"),
+                "Enviado = 0 AND Cerrado = 0",
+                null,
+                null,
+                null,
+                null
+            )
+
+            while (cursor.moveToNext()) {
+                idsPedidos.add(cursor.getInt(0).toString())
+            }
+            cursor.close()
+
+            // 2. Eliminar pedidos
+            val pedidosEliminados = bd.delete(
+                "Pedidos",
+                "Enviado = 0 AND Cerrado = 0",
+                null
+            )
+
+            // 3. Si eliminamos pedidos, borramos sus detalles
+            if (pedidosEliminados > 0 && idsPedidos.isNotEmpty()) {
+                // Construir cláusula WHERE dinámica con los Ids
+                val placeholders = idsPedidos.joinToString(",") { "?" }
+
+                bd.delete(
+                    "detalle_pedidos",
+                    "Id_pedido IN ($placeholders)",
+                    idsPedidos.toTypedArray()
+                )
+            }
+        }catch (e:Exception){
+            println("ERROR: NO SE PUDO ELIMINAR EL PEDIDO -> " + e.message)
+        }finally {
+            bd.close()
+        }
+    }
+
 }

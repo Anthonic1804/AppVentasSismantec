@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.acae30.controllers.InventarioController
+import com.example.acae30.controllers.PedidosController
 import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityInicioBinding
 import com.google.android.material.navigation.NavigationView
@@ -45,6 +46,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
     private var database: Database? = null
+    private var pedidosController = PedidosController()
 
     //VARIABLES PARA UN SLIDE MENU
     private lateinit var  drawerLayout: DrawerLayout
@@ -78,6 +80,13 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         super.onCreate(savedInstanceState)
         binding = ActivityInicioBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        //---------------
+        // Eliminando los pedidos que han dado error
+        //-----------------
+        CoroutineScope(Dispatchers.IO).launch {
+            pedidosController.eliminarPedidoConError(this@Inicio)
+        }
 
         funciones = Funciones()
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
