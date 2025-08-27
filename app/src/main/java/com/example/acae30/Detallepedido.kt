@@ -1760,13 +1760,14 @@ class Detallepedido : AppCompatActivity() {
         val textoVerificacion = dividirEnLineas("Verificacion con $empresa",32)
 
             val qr =if(dteUrlQRempresa != "0") {("[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
-                    "[C] Verificacion con Hacienda \n" +
+                    "[C] Qr Hacienda \n" +
                     "\n" +
                     "[C]<qrcode size='30'>$qrEmpresa</qrcode>\n" +
                     "[C] $textoVerificacion \n")}
                     else{
                         "[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
-                                "[C] Verificacion con Hacienda \n"
+                                " \n" +
+                                "[C] Qr Hacienda \n"
                     }
 
 
@@ -1951,7 +1952,7 @@ class Detallepedido : AppCompatActivity() {
     }
 
     // Función para dividir en varias líneas la descripcion del prducto
-    private fun dividirDescripcion(texto: String, maxLength: Int = 20): List<String> {
+    private fun dividirDescripcion(texto: String, maxLength: Int = 16): List<String> {
         val lineas = mutableListOf<String>()
         var inicio = 0
         while (inicio < texto.length) {
