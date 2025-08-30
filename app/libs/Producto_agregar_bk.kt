@@ -1,5 +1,3 @@
-package com.example.acae30
-
 import android.app.Dialog
 import android.content.ContentValues
 import android.content.Context
@@ -16,12 +14,16 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
+import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityProductoAgregarBinding
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.InventarioPrecios
@@ -42,24 +44,39 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.text.DecimalFormatSymbols
 
-class Producto_agregar : AppCompatActivity() {
+class Producto_agregar_bk : AppCompatActivity() {
+    private var btnatras: ImageButton? = null
     private var idproducto: Int? = 0
+    private var db: Database? = null
+    private var btnagregar: Button? = null
+    private var alert: AlertDialogo? = null
+    private var txtcodigo: TextView? = null
+    private var txtdescripcion: TextView? = null
+    private var txtexistencia: TextView? = null
+    private var spiner: Spinner? = null
     private var precio_iva: Float = 0.toFloat()
     private var precio : Float = 0f
     private var cantidad: Float = 0.toFloat()
+    private var txttotal: TextView? = null
     private var idpedido: Int = 0
     private var idcliente: Int? = 0
     private var idpedidodetalle: Int? = 0
+    private var lienzo: ConstraintLayout? = null
+    private var btneliminar: Button? = null
     private var nombrecliente: String? = ""
     private var idvisita = 0
     private var codigo = ""
     private var idapi = 0
+    private var txtcantidad: EditText? = null
+    private var spprecio: Spinner? = null
     private var listPrecios: ArrayList<InventarioPrecios>? = null
     private var unidadActual: String? = null
     private var datosProducto: com.example.acae30.modelos.Inventario? = null
+    private var btneditarprecio: ImageButton? = null
     private var proviene: String? = ""
     private var total_param: Float? = null
     private var precioEditado: Float = 0.toFloat()
+    private var txttituloproducto: TextView? = null
     private var sinExistencias: Int = 0  // 1 -> Si    0 -> no
     private var existenciaProducto: Float = 0f
     private var getSucursalPosition: Int? = null
@@ -84,39 +101,33 @@ class Producto_agregar : AppCompatActivity() {
     private lateinit var tvTitulo : TextView
     private lateinit var tvMensaje : TextView
 
+    var contexto = this
 
     private var funciones = Funciones()
     private var inventarioController = InventarioController()
     private var clientesController = ClientesController()
     private var modificarPrecio : Boolean = false
 
+    private lateinit var precioPersonalizado : TextView
     private var precioIvaPersonalizado : Float = 0f
     private var bonificacion : Float = 0f
+    private lateinit var txtCantBonificados : TextView
 
+    private var FacturaExportacion = false
 
     //variable que controla el precio a mostrar el la lista esplegable
     private var mostrarPrecioApp : Int = 0
 
-    private lateinit var binding : ActivityProductoAgregarBinding
-
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-        binding = ActivityProductoAgregarBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_producto_agregar)
 
-        //-----------
-        //SETEANDO LAS SHARED PREFERENCES
-        //-----------
-        preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        codEmpleado = preferencias!!.getInt("Idvendedor", 0)
-        sinExistencias = if(preferencias!!.getString("pedidos_sin_existencia", "") == "S") 1 else 0
-        modificarPrecio = preferencias!!.getBoolean("modificar_precio_app", false)
-        mostrarPrecioApp = preferencias!!.getInt("precio_mostrar_app", 0)
 
-        //-----------
-        //SETEANDO LOS INTENT QUE VIENEN DESDE EL FORMULARIO ANTERIOR
-        //-----------
+        supportActionBar?.hide()
+        lienzo = findViewById(R.id.lienzo)
+        btnatras = findViewById(R.id.imgbtnatras)
+
         idproducto = intent.getIntExtra("idproducto", 0)
         idpedido = intent.getIntExtra("idpedido", 0)
         idcliente = intent.getIntExtra("idcliente", 0)
@@ -125,21 +136,57 @@ class Producto_agregar : AppCompatActivity() {
         idvisita = intent.getIntExtra("visitaid", 0)
         codigo = intent.getStringExtra("codigo").toString()
         idapi = intent.getIntExtra("idapi", 0)
+
+        FacturaExportacion = intent.getBooleanExtra("facturaExportacion", false)
+        println("FACTURA DE EXPORTACION -> $FacturaExportacion")
+
+        preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        codEmpleado = preferencias!!.getInt("Idvendedor", 0)
+
+        sinExistencias = if(preferencias!!.getString("pedidos_sin_existencia", "") == "S") 1 else 0
+        modificarPrecio = preferencias!!.getBoolean("modificar_precio_app", false)
+
+        //Asignado el indice que se mostrara de los precios en el listado
+        mostrarPrecioApp = preferencias!!.getInt("precio_mostrar_app", 0)
+
+        //CAPTURANDO SUCURSAL
         getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
+       // println("posicion enviada desde detalle: $getSucursalPosition")
+
+        db = Database(this)
+        alert = AlertDialogo(this, this)
+        txtcodigo = findViewById(R.id.txtcodigo)
+        txtdescripcion = findViewById(R.id.txtdescripcion)
+        txtexistencia = findViewById(R.id.txtexistencia)
+        spiner = findViewById(R.id.spunidad)
+        txttotal = findViewById(R.id.txttotal)
+        btnagregar = findViewById(R.id.btnagregar)
+        btneliminar = findViewById(R.id.btneliminar)
+        precioEditado = 0.toFloat()
+
+        txtCantBonificados = findViewById(R.id.txtBonificados)
+
+        txtcantidad = findViewById(R.id.txtcantidad)
+        spprecio = findViewById(R.id.spprecio)
+        unidadActual = "UNIDAD"
+        datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!, FacturaExportacion)
+        btneditarprecio = findViewById(R.id.btneditarprecio)
+
         proviene = intent.getStringExtra("proviene")
         total_param = intent.getFloatExtra("total_param", 0.toFloat())
 
-        precioEditado = 0.toFloat()
-
-        unidadActual = "UNIDAD"
-        datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!, false)
+        txttituloproducto = findViewById(R.id.txttituloproducto)
 
         //DESHABILITANDO EL PRECIO PERSONALIZADO
-        binding.tvPrecioPersonalizado.visibility = View.GONE
+        precioPersonalizado = findViewById(R.id.tvPrecioPersonalizado)
+        precioPersonalizado.visibility = View.GONE
+
+        //OPTENIENDO LA IP DEL SERVIDOR
+        getApiUrl()
 
         //OBTENIENDO EL PRECIO PERSONALIZADO POR CLIENTE
         precioIvaPersonalizado = clientesController.obtenerPrecioPersoCliente(idcliente!!,
-            idproducto!!, this@Producto_agregar, false)
+            idproducto!!, this@Producto_agregar, FacturaExportacion)
 
         if(precioIvaPersonalizado > 0){
             precioPersonalizado.visibility = View.VISIBLE
@@ -157,7 +204,7 @@ class Producto_agregar : AppCompatActivity() {
         //09/01/2024
         cantidadEscala = seleccionarCantidadenEscala(idpedido, idproducto!!)
 
-        listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false)
+        listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, FacturaExportacion)
 
         // Validar que la cantidad sea con hasta dos decimales
         //ACTUALIZADOS LA VALIDACION QUE SEA HASTA CON 4 DECIMAES
@@ -1081,6 +1128,17 @@ class Producto_agregar : AppCompatActivity() {
         dialogo.show()
 
     } //muestra la alerta para agregar precio
+
+
+
+    //FUNCION PARA OBTENER LA URL DEL SERVIDOR
+    private fun getApiUrl() {
+        val ip = preferencias!!.getString("ip", "")
+        val puerto = preferencias!!.getInt("puerto", 0)
+        if (ip!!.length > 0 && puerto > 0) {
+            url = "http://$ip:$puerto/"
+        }
+    }
 
     //FUNCION PARA OBTENER EL PRECIO AUTORIZADO
     private fun verificarPrecioAutorizado(id_empleado:Int, cod_producto:String){
