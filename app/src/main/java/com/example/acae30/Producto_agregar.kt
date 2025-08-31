@@ -55,7 +55,7 @@ class Producto_agregar : AppCompatActivity() {
     private var codigo = ""
     private var idapi = 0
     private var listPrecios: ArrayList<InventarioPrecios>? = null
-    private var unidadActual: String? = null
+    private var unidadActual: String = "UNI"
     private var datosProducto: com.example.acae30.modelos.Inventario? = null
     private var proviene: String? = ""
     private var total_param: Float? = null
@@ -63,7 +63,6 @@ class Producto_agregar : AppCompatActivity() {
     private var sinExistencias: Int = 0  // 1 -> Si    0 -> no
     private var existenciaProducto: Float = 0f
     private var getSucursalPosition: Int? = null
-
 
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
@@ -137,8 +136,6 @@ class Producto_agregar : AppCompatActivity() {
         //---------
         datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!, false)
 
-        unidadActual = "UNIDAD"
-
 
         //DESHABILITANDO EL PRECIO PERSONALIZADO
         binding.tvPrecioPersonalizado.visibility = View.GONE
@@ -165,7 +162,6 @@ class Producto_agregar : AppCompatActivity() {
         //09/01/2024
         cantidadEscala = seleccionarCantidadenEscala(idpedido, idproducto!!)
 
-        listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false, "UNI")
 
         // Validar que la cantidad sea con hasta dos decimales
         //ACTUALIZADOS LA VALIDACION QUE SEA HASTA CON 4 DECIMAES
@@ -205,73 +201,14 @@ class Producto_agregar : AppCompatActivity() {
 //                val toast = Toast.makeText(applicationContext, "Valor: "+parent!!.getItemAtPosition(position).toString(), Toast.LENGTH_LONG)
 //                toast.show()
 
-                val unidad = parent!!.getItemAtPosition(position).toString()
-
-                if (unidad != unidadActual) {
-                   binding.spprecio.adapter = null
-
-                    // Agregar precios a lista
-
-                    val precioss = ArrayList<String>()
-
-                    if (listPrecios!!.size > 0) {
-                        if (unidad == "UNIDAD") {
-
-                            precioss.add("${String.format("%.2f".format(datosProducto!!.Precio_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
-                            listPrecios!!.forEach {
-
-                                if (it.Unidad == "UNI" || it.Unidad == "") {
-                                    var unidad_cantidad = ""
-                                    if (it.Cantidad!! > 0.toFloat()) {
-                                        unidad_cantidad =
-                                            " (" + "${String.format("%.2f".format(it.Cantidad))}" + ")"
-                                    }
-                                    precioss.add(
-                                        "${
-                                            String.format(
-                                                "%.2f".format(it.Precio_iva)
-                                            )
-                                        }" + " ${it.Nombre}" + unidad_cantidad
-                                    )
-
-                                }
-                            }
-                        }
-
-                        if (unidad == "FRACCIÓN") {
-                            listPrecios!!.forEach {
-
-                                if (it.Unidad == "FRA") {
-                                    var unidad_cantidad = ""
-                                    if (it.Cantidad!! > 0.toFloat()) {
-                                        unidad_cantidad =
-                                            " (" + "${String.format("%.2f".format(it.Cantidad))}" + ")"
-                                    }
-                                    precioss.add(
-                                        "${
-                                            String.format(
-                                                "%.2f".format(it.Precio_iva)
-                                            )
-                                        }" + " ${it.Nombre}" + unidad_cantidad
-                                    )
-                                }
-                            }
-                        }
-
-                    }
-
-                    // Consultar inventario precios
-                    //AGREGA LA LISTA DE PRECIOS EN LA LISTA DESPLEGABLE DE PRECIOS
-                    var adapterPrecios = ArrayAdapter(
-                        this@Producto_agregar,
-                        android.R.layout.simple_spinner_item,
-                        precioss
-                    )
-                    adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                    binding.spprecio.adapter = adapterPrecios
-
-                    unidadActual = unidad
+                unidadActual = when(binding.spunidad.selectedItem.toString()){
+                    "UNIDAD" -> "UNI"
+                    "FRACCION" -> "FRA"
+                    else -> binding.spunidad.selectedItem.toString()
                 }
+
+                cargarListadoPrecios(unidadActual)
+
             }
         }
 
@@ -305,6 +242,50 @@ class Producto_agregar : AppCompatActivity() {
         })
 
     } //inicializa todas las variables y los objetos del xml
+
+    private fun cargarUnidadesMedida(){
+        this@Producto_agregar.lifecycleScope.launch {
+            try {
+
+                val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!)
+                val unidadesMedida = ArrayAdapter<String>(this@Producto_agregar, android.R.layout.simple_spinner_dropdown_item)
+                unidadesMedida.addAll(unidades)
+                binding.spunidad.adapter = unidadesMedida
+
+            }catch (e:Exception){
+                println("ERROR AL CARGAR LAS UNIDADESD DE MEDIDA -> "  + e.message)
+            }
+        }
+    }
+
+    private fun cargarListadoPrecios(unidadMedida : String){
+        listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false, unidadMedida)
+
+        val precioss = ArrayList<String>()
+        if(unidadMedida == "UNI"){
+            precioss.add("${String.format("%.2f".format(datosProducto!!.Precio_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
+        }
+
+        listPrecios!!.forEach {
+            val unidad_cantidad = " (" + "${String.format("%.2f".format(it.Cantidad))}" + ")"
+            precioss.add("${String.format("%.2f".format(it.Precio_iva))}" + " ${it.Nombre}" + unidad_cantidad
+            )
+        }
+
+        var adapterPrecios = ArrayAdapter(this@Producto_agregar, android.R.layout.simple_spinner_item,
+            precioss
+        )
+
+        adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
+        binding.spprecio.adapter = adapterPrecios
+
+        val totalIndices = binding.spprecio.adapter?.count ?: 0
+        if(mostrarPrecioApp in 0 until totalIndices){
+            binding.spprecio.setSelection(mostrarPrecioApp, true)
+        }else{
+            binding.spprecio.setSelection(0, true)
+        }
+    }
 
     //FUNCION PARA VALIDAD CANTIDAD PARA ESCARRSA
     private fun validarCantidad(cantidadIngresada: String){
@@ -378,17 +359,13 @@ class Producto_agregar : AppCompatActivity() {
             }
         }
 
-//        visor!!.text=cantidad.toString()
         binding.txtcantidad.setText(String.format("%.0f".format(cantidad)))
-        //txttotal!!.text="0.00"
 
-        var contexto = this
+        //CARGANDO LAS UNIDADES DE MEDIDA
+        cargarUnidadesMedida()
 
+        cargarListadoPrecios(unidadActual)
 
-        //YA NO REGRESA HASTA EL DETALLE DEL PEDIDO, REGRESA A LA BUSQUEDA DE PRODUCTOS
-        //MODIFICACION PARA LA LIBRERIA DM
-        //23-08-2022
-        //30-08-2022 CORRECCION AL FUNCIONAMIENTO DE LA NAVEGACION DEL BOTON
         binding.imgbtnatras.setOnClickListener {
             if(proviene == "editar"){
 
@@ -449,35 +426,8 @@ class Producto_agregar : AppCompatActivity() {
             this@Producto_agregar.lifecycleScope.launch {
                 try {
                     val datos = datosProducto
-                    val datosInvPrecios = listPrecios!!
 
                     if (datos != null) {
-
-                        // Mostrar si hay fraccion
-                        val arreglo = ArrayList<String>()
-                        arreglo.add("UNIDAD")
-
-                        var numeroFraccion = 0.toInt()
-
-                        listPrecios!!.forEach {
-                            if (it.Unidad == "FRA") {
-                                numeroFraccion++
-                            }
-                        }
-
-                        if (numeroFraccion > 0.toInt()) {
-                            arreglo.add("FRACCIÓN")
-                        }
-
-                        // Agregar datos a spiner de unidad
-
-                        var adapter = ArrayAdapter(
-                            contexto,
-                            android.R.layout.simple_spinner_item,
-                            arreglo
-                        )
-                        adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                        binding.spunidad.adapter = adapter
 
                         binding.txtcodigo.text = datos.Codigo
                         binding.txtdescripcion.text = datos.descripcion
@@ -496,10 +446,6 @@ class Producto_agregar : AppCompatActivity() {
 
                         var seleccionado = false
 
-                        //CORREGIDO EL PRECIO DE VENTA
-                        //30-08-2022
-
-                        // Comprobar si viene de editar y seleccionar ese valor
                         if (proviene == "editar") {
                             binding.btnagregar.text = "ACTUALIZAR PRODUCTO";
                             binding.txttituloproducto.text = "ACTUALIZAR PRODUCTO";
@@ -544,44 +490,6 @@ class Producto_agregar : AppCompatActivity() {
                         }
 
                         Totalizar(cantidad)
-
-                        if (datosInvPrecios.size > 0) {
-                            datosInvPrecios.forEach {
-                                if (it.Unidad == "UNI" || it.Unidad == "") {
-                                    var unidad_cantidad = ""
-                                    if (it.Cantidad!! > 0.toFloat()) {
-                                        unidad_cantidad =
-                                            " (" + "${String.format("%.2f".format(it.Cantidad) )}" + ")"
-                                    }
-                                    precioss.add(
-                                        "${
-                                            String.format(
-                                                "%.2f".format(it.Precio_iva) 
-                                            )
-                                        }" + " ${it.Nombre}" + unidad_cantidad
-                                    )
-//                                   precioss.add("${String.format("%.2f", it.Precio_iva)}")
-                                }
-                            }
-                        }
-
-                        // Consultar inventario precios
-
-                        var adapterPrecios = ArrayAdapter(
-                            contexto,
-                            android.R.layout.simple_spinner_item,
-                            precioss
-                        )
-
-                        adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                        binding.spprecio.adapter = adapterPrecios
-
-                        val totalIndices = binding.spprecio.adapter?.count ?: 0
-                        if(mostrarPrecioApp in 0 until totalIndices){
-                            binding.spprecio.setSelection(mostrarPrecioApp, true)
-                        }else{
-                            binding.spprecio.setSelection(0, true)
-                        }
 
                     } else {
                         throw Exception("No se Han encontrado los datos")
