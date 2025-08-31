@@ -22,7 +22,7 @@ class InventarioDetalleAdapter(private var list: ArrayList<InventarioPrecios>, p
 
         vista.descipcionEscala.text = data.Nombre
         vista.precioEscala.text = "$ ${String.format("%.4f", data.Precio_iva)}"
-        vista.cantidad.text = data.Cantidad.toString() + " UNI"
+        vista.cantidad.text = data.Cantidad.toString() + " " + data.Unidad.toString()
 
     }
 

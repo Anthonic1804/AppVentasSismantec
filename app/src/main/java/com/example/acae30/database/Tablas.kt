@@ -250,7 +250,7 @@ class Tablas {
                 "Id_inventario INTEGER NOT NULL," +
                 "Nombre_unidad VARCHAR(25) NOT NULL," +
                 "Equivale NUMERIC(18,2) NOT NULL," +
-                "Unidades VARCHAR(3) NOT NULL)"
+                "Unidades VARCHAR(25) NOT NULL)"
     } //tabla inventario unidades
 
     //CREANDO LA TABLA VIRTUAL INVENTARIO

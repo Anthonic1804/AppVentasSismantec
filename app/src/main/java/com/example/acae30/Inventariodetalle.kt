@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -24,6 +27,7 @@ class Inventariodetalle : AppCompatActivity() {
 
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+    private var unidadMedida = "UNI"
 
     private var inventarioController = InventarioController()
 
@@ -62,8 +66,43 @@ class Inventariodetalle : AppCompatActivity() {
             finish()
         }//BOTON ATRAS
 
+        binding.spunidad.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                unidadMedida = when(binding.spunidad.selectedItem.toString()){
+                    "UNIDAD" -> "UNI"
+                    "FRACCION" -> "FRA"
+                    else -> binding.spunidad.selectedItem.toString()
+                }
+
+                cargarEscalas(unidadMedida)
+            }
+        }
+
+
         cargarInformacionProducto()
-        cargarEscalas()
+        cargarEscalas(unidadMedida)
+        cargarUnidadesMedidas()
+    }
+
+    private fun cargarUnidadesMedidas(){
+        this@Inventariodetalle.lifecycleScope.launch {
+            try {
+
+                val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Inventariodetalle, idinventario)
+                val unidadesMedida = ArrayAdapter<String>(this@Inventariodetalle, android.R.layout.simple_spinner_dropdown_item)
+                unidadesMedida.addAll(unidades)
+                binding.spunidad.adapter = unidadesMedida
+
+            }catch (e:Exception){
+                println("ERROR AL CARGAR LAS UNIDADESD DE MEDIDA -> "  + e.message)
+            }
+        }
     }
 
     private fun cargarInformacionProducto(){
@@ -83,10 +122,11 @@ class Inventariodetalle : AppCompatActivity() {
             }
         }
     }
-    private fun cargarEscalas(){
+
+    private fun cargarEscalas(unidadMedida : String){
         this@Inventariodetalle.lifecycleScope.launch {
             try{
-                val lista = inventarioController.obtenerEscalaPrecios(this@Inventariodetalle, idinventario, false)
+                val lista = inventarioController.obtenerEscalaPrecios(this@Inventariodetalle, idinventario, false, unidadMedida)
                 if(lista.size > 0){
                     ArmarLista(lista)
                 }
@@ -109,6 +149,7 @@ class Inventariodetalle : AppCompatActivity() {
         binding.listaprecios.adapter = adapter
 
     }
+
     private fun AlertaPrecio(contexto: com.example.acae30.Inventariodetalle) {
         val dialogo = Dialog(this)
         dialogo.setContentView(R.layout.alerta_costo)

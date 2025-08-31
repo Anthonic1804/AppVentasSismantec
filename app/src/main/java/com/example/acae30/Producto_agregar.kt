@@ -129,10 +129,16 @@ class Producto_agregar : AppCompatActivity() {
         proviene = intent.getStringExtra("proviene")
         total_param = intent.getFloatExtra("total_param", 0.toFloat())
 
-        precioEditado = 0.toFloat()
+        //precioEditado = 0.toFloat()
+
+        //---------
+        //LA UNIDADES SE GENERAN AUTOMATICAS
+        //SI EL PRODUCTO LAS TIENE CONFIGURADAS
+        //---------
+        datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!, false)
 
         unidadActual = "UNIDAD"
-        datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!, false)
+
 
         //DESHABILITANDO EL PRECIO PERSONALIZADO
         binding.tvPrecioPersonalizado.visibility = View.GONE
@@ -142,11 +148,13 @@ class Producto_agregar : AppCompatActivity() {
             idproducto!!, this@Producto_agregar, false)
 
         if(precioIvaPersonalizado > 0){
-            precioPersonalizado.visibility = View.VISIBLE
-            spprecio?.visibility = View.GONE
-            btneditarprecio?.visibility = View.GONE
+            binding.apply {
+                tvPrecioPersonalizado.visibility = View.VISIBLE
+                spprecio.visibility = View.GONE
+                btneditarprecio.visibility = View.GONE
 
-            precioPersonalizado.text = "${String.format("%.4f".format(precioIvaPersonalizado))}"
+                tvPrecioPersonalizado.text = "${String.format("%.4f".format(precioIvaPersonalizado))}"
+            }
         }
 
         //OBTENIENDO LA BONIFICACION PERSONALIZADA POR CLIENTE
@@ -157,11 +165,11 @@ class Producto_agregar : AppCompatActivity() {
         //09/01/2024
         cantidadEscala = seleccionarCantidadenEscala(idpedido, idproducto!!)
 
-        listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false)
+        listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false, "UNI")
 
         // Validar que la cantidad sea con hasta dos decimales
         //ACTUALIZADOS LA VALIDACION QUE SEA HASTA CON 4 DECIMAES
-        txtcantidad!!.filters = arrayOf<InputFilter>(object : InputFilter {
+        binding.txtcantidad.filters = arrayOf<InputFilter>(object : InputFilter {
             var decimalFormatSymbols: DecimalFormatSymbols = DecimalFormatSymbols()
             override fun filter(
                 source: CharSequence,
@@ -183,7 +191,7 @@ class Producto_agregar : AppCompatActivity() {
         // Actualizar los precios cuando cambie el select de unidad
         //ACTUALIZADOS LOS DECIMALES A 4 ---> 23-08-2022
         //ACTUALIZADO 08/01/2024
-        spiner?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        binding.spunidad.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
             }
@@ -200,7 +208,7 @@ class Producto_agregar : AppCompatActivity() {
                 val unidad = parent!!.getItemAtPosition(position).toString()
 
                 if (unidad != unidadActual) {
-                    spprecio!!.adapter = null
+                   binding.spprecio.adapter = null
 
                     // Agregar precios a lista
 
@@ -255,12 +263,12 @@ class Producto_agregar : AppCompatActivity() {
                     // Consultar inventario precios
                     //AGREGA LA LISTA DE PRECIOS EN LA LISTA DESPLEGABLE DE PRECIOS
                     var adapterPrecios = ArrayAdapter(
-                        contexto,
+                        this@Producto_agregar,
                         android.R.layout.simple_spinner_item,
                         precioss
                     )
                     adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                    spprecio!!.adapter = adapterPrecios
+                    binding.spprecio.adapter = adapterPrecios
 
                     unidadActual = unidad
                 }
@@ -268,7 +276,7 @@ class Producto_agregar : AppCompatActivity() {
         }
 
 
-        btneditarprecio!!.setOnClickListener {
+        binding.btneditarprecio.setOnClickListener {
             if(modificarPrecio){
                 AlertaPrecio(this@Producto_agregar)
             }else{
@@ -282,7 +290,7 @@ class Producto_agregar : AppCompatActivity() {
         //23-08-2022
         //AGREGADA VALIDACION PARA QUE LA CANTIDAD SOLO ACEPTE ENTEROS
         //24-082022
-        txtcantidad!!.addTextChangedListener(object : TextWatcher {
+        binding.txtcantidad.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
 
             }
@@ -304,22 +312,22 @@ class Producto_agregar : AppCompatActivity() {
             cantidad = cantidadIngresada.toFloat()
 
             if(cantidad > existenciaProducto || cantidad == 0f){
-                txtcantidad!!.error = "No puede Agregar una cantidad mayor a las existencias actuales";
-                btnagregar!!.setBackgroundResource(R.drawable.border_btndisable)
-                btnagregar!!.isEnabled = false
+                binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
+                binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
+                binding.btnagregar.isEnabled = false
             }else if(cantidad < cantidadEscala!!){ //VALIDADO EL PRECIO SELECCIONADO EN LAS ESCALAS.
-                txtcantidad!!.error = "La cantidad no es válida para el precio seleccionado"
-                btnagregar!!.setBackgroundResource(R.drawable.border_btndisable)
-                btnagregar!!.isEnabled = false
+                binding.txtcantidad.error = "La cantidad no es válida para el precio seleccionado"
+                binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
+                binding.btnagregar.isEnabled = false
             }else{
-                btnagregar!!.isEnabled = true
+                binding.btnagregar.isEnabled = true
                 Totalizar(cantidad)
-                btnagregar!!.setBackgroundResource(R.drawable.border_btnenviar) 
+                binding.btnagregar.setBackgroundResource(R.drawable.border_btnenviar) 
             }
 
         }else{
-            txtcantidad!!.error = "Campo no puede quedar vacio"
-            btnagregar!!.isEnabled = false
+            binding.txtcantidad.error = "Campo no puede quedar vacio"
+            binding.btnagregar.isEnabled = false
             cantidad = 0.toFloat()
             Totalizar(cantidad)
         }
@@ -334,7 +342,7 @@ class Producto_agregar : AppCompatActivity() {
         super.onStart()
 
         // Actualizar el total cuando cambie el precio
-        spprecio?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        binding.spprecio.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
             }
@@ -371,7 +379,7 @@ class Producto_agregar : AppCompatActivity() {
         }
 
 //        visor!!.text=cantidad.toString()
-        txtcantidad!!.setText(String.format("%.0f".format(cantidad)))
+        binding.txtcantidad.setText(String.format("%.0f".format(cantidad)))
         //txttotal!!.text="0.00"
 
         var contexto = this
@@ -381,7 +389,7 @@ class Producto_agregar : AppCompatActivity() {
         //MODIFICACION PARA LA LIBRERIA DM
         //23-08-2022
         //30-08-2022 CORRECCION AL FUNCIONAMIENTO DE LA NAVEGACION DEL BOTON
-        btnatras!!.setOnClickListener {
+        binding.imgbtnatras.setOnClickListener {
             if(proviene == "editar"){
 
                 provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
@@ -396,13 +404,13 @@ class Producto_agregar : AppCompatActivity() {
                 intento.putExtra("codigo", codigo)
                 intento.putExtra("idapi", idapi)
                 intento.putExtra("sucursalPosition", getSucursalPosition)
-                intento.putExtra("facturaExportacion", FacturaExportacion)
+                intento.putExtra("facturaExportacion", false)
                 startActivity(intento)
             }
 
         } // boton que lleva atras en el activity
 
-        btnagregar!!.setOnClickListener {
+        binding.btnagregar.setOnClickListener {
             //VERIFICANDO SI MODIFICAR PRECIO ES TRUE DESDE SQLSERVER
             if(modificarPrecio){
                 agregarProducto()
@@ -417,12 +425,12 @@ class Producto_agregar : AppCompatActivity() {
         }//AGREGANDO EL PRODUCTO AL PEDIDO
 
         if (idpedidodetalle!! > 0) {
-            btneliminar!!.visibility = View.VISIBLE
+            binding.btneliminar.visibility = View.VISIBLE
         } else {
-            btneliminar!!.visibility = View.GONE
+            binding.btneliminar.visibility = View.GONE
         }
 
-        btneliminar!!.setOnClickListener {
+        binding.btneliminar.setOnClickListener {
             try {
                 CoroutineScope(Dispatchers.IO).launch {
                     deleteDetalle(idpedidodetalle!!)
@@ -431,7 +439,7 @@ class Producto_agregar : AppCompatActivity() {
                 provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
 
             }catch (e: Exception){
-                funciones.mostrarAlerta("ERROR AL ELIMINAR EL PRODUCTO", this@Producto_agregar, lienzo!!)
+                funciones.mostrarAlerta("ERROR AL ELIMINAR EL PRODUCTO", this@Producto_agregar, binding.lienzo)
             }
         }//boton eliminar
 
@@ -469,16 +477,16 @@ class Producto_agregar : AppCompatActivity() {
                             arreglo
                         )
                         adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                        spiner!!.adapter = adapter
+                        binding.spunidad.adapter = adapter
 
-                        txtcodigo!!.text = datos.Codigo
-                        txtdescripcion!!.text = datos.descripcion
+                        binding.txtcodigo.text = datos.Codigo
+                        binding.txtdescripcion.text = datos.descripcion
                         codigoProducto = datos.Codigo.toString()
 
                         precio_iva = datos.Precio_iva!!
                         precio = datos.Precio!!
                         Totalizar(cantidad)
-                        txtexistencia!!.text = "${datos.Existencia}"
+                        binding.txtexistencia.text = "${datos.Existencia}"
                         existenciaProducto = datos.Existencia!!.toFloat()
 //                       txtprecio!!.text="$"+"${String.format("%.2f", datos!!.Precio_iva)}"
 
@@ -493,9 +501,9 @@ class Producto_agregar : AppCompatActivity() {
 
                         // Comprobar si viene de editar y seleccionar ese valor
                         if (proviene == "editar") {
-                            btnagregar!!.text = "ACTUALIZAR PRODUCTO";
-                            txttituloproducto!!.text = "ACTUALIZAR PRODUCTO";
-                            btneditarprecio!!.visibility = View.INVISIBLE;
+                            binding.btnagregar.text = "ACTUALIZAR PRODUCTO";
+                            binding.txttituloproducto.text = "ACTUALIZAR PRODUCTO";
+                            binding.btneditarprecio.visibility = View.INVISIBLE;
 
                             var cantidad_provisional = detalle!!.Cantidad
 //                           visor!!.text=cantidad.toString()
@@ -506,7 +514,7 @@ class Producto_agregar : AppCompatActivity() {
                             cantidad = cantidad_provisional!!
                             precio_iva = detalle.Precio_venta!! // EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
 
-                            txtcantidad!!.setText("${String.format("%.0f".format(cantidad) )}")
+                            binding.txtcantidad.setText("${String.format("%.0f".format(cantidad) )}")
 
                             if ("${String.format("%.2f".format(precio_provisional) )}" == "${String.format("%.2f".format(precio_iva) )}")
                             {
@@ -566,13 +574,13 @@ class Producto_agregar : AppCompatActivity() {
                         )
 
                         adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                        spprecio!!.adapter = adapterPrecios
+                        binding.spprecio.adapter = adapterPrecios
 
-                        val totalIndices = spprecio!!.adapter?.count ?: 0
+                        val totalIndices = binding.spprecio.adapter?.count ?: 0
                         if(mostrarPrecioApp in 0 until totalIndices){
-                            spprecio!!.setSelection(mostrarPrecioApp, true)
+                            binding.spprecio.setSelection(mostrarPrecioApp, true)
                         }else{
-                            spprecio!!.setSelection(0, true)
+                            binding.spprecio.setSelection(0, true)
                         }
 
                     } else {
@@ -600,9 +608,9 @@ class Producto_agregar : AppCompatActivity() {
     //EDITAR CANTIDAD DE PRODUCTO SIN BORRAR
     //23-08-2022
     private fun CambioCantidad() {
-        txtcantidad!!.setOnFocusChangeListener(OnFocusChangeListener { view, hasFocus ->
+        binding.txtcantidad.setOnFocusChangeListener(OnFocusChangeListener { view, hasFocus ->
             if (hasFocus){
-                txtcantidad!!.setText("${String.format("", cantidad)}");
+                binding.txtcantidad.setText("${String.format("", cantidad)}");
             }
         })
     }
@@ -618,17 +626,17 @@ class Producto_agregar : AppCompatActivity() {
             precio_iva * cantidad
         }
 
-        txttotal!!.text = "${String.format("%.4f".format(total) )}"
+        binding.txttotal.text = "${String.format("%.4f".format(total) )}"
 
         if(bonificacion > 0){
             val productosBonificados = cantidad / bonificacion
-            txtCantBonificados.text = productosBonificados.toInt().toString()
+            binding.txtBonificados.text = productosBonificados.toInt().toString()
         }
 
     }
 
     private fun AddDetallePedido(esPrecioEditado: Boolean, bonificado:Int): Int {
-        val base = db!!.writableDatabase
+        val base = funciones.getDataBase(this@Producto_agregar).writableDatabase
         var vPrecio = precio
         var vPrecio_iva = precio_iva
 
@@ -644,7 +652,7 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("Id_producto", idproducto)
             detalle.put("Cantidad", cantidad)
 
-            if (spiner!!.selectedItem.toString() == "UNIDAD") {
+            if (binding.spunidad.selectedItem.toString() == "UNIDAD") {
                 detalle.put("Unidad", "UNI")
             } else {
                 detalle.put("Unidad", "FRA")
@@ -654,8 +662,8 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("precio", vPrecio)
             detalle.put("Precio_iva", vPrecio_iva)
             detalle.put("Precio_oferta", 0.toFloat())
-            detalle.put("Total", (txttotal!!.text.toString().toFloat()) / 1.13)
-            detalle.put("Total_iva", txttotal!!.text.toString().toFloat())
+            detalle.put("Total", (binding.txttotal.text.toString().toFloat()) / 1.13)
+            detalle.put("Total_iva", binding.txttotal.text.toString().toFloat())
             detalle.put("Descuento", 0.toFloat())
             detalle.put("Bonificado", bonificado)
 
@@ -697,13 +705,11 @@ class Producto_agregar : AppCompatActivity() {
             base.endTransaction()
             base.close()
 
+            //---------
+            // SE DEBE DE QUITAR ESTA ASIGNACION
+            //---------
             preferencias!!.edit {
-                if (FacturaExportacion) {
-                    putBoolean("precioConIva", false)
-                } else {
-                    putBoolean("precioConIva", true)
-                }
-
+                putBoolean("precioConIva", true)
             }
 
         }
@@ -716,7 +722,7 @@ class Producto_agregar : AppCompatActivity() {
     }//anula el boton atras
 
     private fun getPedidodetalle(id: Int): DetallePedido? {
-        val base = db!!.writableDatabase
+        val base = funciones.getDataBase(this@Producto_agregar).writableDatabase
         try {
             var vista: DetallePedido? = null
             val cursor = base.rawQuery("SELECT * FROM detalle_producto where Id=$id", null)
@@ -761,14 +767,14 @@ class Producto_agregar : AppCompatActivity() {
     } //obtiene el detalle del pedido
 
     private fun updateDetalle(iddetalle: Int?, esPrecioEditado: Boolean, bonificado: Int) {
-        val base = db!!.writableDatabase
+        val base = funciones.getDataBase(this@Producto_agregar).writableDatabase
         try {
             base.beginTransaction()
             val detalle = ContentValues()
             detalle.put("Cantidad", cantidad)
             detalle.put("Bonificado", bonificado)
-            //detalle.put("Cantidad", spiner!!.selectedItem.toString())
-            detalle.put("Total_iva", txttotal!!.text.toString().toFloat())
+            //detalle.put("Cantidad", binding.spunidad.selectedItem.toString())
+            detalle.put("Total_iva", binding.txttotal.text.toString().toFloat())
 
             if (esPrecioEditado) {
                 detalle.put("Precio_editado", "*")
@@ -776,7 +782,7 @@ class Producto_agregar : AppCompatActivity() {
                 detalle.put("Precio_editado", "")
             }
 
-            if (spiner!!.selectedItem.toString() == "UNIDAD") {
+            if (binding.spunidad.selectedItem.toString() == "UNIDAD") {
                 detalle.put("Unidad", "UNI")
             } else {
                 detalle.put("Unidad", "FRA")
@@ -819,7 +825,7 @@ class Producto_agregar : AppCompatActivity() {
     } //ACTUALIZA EL DETALLE DEL PRODUCTO
 
     private fun deleteDetalle(iddetalle: Int?) {
-        val base = db!!.writableDatabase
+        val base = funciones.getDataBase(this@Producto_agregar).writableDatabase
         try {
             base.beginTransaction()
             base.execSQL("DELETE FROM detalle_pedidos where Id=$iddetalle") //elimina
@@ -852,7 +858,7 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     private fun validateProduct(idproducto: Int): Int {
-        val base = db!!.writableDatabase
+        val base = funciones.getDataBase(this@Producto_agregar).readableDatabase
         try {
             val cursor = base.rawQuery(
                 "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto",
@@ -895,7 +901,7 @@ class Producto_agregar : AppCompatActivity() {
             cadena.toInt()
             return  true
         }catch (nfe: NumberFormatException){
-            txtcantidad!!.setText("${String.format("", cantidad)}");
+            binding.txtcantidad.setText("${String.format("", cantidad)}");
             return false
         }
     }
@@ -931,7 +937,7 @@ class Producto_agregar : AppCompatActivity() {
         var nuevoprecio = dialogo.findViewById<EditText>(R.id.nuevoprecio)
         nuevoprecio.isEnabled = true
 
-        var cadena_precio = spprecio!!.selectedItem.toString()
+        var cadena_precio = binding.spprecio.selectedItem.toString()
 
         var nuevo_precio = 0.toFloat()
 
@@ -991,9 +997,9 @@ class Producto_agregar : AppCompatActivity() {
                 precioAutorizadoUtilizado = if(!modificarPrecio) 1 else 0
 
                 try {
-                    val unidad = spiner!!.selectedItem.toString()
+                    val unidad = binding.spunidad.selectedItem.toString()
 
-                    spprecio!!.adapter = null
+                    binding.spprecio.adapter = null
 
                     // Agregar precios a lista
 
@@ -1061,13 +1067,13 @@ class Producto_agregar : AppCompatActivity() {
                         precioss
                     )
                     adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                    spprecio!!.adapter = adapterPrecios
+                    binding.spprecio.adapter = adapterPrecios
 
                     dialogo.dismiss()
                 } catch (e: Exception) {
                     dialogo.dismiss()
                     val alert: Snackbar = Snackbar.make(
-                        lienzo!!,
+                        binding.lienzo,
                         e.message.toString(),
                         Snackbar.LENGTH_LONG
                     )
@@ -1119,7 +1125,7 @@ class Producto_agregar : AppCompatActivity() {
                                 precioAutorizado = res.getString("precio_asig").toString().toFloat();
 
                                 runOnUiThread {
-                                    AlertaPrecio(contexto)
+                                    AlertaPrecio(this@Producto_agregar)
                                 }
                             } catch (e: Exception) {
                                 throw Exception(e.message)
@@ -1232,10 +1238,10 @@ class Producto_agregar : AppCompatActivity() {
     //FUNCION PARA AGREGAR EL PRODUCTO SELECCIONADO AL PEDIDO
     private fun agregarProducto(){
 
-        val bonificacion = txtCantBonificados.text.toString().toInt()
+        val bonificacion = binding.txtBonificados.text.toString().toInt()
 
         //Obtenemos el valor el valor del Spinner de Escalas
-        val valor = spprecio!!.selectedItem.toString()
+        val valor = binding.spprecio.selectedItem.toString()
         var precio: Double = 0.0
 
         var esPrecioEditado = false
@@ -1260,8 +1266,8 @@ class Producto_agregar : AppCompatActivity() {
                             val data = getPedidodetalle(id)
                             cantidad += data!!.Cantidad!!
                             var t =
-                                ((txttotal!!.text.toString().toFloat()) + data.Total_iva!!)
-                            txttotal!!.text = "${String.format("%.2f".format(t) )}"
+                                ((binding.txttotal.text.toString().toFloat()) + data.Total_iva!!)
+                            binding.txttotal.text = "${String.format("%.2f".format(t) )}"
                             updateDetalle(id, esPrecioEditado, bonificacion)
                         } else {
                             AddDetallePedido(esPrecioEditado, bonificacion)
@@ -1274,19 +1280,19 @@ class Producto_agregar : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    funciones.mostrarAlerta("ERROR: ${e.message}", this@Producto_agregar, lienzo!!)
+                    funciones.mostrarAlerta("ERROR: ${e.message}", this@Producto_agregar, binding.lienzo)
                 }
             }
         } else {
             runOnUiThread {
-                funciones.mostrarAlerta("PRECIO O CANTIDAD SON VALORES INCORRECTOS", this@Producto_agregar, lienzo!!)
+                funciones.mostrarAlerta("PRECIO O CANTIDAD SON VALORES INCORRECTOS", this@Producto_agregar, binding.lienzo)
             }
         }
     }
 
     //SELECCIONANDO ESCALA PARA EDITAR PRODUCTO EN DETALL
     private fun seleccionarCantidadenEscala(idPedido: Int, idProducto: Int): Int{
-        val db = db!!.readableDatabase
+        val db = funciones.getDataBase(this@Producto_agregar).readableDatabase
         var cantidadEscala = 0
         try {
             val cursor = db.rawQuery("SELECT IP.Cantidad FROM detalle_pedidos AS DP " +
@@ -1321,7 +1327,7 @@ class Producto_agregar : AppCompatActivity() {
         intento.putExtra("from", visita)
         intento.putExtra("idapi", idapi)
         intento.putExtra("sucursalPosition", sucursalPosition)
-        intento.putExtra("facturaExportacion",FacturaExportacion)
+        intento.putExtra("facturaExportacion",false)
         startActivity(intento)
         finish()
     }

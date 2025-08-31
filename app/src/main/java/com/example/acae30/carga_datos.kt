@@ -145,6 +145,20 @@ class carga_datos : AppCompatActivity() {
                         delay(1000)
 
                         withContext(Dispatchers.Main){
+                            alert!!.changeText("CARGANDO UNIDADES DE MEDIDA")
+                        }
+
+                        delay(1000)
+
+                        try{
+                            inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
+                        }catch (e:Exception){
+                            println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
+                        }
+
+                        delay(1000)
+
+                        withContext(Dispatchers.Main){
                             alert!!.changeText("INVENTARIO CARGADO CORRECTAMENTE")
                         }
 
