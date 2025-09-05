@@ -64,7 +64,7 @@ class Database(val context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.devolucionDetalle())
 
     }
-
+//hay que corregir la bd
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
         //ESTO SE VERIFICARA CADA VEZ QUE SE ACTUALICE LA APP
         // SE DEBERA CAMBIAR ESTA INFORMACION
