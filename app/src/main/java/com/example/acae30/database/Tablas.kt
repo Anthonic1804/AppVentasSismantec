@@ -429,6 +429,7 @@ class Tablas {
                 "[Id] INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "[Id_pedido] INTEGER   NOT NULL," +
                 "[Id_producto] INTEGER   NOT NULL," +
+                "Descripcion VARCHAR(200) NOT NULL," +
                 "[Cantidad] NUMERIC(18,2) DEFAULT '0' NOT NULL," +
                 "Unidad VARCHAR(10)," +
                 "Idunidad INTEGER not null default 0," +

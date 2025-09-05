@@ -509,10 +509,9 @@ class ClientesController {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var precioIva = 0f
-        var consulta = ""
 
         //MODIFICANDO PARA FACTURA DE EXPORTACION
-        consulta = if(facExpo){
+        val consulta = if(facExpo){
             "SELECT precio_p from cliente_precios WHERE id_cliente=$idCliente AND id_inventario=$idProducto";
         }else{
             "SELECT precio_p_iva from cliente_precios WHERE id_cliente=$idCliente AND id_inventario=$idProducto";
