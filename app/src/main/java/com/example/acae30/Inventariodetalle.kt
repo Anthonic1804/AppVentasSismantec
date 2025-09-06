@@ -15,6 +15,7 @@ import com.example.acae30.databinding.ActivityInventariodetalleBinding
 import com.example.acae30.listas.InventarioDetalleAdapter
 import com.example.acae30.modelos.InventarioPrecios
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 class Inventariodetalle : AppCompatActivity() {
 
@@ -52,9 +53,9 @@ class Inventariodetalle : AppCompatActivity() {
 
         binding.imgbtnatras.setOnClickListener {
 
-            val editor = preferences.edit()
-            editor.remove("idProducto")
-            editor.apply()
+            preferences.edit {
+                remove("idProducto")
+            }
 
             val intento = Intent(this, com.example.acae30.Inventario::class.java)
             startActivity(intento)

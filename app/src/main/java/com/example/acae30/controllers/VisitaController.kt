@@ -3,6 +3,7 @@ package com.example.acae30.controllers
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
 import com.example.acae30.modelos.JSONmodels.VisitaJSON
 import com.example.acae30.modelos.Visitas
@@ -134,28 +135,33 @@ class VisitaController {
 
     //FUNCION PARA ACTUALIZAR EL CKECKIN EN SQLITE
     private fun updateCheckIn(idvisitaServer: Int, idvisita: Int, context: Context) {
+        val db = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
-        val base = funciones.getDataBase(context).writableDatabase
         try {
-            val data = ContentValues()
-            data.put("Idvisita", idvisitaServer)
-            data.put("Enviado", true)
-            base.update("visitas", data, "Id=?", arrayOf(idvisita.toString()))
+            val data = ContentValues().apply {
+                put("Idvisita", idvisitaServer)
+                put("Enviado", 1) // true = 1 en SQLite
+            }
+
+            db.update(
+                "visitas",
+                SQLiteDatabase.CONFLICT_REPLACE,
+                data,
+                "Id = ?",
+                arrayOf(idvisita.toString())
+            )
 
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
     }
 
     //FUNCION PARA OBTENER LA VISITA POR ID DEL CLIENTE
     fun obtenerVisita(idcliente: Int, context: Context): Visitas? {
-        val bd = funciones.getDataBase(context)
-        val base = bd.readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
             var visita: Visitas? = null
-            val cursor = base.rawQuery("SELECT * FROM visitas where Id_cliente=$idcliente", null)
+            val cursor = base.query("SELECT * FROM visitas where Id_cliente= ? ", arrayOf(idcliente))
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 visita = Visitas(
@@ -179,18 +185,15 @@ class VisitaController {
             return visita
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base!!.close()
         }
     }
 
     //OBTENER VISITAR POR ID
     fun obtenerVisitaPorID(idVisita: Int, context: Context): Visitas? {
-        val bd = funciones.getDataBase(context)
-        val base = bd.readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
             var visita: Visitas? = null
-            val cursor = base.rawQuery("SELECT * FROM visitas where id=$idVisita", null)
+            val cursor = base.query("SELECT * FROM visitas where id=?", arrayOf(idVisita))
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 visita = Visitas(
@@ -214,8 +217,6 @@ class VisitaController {
             return visita
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base!!.close()
         }
     }
 

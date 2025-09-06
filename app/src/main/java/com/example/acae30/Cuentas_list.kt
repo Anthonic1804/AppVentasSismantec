@@ -21,6 +21,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
+import androidx.core.content.edit
 
 class Cuentas_list : AppCompatActivity() {
     private var bd: Database? = null
@@ -120,22 +121,22 @@ class Cuentas_list : AppCompatActivity() {
 
     //FUNCION PARA MANTENER LA BUSQUEDA DEL CLIENTE
     private fun buscarCliente(busqueda : String){
-        val clientSearch = preferences!!.edit()
-        clientSearch.putString("busquedaCliente", busqueda)
-        clientSearch.apply()
+        preferences!!.edit {
+            putString("busquedaCliente", busqueda)
+        }
     }
 
     //FUNCION PARA ELIMINAR LA BUSQUEDA PERSISTENTE DEL CLIENTE
     private fun eliminarBusqueda(){
         val clientSearch = preferences!!.getString("busquedaCliente", "")
-        val deleteSearch = preferences!!.edit()
-        if(clientSearch != ""){
-            deleteSearch.remove("busquedaCliente")
+        preferences!!.edit {
+            if (clientSearch != "") {
+                remove("busquedaCliente")
+            }
+            if (vista == "abono") {
+                remove("vista")
+            }
         }
-        if(vista == "abono"){
-            deleteSearch.remove("vista")
-        }
-        deleteSearch.apply()
     }
 
     //BUSQUEDA DE CLIENTES DINAMICA
@@ -157,10 +158,11 @@ class Cuentas_list : AppCompatActivity() {
     } //obtiene los resultados de la busqueda
 
     private fun CountCuenta(idcliente: Int): Int {
-        val bd = bd!!.readableDatabase
+        val bd = funciones.obtenerInstancia(this@Cuentas_list).openHelper.readableDatabase
         try {
+            val consulta = "SELECT COUNT(*) FROM cuentas where Id_cliente=$idcliente AND status LIKE '%PENDIENTE%'"
             val cursor =
-                bd!!.rawQuery("SELECT COUNT(*) FROM cuentas where Id_cliente=$idcliente AND status LIKE '%PENDIENTE%'", null)
+                bd.query(consulta)
             val cuentas = 0
             return if (cursor.count > 0) {
                 cursor.count
@@ -170,8 +172,6 @@ class Cuentas_list : AppCompatActivity() {
             cursor.close()
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            bd.close()
         }
     } //revisa si tiene cuentas el cliente
 

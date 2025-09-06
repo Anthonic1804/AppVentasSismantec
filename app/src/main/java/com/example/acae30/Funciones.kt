@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import androidx.core.content.edit
+import com.example.acae30.database.AppDatabase
 
 
 class Funciones {
@@ -39,6 +40,8 @@ class Funciones {
     private var alert: AlertDialogo? = null
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+
+    private lateinit var db : AppDatabase
 
     //FUNCION PARA OBTENER UN TIMESTAMP
     fun getFechaHoraProceso(): String?{
@@ -293,5 +296,10 @@ class Funciones {
 //        }
 
         return listado
+    }
+
+    //OBTENER NUEVA INSTANCIA DE LA BD
+    fun obtenerInstancia(context: Context) : AppDatabase {
+        return AppDatabase.getInstance(context)
     }
 }

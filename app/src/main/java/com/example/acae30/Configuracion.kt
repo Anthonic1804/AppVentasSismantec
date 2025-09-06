@@ -38,7 +38,6 @@ class Configuracion : AppCompatActivity() {
     private var swlista: Switch? = null
     private var swminiatura: Switch? = null
     private var swSinExistencia: Switch? = null
-    private var dataBase: Database? = null
     private lateinit var btnBuscarUpdate : Button
     private var url: String? = null
     private var versionAppServer : String? = null
@@ -77,7 +76,6 @@ class Configuracion : AppCompatActivity() {
         btnGuardar = findViewById(R.id.btnupdate)
         atras = findViewById(R.id.imgbtnatras)
         alerta = AlertDialogo(this, this)
-        dataBase = Database(this)
 
         puntoVenta = findViewById(R.id.tvPuntoVenta)
 
@@ -111,29 +109,29 @@ class Configuracion : AppCompatActivity() {
         tvVersionActual.setText("ACAE APP Ver. $versionActual")
 
         swlista!!.setOnCheckedChangeListener { _, isChecked ->
-            val editor = preferencias!!.edit()
-            editor.remove("vistaInventario")
-            if (isChecked) {
-                swminiatura!!.isChecked = false
-                editor.putInt("vistaInventario", 2)
-            } else {
-                swminiatura!!.isChecked = true
-                editor.putInt("vistaInventario", 1)
+            preferencias!!.edit {
+                remove("vistaInventario")
+                if (isChecked) {
+                    swminiatura!!.isChecked = false
+                    putInt("vistaInventario", 2)
+                } else {
+                    swminiatura!!.isChecked = true
+                    putInt("vistaInventario", 1)
+                }
             }
-            editor.apply()
         }
 
         swminiatura!!.setOnCheckedChangeListener { _, isChecked ->
-            val editor = preferencias!!.edit()
-            editor.remove("vistaInventario")
-            if (isChecked) {
-                swlista!!.isChecked = false
-                editor.putInt("vistaInventario", 1)
-            } else {
-                swlista!!.isChecked = true
-                editor.putInt("vistaInventario", 2)
+            preferencias!!.edit {
+                remove("vistaInventario")
+                if (isChecked) {
+                    swlista!!.isChecked = false
+                    putInt("vistaInventario", 1)
+                } else {
+                    swlista!!.isChecked = true
+                    putInt("vistaInventario", 2)
+                }
             }
-            editor.apply()
         }
 
         btnBuscarUpdate.setOnClickListener {
@@ -306,10 +304,10 @@ class Configuracion : AppCompatActivity() {
 
 
                                     if (res.getInt("error") > 0) {
-                                        val editor = preferencias!!.edit()
-                                        editor!!.putInt("puerto", puerto.toInt())
-                                        editor.putString("ip", ip)
-                                        editor.commit()
+                                        preferencias!!.edit(commit = true) {
+                                            this!!.putInt("puerto", puerto.toInt())
+                                            putString("ip", ip)
+                                        }
 
                                         alerta!!.dismisss()
                                         val alert: Snackbar = Snackbar.make(vista!!, res.getString("response"), Snackbar.LENGTH_LONG)
@@ -469,10 +467,10 @@ class Configuracion : AppCompatActivity() {
 
     //FUNCION PARA ACTUALIZAR LA VERSION ACTUAL DE LA APP
     private fun updateVersionApp(versionApp:String){
-        val editor = preferencias!!.edit()
-        editor.remove("versionActualApp")
-        editor.putFloat("versionActualApp", versionApp.toFloat())
-        editor.apply()
+        preferencias!!.edit {
+            remove("versionActualApp")
+            putFloat("versionActualApp", versionApp.toFloat())
+        }
     }
 
     //FUNCION PARA DESCARGAR Y EJECUTAR LA INSTALACION DE LA ACTUALIZACION

@@ -34,7 +34,6 @@ class PreciosAutorizados : AppCompatActivity() {
     private lateinit var rvTokenResgistrados : RecyclerView
     private lateinit var lblNoData : TextView
 
-    private var database: Database? = null
     private var alert: AlertDialogo? = null
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
@@ -55,7 +54,6 @@ class PreciosAutorizados : AppCompatActivity() {
         rvTokenResgistrados = findViewById(R.id.rvTokenRegistrados)
         lblNoData = findViewById(R.id.lblNoData)
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        database = Database(this)
         alert = AlertDialogo(this, this)
 
         lblNoData.visibility = View.GONE

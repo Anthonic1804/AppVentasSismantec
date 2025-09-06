@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.ContentValues
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.os.Environment
 import android.os.StrictMode
@@ -60,11 +61,11 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import androidx.core.content.edit
 
 class Pedido : AppCompatActivity() {
 
     private var funciones: Funciones? = null
-    private var bd: Database? = null
     private var reciclado: RecyclerView? = null
     private var lienzo: ConstraintLayout? = null
     private var btnsincronizar: Button? = null
@@ -111,16 +112,15 @@ class Pedido : AppCompatActivity() {
         StrictMode.setThreadPolicy(policy)
 
         funciones = Funciones()
-        bd = Database(this)
         reciclado = findViewById(R.id.recicler)
 
 
         lienzo = findViewById(R.id.lienzo)
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-            val editor = preferencias.edit()
-            editor.putBoolean("busqueda", true)
-            editor.putBoolean("visita", true)
-            editor.apply()
+            preferencias.edit {
+                putBoolean("busqueda", true)
+                putBoolean("visita", true)
+            }
 
             val intento = Intent(this, Clientes::class.java)
             startActivity(intento)
@@ -222,9 +222,9 @@ class Pedido : AppCompatActivity() {
     }
 
     private fun GetPedido(): ArrayList<Pedidos> {
-        val base = bd!!.writableDatabase
+        val base = funciones!!.obtenerInstancia(this@Pedido).openHelper.readableDatabase
         try {
-            val cursor = base!!.rawQuery(
+            val cursor = base.query(
                 "SELECT Id," +
                         " Id_cliente," +
                         " Nombre_cliente," +
@@ -243,8 +243,7 @@ class Pedido : AppCompatActivity() {
                         "Iva_percibido, " +
                         "pedido_dte, " +
                         "pedido_dte_error FROM pedidos " +
-                        "order by id desc",
-                null
+                        "order by id desc"
             )
             var lista = ArrayList<Pedidos>()
             if (cursor.count > 0) {
@@ -286,8 +285,6 @@ class Pedido : AppCompatActivity() {
             return lista
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
 
     }//obtiene el listado de los pedidos
@@ -424,9 +421,9 @@ class Pedido : AppCompatActivity() {
     }
     //FUNCION PARA CARGAR LOS PEDIDOS ENVIADOS EN LA BD
     private fun cargarPedidos(json: JSONArray, view: View) {
-        val bd = bd!!.writableDatabase
+        val bd = funciones!!.obtenerInstancia(this@Pedido).openHelper.writableDatabase
         try {
-            bd!!.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
+            bd.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
             bd.delete("reporteTemp", null, null) //LIMPIANDO LA TABLA VENTASTEMP
 
             for (i in 0 until json.length()) {
@@ -436,14 +433,13 @@ class Pedido : AppCompatActivity() {
                 valor.put("Sucursal", funciones!!.validateJsonIsnullString(dato, "sucursal"))
                 valor.put("Total", funciones!!.validate(dato.getString("total").toFloat()))
 
-                bd.insert("reporteTemp", null, valor) //INSERTANDO EN VENTASDETALLE
+                bd.insert("reporteTemp", SQLiteDatabase.CONFLICT_REPLACE, valor) //INSERTANDO EN VENTASDETALLE
             } //FINALIZANDO ITERACION FOR
             bd.setTransactionSuccessful() //TRANSACCION COMPLETA
         } catch (e: Exception) {
             throw Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
 
             generarPDF()
             //verificarPermisos(view)
@@ -594,9 +590,9 @@ class Pedido : AppCompatActivity() {
     }
     //FUNCION PARA OBTENER LOS DATOS PARA EL REPORTE
     private fun getReporte(): ArrayList<DatosReporteJSON> {
-        val base = bd!!.writableDatabase
+        val base = funciones!!.obtenerInstancia(this@Pedido).openHelper.readableDatabase
         try {
-            val cursor = base.rawQuery("SELECT *  FROM reporteTemp", null)
+            val cursor = base.query("SELECT *  FROM reporteTemp")
             val lista = ArrayList<DatosReporteJSON>()
             if (cursor.count > 0) {
                 cursor.moveToFirst()
@@ -613,8 +609,6 @@ class Pedido : AppCompatActivity() {
             return lista
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base!!.close()
         }
 
     }

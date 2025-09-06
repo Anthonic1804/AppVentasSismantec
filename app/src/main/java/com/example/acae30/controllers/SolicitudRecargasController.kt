@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import androidx.core.content.contentValuesOf
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
@@ -156,19 +157,17 @@ class SolicitudRecargasController {
     }
 
     private fun limpiarInventariosolicitud(context: Context) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("DELETE FROM inventario_solicitud_carga")
         }catch (e:Exception){
             println("ERROR AL LIMPIAR LA TBL INVENTARIO SOLICITUD CARGA -> ${e.message}")
-        }finally {
-            bd.close()
         }
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
     private fun almacenarInventarioEnSQLite(json: JSONArray, context: Context) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
         try {
             bd.beginTransaction()
@@ -206,20 +205,19 @@ class SolicitudRecargasController {
                 data.put("fechaInventario", LocalDate.now().toString())
 
 
-                bd.insert("inventario_solicitud_carga", null, data)
+                bd.insert("inventario_solicitud_carga", SQLiteDatabase.CONFLICT_REPLACE, data)
             }
             bd.setTransactionSuccessful()
         } catch (e: Exception) {
             println("ERROR AL ALMACENAR EL INVENTARIO DE SOLICUTD EN LA TABLA" + e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }
 
     //FUNCION PARA OBTENER LA INFORMACION DEL PRODUCTO POR CODIGO O POR NOMBRE
     fun obtenerInformacionProductoPorString(context: Context, busqueda: String): ArrayList<Inventario>{
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val lista = ArrayList<Inventario>()
 
         val query: String = if(busqueda != ""){
@@ -229,7 +227,7 @@ class SolicitudRecargasController {
         }
 
         try {
-            val cursor = base.rawQuery(query, null)
+            val cursor = base.query(query)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 do {
@@ -260,15 +258,13 @@ class SolicitudRecargasController {
             cursor.close()
         }catch (e:Exception){
             println("ERROR AL REALIZAR LA BUSQUEDA EN INVENTARIO -> ${e.message}")
-        }finally {
-            base.close()
         }
         return lista
     }
 
     //FUNCION PARA CREAR UNA NUEVA SOLICITUD
     fun guardarNuevaSolicitud(context: Context , solicitud: SolicitudCarga) : Int{
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         var idSolicitud : Int = 0
         try {
             bd.beginTransaction()
@@ -276,13 +272,12 @@ class SolicitudRecargasController {
             data.put("Id_Empleado", solicitud.idEmpleado)
             data.put("Empleado", solicitud.empleado)
             data.put("Fecha", solicitud.fecha.toString())
-            idSolicitud = bd.insert("solicitudCarga", null, data).toInt()
+            idSolicitud = bd.insert("solicitudCarga", SQLiteDatabase.CONFLICT_REPLACE, data).toInt()
             bd.setTransactionSuccessful()
         }catch (e:Exception){
             println("ERROR AL INGRESAR LA NUEVA SOLICITUD -> ${e.message}")
         }finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
         return  idSolicitud
     }
@@ -291,10 +286,12 @@ class SolicitudRecargasController {
     fun validarProductoDetalle(context: Context, detalle: SolicitudCargaDetalle) : Boolean{
         var encontrado : Boolean = false
 
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
-            val cursor = bd.rawQuery("SELECT Id_Producto FROM solicitudCargaDetalle WHERE Id_producto = ${detalle.idProducto} " +
-                    "AND Id_solicitud_carga = ${detalle.idSolicitudCarga}", null)
+            val consulta = "SELECT Id_Producto FROM solicitudCargaDetalle WHERE Id_producto = ${detalle.idProducto} " +
+                    "AND Id_solicitud_carga = ${detalle.idSolicitudCarga}"
+
+            val cursor = bd.query(consulta)
             if(cursor.count > 0){
                 encontrado = true
             }
@@ -302,8 +299,6 @@ class SolicitudRecargasController {
         }catch (e : Exception){
             println("ERROR AL BUSCAR EL PRODUCTO EN DETALLE DE CARGA -> ${e.message}")
             encontrado = false
-        }finally {
-            bd.close()
         }
 
         return encontrado
@@ -312,7 +307,7 @@ class SolicitudRecargasController {
     //FUNCION PARA INSERTAR EL DETALLE DE UNA SOLICITUD
     fun insertarDetalleSolicitud(context: Context, detalle : SolicitudCargaDetalle) : Boolean{
         var registrado : Boolean = false
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.beginTransaction()
             val data = ContentValues()
@@ -326,7 +321,7 @@ class SolicitudRecargasController {
             data.put("Precio_u", detalle.precio)
             data.put("Precio_u_iva", detalle.precio_iva)
             data.put("Total", detalle.total)
-            bd.insert("solicitudCargaDetalle", null, data)
+            bd.insert("solicitudCargaDetalle", SQLiteDatabase.CONFLICT_REPLACE, data)
             bd.setTransactionSuccessful()
             registrado = true
         }catch (e:Exception){
@@ -334,7 +329,6 @@ class SolicitudRecargasController {
             registrado = false
         }finally {
             bd.endTransaction()
-            bd.close()
         }
         return registrado
     }
@@ -342,7 +336,7 @@ class SolicitudRecargasController {
     //FUNCION PARA ACTUALIZAR LA CANTIDAD DEL PRODUCTO EN DETALLE
     fun actualizarCantidadProductoDetalle(context: Context, detalle: SolicitudCargaDetalle) : Boolean{
         var actualizado : Boolean = false
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
         try{
             bd.execSQL("UPDATE solicitudCargaDetalle SET Cantidad = (Cantidad + ${detalle.cantidad}) " +
@@ -353,8 +347,6 @@ class SolicitudRecargasController {
             println("ERROR AL ACTUALIZAR LA CANTIDAD DE PRODUCTO EN DETALLE -> ${e.message}")
 
             actualizado = false
-        }finally {
-            bd.close()
         }
 
         return actualizado
@@ -469,36 +461,33 @@ class SolicitudRecargasController {
 
     //Funcion actualizar ruta de solicitud
     fun actualizarRuta(context: Context, idRuta: Int, ruta: String, idSolicitud: Int){
-        val bd = funciones .getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("UPDATE solicitudCarga SET Id_ruta = $idRuta, ruta = '$ruta' WHERE id = $idSolicitud")
         }catch (e:Exception){
             println("ERROR AL ACTUALIZAR LA RUTA DE LA SOLICITUD -> ${e.message}")
-        }finally {
-            bd.close()
         }
     }
 
     //FUNCION PARA ELIMINAR UNA SOLICITUD Y SU DETALLE
     fun eliminarSolicitud(context: Context, id: Int){
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("DELETE FROM solicitudCarga WHERE id=$id")
             bd.execSQL("DELETE FROM solicitudCargaDetalle WHERE Id_solicitud_carga=$id")
         }catch (e:Exception){
             println("ERROR AL ELIMINAR LA NUEVA SOLICITUD -> ${e.message}")
-        }finally {
-            bd.close()
         }
     }
 
     //FUNCION PARA OBTENER EL ENCABEZADO DE LA SOLICITUD
     private fun obtenerEncabezadoSolicitud(context: Context, idSolicitud: Int): SolicitudCargaDTO? {
 
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var solicitud : SolicitudCargaDTO? = null
         try {
-            val cursor = bd.rawQuery("SELECT * FROM solicitudCarga WHERE Id = $idSolicitud", null)
+            val consulta = "SELECT * FROM solicitudCarga WHERE Id = $idSolicitud"
+            val cursor = bd.query(consulta)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 solicitud = SolicitudCargaDTO(
@@ -516,18 +505,17 @@ class SolicitudRecargasController {
             }
         }catch (e: Exception){
             println("ERROR AL OBTENER EL ENCABEZADO DE LA SOLICITUDA -> ${e.message}")
-        }finally {
-            bd.close()
         }
         return solicitud
     }
 
     //FUNCION PARA MOSTRAR EL DETALLE DE LA SOLICITUD
     fun obtenerDetalleSolicitud(context: Context, idSolicitud : Int) : ArrayList<SolicitudCargaDetalle>?{
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val detalleSolicitud = ArrayList<SolicitudCargaDetalle>()
         try{
-            val cursor = bd.rawQuery("SELECT * FROM solicitudCargaDetalle WHERE Id_solicitud_carga = $idSolicitud", null)
+            val consulta = "SELECT * FROM solicitudCargaDetalle WHERE Id_solicitud_carga = $idSolicitud"
+            val cursor = bd.query(consulta)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -551,15 +539,13 @@ class SolicitudRecargasController {
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER EL DETALLE DE LA SOLICITUD -> ${e.message}")
-        }finally {
-            bd.close()
         }
         return detalleSolicitud
     }
 
     //FUNCION PARA ACTUALIZAR EL ESTADO DE LA SOLICITUD
     fun actualizarEstadoSolicitud(context: Context, idSolicitud : Int, idServidor : Int) : Boolean{
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         var actualizado : Boolean = false
 
         try {
@@ -568,18 +554,16 @@ class SolicitudRecargasController {
         }catch (e:Exception){
             actualizado = false
             println("ERROR AL ACTUALIZAR EL ESTADO DE LA SOLICITUD -> ${e.message}")
-        }finally {
-            bd.close()
         }
         return actualizado
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE SOLICITUDES
     fun obtenerListadosolicitudes(context: Context) : ArrayList<SolicitudCarga>{
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listaSolicitud = ArrayList<SolicitudCarga>()
         try {
-            val cursor = bd.rawQuery("SELECT * FROM solicitudCarga ORDER BY id DESC LIMIT 20", null)
+            val cursor = bd.query("SELECT * FROM solicitudCarga ORDER BY id DESC LIMIT 20")
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -601,8 +585,6 @@ class SolicitudRecargasController {
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER EL LISTADO DE SOLICITUDES -> ${e.message}")
-        }finally {
-            bd.close()
         }
         return listaSolicitud
     }

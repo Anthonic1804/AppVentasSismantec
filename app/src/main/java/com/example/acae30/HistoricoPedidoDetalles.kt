@@ -24,14 +24,14 @@ class HistoricoPedidoDetalles : AppCompatActivity() {
     private var total: Float = 0f
     private var vendedor: String = ""
 
-    private var base: Database? = null
+    private var funciones = Funciones()
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHistoricoPedidoDetallesBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        base = Database(this@HistoricoPedidoDetalles)
 
         idVentas = intent.getIntExtra("id_ventas", 0)
         correlativo = intent.getIntExtra("correlativo", 0)
@@ -68,11 +68,12 @@ class HistoricoPedidoDetalles : AppCompatActivity() {
 
     //FUNCION PARA OBTENER EL DETALLE DE LA VENTA TEMP
     private fun obtenerDetalle(id: Int): ArrayList<VentasDetalleTemp>{
-        val database = base!!.readableDatabase
+        val database = funciones.obtenerInstancia(this@HistoricoPedidoDetalles).openHelper.readableDatabase
         val lista = ArrayList<VentasDetalleTemp>()
 
         try {
-            val cursor = database.rawQuery("SELECT Producto, Precio_u_iva, Cantidad FROM ventasDetalleTemp WHERE Id_venta = '$id' ", null)
+            val consulta = "SELECT Producto, Precio_u_iva, Cantidad FROM ventasDetalleTemp WHERE Id_venta = '$id' "
+            val cursor = database.query(consulta)
             if (cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -89,8 +90,6 @@ class HistoricoPedidoDetalles : AppCompatActivity() {
             }
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            database!!.close()
         }
 
         return lista

@@ -19,8 +19,6 @@ import kotlinx.coroutines.withContext
 class ClientesDetalle : AppCompatActivity() {
 
     private lateinit var binding: ActivityClientesDetalleBinding
-
-    private var bd: Database? = null
     private var funciones: Funciones? = null
     private var nombreCliente : String = ""
     private var direccionCliente : String = ""
@@ -45,7 +43,6 @@ class ClientesDetalle : AppCompatActivity() {
         binding = ActivityClientesDetalleBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        bd = Database(this)
         idcliente = intent.getIntExtra("idcliente", 0)
         println("ID CLIENTE SELECCIONADO -> $idcliente")
 

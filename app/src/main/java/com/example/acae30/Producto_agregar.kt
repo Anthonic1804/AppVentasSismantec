@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
@@ -50,7 +51,6 @@ import androidx.core.content.edit
 class Producto_agregar : AppCompatActivity() {
     private var btnatras: ImageButton? = null
     private var idproducto: Int? = 0
-    private var db: Database? = null
     private var btnagregar: Button? = null
     private var alert: AlertDialogo? = null
     private var txtcodigo: TextView? = null
@@ -154,7 +154,6 @@ class Producto_agregar : AppCompatActivity() {
         getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
        // println("posicion enviada desde detalle: $getSucursalPosition")
 
-        db = Database(this)
         alert = AlertDialogo(this, this)
         txtcodigo = findViewById(R.id.txtcodigo)
         txtdescripcion = findViewById(R.id.txtdescripcion)
@@ -679,7 +678,7 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     private fun AddDetallePedido(esPrecioEditado: Boolean, bonificado:Int): Int {
-        val base = db!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
         var vPrecio = precio
         var vPrecio_iva = precio_iva
 
@@ -719,12 +718,10 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("Id_Inventario_Precios", idEscala)
             detalle.put("Codigo_de_barra", datosProducto!!.codigo_de_barra)
 
-            val idpedidodetalle = base.insert("detalle_pedidos", null, detalle)
+            val idpedidodetalle = base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
 
-            val cursor = base.rawQuery(
-                "SELECT SUM(Total_iva) FROM detalle_pedidos where Id_pedido=$idpedido",
-                null
-            )
+            val sql = "SELECT SUM(Total_iva) FROM detalle_pedidos where Id_pedido=$idpedido"
+            val cursor = base.query(sql)
             var total = 0.toFloat()
             if (cursor.count > 0) {
                 cursor.moveToFirst()
@@ -733,7 +730,7 @@ class Producto_agregar : AppCompatActivity() {
                 //if(total > 0){
                 val t = ContentValues()
                 t.put("Total", total)
-                base.update("pedidos", t, "Id=?", arrayOf(idpedido.toString()))
+                base.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?", arrayOf(idpedido.toString()))
                 //}else{
                 //throw Exception("Error en el total")
                 //}
@@ -746,7 +743,6 @@ class Producto_agregar : AppCompatActivity() {
             throw Exception(e.message)
         } finally {
             base.endTransaction()
-            base.close()
 
             preferencias!!.edit {
                 if (FacturaExportacion) {
@@ -767,10 +763,11 @@ class Producto_agregar : AppCompatActivity() {
     }//anula el boton atras
 
     private fun getPedidodetalle(id: Int): DetallePedido? {
-        val base = db!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
         try {
             var vista: DetallePedido? = null
-            val cursor = base.rawQuery("SELECT * FROM detalle_producto where Id=$id", null)
+            val sql = "SELECT * FROM detalle_producto where Id=$id"
+            val cursor = base.query(sql)
 
             if (cursor.count > 0) {
                 cursor.moveToFirst()
@@ -805,14 +802,12 @@ class Producto_agregar : AppCompatActivity() {
             return vista
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base!!.close()
         }
 
     } //obtiene el detalle del pedido
 
     private fun updateDetalle(iddetalle: Int?, esPrecioEditado: Boolean, bonificado: Int) {
-        val base = db!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
         try {
             base.beginTransaction()
             val detalle = ContentValues()
@@ -835,15 +830,14 @@ class Producto_agregar : AppCompatActivity() {
 
             val idpedidodetalle = base.update(
                 "detalle_pedidos",
+                SQLiteDatabase.CONFLICT_REPLACE,
                 detalle,
                 "Id=?",
                 arrayOf(iddetalle.toString())
             )
 
-            val cursor = base.rawQuery(
-                "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idpedido",
-                null
-            )
+            val sql = "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idpedido"
+            val cursor = base.query(sql)
 
             var total = 0.toFloat()
             if (cursor.count > 0) {
@@ -853,7 +847,7 @@ class Producto_agregar : AppCompatActivity() {
                 //if(total > 0){
                 val t = ContentValues()
                 t.put("Total", total)
-                base.update("pedidos", t, "Id=?", arrayOf(idpedido.toString()))
+                base.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?", arrayOf(idpedido.toString()))
 //                }else{
 //                    throw Exception("Error en el total")
 //                }
@@ -865,19 +859,17 @@ class Producto_agregar : AppCompatActivity() {
             throw Exception(e.message)
         } finally {
             base.endTransaction()
-            base.close()
         }
     } //ACTUALIZA EL DETALLE DEL PRODUCTO
 
     private fun deleteDetalle(iddetalle: Int?) {
-        val base = db!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
         try {
             base.beginTransaction()
             base.execSQL("DELETE FROM detalle_pedidos where Id=$iddetalle") //elimina
-            val cursor = base.rawQuery(
-                "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idpedido",
-                null
-            )
+
+            val sql = "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idpedido"
+            val cursor = base.query(sql)
             var total = 0.toFloat()
             if (cursor.count > 0) {
                 cursor.moveToFirst()
@@ -886,7 +878,7 @@ class Producto_agregar : AppCompatActivity() {
 //                if(total > 0){
                 val t = ContentValues()
                 t.put("Total", total)
-                base.update("pedidos", t, "Id=?", arrayOf(idpedido.toString()))
+                base.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?", arrayOf(idpedido.toString()))
 //                }else{
 //                    throw Exception("Error en el total")
 //                }
@@ -898,17 +890,14 @@ class Producto_agregar : AppCompatActivity() {
             throw Exception(e.message)
         } finally {
             base.endTransaction()
-            base.close()
         }
     }
 
     private fun validateProduct(idproducto: Int): Int {
-        val base = db!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
         try {
-            val cursor = base.rawQuery(
-                "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto",
-                null
-            )
+            val sql = "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto"
+            val cursor = base.query(sql)
             if (cursor.count > 0) {
                 var i = 0
                 cursor.moveToFirst()
@@ -921,9 +910,6 @@ class Producto_agregar : AppCompatActivity() {
 
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-
-            base.close()
         }
     }//valida si ya existe el producto en el detalle
 
@@ -1348,13 +1334,15 @@ class Producto_agregar : AppCompatActivity() {
 
     //SELECCIONANDO ESCALA PARA EDITAR PRODUCTO EN DETALL
     private fun seleccionarCantidadenEscala(idPedido: Int, idProducto: Int): Int{
-        val db = db!!.readableDatabase
+        val db = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
         var cantidadEscala = 0
         try {
-            val cursor = db.rawQuery("SELECT IP.Cantidad FROM detalle_pedidos AS DP " +
+            val sql = "SELECT IP.Cantidad FROM detalle_pedidos AS DP " +
                     "INNER JOIN inventario_precios AS IP " +
                     "ON DP.Id_Inventario_Precios = IP.Id " +
-                    "WHERE DP.Id_pedido=$idPedido AND DP.Id_producto=$idProducto", null)
+                    "WHERE DP.Id_pedido=$idPedido AND DP.Id_producto=$idProducto"
+
+            val cursor = db.query(sql)
 
             cantidadEscala = if(cursor.count > 0){
                 cursor.moveToFirst()

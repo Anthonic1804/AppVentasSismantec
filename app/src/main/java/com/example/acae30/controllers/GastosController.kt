@@ -3,6 +3,7 @@ package com.example.acae30.controllers
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
 import com.example.acae30.modelos.Abono
 import com.example.acae30.modelos.GastoModel
@@ -124,7 +125,7 @@ class GastosController {
     //FUNCION PARA INSERTAR LOS ABONOS EN SQLITE
     private fun insertarGastoSQLite(context: Context, gasto : GastoModel, idGastoServer: Int) : Boolean{
         var guardado : Boolean = false
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.beginTransaction()
 
@@ -143,25 +144,25 @@ class GastosController {
             data.put("gastoEnviado", 1)
             data.put("idServidor", idGastoServer)
 
-            bd.insert("gastos", null, data)
+            bd.insert("gastos", SQLiteDatabase.CONFLICT_REPLACE, data)
             bd.setTransactionSuccessful()
             guardado = true
         }catch (e:Exception){
             println("ERROR: INSERTAR EL GASTO -> ${e.message}")
         }finally {
             bd.endTransaction()
-            bd.close()
         }
         return guardado
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE GASTOS POR DIA
     fun obtenerGastosSQLite(context: Context) : ArrayList<GastoModel>{
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listadoGastos = ArrayList<GastoModel>()
         val fecha = funciones.obtenerFecha()
         try{
-            val cursor = bd.rawQuery("SELECT * FROM gastos WHERE fecha = '$fecha'", null)
+            val consulta = "SELECT * FROM gastos WHERE fecha = '$fecha'"
+            val cursor = bd.query(consulta)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -184,8 +185,6 @@ class GastosController {
             cursor.close()
         }catch (e : Exception){
             funciones.mensaje(context,"ERROR: OBTENER LOS GASTOS -> ${e.message}")
-        }finally {
-            bd.close()
         }
         return listadoGastos
     }

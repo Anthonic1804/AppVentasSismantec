@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import com.example.acae30.Detallepedido
 import com.example.acae30.Funciones
@@ -35,18 +36,6 @@ class ClientesController {
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
 
-    /*
-    * FUNCIONES PARA OBTENER LA INFORMACION DEL CLIENTE
-    * DESDE EL SERVIDOR SQL
-    * */
-
-    //FUNCION PARA OBTENER LA INFORMACION DE LOS CLIENTES
-    fun obtenerClientesServidor(context: Context){
-        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
-
-
-    }
 
     //FUNCION PARA OBTENER LOS PRECIOS PERSONALIZADOS
     suspend fun obtenerPreciosPersonalizados(context: Context){
@@ -160,7 +149,7 @@ class ClientesController {
 
     //FUNCION PARA LAMACENAR LOS PRECIOS PERSONALIZADOS EN SQLITE
     private fun almacenarPrecioPersonalizados(json: JSONArray, context: Context){
-        val base = funciones.getDataBase(context).writableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             base.beginTransaction()
             for (i in 0 until json.length()){
@@ -173,31 +162,24 @@ class ClientesController {
                 valor.put("precio_p_iva", funciones.validateJsonIsNullFloat(datos, "precio_p_iva"))
                 valor.put("bonificado", funciones.validateJsonIsNullFloat(datos, "bonificado"))
 
-                base.insert("cliente_precios", null, valor)
+                base.insert("cliente_precios", SQLiteDatabase.CONFLICT_REPLACE, valor)
             }
             base.setTransactionSuccessful()
         }catch (e:Exception){
             println("ERROR AL INSERTAR LOS PRECIOS PERSONALIZADOS -> ${e.message}")
         }finally {
             base.endTransaction()
-            base.close()
         }
     }
-
-    /*
-    * FIN DE LAS FUNCIONES DE OBTENER INFORMACION DESDE
-    * EL SERVIDOR
-    * */
-
 
     //FUNCION PARA OBTENER LOS DATOS DEL CLIENTE POR ID
     fun obtenerInformacionCliente(context: Context, idCliente: Int): Cliente?{
 
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var datosCliente: Cliente? = null
 
         try {
-            val cursor = base.rawQuery("SELECT Id," +
+            val cursor = base.query("SELECT Id," +
                     "Codigo," +
                     "Cliente," +
                     "Dui," +
@@ -240,7 +222,7 @@ class ClientesController {
                     "DTECodGiro, " +
                     "DTEDistrito, " +
                     "DTECodDistrito FROM clientes " +
-                    "WHERE id=$idCliente", null)
+                    "WHERE id=?", arrayOf(idCliente))
 
             if (cursor.count > 0) {
                 cursor.moveToFirst()
@@ -294,8 +276,6 @@ class ClientesController {
             cursor.close()
         }catch (e: Exception){
             println("ERROR: NO SE ENCONTRO EL CLIENTE -> ${e.message}")
-        }finally {
-            base.close()
         }
 
         return datosCliente
@@ -304,7 +284,7 @@ class ClientesController {
     //FUNCION PARA OBTENER TODOS LOS CLIENTES
     fun obtenerListaClientes(context: Context, busqueda: String, rutaClientes: String): ArrayList<Cliente>{
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listaClientes = ArrayList<Cliente>()
         val consultaSql: String
         val argumentos: Array<String>
@@ -346,7 +326,7 @@ class ClientesController {
         }
 
         try {
-            val consulta = base.rawQuery(consultaSql, argumentos)
+            val consulta = base.query(consultaSql, argumentos)
 
             if (consulta.count > 0) {
                 consulta.moveToFirst()
@@ -403,8 +383,6 @@ class ClientesController {
             }
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
 
         return listaClientes
@@ -473,16 +451,19 @@ class ClientesController {
 
     //FUNCION PARA ACTUALIZAR EL PAGARE DE FORMA LOCAL
     private fun actualizarPagareFirmadoSqLite(context: Context, idCliente: Int){
-        val base = funciones.getDataBase(context).writableDatabase
-        base.beginTransaction()
-        val data = ContentValues()
-        data.put("Firmar_pagare_app", 1)
+        val db = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
-        base.update("clientes", data, "Id=${idCliente}", null)
+        try {
+            db.beginTransaction()
 
-        base.setTransactionSuccessful()
-        base.endTransaction()
-        base.close()
+            db.execSQL("UPDATE Clientes SET Firmar_pagare_app= 1 WHERE Id = ?", arrayOf(idCliente))
+
+            db.setTransactionSuccessful()
+        } catch (e: Exception) {
+            println("Error al actualizar pagaré: ${e.message}")
+        } finally {
+            db.endTransaction()
+        }
     }
 
     //FUNCION DE REDIRECCION CUDNO SE VERIFICAR SI EL PAGARE ES OBLIGATORIO O NO
@@ -526,7 +507,7 @@ class ClientesController {
     //FUNCION PARA OBTENER EL PRECIO PERSONALIZADO POR ID CLIENTE E ID PRODUCTO
     fun obtenerPrecioPersoCliente(idCliente: Int, idProducto: Int, context: Context, facExpo: Boolean) : Float{
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var precioIva = 0f
         var consulta = ""
 
@@ -538,7 +519,7 @@ class ClientesController {
         }
 
         try {
-            val cursor = base.rawQuery(consulta, null)
+            val cursor = base.query(consulta)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 precioIva = cursor.getFloat(0)
@@ -546,8 +527,6 @@ class ClientesController {
             cursor.close()
         }catch (e:Exception){
             println("ERROR AL BUSCAR EL PRECIO PERSONALIZADO -> ${e.message}")
-        }finally {
-            base.close()
         }
         return precioIva
     }
@@ -555,12 +534,13 @@ class ClientesController {
     //FUNCION PARA OBTENER LAS BONIFICACIONES PERSONALIDAS POR ID CLIENTE E ID PRODUCTO
     fun obtenerBonificacionCliente(idCliente: Int, idProducto: Int, context: Context) : Float{
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var bonificacion = 0f
 
         try {
-            val cursor = base.rawQuery("SELECT bonificado FROM cliente_precios " +
-                    "WHERE id_cliente = $idCliente AND id_inventario = $idProducto", null)
+            val consulta = "SELECT bonificado FROM cliente_precios " +
+                    "WHERE id_cliente = $idCliente AND id_inventario = $idProducto"
+            val cursor = base.query(consulta)
 
             if(cursor.count > 0){
                 cursor.moveToFirst()
@@ -569,8 +549,6 @@ class ClientesController {
             cursor.close()
         }catch (e:Exception){
             println("ERROR AL BUSCAR LA BONIFICACIONI PERSONALIZADA ->  ${e.message}")
-        }finally {
-            base.close()
         }
         return bonificacion
     }
@@ -702,9 +680,9 @@ class ClientesController {
 
     //FUNINON PARA REGISTRAR EL NUEVO CLIENTE EN SLITE
     private fun registrarClienteDataBase(cliente: Cliente, idCliente: Int, codigo: String, context: Context) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            bd!!.beginTransaction()
+            bd.beginTransaction()
 
             val data = ContentValues()
             data.put("Id", idCliente)
@@ -759,22 +737,21 @@ class ClientesController {
             data.put("DTEDistrito", funciones.validate(cliente.DTEDistrito))
             data.put("DTECodDistrito", funciones.validate(cliente.DTECodDistrito))
 
-            bd.insert("clientes", null, data)
+            bd.insert("clientes", SQLiteDatabase.CONFLICT_REPLACE, data)
             bd.setTransactionSuccessful()
 
         } catch (e: Exception) {
             println("ERROR AL REGISTRAR EL CLIENTE EN SQLITE -> " + e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }
 
     //FUNINON PARA ACTUALIZAR EL NUEVO CLIENTE EN SLITE
     private fun actualizarClienteDataBase(cliente: Cliente, idCliente: Int, context: Context) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            bd!!.beginTransaction()
+            bd.beginTransaction()
 
             val data = ContentValues()
             data.put("Id", idCliente)
@@ -828,15 +805,14 @@ class ClientesController {
             data.put("DTEDistrito", funciones.validate(cliente.DTEDistrito))
             data.put("DTECodDistrito", funciones.validate(cliente.DTECodDistrito))
 
-            bd.update("clientes", data, "Id = ?", arrayOf(idCliente.toString()))
+            bd.update("clientes", SQLiteDatabase.CONFLICT_REPLACE, data,"Id = ?", arrayOf(idCliente.toString()))
 
             bd.setTransactionSuccessful()
 
         } catch (e: Exception) {
             println("ERROR AL REGISTRAR EL CLIENTE EN SQLITE -> " + e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }
 

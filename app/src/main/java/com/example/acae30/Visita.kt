@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.database.sqlite.SQLiteDatabase
 import android.location.Location
 import android.os.Bundle
 import android.os.StrictMode
@@ -36,6 +37,8 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import java.sql.SQLXML
+import androidx.core.content.edit
 
 
 class Visita : AppCompatActivity() {
@@ -101,12 +104,10 @@ class Visita : AppCompatActivity() {
         verificarClienteMora()
 
         if (idvisitaGLOBAL!! > 0) {
-            val base = bd!!.readableDatabase
+            val base = funciones.obtenerInstancia(this@Visita).openHelper.readableDatabase
             try {
-                val cursor = base!!.rawQuery(
-                    "select c.codigo as codigo, v.Id as idvisita, c.id as idcliente, c.cliente as nombre from visitas v inner join clientes c on v.id_cliente = c.Id where v.id = ${idvisitaGLOBAL}",
-                    null
-                )
+                val consulta = "select c.codigo as codigo, v.Id as idvisita, c.id as idcliente, c.cliente as nombre from visitas v inner join clientes c on v.id_cliente = c.Id where v.id = ${idvisitaGLOBAL}"
+                val cursor = base.query(consulta)
                 if (cursor.count > 0) {
                     cursor.moveToFirst()
                     codigo = cursor.getString(0)
@@ -121,8 +122,6 @@ class Visita : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 throw Exception(e.message)
-            } finally {
-                base.close()
             }
         } else {
             binding.txtcodigo.text = codigo
@@ -204,9 +203,9 @@ class Visita : AppCompatActivity() {
     }
     //FUNCION PARA CREAR LA PROPIEDAD EN LAS SHAREDPREFERENCIAS
     private fun clienteMoroso(){
-        val agregar = preferencias.edit()
-        agregar.putInt("clienteMoroso", clienteMoroso)
-        agregar.apply()
+        preferencias.edit {
+            putInt("clienteMoroso", clienteMoroso)
+        }
     }
 
     // Manejar el resultado de la solicitud de permisos
@@ -226,10 +225,10 @@ class Visita : AppCompatActivity() {
     //FUNCION PARA ELIMINAR LAS SHARED PREFERENCES CREADAS
     //13/01/2024
     private fun updateSharedPreferencesFinalizarVisita(){
-        val editor = preferencias.edit()
-        editor.remove("visita")
-        editor.remove("busqueda")
-        editor.apply()
+        preferencias.edit {
+            remove("visita")
+            remove("busqueda")
+        }
     }
 
     private fun RevisarVisita() {
@@ -418,11 +417,11 @@ class Visita : AppCompatActivity() {
     override fun onStop() {
         val preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
-        val editor = preferencias.edit()
-        editor.putString("nombrecliente", nombre)
-        editor.putString("codigo", codigo)
-        editor.putInt("idcliente", idcliente)
-        editor.apply()
+        preferencias.edit {
+            putString("nombrecliente", nombre)
+            putString("codigo", codigo)
+            putInt("idcliente", idcliente)
+        }
         super.onStop()
     }
 
@@ -433,11 +432,11 @@ class Visita : AppCompatActivity() {
         codigo = preferencias.getString("codigo", "").toString()
         idcliente = preferencias.getInt("idcliente", 0)
 
-        val editor = preferencias.edit()
-        editor.remove("nombrecliente")
-        editor.remove("codigo")
-        editor.remove("idcliente")
-        editor.apply()
+        preferencias.edit {
+            remove("nombrecliente")
+            remove("codigo")
+            remove("idcliente")
+        }
         binding.txtcodigo.text = codigo
         binding.txtnombre.text = nombre
         super.onRestart()
@@ -455,7 +454,7 @@ class Visita : AppCompatActivity() {
     }
 
     private fun CheckIn(ubicacion: String): Visitas {
-        val base = bd!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Visita).openHelper.writableDatabase
         try {
             var visita = ContentValues()
             val fechanow = funciones.getFechaHoraProceso()
@@ -471,10 +470,11 @@ class Visita : AppCompatActivity() {
             visita.put("Enviado", false)
             visita.put("Enviado_final", false)
 
-            val id = base.insert("visitas", null, visita)
+            val id = base.insert("visitas", SQLiteDatabase.CONFLICT_REPLACE, visita)
             idvisitaGLOBAL = id.toInt()
 
-            val cursor = base!!.rawQuery("SELECT * FROM visitas where Id=${id.toInt()}", null)
+            val consulta = "SELECT * FROM visitas where Id=${id.toInt()}"
+            val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 val datos = Visitas(
@@ -501,15 +501,14 @@ class Visita : AppCompatActivity() {
             //return id.toInt()
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
     }//crea el checkin
 
     private fun getVisita(idvisitaparam: Int): Visitas {
-        val base = bd!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Visita).openHelper.readableDatabase
         try {
-            val cursor = base!!.rawQuery("SELECT * FROM visitas where Id=${idvisitaparam}", null)
+            val consulta = "SELECT * FROM visitas where Id=${idvisitaparam}"
+            val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 val datos = Visitas(
@@ -536,8 +535,6 @@ class Visita : AppCompatActivity() {
             //return id.toInt()
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
     }//crea el checkin
 
@@ -595,36 +592,32 @@ class Visita : AppCompatActivity() {
     } //envia la data al servidor
 
     private fun updateCheckIn(idvisitaServer: Int, idvisita: Int) {
-        val base = bd!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Visita).openHelper.writableDatabase
         try {
             val data = ContentValues()
             data.put("Idvisita", idvisitaServer)
             data.put("Enviado", true)
-            base.update("visitas", data, "Id=?", arrayOf(idvisita.toString()))
+            base.update("visitas", SQLiteDatabase.CONFLICT_REPLACE, data, "Id=?", arrayOf(idvisita.toString()))
 
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
     } //ACTUALIZA CON EL ID DEL PEDIDO DE LA BD
 
     private fun updateCheckOut(idvisita: Int) {
-        val base = bd!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Visita).openHelper.writableDatabase
         try {
             val data = ContentValues()
             data.put("Enviado_final", true)
-            base.update("visitas", data, "Id=?", arrayOf(idvisita.toString()))
+            base.update("visitas", SQLiteDatabase.CONFLICT_REPLACE, data,"Id=?", arrayOf(idvisita.toString()))
 
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
     } //ACTUALIZA CON EL ID DEL PEDIDO DE LA BD
 
     private fun updateGpsVisita(idvisita: Int, gps_p: String, inicio: Boolean) {
-        val base = bd!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Visita).openHelper.writableDatabase
         try {
             val data = ContentValues()
             if (inicio) {
@@ -632,25 +625,24 @@ class Visita : AppCompatActivity() {
             } else {
                 data.put("Gps_out", gps_p)
             }
-            base.update("visitas", data, "Id=?", arrayOf(idvisita.toString()))
+            base.update("visitas", SQLiteDatabase.CONFLICT_REPLACE,data, "Id=?", arrayOf(idvisita.toString()))
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
     } //ACTUALIZA CON EL ID DEL PEDIDO DE LA BD
 
     // ACTUALIZACIÓN DE LA UBICACIÓN EN LA BD LOCAL DE CHECKOUT
     private fun checkOut(idvisita: Int, coordenadas: String): Visitas {
-        val base = bd!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Visita).openHelper.writableDatabase
         try {
             val data = ContentValues()
             data.put("Gps_out", coordenadas)
             data.put("Fecha_final", funciones.getFechaHoraProceso())
             data.put("Abierta", false)
-            base.update("visitas", data, "Id=?", arrayOf(idvisita.toString()))
+            base.update("visitas", SQLiteDatabase.CONFLICT_REPLACE,data, "Id=?", arrayOf(idvisita.toString()))
 
-            val cursor = base!!.rawQuery("SELECT * FROM visitas where Id=${idvisita}", null)
+            val consulta = "SELECT * FROM visitas where Id=${idvisita}"
+            val cursor = base.query(consulta)
 
             if (cursor.count > 0) {
                 cursor.moveToFirst()
@@ -680,8 +672,6 @@ class Visita : AppCompatActivity() {
             }
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
     } //ACTUALIZA CON EL ID DEL PEDIDO DE LA BD
 
@@ -746,7 +736,7 @@ class Visita : AppCompatActivity() {
     }//finaliza el checkout
 
     private fun CreatePedido() {
-        val base = bd!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Visita).openHelper.writableDatabase
         val fechanow = funciones.getFechaHoraProceso()
         val terminos = clientesController.obtenerInformacionCliente(this@Visita, idcliente)
         var tipoDocumento = "FC"
@@ -775,7 +765,7 @@ class Visita : AppCompatActivity() {
             contenido.put("DTEPais", terminos.DTEPais)
             contenido.put("DTECorreo", terminos.DTECorreo)
             contenido.put("DTETelefono", terminos.DTETelefono)
-            val id = base.insert("pedidos", null, contenido)
+            val id = base.insert("pedidos", SQLiteDatabase.CONFLICT_REPLACE, contenido)
             //inserta el encabezado del pedido
             idpedido = id.toInt()
 
@@ -787,7 +777,6 @@ class Visita : AppCompatActivity() {
             throw Exception(e.message)
         } finally {
             base.endTransaction()
-            base.close()
         }
     } //crea el pedido en caso de que no exista
 

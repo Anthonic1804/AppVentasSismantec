@@ -36,6 +36,7 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import androidx.core.content.edit
 
 @Suppress("DEPRECATION")
 class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -233,9 +234,9 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 funciones!!.eliminarInformacion(this@Inicio)
             }
 
-            val editor = preferencias!!.edit()
-            editor.putString("fechaInventario", "NULL")
-            editor.apply()
+            preferencias!!.edit {
+                putString("fechaInventario", "NULL")
+            }
 
             updateSesionServer()
             cerrarSesion()
@@ -359,14 +360,14 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         //SE ELIMINO LA FUNCION DE ELIMINADO DE DATOS DE LA TABLA PEDIDOS Y PEDIDOS_DETALLE
         //22/04/2023
         // BORRAR DATOS DE SESION Y SALIR A LA PANTALLA DE LOGIN
-        val editor = preferencias!!.edit()
-        editor.putInt("Idvendedor", 0)
-        editor.putString("Vendedor", "")
-        editor.putString("Usuario", "")
-        editor.putString("Identidad", "")
-        editor.putInt("generaToken", 0)
-        editor.putBoolean("sesion", false)
-        editor.apply()
+        preferencias!!.edit {
+            putInt("Idvendedor", 0)
+            putString("Vendedor", "")
+            putString("Usuario", "")
+            putString("Identidad", "")
+            putInt("generaToken", 0)
+            putBoolean("sesion", false)
+        }
 
         val intento = Intent(this, Login::class.java)
         startActivity(intento)
