@@ -35,13 +35,11 @@ class PedidosController {
 
     //FUNCION PARA ACTUALIZAR EL TIPO DE ENVIO SELECCIONADO
     fun updateTipoPedido(tipoPedido:Int, idpedido:Int, context: Context){
-        val data = funciones.getDataBase(context).writableDatabase
+        val data = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            data!!.execSQL("UPDATE pedidos set tipo_envio=$tipoPedido WHERE id=$idpedido")
+            data.execSQL("UPDATE pedidos set tipo_envio=$tipoPedido WHERE id=$idpedido")
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            data.close()
         }
     }
 

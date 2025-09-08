@@ -158,9 +158,10 @@ class SolicitudDevolucionesController {
     //FUNCION PARA BUSCAR EL PRODUCTO YA AGREGADO AL DETALLE DE LA DEVOLUCION
     fun obtenerProductoEnDevolucion(context: Context, idProducto: Int, idDevolucion: Int) : Boolean{
         var encontrado = false
-        val db = funciones.getDataBase(context).readableDatabase
+        val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
-            val cursor = db.rawQuery("SELECT * FROM devolucion_detalle WHERE Id_producto=$idProducto AND Id_dev=$idDevolucion", null)
+            val sql = "SELECT * FROM devolucion_detalle WHERE Id_producto=$idProducto AND Id_dev=$idDevolucion"
+            val cursor = db.query(sql)
             if(cursor.count > 0){
                 encontrado = true
             }
@@ -168,8 +169,6 @@ class SolicitudDevolucionesController {
         }catch (e:Exception){
             println("ERROR AL ENCONTRAR EL PRODUCTO EN EL DETALLE DE LA DEVOLUCION -> ${e.message}")
             encontrado = false
-        }finally {
-            db.close()
         }
         return encontrado
     }

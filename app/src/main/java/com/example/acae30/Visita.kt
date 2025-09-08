@@ -20,7 +20,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.CuentasController
 import com.example.acae30.controllers.VisitaController
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityVisitaBinding
 import com.example.acae30.modelos.Visitas
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -58,7 +57,6 @@ class Visita : AppCompatActivity() {
     private var cuentasController = CuentasController()
     lateinit var preferencias: SharedPreferences
     private val instancia = "CONFIG_SERVIDOR"
-    private var bd: Database? = null
     private lateinit var binding: ActivityVisitaBinding
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -94,7 +92,6 @@ class Visita : AppCompatActivity() {
         idvisitaGLOBAL = intent.getIntExtra("visitaid", 0)
 
         alerta = AlertDialogo(this, this)
-        bd = Database(this)
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()

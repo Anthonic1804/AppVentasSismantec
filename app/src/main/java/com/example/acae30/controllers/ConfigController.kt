@@ -77,8 +77,8 @@ class ConfigController {
                                         nrc = dato.getString("nrc"),
                                         nit = dato.getString("nit"),
                                         giro = dato.getString("giro"),
-                                        dteUrlQRHacienda = dato.getString("dteUrlQR_Hacienda"),
-                                        dteUrlQRempresa = dato.getString("dteUrlQR_empresa")
+                                        dteUrlQRHacienda = dato.optString("dteUrlQR_Hacienda", "0"),
+                                        dteUrlQRempresa = dato.optString("dteUrlQR_empresa", "0")
                                     )
 
                                     confirmarPagareObligatorio(item, context)

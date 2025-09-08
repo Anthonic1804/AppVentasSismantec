@@ -7,21 +7,14 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewAnimationUtils
-import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import com.example.acae30.controllers.PedidosController
-import com.example.acae30.database.Database
+import androidx.core.content.edit
+import com.example.acae30.database.AppDatabase
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -31,8 +24,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
-import androidx.core.content.edit
-import com.example.acae30.database.AppDatabase
 
 
 class Funciones {
@@ -96,11 +87,6 @@ class Funciones {
         }
     }
     //FIN FUNCION PARA VERIFICAR LA CONEXION A INTERNET
-
-    //FUNCION PARA OBTENER LA INSTANCIA DE LA BASE DE DATOS
-    fun getDataBase(context: Context): Database {
-        return Database(context)
-    }
 
     //FUNCION PARA OBTENER EL SERVIDOR
     fun getServidor(ip: String?, puerto: String?): String {
@@ -230,7 +216,7 @@ class Funciones {
     //FUNCION PARA ELIMINAR INFORMACION DE LAS TABLAS PRINCIPALES AL CERRAR SESSION
     fun eliminarInformacion(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val db = getDataBase(context).writableDatabase
+        val db = obtenerInstancia(context).openHelper.writableDatabase
         try {
             db.execSQL("DELETE FROM Inventario")
             db.execSQL("DELETE FROM hoja_carga")
@@ -243,8 +229,6 @@ class Funciones {
             //db.execSQL("DELETE FROM detalle_pedidos")
         }catch (e:Exception){
             throw Exception("ERROR AL ELIMINAR LA INFORMACION AL CERRAR SESSION -> " + e.message)
-        }finally {
-            db.close()
         }
 
         preferences.edit {

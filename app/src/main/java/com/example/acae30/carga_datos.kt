@@ -15,7 +15,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.DAO.InventarioDao
 import com.example.acae30.Entities.InventarioEntity
@@ -23,14 +23,10 @@ import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
-import com.example.acae30.controllers.ConfigController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.database.AppDatabase
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityCargaDatosBinding
-import com.example.acae30.listas.InventarioRetrofit
-import com.example.acae30.modelos.Inventario
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,19 +34,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
-import retrofit2.Response
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.LocalDate
-import androidx.core.content.edit
 
 class carga_datos : AppCompatActivity() {
 
     private lateinit var url: String
     private var idVendedor = 0
     private var alert: AlertDialogo? = null
-    private var database: Database? = null
-
     private var inventarioController = InventarioController()
     private var clietnesController = ClientesController()
     private var pedidosController = PedidosController()
@@ -78,7 +70,6 @@ class carga_datos : AppCompatActivity() {
         preferences = this@carga_datos.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         alert = AlertDialogo(this@carga_datos, this)
-        database = Database(this@carga_datos)
 
         url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
@@ -776,7 +767,7 @@ class carga_datos : AppCompatActivity() {
             while(hayMas){
                 val respuesta = api.obtenerEscalasPrecios(offset, limite)
 
-                println(respuesta)
+                //println(respuesta)
 
                 if (respuesta.isNotEmpty()) {
                     val entidades = respuesta.map {

@@ -18,11 +18,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.ClientesController
-import com.example.acae30.database.Database
-import com.example.acae30.databinding.ActivityCargaDatosBinding
 import com.example.acae30.databinding.ActivityClientesBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
@@ -31,8 +30,6 @@ import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.collections.ArrayList
-import androidx.core.content.edit
 
 class Clientes : AppCompatActivity() {
     private var recicle: RecyclerView? = null

@@ -16,10 +16,9 @@ import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.edit
 import androidx.drawerlayout.widget.DrawerLayout
-import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityInicioBinding
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
@@ -36,7 +35,6 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import androidx.core.content.edit
 
 @Suppress("DEPRECATION")
 class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -46,7 +44,6 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var funciones: Funciones? = null
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
-    private var database: Database? = null
     private var pedidosController = PedidosController()
 
     //VARIABLES PARA UN SLIDE MENU
@@ -92,7 +89,6 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         funciones = Funciones()
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         funciones!!.VendedorVerific(this) //valida que haya sesion y que haya configuracion
-        database = Database(this)
 
         ip = preferencias!!.getString("ip", "").toString()
         puerto = preferencias!!.getInt("puerto", 0)

@@ -20,13 +20,12 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
-import com.example.acae30.database.Database
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.InventarioPrecios
 import com.example.acae30.modelos.JSONmodels.ActualizarPrecioPersonalizadoJSON
@@ -45,7 +44,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.text.DecimalFormatSymbols
-import androidx.core.content.edit
 
 
 class Producto_agregar : AppCompatActivity() {
@@ -618,11 +616,14 @@ class Producto_agregar : AppCompatActivity() {
                         adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
                         spprecio!!.adapter = adapterPrecios
 
-                        val totalIndices = spprecio!!.adapter?.count ?: 0
-                        if(mostrarPrecioApp in 0 until totalIndices){
-                            spprecio!!.setSelection(mostrarPrecioApp, true)
-                        }else{
-                            spprecio!!.setSelection(0, true)
+                        val id = validateProduct(idproducto!!)
+                        if(id == 0){
+                            val totalIndices = spprecio!!.adapter?.count ?: 0
+                            if(mostrarPrecioApp in 0 until totalIndices){
+                                spprecio!!.setSelection(mostrarPrecioApp, true)
+                            }else{
+                                spprecio!!.setSelection(0, true)
+                            }
                         }
 
                     } else {
@@ -806,13 +807,17 @@ class Producto_agregar : AppCompatActivity() {
 
     } //obtiene el detalle del pedido
 
-    private fun updateDetalle(iddetalle: Int?, esPrecioEditado: Boolean, bonificado: Int) {
+    private fun updateDetalle(iddetalle: Int?, esPrecioEditado: Boolean, bonificado: Int, precioIva : Float) {
         val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
+        val precioIva = precioIva
+        val precioU = precioIva / 1.13
         try {
             base.beginTransaction()
             val detalle = ContentValues()
             detalle.put("Cantidad", cantidad)
             detalle.put("Bonificado", bonificado)
+            detalle.put("precio", precioU)
+            detalle.put("Precio_iva", precioIva)
             //detalle.put("Cantidad", spiner!!.selectedItem.toString())
             detalle.put("Total_iva", txttotal!!.text.toString().toFloat())
 
@@ -1301,7 +1306,7 @@ class Producto_agregar : AppCompatActivity() {
 
                 if (idpedido > 0) {
                     if (idpedidodetalle!! > 0) {
-                        updateDetalle(idpedidodetalle!!, esPrecioEditado, bonificacion)
+                        updateDetalle(idpedidodetalle!!, esPrecioEditado, bonificacion, precio.toFloat())
                     } else {
                         val id = validateProduct(idproducto!!)
                         if (id > 0) {
@@ -1310,7 +1315,7 @@ class Producto_agregar : AppCompatActivity() {
                             var t =
                                 ((txttotal!!.text.toString().toFloat()) + data.Total_iva!!)
                             txttotal!!.text = "${String.format("%.2f".format(t) )}"
-                            updateDetalle(id, esPrecioEditado, bonificacion)
+                            updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
                         } else {
                             AddDetallePedido(esPrecioEditado, bonificacion)
                         }

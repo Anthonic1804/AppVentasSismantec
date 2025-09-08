@@ -8,8 +8,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.acae30.controllers.ClientesController
-import com.example.acae30.controllers.SucursalesController
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityClientesDetalleBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

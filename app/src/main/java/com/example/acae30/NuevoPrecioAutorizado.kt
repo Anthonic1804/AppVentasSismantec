@@ -8,9 +8,15 @@ import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.view.View
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.acae30.database.Database
 import com.example.acae30.modelos.Empleados
 import com.example.acae30.modelos.JSONmodels.PrecioPersonalizadoJSON
 import com.google.gson.Gson
@@ -23,7 +29,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class NuevoPrecioAutorizado : AppCompatActivity() {
 

@@ -18,11 +18,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.PedidosController
-import com.example.acae30.database.Database
 import com.example.acae30.listas.PedidosAdapter
 import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
 import com.example.acae30.modelos.JSONmodels.DatosReporteJSON
@@ -61,7 +61,6 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import androidx.core.content.edit
 
 class Pedido : AppCompatActivity() {
 

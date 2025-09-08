@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityHistoricoPedidoDetallesBinding
 import com.example.acae30.listas.VentaDetalleTempAdapter
 import com.example.acae30.modelos.VentasDetalleTemp

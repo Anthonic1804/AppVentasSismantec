@@ -16,9 +16,9 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import com.dcastalia.localappupdate.DownloadApk
 import com.example.acae30.controllers.ConfigController
-import com.example.acae30.database.Database
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +30,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import androidx.core.content.edit
 
 
 class Configuracion : AppCompatActivity() {

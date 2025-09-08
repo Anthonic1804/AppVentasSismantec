@@ -3,29 +3,20 @@ package com.example.acae30
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.ImageButton
 import android.widget.SearchView
 import android.widget.Toast
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.CuentasController
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityCuentasListBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
-import java.util.*
-import kotlin.collections.ArrayList
-import androidx.core.content.edit
 
 class Cuentas_list : AppCompatActivity() {
-    private var bd: Database? = null
-
     private var preferences : SharedPreferences? = null
     private var instancia = "CONFIG_SERVIDOR"
     private var busquedaCliente : String? = null
@@ -40,8 +31,6 @@ class Cuentas_list : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityCuentasListBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        bd = Database(this)
 
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         vista = preferences!!.getString("vista", "").toString()
