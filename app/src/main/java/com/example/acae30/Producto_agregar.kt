@@ -180,7 +180,7 @@ class Producto_agregar : AppCompatActivity() {
                 }
 
                 cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar,
-                    idproducto!!, precio_iva)
+                    idproducto!!, precio_iva, unidadActual)
 
                 Totalizar(cantidad)
 
@@ -447,7 +447,7 @@ class Producto_agregar : AppCompatActivity() {
             }
 
             listPrecios!!.forEach {
-                val unidad_cantidad = " (" + "${String.format("%.2f".format(it.Cantidad))}" + ")"
+                val unidad_cantidad = " (" + "${String.format("%.2f".format(it.Cantidad))}" + " ${it.Unidad} )"
                 precioss.add("${String.format("%.2f".format(it.Precio_iva))}" + " ${it.Nombre}" + unidad_cantidad
                 )
             }
@@ -459,12 +459,14 @@ class Producto_agregar : AppCompatActivity() {
             adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
             binding.spprecio.adapter = adapterPrecios
 
+
             val totalIndices = binding.spprecio.adapter?.count ?: 0
             if(mostrarPrecioApp in 0 until totalIndices){
                 binding.spprecio.setSelection(mostrarPrecioApp, true)
             }else{
                 binding.spprecio.setSelection(0, true)
             }
+
         }
     }
 
@@ -529,11 +531,20 @@ class Producto_agregar : AppCompatActivity() {
 
     }
 
-    private fun AddDetallePedido(esPrecioEditado: Boolean, bonificado:Int): Int {
+    private fun AddDetallePedido(esPrecioEditado: Boolean, bonificado:Int, precioIva: Float): Int {
         val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
-        var vPrecio = precio
-        var vPrecio_iva = precio_iva
+        var vPrecio: Float = precioIva / 1.13f
+        var vPrecio_iva = precioIva
 
+        //CONFIGURA LA DESCRIPCION DEL PRODUCTO DE ACUERDO A LA UNIDAD SELECCIONADA
+        val nombreProducto = binding.txtdescripcion.text.toString()
+        val descripcion = when(binding.spunidad.selectedItem.toString()){
+            "UNIDAD" -> nombreProducto
+            "FRACCION" -> datosProducto!!.Nombre_fraccion + ' ' + nombreProducto
+            else -> binding.spunidad.selectedItem.toString().trim() + ' ' + nombreProducto
+        }
+
+        //CONFIGURA EL PRECIO PERSONALIZADO DEL CLIENTE
         if(precioIvaPersonalizado > 0){
             vPrecio = (precioIvaPersonalizado / 1.13).toFloat()
             vPrecio_iva = precioIvaPersonalizado
@@ -545,13 +556,8 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("Id_pedido", idpedido)
             detalle.put("Id_producto", idproducto)
             detalle.put("Cantidad", cantidad)
-
-            if (binding.spunidad.selectedItem.toString() == "UNIDAD") {
-                detalle.put("Unidad", "UNI")
-            } else {
-                detalle.put("Unidad", "FRA")
-            }
-
+            detalle.put("Unidad", unidadActual)
+            detalle.put("Descripcion", descripcion)
             detalle.put("Idunidad", 0)
             detalle.put("precio", vPrecio)
             detalle.put("Precio_iva", vPrecio_iva)
@@ -660,6 +666,15 @@ class Producto_agregar : AppCompatActivity() {
         val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
         val precioIva = precio
         val precioU = precio / 1.13
+
+        //CONFIGURA LA DESCRIPCION DEL PRODUCTO DE ACUERDO A LA UNIDAD SELECCIONADA
+        val nombreProducto = binding.txtdescripcion.text.toString()
+        val descripcion = when(binding.spunidad.selectedItem.toString()){
+            "UNIDAD" -> nombreProducto
+            "FRACCION" -> datosProducto!!.Nombre_fraccion + ' ' + nombreProducto
+            else -> binding.spunidad.selectedItem.toString().trim() + ' ' + nombreProducto
+        }
+
         try {
             base.beginTransaction()
             val detalle = ContentValues()
@@ -669,17 +684,13 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("Precio_iva", precioIva)
             //detalle.put("Cantidad", binding.spunidad.selectedItem.toString())
             detalle.put("Total_iva", binding.txttotal.text.toString().toFloat())
+            detalle.put("Descripcion", descripcion)
+            detalle.put("Unidad", unidadActual)
 
             if (esPrecioEditado) {
                 detalle.put("Precio_editado", "*")
             } else {
                 detalle.put("Precio_editado", "")
-            }
-
-            if (binding.spunidad.selectedItem.toString() == "UNIDAD") {
-                detalle.put("Unidad", "UNI")
-            } else {
-                detalle.put("Unidad", "FRA")
             }
 
             val idpedidodetalle = base.update(
@@ -750,7 +761,8 @@ class Producto_agregar : AppCompatActivity() {
     private fun validateProduct(idproducto: Int): Int {
         val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
         try {
-            val consulta = "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto"
+
+            val consulta = "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual'"
             val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 var i = 0
@@ -1155,7 +1167,7 @@ class Producto_agregar : AppCompatActivity() {
                             binding.txttotal.text = "${String.format("%.2f".format(t) )}"
                             updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
                         } else {
-                            AddDetallePedido(esPrecioEditado, bonificacion)
+                            AddDetallePedido(esPrecioEditado, bonificacion, precio.toFloat())
                         }
                     }
                 }

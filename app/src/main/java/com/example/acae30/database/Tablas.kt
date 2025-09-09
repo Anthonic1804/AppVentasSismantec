@@ -454,7 +454,7 @@ class Tablas {
                     "detalle_pedidos.id_pedido," +
                     "detalle_pedidos.id_producto," +
                     "inventario.codigo," +
-                    "inventario.descripcion," +
+                    "detalle_pedidos.descripcion," +
                     "inventario.costo," +
                     "inventario.costo_iva," +
                     "inventario.precio," +

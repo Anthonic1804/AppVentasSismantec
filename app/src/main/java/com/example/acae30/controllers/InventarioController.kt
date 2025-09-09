@@ -223,8 +223,6 @@ class InventarioController {
             cursor.close()
         }catch (e:Exception){
             println("ERROR AL REALIZAR LA BUSQUEDA EN INVENTARIO -> ${e.message}")
-        }finally {
-            base.close()
         }
         return lista
     }
@@ -1095,7 +1093,7 @@ class InventarioController {
     }
 
     //FUNCION PARA OBTENER LA CANTIDAD DE LA ESCALA SELECCIONADA
-    fun obtenerEscalaSeleccionada(context: Context, idProducto: Int, precio: Float): Int {
+    fun obtenerEscalaSeleccionada(context: Context, idProducto: Int, precio: Float, unidad : String): Int {
         val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var cantidadEscala = 0
         try {
@@ -1104,9 +1102,10 @@ class InventarioController {
             FROM inventario_precios 
             WHERE id_inventario = ? 
             AND ROUND(Precio_iva, 2) = ROUND(?, 2)
+            AND unidad = ?
         """.trimIndent()
 
-            val cursor = bd.query(query, arrayOf(idProducto.toString(), precio.toString()))
+            val cursor = bd.query(query, arrayOf(idProducto.toString(), precio.toString(), unidad))
 
             if (cursor.moveToFirst()) {
                 cantidadEscala = cursor.getInt(0)
