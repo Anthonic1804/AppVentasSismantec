@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import android.widget.Toast
 import com.example.acae30.Funciones
@@ -39,10 +40,11 @@ class InventarioController {
 
     //FUNCION PARA OBTENER INFORMACION DEL PRODUCTO POR ID
     fun obtenerInformacionProductoPorId(context: Context ,idInventario: Int, facExpo: Boolean): Inventario?{
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var datos: Inventario? = null
         try {
-            val cursor = base.rawQuery("SELECT * FROM inventario WHERE Id=$idInventario", null)
+            val consulta = "SELECT * FROM inventario WHERE Id=$idInventario"
+            val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 if(facExpo){
@@ -94,19 +96,17 @@ class InventarioController {
         }catch (e:Exception){
             println("ERROR: DETALLE DEL PRODUCTO -> ${e.message}")
         }
-        finally {
-            base.close()
-        }
         return datos
     }
 
     //FUNCION PARA OBTENER LAS ESCALAS DE PRECIO POR PRODUCTO
     fun obtenerEscalaPrecios(context: Context, idInventario: Int, facExpo: Boolean, unidadMedida: String): ArrayList<InventarioPrecios>{
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listaEscalas = ArrayList<InventarioPrecios>()
 
         try {
-            val cursor = base.rawQuery("SELECT * FROM Inventario_precios WHERE id_inventario = '$idInventario' AND unidad='${unidadMedida.trim()}'", null)
+            val consulta = "SELECT * FROM Inventario_precios WHERE id_inventario = '$idInventario' AND unidad='${unidadMedida.trim()}'"
+            val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
 
@@ -154,15 +154,12 @@ class InventarioController {
         }catch (e:Exception){
             println("ERROR: OBTENER ESCALAS DE PRECIOS -> ${e.message}")
         }
-        finally {
-            base.close()
-        }
         return listaEscalas
     }
 
     //FUNCION PARA OBTENER LA INFORMACION DEL PRODUCTO POR CODIGO O POR NOMBRE
     fun obtenerInformacionProductoPorString(context: Context, busqueda: String, vista:String): ArrayList<Inventario>{
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val lista = ArrayList<Inventario>()
 
         val query: String = when (vista) {
@@ -192,9 +189,9 @@ class InventarioController {
 
         try {
             val cursor = if (busqueda.isNotEmpty()) {
-                base.rawQuery(query, arrayOf(busqueda, busqueda))
+                base.query(query, arrayOf(busqueda, busqueda))
             } else {
-                base.rawQuery(query, null)
+                base.query(query)
             }
             if (cursor.count > 0) {
                 cursor.moveToFirst()
@@ -235,33 +232,31 @@ class InventarioController {
     //FUNCION PARA OBTENER LA FECHA DEL INVENTARIO
     fun obtenerFechaInventario(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
             var fechaInventario: String = "NULL"
-            val consulta = base.rawQuery("SELECT Fecha_inventario FROM inventario LIMIT 1", null)
+            val consulta = base.query("SELECT Fecha_inventario FROM inventario LIMIT 1")
 
             if(consulta.count > 0){
                 consulta.moveToFirst()
                 fechaInventario = consulta.getString(0).toString()
             }
 
-            val editor = preferences.edit()
-            editor.putString("fechaInventario", fechaInventario)
-            editor.apply()
+            preferences.edit {
+                putString("fechaInventario", fechaInventario)
+            }
 
             consulta.close()
         }catch (e:Exception){
             print("ERROR: ${e.message}")
-        }finally {
-            base.close()
         }
     }
 
     //FUNCION PARA ALMACENAR LOS PRECIOS EN LA BASE DE DATOS
     fun saveInventarioPreciosDatabase(json: JSONArray, context: Context) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            bd!!.beginTransaction()
+            bd.beginTransaction()
             for (i in 0 until json.length()) {
                 val dato = json.getJSONObject(i)
                 val data = ContentValues()
@@ -287,14 +282,13 @@ class InventarioController {
                 data.put("precio", funciones.validateJsonIsNullFloat(dato, "precio"))
                 data.put("precio_iva", funciones.validateJsonIsNullFloat(dato, "precio_iva"))
 
-                bd.insert("inventario_precios", null, data)
+                bd.insert("inventario_precios", SQLiteDatabase.CONFLICT_REPLACE, data)
             }
             bd.setTransactionSuccessful()
         } catch (e: Exception) {
             throw Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }
 
@@ -408,7 +402,7 @@ class InventarioController {
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
     private fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, recarga: Int) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
@@ -463,7 +457,7 @@ class InventarioController {
                 idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")
                 rutaHojaCarga = funciones.validateJsonIsnullString(dato, "ruta")
 
-                bd.insert("inventario", null, data)
+                bd.insert("inventario", SQLiteDatabase.CONFLICT_REPLACE, data)
             }
 
             //ALAMACENANDO EN SHARED PREFERENCES EL ID DE LA HOJA DE CARGA ACTIVA
@@ -477,8 +471,7 @@ class InventarioController {
         } catch (e: Exception) {
             throw Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
             if(recarga == 0){
                 CoroutineScope(Dispatchers.IO).launch {
                     insertarHojaDeCargar(json, context, numeroHojaCarga)
@@ -489,9 +482,10 @@ class InventarioController {
 
     //DESCARGA DE INVENTARIO DE HOJA DE CARGA
     fun descargarProductosInventario(idPedido: Int, context: Context){
-        val base = funciones.getDataBase(context).writableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            val cursor = base.rawQuery("SELECT ID_PRODUCTO, (CANTIDAD + BONIFICADO) AS CANTIDAD FROM DETALLE_PEDIDOS WHERE ID_PEDIDO=$idPedido",null)
+            val consulta = "SELECT ID_PRODUCTO, (CANTIDAD + BONIFICADO) AS CANTIDAD FROM DETALLE_PEDIDOS WHERE ID_PEDIDO=$idPedido"
+            val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 do {
@@ -505,8 +499,6 @@ class InventarioController {
             }
         }catch (e:Exception){
             println("ERROR: NO SE ENCONTRARON REGISTROS EN EL PEDIDO -> ${e.message}")
-        }finally {
-            base.close()
         }
     }
 
@@ -529,7 +521,7 @@ class InventarioController {
 
     //FUNCION PARA LIMPIAR TABLAS DE INVENTARIO Y HOJA DE CARGA
     private fun limpiarInventarioHojaCarga(context: Context){
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("DELETE FROM Inventario")
             bd.execSQL("DELETE FROM hoja_carga")
@@ -537,15 +529,13 @@ class InventarioController {
             bd.execSQL("DELETE FROM hoja_detalle_recargas")
         }catch (e: Exception){
             throw Exception("ERROR LA ELIMINAR EL INVENTARIO -> " + e.message)
-        }finally {
-            bd.close()
         }
     }
 
     //FUNCION PARA INSERTAR MAESTRO HOJA CARGA
     private fun insertarHojaDeCargar(json: JSONArray, context: Context, numeroHojaCarga:Int){
 
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         val idHojaCarga = preferences.getInt("idHojaCarga", 0)
@@ -561,14 +551,13 @@ class InventarioController {
             data.put("Fecha_registro", fechaHojaCarga)
             data.put("Id_ruta", idRutaHojaCarga)
             data.put("Ruta", rutaHojaCarga)
-            bd.insert("hoja_carga", null, data)
+            bd.insert("hoja_carga", SQLiteDatabase.CONFLICT_REPLACE, data)
 
             bd.setTransactionSuccessful()
         }catch (e:Exception){
             throw Exception("ERROR AL INSERTAR HOJA DE CARGA MAESTRO -> " + e.message)
         }finally {
             bd.endTransaction()
-            bd.close()
             CoroutineScope(Dispatchers.IO).launch {
                 insertarDetalleHojaCarga(json, context, numeroHojaCarga)
             }
@@ -577,7 +566,7 @@ class InventarioController {
 
     //FUNCION PARA INSERTAR DETALLE DE HOJA DE CARGA
     private suspend fun insertarDetalleHojaCarga(json: JSONArray, context: Context, numeroHojaCarga: Int){
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         val idHojaCarga = preferences.getInt("idHojaCarga", 0)
@@ -592,7 +581,7 @@ class InventarioController {
                 data.put("Id_inventario", dato.getInt("id"))
                 data.put("Codigo_inventario", funciones.validateJsonIsnullString(dato, "codigo"))
                 data.put("Cantidad", funciones.validateJsonIsNullFloat(dato, "existencia"))
-                bd.insert("hoja_carga_detalle", null, data)
+                bd.insert("hoja_carga_detalle", SQLiteDatabase.CONFLICT_REPLACE, data)
 
                 //ACTUALIZANDO EXISTENCIAS
                 CoroutineScope(Dispatchers.IO).launch {
@@ -605,19 +594,15 @@ class InventarioController {
             throw Exception("ERROR AL INSERTAR HOJA DE CARGA DETALLE -> " + e.message)
         }finally {
             bd.endTransaction()
-            bd.close()
 
             //OBTENIENDO FECHA DE INVENTARIO
             CoroutineScope(Dispatchers.IO).launch {
                 obtenerFechaInventario(context)
             }
 
-            //REGISTRANDO HOJA DE CARGA ACTIVA
-            println("REGISTRANDO HOJA DE CARGA ACTIVA")
-
-            val editor = preferences.edit()
-            editor.putInt("hojaCarga", numeroHojaCarga)
-            editor.apply()
+            preferences.edit {
+                putInt("hojaCarga", numeroHojaCarga)
+            }
 
             //funciones.mostrarMensaje("INVENTARIO CARGADO CORRECTAMENTE", context, view)
             withContext(Dispatchers.Main){
@@ -629,13 +614,11 @@ class InventarioController {
 
     //FUNCION ACTUALIZAR INVENTARIO POR HOJA DE CARGA
     fun actualizarExistenciasInventario(context: Context, cantidad:Float, id:Int){
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("UPDATE inventario SET Existencia=(Existencia + $cantidad) WHERE id=$id")
         }catch (e:Exception){
             throw Exception("ERROR AL ACTULIZAR LA EXISTENCIA DEL INVENTARIO  -> " + e.message)
-        }finally {
-            bd.close()
         }
     }
 
@@ -742,7 +725,7 @@ class InventarioController {
     }
 
     private fun actualizarInventarioDatabase(json: JSONArray, context: Context, view:View) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
         try {
             bd.beginTransaction()
@@ -759,8 +742,7 @@ class InventarioController {
         } catch (e: Exception) {
             throw Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }
 
@@ -845,7 +827,6 @@ class InventarioController {
 
     //INSERTANDO EN TBL RECARGAS
     private suspend fun insertarHojaRecargas(json: JSONArray, context: Context, view:View){
-        val bd = funciones.getDataBase(context).writableDatabase
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         var hojaRecargada = 0
 
@@ -917,8 +898,6 @@ class InventarioController {
             }
         }catch (e:Exception){
             throw Exception("ERROR AL INSERTAR HOJA DE CARGA DETALLE -> " + e.message)
-        }finally {
-            bd.close()
         }
     }
 
@@ -1004,8 +983,6 @@ class InventarioController {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
-        val database = funciones.getDataBase(context)
-
         // TABLA INVENTARIO PRECIOS
         try {
             val direccionprecioscantidad = servidor + "inventario/precios/cantidad"
@@ -1047,9 +1024,9 @@ class InventarioController {
                 registrosPreciosCargados = BLOQUE_PRECIOS
             }
 
-            val bd = database.writableDatabase
+            val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
             try {
-                bd!!.beginTransaction() //inicio la transaccion
+                bd.beginTransaction() //inicio la transaccion
                 bd.delete("inventario_precios", null, null)
 
                 val sql2 = "DELETE FROM SQLITE_SEQUENCE WHERE NAME =  'inventario_precios'"
@@ -1059,8 +1036,7 @@ class InventarioController {
             } catch (e: Exception) {
                 throw Exception("Error #6 Linea 354")
             } finally {
-                bd!!.endTransaction()
-                bd.close()
+                bd.endTransaction()
             }
 
             do {
@@ -1120,7 +1096,7 @@ class InventarioController {
 
     //FUNCION PARA OBTENER LA CANTIDAD DE LA ESCALA SELECCIONADA
     fun obtenerEscalaSeleccionada(context: Context, idProducto: Int, precio: Float): Int {
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var cantidadEscala = 0
         try {
             val query = """
@@ -1130,7 +1106,7 @@ class InventarioController {
             AND ROUND(Precio_iva, 2) = ROUND(?, 2)
         """.trimIndent()
 
-            val cursor = bd.rawQuery(query, arrayOf(idProducto.toString(), precio.toString()))
+            val cursor = bd.query(query, arrayOf(idProducto.toString(), precio.toString()))
 
             if (cursor.moveToFirst()) {
                 cantidadEscala = cursor.getInt(0)
@@ -1138,8 +1114,6 @@ class InventarioController {
             cursor.close()
         } catch (e: Exception) {
             println("ERROR AL OBTENER LA CANTIDAD DE LA ESCALA SELECCIONADA: ${e.message}")
-        } finally {
-            bd.close()
         }
         return cantidadEscala
     }
@@ -1192,7 +1166,7 @@ class InventarioController {
     //FUNCION PARA REGISTRAR LAS UNIDADES DE MEDIDA EN SQLITE
     private fun registrarUnidadesMedidaSQLite(json: JSONArray, context: Context) {
 
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
 
             bd.beginTransaction()
@@ -1210,14 +1184,13 @@ class InventarioController {
                 valor.put("Equivale", dato.getInt("equivale"))
                 valor.put("Unidades", dato.getString("unidades")).toString().trim()
 
-                bd.insert("inventario_unidades", null, valor)
+                bd.insert("inventario_unidades", SQLiteDatabase.CONFLICT_REPLACE, valor)
             }
             bd.setTransactionSuccessful()
         }catch (e:Exception){
             println("ERROR AL ALMECENAR LAS UNIDAD DE MEDIDA EN SQLITE -> " + e.message)
         }finally {
             bd.endTransaction()
-            bd.close()
         }
 
     }
@@ -1225,14 +1198,15 @@ class InventarioController {
     //FUNCION PARA OBTENER EL LISTADO DE UNIDADES DE MEDIDA
     fun listadoUnidadesMedidaProductoById(context: Context, idProducto: Int) : ArrayList<String>{
 
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listado = ArrayList<String>()
         var inventarioFraccion = 0f
 
         listado.add("UNIDAD")
 
         try {
-            val cursor = bd.rawQuery("SELECT fraccion FROM Inventario WHERE Id=$idProducto", null)
+            val consulta = "SELECT fraccion FROM Inventario WHERE Id=$idProducto"
+            val cursor = bd.query(consulta)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 inventarioFraccion = cursor.getFloat(0)
@@ -1243,7 +1217,8 @@ class InventarioController {
                 listado.add("FRACCION")
             }
 
-            val cursor2 = bd.rawQuery("SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto", null)
+            val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
+            val cursor2 = bd.query(consulta2)
             if(cursor2.count > 0){
                 cursor2.moveToFirst()
                 do {
@@ -1255,8 +1230,6 @@ class InventarioController {
 
         }catch (e:Exception){
             println("ERROR NO SE ENCONTRARON UNIDADES EN INVENTARIO -> " + e.message)
-        }finally {
-            bd.close()
         }
 
         return listado
