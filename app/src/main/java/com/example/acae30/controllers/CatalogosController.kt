@@ -4,10 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
-import androidx.room.Room
 import com.example.acae30.Funciones
-import com.example.acae30.database.AppDatabase
 import com.example.acae30.modelos.Catalogos.DepartamentoModel
 import com.example.acae30.modelos.Catalogos.DistritoModel
 import com.example.acae30.modelos.Catalogos.MunicipioModel
