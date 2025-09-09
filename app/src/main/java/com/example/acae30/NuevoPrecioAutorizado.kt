@@ -5,11 +5,18 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.view.View
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.acae30.database.Database
 import com.example.acae30.modelos.Empleados
 import com.example.acae30.modelos.JSONmodels.PrecioPersonalizadoJSON
 import com.google.gson.Gson
@@ -22,7 +29,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class NuevoPrecioAutorizado : AppCompatActivity() {
 
@@ -42,13 +50,13 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
     private var nombreProducto : String? = ""
     private var precioProducto : String? = ""
     private var empleadoName: String = ""
-    private var db: Database? = null
     private var empleadoId : Int = 0
     private var adminId : Int = 0
 
     private var url: String? = null
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
+    private var funciones = Funciones()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,7 +72,6 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
         codigoProducto = intento.getStringExtra("codigo")
         nombreProducto = intento.getStringExtra("producto")
         precioProducto = intento.getFloatExtra("precio", 0f).toString()
-        db = Database(this)
 
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         adminId = preferencias!!.getInt("Idvendedor", 0)
@@ -151,11 +158,11 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
     }
 
     private fun getEmpleadoId(nombre : String){
-        val db = db!!.readableDatabase
+        val db = funciones.obtenerInstancia(this@NuevoPrecioAutorizado).openHelper.readableDatabase
         val listaEmpleados = ArrayList<Empleados>()
         try {
-
-            val dataEmpleado = db.rawQuery("SELECT * FROM empleado WHERE nombre_empleado='$nombre'", null)
+            val consulta = "SELECT * FROM empleado WHERE nombre_empleado='$nombre'"
+            val dataEmpleado = db.query(consulta)
             if(dataEmpleado.count > 0){
                 dataEmpleado.moveToFirst()
                 do{
@@ -175,8 +182,6 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
             dataEmpleado.close()
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            db!!.close()
         }
     }
 
@@ -239,11 +244,11 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
 
     //FUNCION PARA OBTENER LOS EMPLEADOS.
     private fun getEmpleadoNombre(): ArrayList<Empleados> {
-        val db = db!!.readableDatabase
+        val db = funciones.obtenerInstancia(this@NuevoPrecioAutorizado).openHelper.readableDatabase
         val listaEmpleados = ArrayList<Empleados>()
         try {
 
-            val dataEmpleado = db.rawQuery("SELECT * FROM empleado", null)
+            val dataEmpleado = db.query("SELECT * FROM empleado")
             if(dataEmpleado.count > 0){
                 dataEmpleado.moveToFirst()
                 do{
@@ -259,8 +264,6 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
             dataEmpleado.close()
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            db!!.close()
         }
         return listaEmpleados
     }
@@ -339,7 +342,7 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
     }
 
     private fun confirmarToken(id_empleado:Int, id_admin:Int, cod_producto:String, precio_asig:Float, idServer: Int) {
-        val base = db!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@NuevoPrecioAutorizado).openHelper.writableDatabase
         try {
             base.beginTransaction()
             val fechanow = getDateTime()
@@ -351,13 +354,12 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
             contenido.put("fecha_registrado", fechanow)
             contenido.put("id_server", idServer)
 
-            base.insert("preciosAutorizados", null, contenido)
+            base.insert("preciosAutorizados", SQLiteDatabase.CONFLICT_REPLACE, contenido)
             base.setTransactionSuccessful()
         } catch (e: Exception) {
             throw Exception(e.message)
         } finally {
             base.endTransaction()
-            base.close()
 
             mensajeCreado()
         }

@@ -43,7 +43,6 @@ import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.controllers.VisitaController
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityDetallepedidoBinding
 import com.example.acae30.listas.PedidoDetalleAdapter
 import com.example.acae30.modelos.DetallePedido
@@ -103,7 +102,6 @@ class Detallepedido : AppCompatActivity() {
     private var idpedido = 0
     private var visita_enviada: Boolean? = null
     private var from: String? = ""
-    private var db: Database? = null
     private var idvendedor = 0
     private var idvisita = 0
     private var vendedor = ""
@@ -186,7 +184,6 @@ class Detallepedido : AppCompatActivity() {
         idapi = intento.getIntExtra("idapi", 0)
         from = intento.getStringExtra("from").toString()
         FacturaExportacion = intento.getBooleanExtra("facturaExportacion", false)
-        db = Database(this)
 
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         idvendedor = preferencias.getInt("Idvendedor", 0)
@@ -282,12 +279,10 @@ class Detallepedido : AppCompatActivity() {
 
         // Consultar datos de visita
         if (idpedido > 0) {
-            val base = db!!.writableDatabase
+            val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
             try {
-                val cursor = base!!.rawQuery(
-                    "select c.codigo as codigo, c.cliente as nombre, c.id as idcliente, v.id as idvisita, v.enviado as visita_enviada, strftime('%d/%m/%Y %H:%M', p.fecha_creado) as fecha_creado from pedidos p inner join clientes c on p.Id_cliente = c.Id inner join visitas v on p.idvisita = v.id where p.id = ${idpedido}",
-                    null
-                )
+                val sql = "select c.codigo as codigo, c.cliente as nombre, c.id as idcliente, v.id as idvisita, v.enviado as visita_enviada, strftime('%d/%m/%Y %H:%M', p.fecha_creado) as fecha_creado from pedidos p inner join clientes c on p.Id_cliente = c.Id inner join visitas v on p.idvisita = v.id where p.id = ${idpedido}"
+                val cursor = base.query(sql)
                 if (cursor.count > 0) {
                     cursor.moveToFirst()
                     codigo = cursor.getString(0)
@@ -302,8 +297,6 @@ class Detallepedido : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 throw Exception(e.message)
-            } finally {
-                base.close()
             }
         }
 
@@ -742,9 +735,10 @@ class Detallepedido : AppCompatActivity() {
 
     //OPTENIENDO INFORMACION DEL PEDIDO
     private fun getTipoEnvio(ipPedido: Int){
-        val dataBase = db!!.readableDatabase
+        val dataBase = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
-            val getTipo = dataBase.rawQuery("SELECT Enviado, nombre_sucursal, tipo_envio, tipo_documento, terminos FROM pedidos WHERE id=$ipPedido", null)
+            val sql = "SELECT Enviado, nombre_sucursal, tipo_envio, tipo_documento, terminos FROM pedidos WHERE id=$ipPedido"
+            val getTipo = dataBase.query(sql)
             val getPedidoData = ArrayList<dataPedidos>()
             if(getTipo.count > 0){
                 getTipo.moveToFirst()
@@ -770,8 +764,6 @@ class Detallepedido : AppCompatActivity() {
             getTipo.close()
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            dataBase!!.close()
         }
     }
 
@@ -779,13 +771,15 @@ class Detallepedido : AppCompatActivity() {
     //CAMBIO EN EL TIPO DE DATO PARA EL CODIGO DE LA SUCURSAL, SE CAMBIO A STRING
     //09/10/2023
     private fun updatePedidoSucursal(idCliente:Int, nombreSucursal: String, idpedidos: Int){
-        val db = db!!.writableDatabase
+        val db = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         var sucursal = nombreSucursal.replace("'", "''", false)
         try {
-            val cursor = db.rawQuery("SELECT Id, id_cliente, codigo_sucursal, nombre_sucursal, direccion_sucursal, " +
+            val sql = "SELECT Id, id_cliente, codigo_sucursal, nombre_sucursal, direccion_sucursal, " +
                     "municipio_sucursal, depto_sucursal, telefono_1, correo_sucursal, " +
                     "Id_ruta, Ruta, DTECodDepto, DTECodMunicipio, DTECodPais, DTEPais  FROM cliente_sucursal " +
-                    "WHERE id_cliente=$idCliente and nombre_sucursal = '$sucursal'", null)
+                    "WHERE id_cliente=$idCliente and nombre_sucursal = '$sucursal'"
+
+            val cursor = db.query(sql)
             //val cursor = db.rawQuery("SELECT * FROM cliente_sucursal WHERE id_cliente=$idCliente and nombre_sucursal like '%$sucursal%'", null)
             val listaSucursales = ArrayList<InformacionSucursal>()
             if(cursor.count > 0){
@@ -825,7 +819,7 @@ class Detallepedido : AppCompatActivity() {
                 DTECorreo = data.dteCorreo
                 DTETelefono = data.dteTelefono
             }
-            db!!.execSQL("UPDATE pedidos set id_sucursal=$idSucursal, " +
+            db.execSQL("UPDATE pedidos set id_sucursal=$idSucursal, " +
                     "codigo_sucursal='$codigoSucursal', " +
                     "nombre_sucursal='$sucursal'," +
                     "Id_ruta = $Id_ruta," +
@@ -842,8 +836,6 @@ class Detallepedido : AppCompatActivity() {
 
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            db!!.close()
         }
     }
 
@@ -876,11 +868,12 @@ class Detallepedido : AppCompatActivity() {
     //FUNCION PARA OBTENER LAS SUCURSALES POR CLIENTE.
     //03-02-2023
     private fun getSucursalesNombre(idCliente:Int): ArrayList<Sucursales> {
-        val db = db!!.readableDatabase
+        val db = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         val listaSucursales = ArrayList<Sucursales>()
         try {
 
-            val dataSucursal = db.rawQuery("SELECT * FROM cliente_sucursal WHERE id_cliente='$idCliente'", null)
+            val sql = "SELECT * FROM cliente_sucursal WHERE id_cliente='$idCliente'"
+            val dataSucursal = db.query(sql)
             if(dataSucursal.count > 0){
                 dataSucursal.moveToFirst()
                 do{
@@ -898,8 +891,6 @@ class Detallepedido : AppCompatActivity() {
             dataSucursal.close()
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            db!!.close()
         }
         return listaSucursales
     }
@@ -1101,10 +1092,11 @@ class Detallepedido : AppCompatActivity() {
     } //muestra la alerta para eliminar
 
     private fun EliminarPedido(idpedido: Int) {
-        val bd = db!!.writableDatabase
+        val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
+            val sql = "SELECT * FROM pedidos where Id=$idpedido and Enviado=1"
             val cursor =
-                bd!!.rawQuery("SELECT * FROM pedidos where Id=$idpedido and Enviado=1", null)
+                bd.query(sql)
             if (cursor.count > 0) {
                 throw Exception("Este pedido ya fue enviado no se puede eliminar")
             } else {
@@ -1113,17 +1105,16 @@ class Detallepedido : AppCompatActivity() {
             cursor.close()
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            bd!!.close()
         }
     }
 
     //AGREGANDO CAMPOS DE SUCURSAL Y TIPO DE ENVIO A LA CABECERA DEL PEDIDO
     private fun getPedidoSend(idpedido: Int): CabezeraPedidoSend? {
-        val base = db!!.readableDatabase
+        val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
             var envio: CabezeraPedidoSend? = null
-            val pedido = base!!.rawQuery("SELECT * FROM pedidos where Id=$idpedido", null)
+            val sql = "SELECT * FROM pedidos where Id=$idpedido"
+            val pedido = base.query(sql)
             if (pedido.count > 0) {
                 pedido.moveToFirst()
                 envio = CabezeraPedidoSend(
@@ -1170,8 +1161,9 @@ class Detallepedido : AppCompatActivity() {
                     null
                 )
                 pedido.close()
+                val consulta = "SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido"
                 val cdetalle =
-                    base.rawQuery("SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido", null)
+                    base.query(consulta)
                 if (cdetalle.count > 0) {
                     val list = ArrayList<DetallePedido>() //lista donde se guardara el pedido
                     cdetalle.moveToFirst()
@@ -1209,8 +1201,6 @@ class Detallepedido : AppCompatActivity() {
             return envio
         } catch (e: Exception) {
             throw Exception(e)
-        } finally {
-            base.close()
         }
     }//obtiene el pedido
     //obtiene el pedido de la base de datos
@@ -1295,25 +1285,21 @@ class Detallepedido : AppCompatActivity() {
     } //funcion que envia el pedido a la bd
 
     private fun ConfirmarPedido(idpedido: Int, idservidor: Int) {
-        val bd = db!!.writableDatabase
+        val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.writableDatabase
         try {
-            bd!!.execSQL("UPDATE pedidos set Id_pedido_sistema=$idservidor,Enviado=1,Cerrado=1 WHERE Id=$idpedido")
+            bd.execSQL("UPDATE pedidos set Id_pedido_sistema=$idservidor,Enviado=1,Cerrado=1 WHERE Id=$idpedido")
             //bd!!.execSQL("UPDATE pedidos set Enviado=1,Cerrado=1 WHERE Id=$idpedido")
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            bd!!.close()
         }
     } //actualiza el pedido y confirma que se envio
 
     private fun ConfirmarDetallePedido(): Int {
-        val bd = db!!.writableDatabase
+        val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         var cantidadDetallepedido = 0.toInt()
         try {
-            val cursor = bd!!.rawQuery(
-                "select count(id_pedido) as cantidad from detalle_pedidos where id_pedido = ${idpedido}",
-                null
-            )
+            val sql = "select count(id_pedido) as cantidad from detalle_pedidos where id_pedido = ${idpedido}"
+            val cursor = bd.query(sql)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 cantidadDetallepedido = cursor.getInt(0)
@@ -1323,8 +1309,6 @@ class Detallepedido : AppCompatActivity() {
             }
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            bd!!.close()
         }
         return cantidadDetallepedido
     } //actualiza el pedido y confirma que se envio
@@ -1338,12 +1322,10 @@ class Detallepedido : AppCompatActivity() {
 
         var horaProceso = funciones.getFechaHoraProceso()
 
-        val base = db!!.writableDatabase
+        val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
-            val cursor = base!!.rawQuery(
-                "select v.Idvisita from visitas v inner join pedidos p on v.id = p.idvisita where p.id = ${idpedido_param}",
-                null
-            )
+            val sql = "select v.Idvisita from visitas v inner join pedidos p on v.id = p.idvisita where p.id = ${idpedido_param}"
+            val cursor = base.query(sql)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 idvisita_v = cursor.getInt(0)
@@ -1353,8 +1335,6 @@ class Detallepedido : AppCompatActivity() {
             }
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            base.close()
         }
 
         val json = JsonObject()

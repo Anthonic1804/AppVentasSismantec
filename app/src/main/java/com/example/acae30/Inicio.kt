@@ -16,10 +16,9 @@ import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.edit
 import androidx.drawerlayout.widget.DrawerLayout
-import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityInicioBinding
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
@@ -45,7 +44,6 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var funciones: Funciones? = null
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
-    private var database: Database? = null
     private var pedidosController = PedidosController()
 
     //VARIABLES PARA UN SLIDE MENU
@@ -91,7 +89,6 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         funciones = Funciones()
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         funciones!!.VendedorVerific(this) //valida que haya sesion y que haya configuracion
-        database = Database(this)
 
         ip = preferencias!!.getString("ip", "").toString()
         puerto = preferencias!!.getInt("puerto", 0)
@@ -233,9 +230,9 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 funciones!!.eliminarInformacion(this@Inicio)
             }
 
-            val editor = preferencias!!.edit()
-            editor.putString("fechaInventario", "NULL")
-            editor.apply()
+            preferencias!!.edit {
+                putString("fechaInventario", "NULL")
+            }
 
             updateSesionServer()
             cerrarSesion()
@@ -359,14 +356,14 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         //SE ELIMINO LA FUNCION DE ELIMINADO DE DATOS DE LA TABLA PEDIDOS Y PEDIDOS_DETALLE
         //22/04/2023
         // BORRAR DATOS DE SESION Y SALIR A LA PANTALLA DE LOGIN
-        val editor = preferencias!!.edit()
-        editor.putInt("Idvendedor", 0)
-        editor.putString("Vendedor", "")
-        editor.putString("Usuario", "")
-        editor.putString("Identidad", "")
-        editor.putInt("generaToken", 0)
-        editor.putBoolean("sesion", false)
-        editor.apply()
+        preferencias!!.edit {
+            putInt("Idvendedor", 0)
+            putString("Vendedor", "")
+            putString("Usuario", "")
+            putString("Identidad", "")
+            putInt("generaToken", 0)
+            putBoolean("sesion", false)
+        }
 
         val intento = Intent(this, Login::class.java)
         startActivity(intento)

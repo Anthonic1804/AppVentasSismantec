@@ -14,11 +14,9 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.acae30.database.Database
 import com.example.acae30.modelos.JSONmodels.Login
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
@@ -37,7 +35,6 @@ import java.nio.charset.StandardCharsets
 
 class Login : AppCompatActivity() {
     private var btnlogin: Button? = null
-    private var bd: Database? = null
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
     private var funciones: Funciones? = null
@@ -58,7 +55,6 @@ class Login : AppCompatActivity() {
         setContentView(R.layout.activity_login)
         supportActionBar?.hide()
         alerta = AlertDialogo(this, this)
-        bd = Database(this)
         lienzo = findViewById(R.id.lienzo)
         btnlogin = findViewById(R.id.btnlogin)
         funciones = Funciones()

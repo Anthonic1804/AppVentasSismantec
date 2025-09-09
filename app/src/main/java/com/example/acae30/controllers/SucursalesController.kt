@@ -3,6 +3,7 @@ package com.example.acae30.controllers
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.InformacionSucursal
@@ -29,10 +30,11 @@ class SucursalesController {
 
     //FUNCION PARA OBTENER LAS SUCURSALES POR CLIENTE.
     fun obtenerSucursalesporIdCliente(context: Context, idCliente:Int): ArrayList<String> {
-        val db = funciones.getDataBase(context).readableDatabase
+        val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listaSucursales = ArrayList<String>()
         try {
-            val dataSucursal = db.rawQuery("SELECT nombre_sucursal FROM cliente_sucursal WHERE id_cliente='$idCliente'", null)
+            val consulta = "SELECT nombre_sucursal FROM cliente_sucursal WHERE id_cliente='$idCliente'"
+            val dataSucursal = db.query(consulta)
             if(dataSucursal.count > 0){
                 dataSucursal.moveToFirst()
                 listaSucursales.add("-- SELECCIONES UNA SUCURSAL --")
@@ -43,22 +45,23 @@ class SucursalesController {
             dataSucursal.close()
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            db!!.close()
         }
         return listaSucursales
     }
 
     //FUNCION PARA OBTENER LA INFORMACION DE LA SUCURSAL DEL CLIENTE
     fun obtenerInformacionSucursal(context: Context, sucursal: String, idCliente: Int) : InformacionSucursal?{
-        val db = funciones.getDataBase(context).readableDatabase
+        val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var datosSucursal : InformacionSucursal? = null
 
         try {
-            val cursor = db.rawQuery("SELECT Id, id_cliente, codigo_sucursal, nombre_sucursal, direccion_sucursal, " +
+
+            val consulta = "SELECT Id, id_cliente, codigo_sucursal, nombre_sucursal, direccion_sucursal, " +
                     "municipio_sucursal, depto_sucursal, telefono_1, correo_sucursal, " +
                     "Id_ruta, Ruta, DTECodDepto, DTECodMunicipio, DTECodPais, DTEPais  FROM cliente_sucursal " +
-                    "WHERE nombre_sucursal='$sucursal' AND id_cliente=$idCliente", null)
+                    "WHERE nombre_sucursal='$sucursal' AND id_cliente=$idCliente"
+
+            val cursor = db.query(consulta)
 
             if(cursor.count > 0){
                 cursor.moveToFirst()
@@ -85,19 +88,18 @@ class SucursalesController {
             cursor.close()
         }catch (e:Exception){
             throw Exception("ERROR AL OBTENER LA INFORMACION DE LAS SUCURSALES -> " + e.message)
-        }finally {
-            db.close()
         }
         return datosSucursal
     }
 
     //FUNCION PARA OBTENER LAS SUCURSALES POR CLIENTE PARA LISTADO
     fun obtenerInfoSucursalesPorCliente(context: Context, idCliente:Int) : ArrayList<SucursalesTarjetaModel>{
-        val db = funciones.getDataBase(context).readableDatabase
+        val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listaSucursales = ArrayList<SucursalesTarjetaModel>()
         try {
-            val dataSucursal = db.rawQuery("SELECT codigo_sucursal, nombre_sucursal, depto_sucursal, municipio_sucursal, " +
-                    "direccion_sucursal, telefono_1, Ruta, DTECorreo FROM cliente_sucursal WHERE id_cliente='$idCliente' LIMIT 30", null)
+            val consulta = "SELECT codigo_sucursal, nombre_sucursal, depto_sucursal, municipio_sucursal, " +
+                    "direccion_sucursal, telefono_1, Ruta, DTECorreo FROM cliente_sucursal WHERE id_cliente='$idCliente' LIMIT 30"
+            val dataSucursal = db.query(consulta)
             if(dataSucursal.count > 0){
                 dataSucursal.moveToFirst()
                 do{
@@ -118,8 +120,6 @@ class SucursalesController {
             dataSucursal.close()
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            db!!.close()
         }
         return listaSucursales
     }
@@ -226,9 +226,9 @@ class SucursalesController {
 
     //FUNINON PARA REGISTRAR EL NUEVO CLIENTE EN SLITE
     private fun registrarSucursalDataBase(sucursal: SucursalModel, idSucursal: Int, context: Context) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            bd!!.beginTransaction()
+            bd.beginTransaction()
 
             val data = ContentValues()
             data.put("Id", idSucursal)
@@ -252,14 +252,13 @@ class SucursalesController {
             data.put("Latitud_app", funciones.validate(sucursal.Latitud_app))
             data.put("Longitud_app", funciones.validate(sucursal.Longitud_app))
 
-            bd.insert("cliente_sucursal", null, data)
+            bd.insert("cliente_sucursal", SQLiteDatabase.CONFLICT_REPLACE, data)
             bd.setTransactionSuccessful()
 
         } catch (e: Exception) {
             println("ERROR AL REGISTRAR LA SUCURSAL EN SQLITE -> " + e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }
 

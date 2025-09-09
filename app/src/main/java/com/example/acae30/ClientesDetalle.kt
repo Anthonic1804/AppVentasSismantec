@@ -8,8 +8,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.acae30.controllers.ClientesController
-import com.example.acae30.controllers.SucursalesController
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityClientesDetalleBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,8 +17,6 @@ import kotlinx.coroutines.withContext
 class ClientesDetalle : AppCompatActivity() {
 
     private lateinit var binding: ActivityClientesDetalleBinding
-
-    private var bd: Database? = null
     private var funciones: Funciones? = null
     private var nombreCliente : String = ""
     private var direccionCliente : String = ""
@@ -45,7 +41,6 @@ class ClientesDetalle : AppCompatActivity() {
         binding = ActivityClientesDetalleBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        bd = Database(this)
         idcliente = intent.getIntExtra("idcliente", 0)
         println("ID CLIENTE SELECCIONADO -> $idcliente")
 

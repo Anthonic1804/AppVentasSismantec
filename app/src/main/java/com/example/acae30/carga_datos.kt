@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -14,7 +15,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.DAO.InventarioDao
 import com.example.acae30.Entities.InventarioEntity
@@ -22,14 +23,10 @@ import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
-import com.example.acae30.controllers.ConfigController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.database.AppDatabase
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityCargaDatosBinding
-import com.example.acae30.listas.InventarioRetrofit
-import com.example.acae30.modelos.Inventario
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +34,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
-import retrofit2.Response
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.LocalDate
@@ -47,8 +43,6 @@ class carga_datos : AppCompatActivity() {
     private lateinit var url: String
     private var idVendedor = 0
     private var alert: AlertDialogo? = null
-    private var database: Database? = null
-
     private var inventarioController = InventarioController()
     private var clietnesController = ClientesController()
     private var pedidosController = PedidosController()
@@ -76,7 +70,6 @@ class carga_datos : AppCompatActivity() {
         preferences = this@carga_datos.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         alert = AlertDialogo(this@carga_datos, this)
-        database = Database(this@carga_datos)
 
         url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
@@ -481,12 +474,12 @@ class carga_datos : AppCompatActivity() {
                             catalagosController.obtenerInformacionRuta(this@carga_datos, rutaSeleccionada)!!.id
                         }
 
-                        val editor = preferences.edit()
-                        editor.putInt("idRutaSeleccionada", 0)
-                        editor.putString("rutaSeleccionada", "")
-                        editor.putInt("idRutaSeleccionada", idRutaSeleccionada)
-                        editor.putString("rutaSeleccionada", rutaSeleccionada)
-                        editor.apply()
+                        preferences.edit {
+                            putInt("idRutaSeleccionada", 0)
+                            putString("rutaSeleccionada", "")
+                            putInt("idRutaSeleccionada", idRutaSeleccionada)
+                            putString("rutaSeleccionada", rutaSeleccionada)
+                        }
 
                     }catch (e: Exception){
                         println("ERROR AL CARGAR LA RUTA DEL CIENTE " + e.message)
@@ -625,12 +618,12 @@ class carga_datos : AppCompatActivity() {
     //GUARDANDO SUCURSALES EN SQLITE
     //28-01-2023
     private fun saveSucursalesDatabase(json: JSONArray) {
-        val bd = database!!.writableDatabase
+        val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
         val total = json.length()
         val talla = (50.toFloat() / total.toFloat()).toFloat()
         var contador: Float = 0.toFloat()
         try {
-            bd!!.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
+            bd.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
             for (i in 0 until json.length()) {
                 val dato = json.getJSONObject(i)
                 val valor = ContentValues()
@@ -656,7 +649,7 @@ class carga_datos : AppCompatActivity() {
                 valor.put("Latitud_app", funciones.validateJsonIsnullString(dato, "latitud_app"))
                 valor.put("Longitud_app", funciones.validateJsonIsnullString(dato, "longitud_app"))
 
-                bd.insert("cliente_sucursal", null, valor)
+                bd.insert("cliente_sucursal", SQLiteDatabase.CONFLICT_REPLACE, valor)
                 contador += talla
                 val mensaje = contador + 50.toFloat()
                 messageAsync("Cargando ${mensaje.toInt()}%")
@@ -665,8 +658,7 @@ class carga_datos : AppCompatActivity() {
         } catch (e: Exception) {
             throw  Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     } //INSERTANDO DATOS EN LA TABLA SUCURSALES EN SQLITE
 
@@ -775,7 +767,7 @@ class carga_datos : AppCompatActivity() {
             while(hayMas){
                 val respuesta = api.obtenerEscalasPrecios(offset, limite)
 
-                println(respuesta)
+                //println(respuesta)
 
                 if (respuesta.isNotEmpty()) {
                     val entidades = respuesta.map {
@@ -889,9 +881,9 @@ class carga_datos : AppCompatActivity() {
         val total = json.length()
         val talla = (50.toFloat() / total.toFloat()).toFloat()
         var contador: Float = 0.toFloat()
-        val bd = database!!.writableDatabase
+        val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
         try {
-            bd!!.beginTransaction() //inicio la transaccion
+            bd.beginTransaction() //inicio la transaccion
 
             bd.execSQL("DELETE FROM clientes") //limpiamos los registros viejos par obtener los nuevos
             bd.execSQL("DELETE FROM cliente_precios")
@@ -965,7 +957,7 @@ class carga_datos : AppCompatActivity() {
                 data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
                 data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))
 
-                bd.insert("clientes", null, data)
+                bd.insert("clientes", SQLiteDatabase.CONFLICT_REPLACE, data)
                 contador += talla
                 val mensaje = contador + 50.toFloat()
                 messageAsync("Cargando ${mensaje.toInt()}%")
@@ -975,18 +967,17 @@ class carga_datos : AppCompatActivity() {
         } catch (e: Exception) {
             throw Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }//guarda los datos en la bd
 
     private fun saveCuentaDatabase(json: JSONArray) {
-        val bd = database!!.writableDatabase
+        val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
         val total = json.length()
         val talla = (50.toFloat() / total.toFloat()).toFloat()
         var contador: Float = 0.toFloat()
         try {
-            bd!!.beginTransaction() //inicia la transaccion
+            bd.beginTransaction() //inicia la transaccion
             bd.execSQL("DELETE FROM cuentas") //eliminamos la cuentas
 
             val sql2 = "DELETE FROM SQLITE_SEQUENCE WHERE NAME = 'cuentas'"
@@ -1031,7 +1022,7 @@ class carga_datos : AppCompatActivity() {
                 )
                 valor.put("dias_tardios", funciones.validateJsonIsNullInt(dato, "dias_tardios"))
 
-                bd.insert("cuentas", null, valor)
+                bd.insert("cuentas", SQLiteDatabase.CONFLICT_REPLACE, valor)
                 contador = contador + talla
                 val mensaje = contador + 50.toFloat()
                 messageAsync("Cargando ${mensaje.toInt()}%")
@@ -1040,8 +1031,7 @@ class carga_datos : AppCompatActivity() {
         } catch (e: Exception) {
             throw  Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     } //inserta las cxc en la tabla
 

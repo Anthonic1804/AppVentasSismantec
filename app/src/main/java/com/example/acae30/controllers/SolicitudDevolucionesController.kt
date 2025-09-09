@@ -3,6 +3,7 @@ package com.example.acae30.controllers
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
 import com.example.acae30.modelos.SolcitudDevolucion.SolicitudDevolucion
 import com.example.acae30.modelos.SolcitudDevolucion.SolicitudDevolucionDetalle
@@ -39,7 +40,7 @@ class SolicitudDevolucionesController {
 
 
 
-        val base = funciones.getDataBase(context).writableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
         val fecha = funciones.obtenerFecha()
         var idDevolucion : Int = 0
 
@@ -55,7 +56,7 @@ class SolicitudDevolucionesController {
             contenido.put("Id_vendedor", idVendedor)
             contenido.put("Vendedor", nombreVendedor)
             contenido.put("Estado", "PROCESADO")
-            val id = base.insert("devolucion", null, contenido)
+            val id = base.insert("devolucion", SQLiteDatabase.CONFLICT_REPLACE, contenido)
             idDevolucion = id.toInt()
 
             base.setTransactionSuccessful()
@@ -65,7 +66,6 @@ class SolicitudDevolucionesController {
             println("ERROR AL CREAR LA NUEVA DEVOLUCION " + e.message)
         }finally {
             base.endTransaction()
-            base.close()
         }
 
         return  idDevolucion
@@ -74,7 +74,7 @@ class SolicitudDevolucionesController {
     //FUNCION PARA AGREGAR PRODUCTOS A LA DEVOLUCION
     fun agregarProductoDetalleDevolucion(context: Context,  obj: SolicitudDevolucionDetalle) : Boolean{
         var registrado = false
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
         val fecha = funciones.obtenerFecha()
         try {
@@ -91,7 +91,7 @@ class SolicitudDevolucionesController {
             contenido.put("Bueno", obj.Bueno)
             contenido.put("Averia", obj.Averia)
             contenido.put("Tipo_fiscal", "G")
-            bd.insert("devolucion_detalle", null, contenido)
+            bd.insert("devolucion_detalle", SQLiteDatabase.CONFLICT_REPLACE, contenido)
             registrado = true
 
             bd.setTransactionSuccessful()
@@ -100,7 +100,6 @@ class SolicitudDevolucionesController {
             println("ERROR AL REGISTRAR EL DETALLE DE LA DEVOLUCION -> ${e.message}")
         }finally {
             bd.endTransaction()
-            bd.close()
         }
 
 
@@ -110,7 +109,7 @@ class SolicitudDevolucionesController {
     //FUNCION PARA CANCELAR EL PROCESO DE DEVOLUCION
     fun eliminarDevolucion(context: Context, idDevolucion : Int): Boolean{
         var eliminado : Boolean = false
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("DELETE FROM devolucion WHERE id=$idDevolucion")
             bd.execSQL("DELETE FROM devolucion_detalle WHERE Id_dev=$idDevolucion")
@@ -119,18 +118,17 @@ class SolicitudDevolucionesController {
         }catch (e:Exception){
             println("ERROR AL ELIMINAR LA DEVOLUCION DESDE LA BD DE SQLITE")
             eliminado = false
-        }finally {
-            bd.close()
         }
         return eliminado
     }
 
     //FUNCION PARA OBTENER EL DETALLE DE LA DEVOLUCION
     fun obtenerDetalleDevolucion(context: Context, idDevolucion: Int) : ArrayList<SolicitudDevolucionDetalle>{
-        val db = funciones.getDataBase(context).readableDatabase
+        val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val detalleDevolucion = ArrayList<SolicitudDevolucionDetalle>()
         try {
-            val cursor = db.rawQuery("SELECT * FROM devolucion_detalle WHERE Id_dev=$idDevolucion", null)
+            val consulta = "SELECT * FROM devolucion_detalle WHERE Id_dev=$idDevolucion"
+            val cursor = db.query(consulta)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -153,8 +151,6 @@ class SolicitudDevolucionesController {
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER EL DETALLE DE LA DEVOLUCION -> ${e.message}")
-        }finally {
-            db.close()
         }
         return  detalleDevolucion
     }
@@ -162,9 +158,10 @@ class SolicitudDevolucionesController {
     //FUNCION PARA BUSCAR EL PRODUCTO YA AGREGADO AL DETALLE DE LA DEVOLUCION
     fun obtenerProductoEnDevolucion(context: Context, idProducto: Int, idDevolucion: Int) : Boolean{
         var encontrado = false
-        val db = funciones.getDataBase(context).readableDatabase
+        val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
-            val cursor = db.rawQuery("SELECT * FROM devolucion_detalle WHERE Id_producto=$idProducto AND Id_dev=$idDevolucion", null)
+            val sql = "SELECT * FROM devolucion_detalle WHERE Id_producto=$idProducto AND Id_dev=$idDevolucion"
+            val cursor = db.query(sql)
             if(cursor.count > 0){
                 encontrado = true
             }
@@ -172,18 +169,17 @@ class SolicitudDevolucionesController {
         }catch (e:Exception){
             println("ERROR AL ENCONTRAR EL PRODUCTO EN EL DETALLE DE LA DEVOLUCION -> ${e.message}")
             encontrado = false
-        }finally {
-            db.close()
         }
         return encontrado
     }
 
     //FUNCION PARA OBTENER TODA LA DEVOLCION ENCABEZADO Y DETALLE
     private fun obtenerDevolucion(context: Context, idDevolucion: Int) : SolicitudDevolucion?{
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var devolucion : SolicitudDevolucion? = null
         try {
-            val cursor = bd.rawQuery("SELECT * FROM devolucion WHERE id=$idDevolucion", null)
+            val consulta = "SELECT * FROM devolucion WHERE id=$idDevolucion"
+            val cursor = bd.query(consulta)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 devolucion = SolicitudDevolucion(
@@ -205,8 +201,6 @@ class SolicitudDevolucionesController {
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER LA DEVOLUCION -> ${e.message}")
-        }finally {
-            bd.close()
         }
         return devolucion
     }
@@ -278,14 +272,12 @@ class SolicitudDevolucionesController {
     }
 
     private fun actualizarNumeroDcolucion(context: Context, idDevolucion: Int, numero: Int){
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("UPDATE devolucion SET numero=$numero WHERE Id=$idDevolucion")
             bd.execSQL("UPDATE devolucion_detalle SET Numero_dev = $numero WHERE Id_dev=$idDevolucion ")
         }catch (e:Exception){
             println("ERROR AL ACTUALIZAR EL NUMERO DE LA DEVOLUCION -> ${e.message}")
-        }finally {
-            bd.close()
         }
     }
 
@@ -332,9 +324,10 @@ class SolicitudDevolucionesController {
 
     //DESCARGA DE INVENTARIO LA DEVOLUCION
     fun descargarProductosInventario(idDevolucion: Int, context: Context){
-        val base = funciones.getDataBase(context).writableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            val cursor = base.rawQuery("SELECT Id_producto, Cantidad FROM devolucion_detalle WHERE Id_dev=$idDevolucion",null)
+            val consulta = "SELECT Id_producto, Cantidad FROM devolucion_detalle WHERE Id_dev=$idDevolucion"
+            val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 do {
@@ -348,17 +341,15 @@ class SolicitudDevolucionesController {
             }
         }catch (e:Exception){
             println("ERROR: NO SE ENCONTRARON REGISTROS EN LA DEVOLUCION -> ${e.message}")
-        }finally {
-            base.close()
         }
     }
 
     //FUNCION PARA OBTENER TODA LA DEVOLCION ENCABEZADO Y DETALLE
     fun obtenerListadoDevoluciones(context: Context) : ArrayList<SolicitudDevolucion>{
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val devolucion = ArrayList<SolicitudDevolucion>()
         try {
-            val cursor = bd.rawQuery("SELECT * FROM devolucion ORDER BY ID DESC LIMIT 20", null)
+            val cursor = bd.query("SELECT * FROM devolucion ORDER BY ID DESC LIMIT 20")
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -382,8 +373,6 @@ class SolicitudDevolucionesController {
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER LA DEVOLUCION -> ${e.message}")
-        }finally {
-            bd.close()
         }
         return devolucion
     }

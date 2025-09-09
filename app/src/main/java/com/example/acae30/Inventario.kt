@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 
 class Inventario : AppCompatActivity() {
@@ -329,9 +330,9 @@ class Inventario : AppCompatActivity() {
                                 }else{
                                     buscarProducto(busqueda!!.query.toString())
 
-                                    val editor = preferences.edit()
-                                    editor.putInt("idProducto", list[position].Id!!)
-                                    editor.apply()
+                                    preferences.edit {
+                                        putInt("idProducto", list[position].Id!!)
+                                    }
 
                                     val intento = Intent(this@Inventario, Inventariodetalle::class.java)
                                     startActivity(intento)
@@ -420,9 +421,9 @@ class Inventario : AppCompatActivity() {
 
     //FUNCION PARA ALMACENAR LA BUSQUEDA DEL PRODUCTO EN MEMORIA
     private fun buscarProducto(busqueda : String){
-        val dataSearch = preferences.edit()
-        dataSearch.putString("buscarProducto", busqueda)
-        dataSearch.apply()
+        preferences.edit {
+            putString("buscarProducto", busqueda)
+        }
     }
 
     //FUNCION PARA ELIMINAR LA BUSQUEDA DE PRODUCTO EN MEMORIA

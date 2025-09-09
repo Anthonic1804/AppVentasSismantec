@@ -11,10 +11,11 @@ class CuentasController {
 
     //FUNCION PARA OBTENER LAS CXC POR CLIENTE
     fun obtenerCuentasPorNombre(cliente: String, context: Context): ArrayList<Cliente> {
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val lista = ArrayList<Cliente>()
         try {
-            val consulta = base.rawQuery("SELECT * FROM Clientes WHERE cliente LIKE '%$cliente%'", null)
+            val sql = "SELECT * FROM Clientes WHERE cliente LIKE '%$cliente%'"
+            val consulta = base.query(sql)
 
             if (consulta.count > 0) {
                 consulta.moveToFirst()
@@ -71,24 +72,22 @@ class CuentasController {
             }
         } catch (e: Exception) {
             throw Exception("ERROR: NO SE ENCONTRARON CUENTAS -> " + e.message)
-        } finally {
-            base!!.close()
         }
         return lista
     }
 
     //FUNCION PARA OBTENER TODAS LAS CUENTAS EN LISTA
     fun obtenerTodaslasCxC(context: Context): ArrayList<Cliente>{
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val lista = ArrayList<Cliente>()
 
         try {
 
-            val consulta = base.rawQuery("SELECT DISTINCT * FROM clientes C " +
+            val consulta = base.query("SELECT DISTINCT * FROM clientes C " +
                     "INNER JOIN cuentas P " +
                     "ON C.id = P.id_cliente AND P.Status = 'PENDIENTE' " +
                     "GROUP BY C.id " +
-                    "LIMIT 30 ", null)
+                    "LIMIT 30 ")
 
             if (consulta.count > 0) {
                 consulta.moveToFirst()
@@ -146,15 +145,13 @@ class CuentasController {
             }
         } catch (e: Exception) {
             throw Exception("ERROR: AL OBTENER TODAS LAS CXC ->" + e.message)
-        } finally {
-            base.close()
         }
         return lista
     }
 
     //FUNCION PARA OBTENER LAS CUENTAS DEL CLIENTE POR ID Y FILTRO
     fun obtenerCxCporIdCliente(idcliente: Int, context: Context, filtro: String) : ArrayList<Cuenta>{
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
             var consulta : String = ""
             when(filtro){
@@ -170,7 +167,7 @@ class CuentasController {
             }
 
             val lista = ArrayList<Cuenta>()
-            val cursor = base!!.rawQuery(consulta, null)
+            val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 do {
@@ -199,8 +196,6 @@ class CuentasController {
             return lista
         } catch (e: Exception) {
             throw Exception("ERROR: NO SE ENCONTRARON CXC -> " + e.message)
-        } finally {
-            base!!.close()
         }
     }
 

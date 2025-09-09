@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import androidx.appcompat.app.AlertDialog
 import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
 import com.example.acae30.AbonosCxc
@@ -34,7 +35,7 @@ class AbonosController {
     //FUNCION PARA INSERTAR LOS ABONOS EN SQLITE
     fun insertarAbonoCxc(context: Context, abono: Abono, tipo: String, idAbonoServer: Int) : Boolean{
         var guardado : Boolean = false
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         var enviado = 1
         if(tipo == "GUARDAR"){
             enviado = 0
@@ -61,25 +62,24 @@ class AbonosController {
             data.put("idAbonoServer", idAbonoServer)
             data.put("abonoEnviado", enviado)
 
-            bd.insert("abonos", null, data)
+            bd.insert("abonos", SQLiteDatabase.CONFLICT_REPLACE, data)
             bd.setTransactionSuccessful()
             guardado = true
         }catch (e:Exception){
             println("ERROR: INSERTAR ABONO -> ${e.message}")
         }finally {
             bd.endTransaction()
-            bd.close()
         }
         return guardado
     }
 
     //FUNCION PARA SELECCIONAR TODOS LOS ABONOS POR FECHA
     fun obtenerAbonosSQLite(context: Context, fecha : String) : ArrayList<Abono>{
-        val bd = funciones.getDataBase(context).readableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listaAbonos = ArrayList<Abono>()
 
         try{
-            val cursor = bd.rawQuery("SELECT * FROM abonos WHERE fecha = '$fecha' AND borradoLogico = 0 ORDER BY id DESC", null)
+            val cursor = bd.query("SELECT * FROM abonos WHERE fecha = ? AND borradoLogico = 0 ORDER BY id DESC", arrayOf(fecha))
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -109,8 +109,6 @@ class AbonosController {
             cursor.close()
         }catch (e:Exception){
             funciones.mensaje(context,"ERROR: OBTENER LOS ABONOS -> ${e.message}")
-        }finally {
-            bd.close()
         }
         return listaAbonos
     }
@@ -195,14 +193,12 @@ class AbonosController {
 
     //FUNCION PARA ACTUALIZAR EL ESTADO DE ENVIO DEL ABONO
     private fun actualizandoAbonoCxc(context: Context, abono: Abono, idAbono: Int) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("UPDATE abonos SET idAbonoServer = $idAbono, abonoEnviado = 1 " +
                     "WHERE idCliente = ${abono.IdCliente} AND idSucursal = ${abono.IdSucursal} AND fecha = '${abono.Fecha}'")
         } catch (e: Exception) {
             println("ERROR AL ACTUALIZAR EL ABONO EN SQLITE -> " + e.message)
-        } finally {
-            bd!!.close()
         }
     }
 
@@ -235,11 +231,11 @@ class AbonosController {
 
     //FUNCION PARA SELECCIONAR LOS ABONO NO ENVIADOS
     fun obtenerAbonosNoEnviados(context: Context) : ArrayList<Abono>{
-        val base = funciones.getDataBase(context).readableDatabase
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val abonos = ArrayList<Abono>()
         val fecha = funciones.obtenerFecha()
         try {
-            val cursor = base.rawQuery("SELECT * FROM abonos WHERE abonoEnviado = 0 AND fecha='$fecha'", null)
+            val cursor = base.query("SELECT * FROM abonos WHERE abonoEnviado = 0 AND fecha=?", arrayOf(fecha))
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -268,8 +264,6 @@ class AbonosController {
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER LOS ABONOS NO ENVIADOS -> " + e.message)
-        }finally {
-            base.close()
         }
         return abonos
     }
@@ -352,13 +346,11 @@ class AbonosController {
 
     //FUNCION ACTUALIZAR ESTADO DE ABONO ANULADO
     private fun actualizarEstadoAbonoAnulado(context: Context, idAbonoServer: Int){
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("UPDATE abonos SET borradoLogico = 1 WHERE idAbonoServer = $idAbonoServer")
         }catch (e:Exception){
             println("ERROR AL ACTUALIZAR EL ESTADO DEL ABONO " + e.message)
-        }finally {
-            bd.close()
         }
     }
 

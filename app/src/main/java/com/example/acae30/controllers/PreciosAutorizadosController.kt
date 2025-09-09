@@ -6,23 +6,22 @@ import com.example.acae30.Funciones
 import com.example.acae30.modelos.PrecioPersonalizado
 
 class PreciosAutorizadosController {
-
-    private lateinit var preferences: SharedPreferences
-    private var instancia = "CONFIG_SERVIDOR"
     private var funciones = Funciones()
 
 
     //OBTENIEDO LOS PRECIOS AUTORIZADOS POR FECHA
     fun obtenerPrecioAutorizadoPorFecha(context: Context): ArrayList<PrecioPersonalizado>{
-        val data = funciones.getDataBase(context).readableDatabase
+        val data = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val fechanow = funciones.obtenerFecha()
         val list = ArrayList<PrecioPersonalizado>()
 
         try {
-            val cursor = data.rawQuery("SELECT T.Id, T.cod_producto, I.Descripcion, E.nombre_empleado, T.precio_asig FROM preciosAutorizados T " +
+            val consulta = "SELECT T.Id, T.cod_producto, I.Descripcion, E.nombre_empleado, T.precio_asig FROM preciosAutorizados T " +
                     "INNER JOIN inventario I ON I.Codigo = T.cod_producto " +
                     "INNER JOIN empleado E ON E.id_empleado = T.Id_vendedor " +
-                    "WHERE fecha_registrado='$fechanow'", null)
+                    "WHERE fecha_registrado='$fechanow'"
+
+            val cursor = data.query(consulta)
             if(cursor.count > 0){
                 cursor.moveToFirst()
                 do {
@@ -39,8 +38,6 @@ class PreciosAutorizadosController {
             cursor.close()
         }catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            data.close()
         }
         return list
     }

@@ -18,11 +18,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.ClientesController
-import com.example.acae30.database.Database
-import com.example.acae30.databinding.ActivityCargaDatosBinding
 import com.example.acae30.databinding.ActivityClientesBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
@@ -31,11 +30,8 @@ import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.collections.ArrayList
 
 class Clientes : AppCompatActivity() {
-
-    private var db: Database? = null
     private var recicle: RecyclerView? = null
     private var alert: AlertDialogo? = null
     private var busqueda: SearchView? = null
@@ -93,7 +89,6 @@ class Clientes : AppCompatActivity() {
 
         P_Mantto_Clientes = preferences!!.getBoolean("P_Mantto_Clientes", false)
 
-        db = Database(this)
         alert = AlertDialogo(this, this)
         busqueda = findViewById(R.id.busquedainv)
         atras = findViewById(R.id.imageButton)
@@ -223,10 +218,10 @@ class Clientes : AppCompatActivity() {
     //FUNCION PARA ELIMINAR LAS SHARED PREFERENCES CREADAS
     //13/01/2024
     private fun sharedPreferencesFinalizarVisita(){
-        val editor = preferences!!.edit()
-        editor.remove("visita")
-        editor.remove("busqueda")
-        editor.apply()
+        preferences!!.edit {
+            remove("visita")
+            remove("busqueda")
+        }
     }
 
     fun Atras(view: View) {
@@ -334,18 +329,18 @@ class Clientes : AppCompatActivity() {
 
     private fun busquedaCliente(busqueda : String){
         //ALAMACENADO EN MEMORIA LA BUSQUEDA DEL CLIENTE
-        val clienteBusqueda = preferences!!.edit()
-        clienteBusqueda.putString("clienteBusqueda", busqueda)
-        clienteBusqueda.apply()
+        preferences!!.edit {
+            putString("clienteBusqueda", busqueda)
+        }
     }
 
     //FUNCION PARA ELIMINA DE MEMORIA LA BUSQUEDA DEL CLIENTE
     private fun eliminarBusqueda(){
         val dSearch = preferences?.getString("clienteBusqueda", "")
         if(dSearch != null){
-            val eliminarBusqueda = preferences?.edit()
-            eliminarBusqueda!!.remove("clienteBusqueda")
-            eliminarBusqueda.apply()
+            preferences?.edit {
+                this!!.remove("clienteBusqueda")
+            }
         }
     }
 

@@ -3,28 +3,20 @@ package com.example.acae30
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.ImageButton
 import android.widget.SearchView
 import android.widget.Toast
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.controllers.CuentasController
-import com.example.acae30.database.Database
 import com.example.acae30.databinding.ActivityCuentasListBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
-import java.util.*
-import kotlin.collections.ArrayList
 
 class Cuentas_list : AppCompatActivity() {
-    private var bd: Database? = null
-
     private var preferences : SharedPreferences? = null
     private var instancia = "CONFIG_SERVIDOR"
     private var busquedaCliente : String? = null
@@ -39,8 +31,6 @@ class Cuentas_list : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityCuentasListBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        bd = Database(this)
 
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         vista = preferences!!.getString("vista", "").toString()
@@ -120,22 +110,22 @@ class Cuentas_list : AppCompatActivity() {
 
     //FUNCION PARA MANTENER LA BUSQUEDA DEL CLIENTE
     private fun buscarCliente(busqueda : String){
-        val clientSearch = preferences!!.edit()
-        clientSearch.putString("busquedaCliente", busqueda)
-        clientSearch.apply()
+        preferences!!.edit {
+            putString("busquedaCliente", busqueda)
+        }
     }
 
     //FUNCION PARA ELIMINAR LA BUSQUEDA PERSISTENTE DEL CLIENTE
     private fun eliminarBusqueda(){
         val clientSearch = preferences!!.getString("busquedaCliente", "")
-        val deleteSearch = preferences!!.edit()
-        if(clientSearch != ""){
-            deleteSearch.remove("busquedaCliente")
+        preferences!!.edit {
+            if (clientSearch != "") {
+                remove("busquedaCliente")
+            }
+            if (vista == "abono") {
+                remove("vista")
+            }
         }
-        if(vista == "abono"){
-            deleteSearch.remove("vista")
-        }
-        deleteSearch.apply()
     }
 
     //BUSQUEDA DE CLIENTES DINAMICA
@@ -157,10 +147,11 @@ class Cuentas_list : AppCompatActivity() {
     } //obtiene los resultados de la busqueda
 
     private fun CountCuenta(idcliente: Int): Int {
-        val bd = bd!!.readableDatabase
+        val bd = funciones.obtenerInstancia(this@Cuentas_list).openHelper.readableDatabase
         try {
+            val consulta = "SELECT COUNT(*) FROM cuentas where Id_cliente=$idcliente AND status LIKE '%PENDIENTE%'"
             val cursor =
-                bd!!.rawQuery("SELECT COUNT(*) FROM cuentas where Id_cliente=$idcliente AND status LIKE '%PENDIENTE%'", null)
+                bd.query(consulta)
             val cuentas = 0
             return if (cursor.count > 0) {
                 cursor.count
@@ -170,8 +161,6 @@ class Cuentas_list : AppCompatActivity() {
             cursor.close()
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            bd.close()
         }
     } //revisa si tiene cuentas el cliente
 

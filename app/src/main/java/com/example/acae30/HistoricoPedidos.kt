@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -16,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.acae30.database.Database
 import com.example.acae30.listas.VentasTempAdapter
 import com.example.acae30.modelos.JSONmodels.BusquedaPedidoJSON
 import com.example.acae30.modelos.VentasTemp
@@ -56,7 +56,6 @@ class HistoricoPedidos : AppCompatActivity() {
     private var url: String? = null
     private var alert: AlertDialogo? = null
     private var funciones: Funciones? = null
-    private var database: Database? = null
 
     private lateinit var tvUpdate: TextView
     private lateinit var tvCancel: TextView
@@ -84,7 +83,6 @@ class HistoricoPedidos : AppCompatActivity() {
 
         alert = AlertDialogo(this@HistoricoPedidos, this)
         funciones = Funciones()
-        database = Database(this@HistoricoPedidos)
 
         nombreVendedor = preferencias!!.getString("Vendedor", "").toString()
         idVendedor = preferencias!!.getInt("Idvendedor", 0)
@@ -239,11 +237,11 @@ class HistoricoPedidos : AppCompatActivity() {
     }
     //FUNCION PARA VERFICAR SI HAY O NO SUCURSAL EN LOS PEDIDOS
     private fun getSucursalEnHistorial(){
-        val db = database!!.readableDatabase
+        val db = funciones!!.obtenerInstancia(this@HistoricoPedidos).openHelper.writableDatabase
         val lista = ArrayList<VentasTempSucursal>()
 
         try {
-            val verificar = db.rawQuery("SELECT id_sucursal FROM ventasTemp LIMIT 1", null)
+            val verificar = db.query("SELECT id_sucursal FROM ventasTemp LIMIT 1")
             if(verificar.count > 0){
                 verificar.moveToFirst()
                 val consulta = VentasTempSucursal(
@@ -357,9 +355,9 @@ class HistoricoPedidos : AppCompatActivity() {
 
     //FUNCION PARA CARGAR LOS PEDIDOS A SQLITE
     private fun cargarPedidos(json: JSONArray) {
-        val bd = database!!.writableDatabase
+        val bd = funciones!!.obtenerInstancia(this@HistoricoPedidos).openHelper.writableDatabase
         try {
-            bd!!.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
+            bd.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
             bd.delete("ventasTemp", null, null) //LIMPIANDO LA TABLA VENTASTEMP
             bd.delete("ventasDetalleTemp", null, null) //LIMPIANDO LA TABLA VENTASDETALLETEMP
 
@@ -395,17 +393,16 @@ class HistoricoPedidos : AppCompatActivity() {
                         funciones!!.validate(detalle.getString("total_iva").toFloat())
                     )
 
-                    bd.insert("ventasDetalleTemp", null, item) //INSERTANDO EN VENTASDETALLETEMP
+                    bd.insert("ventasDetalleTemp", SQLiteDatabase.CONFLICT_REPLACE, item) //INSERTANDO EN VENTASDETALLETEMP
                 }
-                bd.insert("ventasTemp", null, valor) //INSERTANDO EN VENTASDETALLE
+                bd.insert("ventasTemp", SQLiteDatabase.CONFLICT_REPLACE, valor) //INSERTANDO EN VENTASDETALLE
             } //FINALIZANDO ITERACION FOR
             bd.setTransactionSuccessful() //TRANSACCION COMPLETA
             alert!!.dismisss()
         } catch (e: Exception) {
             throw Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }
 
@@ -420,10 +417,10 @@ class HistoricoPedidos : AppCompatActivity() {
 
     //FUNCION PARA OBTENER TODOS LOS PEDIDOS DE SQLITE
     private fun obtenerPedidosAlmacenadosConSucursal(): ArrayList<VentasTemp> {
-        val db = database!!.readableDatabase
+        val db = funciones!!.obtenerInstancia(this@HistoricoPedidos).openHelper.readableDatabase
         val lista = ArrayList<VentasTemp>()
         try {
-            val consulta = db.rawQuery(
+            val consulta = db.query(
                 "SELECT VT.id, " +
                         "VT.fecha, " +
                         "C.Cliente, " +
@@ -433,7 +430,7 @@ class HistoricoPedidos : AppCompatActivity() {
                         "VT.Vendedor FROM ventasTemp VT " +
                         "INNER JOIN clientes C ON VT.id_cliente = C.id " +
                         "INNER JOIN cliente_sucursal CS ON VT.id_sucursal = CS.id " +
-                        "ORDER BY VT.id DESC", null
+                        "ORDER BY VT.id DESC"
             )
             if (consulta.count > 0) {
                 consulta.moveToFirst()
@@ -456,17 +453,15 @@ class HistoricoPedidos : AppCompatActivity() {
             }
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            db!!.close()
         }
         return lista
     }
 
     private fun obtenerPedidosAlmacenadosSinSucursal(): ArrayList<VentasTemp> {
-        val db = database!!.readableDatabase
+        val db = funciones!!.obtenerInstancia(this@HistoricoPedidos).openHelper.readableDatabase
         val lista = ArrayList<VentasTemp>()
         try {
-            val consulta = db.rawQuery(
+            val consulta = db.query(
                 "SELECT VT.id, " +
                         "VT.fecha, " +
                         "C.Cliente, " +
@@ -475,7 +470,7 @@ class HistoricoPedidos : AppCompatActivity() {
                         "VT.numero, " +
                         "VT.Vendedor FROM ventasTemp VT " +
                         "INNER JOIN clientes C ON VT.id_cliente = C.id " +
-                        "ORDER BY VT.id DESC", null
+                        "ORDER BY VT.id DESC"
             )
             if (consulta.count > 0) {
                 consulta.moveToFirst()
@@ -498,8 +493,6 @@ class HistoricoPedidos : AppCompatActivity() {
             }
         } catch (e: Exception) {
             throw Exception(e.message)
-        } finally {
-            db!!.close()
         }
         return lista
     }

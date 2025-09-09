@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
@@ -84,12 +85,12 @@ class EmpleadosController {
 
     //ALMACENANDO LOS EMPLEADOS EN LA BD SQLITE
     private fun saveEmpleadosDatabase(json: JSONArray, context: Context) {
-        val bd = funciones.getDataBase(context).writableDatabase
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         val total = json.length()
         val talla = (50.toFloat() / total.toFloat()).toFloat()
         var contador: Float = 0.toFloat()
         try {
-            bd!!.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
+            bd.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
             bd.execSQL("DELETE FROM empleado") //LIMPIANDO TABLA EMPLEADO
 
             val sql2 = "DELETE FROM SQLITE_SEQUENCE WHERE NAME = 'empleado'"
@@ -100,7 +101,7 @@ class EmpleadosController {
                 val valor = ContentValues()
                 valor.put("Id_empleado", dato.getInt("id"))
                 valor.put("nombre_empleado", funciones.validateJsonIsnullString(dato, "empleado"))
-                bd.insert("empleado", null, valor)
+                bd.insert("empleado", SQLiteDatabase.CONFLICT_REPLACE, valor)
                 contador += talla
                 val mensaje = contador + 50.toFloat()
                 funciones.messageAsync("Cargando ${mensaje.toInt()}%")
@@ -109,8 +110,7 @@ class EmpleadosController {
         } catch (e: Exception) {
             throw  Exception(e.message)
         } finally {
-            bd!!.endTransaction()
-            bd.close()
+            bd.endTransaction()
         }
     }
 

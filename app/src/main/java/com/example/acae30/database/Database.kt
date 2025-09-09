@@ -64,25 +64,12 @@ class Database(val context: Context) : SQLiteOpenHelper(
         db?.execSQL(tbl.devolucionDetalle())
 
     }
-
+//hay que corregir la bd
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        //ESTO SE VERIFICARA CADA VEZ QUE SE ACTUALICE LA APP
-        // SE DEBERA CAMBIAR ESTA INFORMACION
         if(oldVersion < newVersion){
             //CREANDO TABLA SIN ELIMINAR LA ANTERIOR BD
             //HABILITAR CON LA VERSION DE LA BD EN 2
 //            db?.execSQL(tbl.abonosCxc())
-//            db?.execSQL(tbl.catalogoPais())
-//            db?.execSQL(tbl.catalogoDepartamento())
-//            db?.execSQL(tbl.catalogoMunicipio())
-//            db?.execSQL(tbl.catalogoDistrito())
-//            db?.execSQL(tbl.catalogoGiro())
-//            db?.execSQL(tbl.catalogoRuta())
-//            db?.execSQL(tbl.gastos())
-//            db?.execSQL(tbl.inventariosolicitudCarga())
-//            db?.execSQL(tbl.solicitudCarga())
-//            db?.execSQL(tbl.inventariosolicitudCarga())
-//            db?.execSQL(tbl.triggerInventarioSolicitudVirtual())
         }
     }
 }
