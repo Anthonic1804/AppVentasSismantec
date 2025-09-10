@@ -106,6 +106,7 @@ class Producto_agregar : AppCompatActivity() {
     private var precioIvaPersonalizado : Float = 0f
     private var bonificacion : Float = 0f
     private var mostrarPrecioApp : Int = 0 //MOSTRARA EL PRECIO CONFIGURADO EN LA BD DEL SERVIDOR
+    private var idUnidad = 0
 
 
 
@@ -265,6 +266,13 @@ class Producto_agregar : AppCompatActivity() {
                     else -> binding.spunidad.selectedItem.toString()
                 }
                 cargarListadoPrecios(unidadActual)
+
+                if(unidadActual != "UNI" || unidadActual != "FRA"){
+                    CoroutineScope(Dispatchers.IO).launch {
+                        idUnidad = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
+                    }
+                }
+
             }
         }
 
@@ -305,6 +313,7 @@ class Producto_agregar : AppCompatActivity() {
                         precio = datos.Precio!!
                         Totalizar(cantidad)
                         binding.txtexistencia.text = "${datos.Existencia}"
+                        binding.txtExistenciasFra.text = "${datos.Existencia_u}"
                         existenciaProducto = datos.Existencia!!.toFloat()
 //                       txtprecio!!.text="$"+"${String.format("%.2f", datos!!.Precio_iva)}"
 
@@ -558,7 +567,7 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("Cantidad", cantidad)
             detalle.put("Unidad", unidadActual)
             detalle.put("Descripcion", descripcion)
-            detalle.put("Idunidad", 0)
+            detalle.put("Idunidad", idUnidad)
             detalle.put("precio", vPrecio)
             detalle.put("Precio_iva", vPrecio_iva)
             detalle.put("Precio_oferta", 0.toFloat())
@@ -686,6 +695,7 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("Total_iva", binding.txttotal.text.toString().toFloat())
             detalle.put("Descripcion", descripcion)
             detalle.put("Unidad", unidadActual)
+            detalle.put("Idunidad", idUnidad)
 
             if (esPrecioEditado) {
                 detalle.put("Precio_editado", "*")
@@ -1038,7 +1048,7 @@ class Producto_agregar : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR AL CARGAR VENTANA DE CAMBIAR PRECIO -> " + e.message)
         }
     }
 

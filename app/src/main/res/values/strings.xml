@@ -117,7 +117,7 @@
     <string name="descripcion_">DESCRIPCION:</string>
     <string name="unidad_">UNIDAD</string>
     <string name="precio_">PRECIO</string>
-    <string name="existencias_">EXISTENCIAS</string>
+    <string name="existencias_">EXISTENCIAS UNI.</string>
     <string name="total_">TOTAL</string>
     <string name="agregar_a_pedido">AGREGAR A PEDIDO</string>
     <string name="eliminar_producto">ELIMINAR PRODUCTO</string>

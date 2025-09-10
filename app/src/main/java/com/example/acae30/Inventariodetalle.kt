@@ -114,6 +114,7 @@ class Inventariodetalle : AppCompatActivity() {
                     txtdescripcion.text = producto.descripcion
                     txtprecio.text = "$" + String.format("%.4f", producto.Precio_iva)
                     txtexistencia.text = producto.Existencia!!.toInt().toString() + " UNI"
+                    txtexistenciaFracciones.text = producto.Existencia_u!!.toString() + " FRA"
                 }
             } catch (e: Exception) {
                 runOnUiThread {

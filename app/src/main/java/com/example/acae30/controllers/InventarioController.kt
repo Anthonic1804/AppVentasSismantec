@@ -1235,4 +1235,23 @@ class InventarioController {
 
     }
 
+    //OBTENER EL ID DE LA UNIDAD DE MEDIDA PARA VENTAS
+    fun obtenerIdUnidadMedida(context: Context, idProducto: Int, unidadMedida: String) : Int{
+
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        var idUnidadMedida = 0
+        try {
+            val consulta = "SELECT Id FROM inventario_unidades WHERE Id_inventario = $idProducto AND Nombre_unidad = '$unidadMedida' "
+            val cursor = bd.query(consulta)
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                idUnidadMedida = cursor.getInt(0)
+            }
+            cursor.close()
+        }catch (e: Exception){
+            println("Error: no se obtuvo la unidad de medida -> " + e.message)
+        }
+        return idUnidadMedida
+    }
+
 }
