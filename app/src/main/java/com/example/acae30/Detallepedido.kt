@@ -217,6 +217,10 @@ class Detallepedido : AppCompatActivity() {
 
         //COMPLETANDO SPINNER TERMINOS ENVIO
         terminosDelCliente()
+
+        //CARGANDO LA CANTIDAD DE ITEMS EN EL PEDIDO
+        obtenerCantidadItemsPedido()
+
         when(terminosPedidos){
             "Contado" -> {
                 binding.spTipoEnvio.setSelection(0, true)
@@ -514,6 +518,17 @@ class Detallepedido : AppCompatActivity() {
         }
     }
 
+    //FUNCION PARA OBTENER LA CANTIDAD DE ITEMS Y SETEARLO EN PANTALLA
+    private fun obtenerCantidadItemsPedido(){
+        this@Detallepedido.lifecycleScope.launch {
+            var cantidadItems : Int = 0
+
+            cantidadItems = pedidosController.obtenerCantidadItemsPedido(this@Detallepedido, idpedido)
+
+            binding.cantidadItems.text = "CANT. ITEMS: $cantidadItems"
+        }
+    }
+
     private fun actualizarVistaTotales(){
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -529,8 +544,6 @@ class Detallepedido : AppCompatActivity() {
                 }
             }
         }
-
-         
     }
 
     //FUNCION PARA COMPLETAR LOS TERMINOS DEL CLIENTE
@@ -1043,6 +1056,7 @@ class Detallepedido : AppCompatActivity() {
                 intento.putExtra("total_param", data.Total_iva)
                 intento.putExtra("sucursalPosition", getSucursalPosition)
                 intento.putExtra("facturaExportacion", FacturaExportacion)
+                intento.putExtra("Editar", true)
                 startActivity(intento)
                 finish()
             }
@@ -1095,11 +1109,11 @@ class Detallepedido : AppCompatActivity() {
         val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
             val sql = "SELECT * FROM pedidos where Id=$idpedido and Enviado=1"
-            val cursor =
-                bd.query(sql)
+            val cursor = bd.query(sql)
             if (cursor.count > 0) {
                 throw Exception("Este pedido ya fue enviado no se puede eliminar")
             } else {
+                bd.execSQL("DELETE FROM detalle_pedidos WHERE Id_pedido=$idpedido")
                 bd.execSQL("DELETE FROM pedidos where Id=$idpedido")
             }
             cursor.close()

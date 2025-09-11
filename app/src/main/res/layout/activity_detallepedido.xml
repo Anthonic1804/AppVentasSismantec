@@ -300,6 +300,21 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/textView18" />
 
+                <TextView
+                    android:id="@+id/cantidadItems"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAlignment="center"
+                    android:text="CANT. ITEM: 14"
+                    android:textSize="12sp"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textStyle="bold"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="10dp"
+                    app:layout_constraintStart_toEndOf="@id/fecha_creacion"
+                    app:layout_constraintTop_toBottomOf="@+id/textView18"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
                 <ImageButton
                     android:id="@+id/imgbtnadd"
                     android:layout_width="45dp"

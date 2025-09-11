@@ -107,6 +107,7 @@ class Producto_agregar : AppCompatActivity() {
     private var bonificacion : Float = 0f
     private var mostrarPrecioApp : Int = 0 //MOSTRARA EL PRECIO CONFIGURADO EN LA BD DEL SERVIDOR
     private var idUnidad = 0
+    private var editarProducto = false
 
 
 
@@ -139,6 +140,7 @@ class Producto_agregar : AppCompatActivity() {
         getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
         proviene = intent.getStringExtra("proviene")
         total_param = intent.getFloatExtra("total_param", 0.toFloat())
+        editarProducto = intent.getBooleanExtra("Editar", false)
 
         cargarOpcionesGenerales()
 
@@ -435,7 +437,9 @@ class Producto_agregar : AppCompatActivity() {
         this@Producto_agregar.lifecycleScope.launch {
             try {
 
-                val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!)
+                val hojaCarga = preferencias!!.getBoolean("Hoja_carga_inventario_app", false)
+
+                val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
                 val unidadesMedida = ArrayAdapter<String>(this@Producto_agregar, android.R.layout.simple_spinner_dropdown_item)
                 unidadesMedida.addAll(unidades)
                 binding.spunidad.adapter = unidadesMedida
@@ -469,11 +473,15 @@ class Producto_agregar : AppCompatActivity() {
             binding.spprecio.adapter = adapterPrecios
 
 
-            val totalIndices = binding.spprecio.adapter?.count ?: 0
-            if(mostrarPrecioApp in 0 until totalIndices){
-                binding.spprecio.setSelection(mostrarPrecioApp, true)
-            }else{
-                binding.spprecio.setSelection(0, true)
+            //FUNCION PARA MOSTRAR EL PRECIO POR DEFECTO EN EL LISTADO DEL PRODUCTO
+            //SOLO CUANDO SE AGREGA EL PRODUCTO POR PRIMERA VEZ
+            if(!editarProducto){
+                val totalIndices = binding.spprecio.adapter?.count ?: 0
+                if(mostrarPrecioApp in 0 until totalIndices){
+                    binding.spprecio.setSelection(mostrarPrecioApp, true)
+                }else{
+                    binding.spprecio.setSelection(0, true)
+                }
             }
 
         }
@@ -997,6 +1005,10 @@ class Producto_agregar : AppCompatActivity() {
 
     //FUNCION PARA OBTENER EL PRECIO AUTORIZADO
     private fun verificarPrecioAutorizado(id_empleado:Int, cod_producto:String){
+
+        preferencias = this@Producto_agregar.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferencias!!.getString("ip", ""), preferencias!!.getInt("puerto", 0).toString())
+
         try {
             val datos = ActualizarPrecioPersonalizadoJSON(
                 id_empleado,
@@ -1004,7 +1016,7 @@ class Producto_agregar : AppCompatActivity() {
             )
             val objecto =
                 Gson().toJson(datos)
-            val ruta: String = url!! + "token/search"
+            val ruta: String = servidor + "token/search"
             val url = URL(ruta)
             with(url.openConnection() as HttpURLConnection) {
                 try {
@@ -1054,6 +1066,10 @@ class Producto_agregar : AppCompatActivity() {
 
     //FUNCION PARA CONFIRMAR LA UTILIZACION DEL TOKEN
     private fun confirmarToken(id_empleado:Int, cod_producto:String){
+
+        preferencias = this@Producto_agregar.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferencias!!.getString("ip", ""), preferencias!!.getInt("puerto", 0).toString())
+
         try {
             val datos = ActualizarPrecioPersonalizadoJSON(
                 id_empleado,
@@ -1061,7 +1077,7 @@ class Producto_agregar : AppCompatActivity() {
             )
             val objecto =
                 Gson().toJson(datos)
-            val ruta: String = url!! + "token/update"
+            val ruta: String = servidor + "token/update"
             val url = URL(ruta)
             with(url.openConnection() as HttpURLConnection) {
                 try {

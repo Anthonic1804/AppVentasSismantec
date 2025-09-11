@@ -528,4 +528,25 @@ class PedidosController {
         }
     }
 
+    //FUNCION PARA CONTAR LA CANTIDAD DE ITEMS EN EL PEDIDO
+    fun obtenerCantidadItemsPedido(context: Context, idPedido: Int) : Int{
+
+        var cantidadItems : Int = 0
+
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        try {
+            val sql = "SELECT COUNT(*) AS Cantidad FROM detalle_pedidos WHERE Id_pedido = $idPedido"
+            val cursor = bd.query(sql)
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                cantidadItems = cursor.getInt(0)
+            }
+            cursor.close()
+        }catch (e: Exception){
+            println("ERROR NO SE LOGRO OBTENER LA CANTIDAD DE REGISTROS EN EL PEDIDO -> " + e.message)
+        }
+
+        return  cantidadItems
+    }
+
 }

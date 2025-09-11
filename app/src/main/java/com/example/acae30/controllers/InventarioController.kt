@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import android.widget.Toast
+import androidx.core.content.contentValuesOf
 import com.example.acae30.Funciones
 import com.example.acae30.listas.InventarioRetrofit
 import com.example.acae30.modelos.Inventario
@@ -482,13 +483,21 @@ class InventarioController {
     fun descargarProductosInventario(idPedido: Int, context: Context){
         val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            val consulta = "SELECT ID_PRODUCTO, (CANTIDAD + BONIFICADO) AS CANTIDAD FROM DETALLE_PEDIDOS WHERE ID_PEDIDO=$idPedido"
+            val consulta = "SELECT ID_PRODUCTO, (CANTIDAD + BONIFICADO) AS CANTIDAD, Unidad FROM DETALLE_PEDIDOS WHERE ID_PEDIDO=$idPedido"
             val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
                 do {
                     try {
+
                         base.execSQL("UPDATE Inventario SET Existencia = (Existencia - ${cursor.getInt(1)}) WHERE Id=${cursor.getInt(0)}")
+
+                        //DESCARGA DE INVENTARIO PARA HOJAS DE CARGA CON FRACCIONES
+                        /*when(cursor.getString(2)){
+                            "UNI" -> descargarUnidades(context, cursor.getInt(0), cursor.getInt(1))
+                            "FRA" -> descargarFracciones(context, cursor.getInt(0), cursor.getInt(1))
+                            else -> descargarUnidadesMedida(context,cursor.getInt(0), cursor.getInt(1), cursor.getString(2))
+                        }*/
                     }catch (e:Exception){
                         println("ERROR: NO SE ACTUALIZARON LAS EXITENCIAS EN INVENTARIO -> ${e.message}")
                     }
@@ -499,6 +508,83 @@ class InventarioController {
             println("ERROR: NO SE ENCONTRARON REGISTROS EN EL PEDIDO -> ${e.message}")
         }
     }
+
+    //FUNCION PARA DESCARGAR UNIDADES
+    /*private fun descargarUnidades(context: Context, idProducto: Int, cantidad: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.execSQL("UPDATE Inventario SET Existencia = (Existencia - $cantidad) WHERE Id=$idProducto")
+        }catch (e: Exception){
+            println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA DEL PRODUCTO -> " + e.message)
+        }
+    }*/
+
+    //FUNCION PARA DESCARGAR FRACCIONES
+    /*private fun descargarFracciones(context: Context, idProducto: Int, cantidad: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try{
+            val sql = "SELECT Existencia, Existencia_u, Fraccion FROM inventario WHERE id = $idProducto"
+            val cursor = bd.query(sql)
+
+            var existenciaActual : Int = 0
+            var existenciaUActual : Int = 0
+            var fraccionamiento : Int = 0
+            var totalFraccionesActuales : Int = 0
+
+
+            var existenciaFinal : Int = 0
+            var existenciaUFinal : Int = 0
+            var totalFraccionesFinal : Int = 0
+
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                existenciaActual = cursor.getInt(0)
+                existenciaUActual = cursor.getInt(1)
+                fraccionamiento = cursor.getInt(2)
+            }
+            cursor.close()
+
+            //CALCULANDO EL TOTAL DE FACCIONES ACTUAL EN INVENTARIO
+            totalFraccionesActuales = (existenciaActual * fraccionamiento) + existenciaUActual
+
+            totalFraccionesFinal = totalFraccionesActuales - cantidad
+
+            existenciaFinal = totalFraccionesFinal / fraccionamiento   // cuántas unidades completas quedan
+            existenciaUFinal = totalFraccionesFinal % fraccionamiento  // fracciones restantes
+
+            bd.execSQL("UPDATE inventario SET Existencia = $existenciaFinal, Existencia_u = $existenciaUFinal WHERE Id = $idProducto")
+
+        }catch (e: Exception){
+            println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA EN FRACCION DEL PRODUCTO -> " + e.message)
+        }
+    }*/
+
+    //FUNCION PARA VALIDAR DESCARGA DE UNIDADES DE MEDIDA
+    /*private fun descargarUnidadesMedida(context: Context, idProducto: Int, cantidad: Int, unidadMedida: String){
+
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        try {
+            //SELECCIONANDO LA UNIDAD DE MEDIDA
+            val sql = "SELECT Equivale, Unidades FROM inventario_unidades WHERE id_inventario = $idProducto AND Nombre_unidad = '$unidadMedida'"
+            val cursor = bd.query(sql)
+
+            var cantidadDescargar: Int = 0
+
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                cantidadDescargar = cantidad * cursor.getInt(0)
+
+                when(cursor.getString(1)){
+                    "UNI" -> descargarUnidades(context, idProducto, cantidadDescargar)
+                    "FRA" -> descargarFracciones(context, idProducto, cantidadDescargar)
+                }
+            }
+            cursor.close()
+
+        }catch (e: Exception){
+            println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA DEL PRODUCTO POR UNIDAD DE MEDIDA -> " + e.message)
+        }
+    }*/
 
     //FUNCION PARA VERIFICAR FECHA DE INVENTARIO CON HOJA DE CARGA
     fun verificarFechaInventario(context: Context) : Boolean{
@@ -1195,7 +1281,7 @@ class InventarioController {
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE UNIDADES DE MEDIDA
-    fun listadoUnidadesMedidaProductoById(context: Context, idProducto: Int) : ArrayList<String>{
+    fun listadoUnidadesMedidaProductoById(context: Context, idProducto: Int, hojaCargaActiva: Boolean) : ArrayList<String>{
 
         val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listado = ArrayList<String>()
@@ -1203,32 +1289,34 @@ class InventarioController {
 
         listado.add("UNIDAD")
 
-        try {
-            val consulta = "SELECT fraccion FROM Inventario WHERE Id=$idProducto"
-            val cursor = bd.query(consulta)
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                inventarioFraccion = cursor.getFloat(0)
+        if(!hojaCargaActiva){
+            try {
+                val consulta = "SELECT fraccion FROM Inventario WHERE Id=$idProducto"
+                val cursor = bd.query(consulta)
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    inventarioFraccion = cursor.getFloat(0)
+                }
+                cursor.close()
+
+                if(inventarioFraccion > 1){
+                    listado.add("FRACCION")
+                }
+
+                val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
+                val cursor2 = bd.query(consulta2)
+                if(cursor2.count > 0){
+                    cursor2.moveToFirst()
+                    do {
+                        listado.add(cursor2.getString(0))
+                    }while (cursor2.moveToNext())
+                }
+                cursor2.close()
+
+
+            }catch (e:Exception){
+                println("ERROR NO SE ENCONTRARON UNIDADES EN INVENTARIO -> " + e.message)
             }
-            cursor.close()
-
-            if(inventarioFraccion > 1){
-                listado.add("FRACCION")
-            }
-
-            val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
-            val cursor2 = bd.query(consulta2)
-            if(cursor2.count > 0){
-                cursor2.moveToFirst()
-                do {
-                    listado.add(cursor2.getString(0))
-                }while (cursor2.moveToNext())
-            }
-            cursor2.close()
-
-
-        }catch (e:Exception){
-            println("ERROR NO SE ENCONTRARON UNIDADES EN INVENTARIO -> " + e.message)
         }
 
         return listado

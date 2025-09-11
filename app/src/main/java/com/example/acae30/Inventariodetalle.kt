@@ -94,7 +94,8 @@ class Inventariodetalle : AppCompatActivity() {
         this@Inventariodetalle.lifecycleScope.launch {
             try {
 
-                val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Inventariodetalle, idinventario)
+                val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
+                val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Inventariodetalle, idinventario, hojaCarga)
                 val unidadesMedida = ArrayAdapter<String>(this@Inventariodetalle, android.R.layout.simple_spinner_dropdown_item)
                 unidadesMedida.addAll(unidades)
                 binding.spunidad.adapter = unidadesMedida
