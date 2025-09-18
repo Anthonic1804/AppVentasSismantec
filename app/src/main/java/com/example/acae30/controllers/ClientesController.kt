@@ -223,57 +223,57 @@ class ClientesController {
                     "DTEDistrito, " +
                     "DTECodDistrito FROM clientes " +
                     "WHERE id=?", arrayOf(idCliente))
-
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                datosCliente = Cliente(
-                    cursor.getInt(0),
-                    cursor.getString(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getString(5),
-                    cursor.getString(6),
-                    cursor.getString(7),
-                    cursor.getString(8),
-                    cursor.getInt(9),
-                    cursor.getFloat(10),
-                    cursor.getFloat(11),
-                    cursor.getString(12),
-                    cursor.getString(13),
-                    cursor.getString(14),
-                    cursor.getString(15),
-                    cursor.getString(16),
-                    cursor.getString(17),
-                    cursor.getString(18),
-                    cursor.getString(19),
-                    cursor.getInt(20),
-                    cursor.getInt(21),
-                    cursor.getString(22),
-                    cursor.getString(23),
-                    cursor.getString(24),
-                    cursor.getFloat(25),
-                    cursor.getInt(26),
-                    cursor.getString(27),
-                    cursor.getString(28),
-                    cursor.getString(29),
-                    cursor.getString(30),
-                    cursor.getString(31),
-                    cursor.getString(32),
-                    cursor.getString(33),
-                    cursor.getString(34),
-                    cursor.getString(35),
-                    cursor.getString(36),
-                    cursor.getString(37),
-                    cursor.getString(38),
-                    cursor.getString(39),
-                    cursor.getString(40),
-                    cursor.getString(41),
-                    cursor.getString(42)
-                )
-                cursor.close()
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    datosCliente = Cliente(
+                        cursor.getInt(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getString(7),
+                        cursor.getString(8),
+                        cursor.getInt(9),
+                        cursor.getFloat(10),
+                        cursor.getFloat(11),
+                        cursor.getString(12),
+                        cursor.getString(13),
+                        cursor.getString(14),
+                        cursor.getString(15),
+                        cursor.getString(16),
+                        cursor.getString(17),
+                        cursor.getString(18),
+                        cursor.getString(19),
+                        cursor.getInt(20),
+                        cursor.getInt(21),
+                        cursor.getString(22),
+                        cursor.getString(23),
+                        cursor.getString(24),
+                        cursor.getFloat(25),
+                        cursor.getInt(26),
+                        cursor.getString(27),
+                        cursor.getString(28),
+                        cursor.getString(29),
+                        cursor.getString(30),
+                        cursor.getString(31),
+                        cursor.getString(32),
+                        cursor.getString(33),
+                        cursor.getString(34),
+                        cursor.getString(35),
+                        cursor.getString(36),
+                        cursor.getString(37),
+                        cursor.getString(38),
+                        cursor.getString(39),
+                        cursor.getString(40),
+                        cursor.getString(41),
+                        cursor.getString(42)
+                    )
+                    // cursor.close()
+                }
             }
-            cursor.close()
         }catch (e: Exception){
             println("ERROR: NO SE ENCONTRO EL CLIENTE -> ${e.message}")
         }

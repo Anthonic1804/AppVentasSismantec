@@ -252,8 +252,8 @@ class HistoricoPedidos : AppCompatActivity() {
                 for(data in lista){
                     ventasSucursal = data.sucursal
                 }
-                verificar.close()
             }
+            verificar.close()
         }catch (e: Exception) {
             throw Exception(e.message)
         }
@@ -446,11 +446,10 @@ class HistoricoPedidos : AppCompatActivity() {
                     )
                     lista.add(listado)
                 } while (consulta.moveToNext())
-                consulta.close()
             } else {
                 tvNoRegistros.visibility = View.VISIBLE
-                consulta.close()
             }
+            consulta.close()
         } catch (e: Exception) {
             throw Exception(e.message)
         }
@@ -486,11 +485,10 @@ class HistoricoPedidos : AppCompatActivity() {
                     )
                     lista.add(listado)
                 } while (consulta.moveToNext())
-                consulta.close()
             } else {
                 tvNoRegistros.visibility = View.VISIBLE
-                consulta.close()
             }
+            consulta.close()
         } catch (e: Exception) {
             throw Exception(e.message)
         }

@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import com.dcastalia.localappupdate.DownloadApk
 import com.example.acae30.controllers.ConfigController
+import com.example.acae30.databinding.ActivityConfiguracionBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,112 +35,80 @@ import java.net.URL
 
 class Configuracion : AppCompatActivity() {
 
-    private var swlista: Switch? = null
-    private var swminiatura: Switch? = null
-    private var swSinExistencia: Switch? = null
-    private lateinit var btnBuscarUpdate : Button
+
     private var url: String? = null
     private var versionAppServer : String? = null
     private var urlAppServer : String? = null
     private lateinit var tvUpdate : TextView
     private lateinit var tvCancel : TextView
     private var versionActual : Float = 0f
-    private lateinit var tvVersionActual : TextView
-    private lateinit var btnConfig : Button
 
-    private var atras: ImageButton? = null
-    private var ip: TextView? = null
-    private var puerto: TextView? = null
-    private var btnGuardar: Button? = null
     private val instancia = "CONFIG_SERVIDOR"
     private var preferencias: SharedPreferences? = null
-    private var vista: View? = null
-    private var funciones: Funciones? = null
     private var alerta: AlertDialogo? = null
 
-    private var logoEmpresa : ImageView? = null
-
-    private lateinit var puntoVenta : TextView
-
     private var configController = ConfigController()
+    private var funciones = Funciones()
+
+    private lateinit var binding : ActivityConfiguracionBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_configuracion)
-        supportActionBar?.hide()
+        binding = ActivityConfiguracionBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
-
-        funciones = Funciones()
-
-        vista = findViewById(R.id.vistaalerta)
-        ip = findViewById(R.id.txtip)
-        puerto = findViewById(R.id.txtpuerto)
-        btnGuardar = findViewById(R.id.btnupdate)
-        atras = findViewById(R.id.imgbtnatras)
         alerta = AlertDialogo(this, this)
 
-        puntoVenta = findViewById(R.id.tvPuntoVenta)
-
         //FUNCIONES AGRAGADAS PARA LOS CONTROLES DE VISTA DE INVENTARIO
-        swlista = findViewById(R.id.swlista)
-        swminiatura = findViewById(R.id.swminiatura)
-        swSinExistencia = findViewById(R.id.swSinExistencias)
-        swSinExistencia!!.isEnabled = false
 
-        tvVersionActual = findViewById(R.id.tvVersionActualApp)
-
-        btnBuscarUpdate = findViewById(R.id.btnBuscarUpdate)
-
-        btnConfig = findViewById(R.id.btnCargarConfig)
-
-        logoEmpresa = findViewById(R.id.imgLogoEmpresa)
+        binding.swSinExistencias.isEnabled = false
 
         //OBTENIENDO LA URL DEL SERVIDOR
         getApiUrl()
 
         //ACTUALIZAR CONFIG PARA PEDIDOS SIN EXISTENCIAS
-        swSinExistencia!!.isChecked = preferencias!!.getString("pedidos_sin_existencia", "") == "S"
+        binding.swSinExistencias.isChecked = preferencias!!.getString("pedidos_sin_existencia", "") == "S"
 
         versionActual = preferencias!!.getFloat("versionActualApp", 1f)
 
         // 2 -> LISTADO
         // 1 -> VISTA MINIATURA
-        swlista!!.isChecked = preferencias!!.getInt("vistaInventario", 0) == 2
-        swminiatura!!.isChecked = preferencias!!.getInt("vistaInventario", 0) == 1
+        binding.swlista.isChecked = preferencias!!.getInt("vistaInventario", 0) == 2
+        binding.swminiatura.isChecked = preferencias!!.getInt("vistaInventario", 0) == 1
 
-        tvVersionActual.setText("ACAE APP Ver. $versionActual")
+        binding.tvVersionActualApp.setText("ACAE APP Ver. $versionActual")
 
-        swlista!!.setOnCheckedChangeListener { _, isChecked ->
+        binding.swlista.setOnCheckedChangeListener { _, isChecked ->
             preferencias!!.edit {
                 remove("vistaInventario")
                 if (isChecked) {
-                    swminiatura!!.isChecked = false
+                    binding.swminiatura.isChecked = false
                     putInt("vistaInventario", 2)
                 } else {
-                    swminiatura!!.isChecked = true
+                    binding.swminiatura.isChecked = true
                     putInt("vistaInventario", 1)
                 }
             }
         }
 
-        swminiatura!!.setOnCheckedChangeListener { _, isChecked ->
+        binding.swminiatura.setOnCheckedChangeListener { _, isChecked ->
             preferencias!!.edit {
                 remove("vistaInventario")
                 if (isChecked) {
-                    swlista!!.isChecked = false
+                    binding.swlista.isChecked = false
                     putInt("vistaInventario", 1)
                 } else {
-                    swlista!!.isChecked = true
+                    binding.swlista.isChecked = true
                     putInt("vistaInventario", 2)
                 }
             }
         }
 
-        btnBuscarUpdate.setOnClickListener {
+        binding.btnBuscarUpdate.setOnClickListener {
             //getVersionUpdate()
             if (url != null) {
-                if (funciones!!.isInternetAvailable(this)) {
+                if (funciones.isInternetAvailable(this)) {
 
                     CoroutineScope(Dispatchers.IO).launch {
                         getAppVersion()
@@ -160,14 +129,14 @@ class Configuracion : AppCompatActivity() {
         if (filePath != null) {
             val file = File(filePath)
             if (file.exists()) {
-                logoEmpresa!!.setImageURI(Uri.fromFile(file))
+                binding.imgLogoEmpresa.setImageURI(Uri.fromFile(file))
             }
         }else{
             val nombreImagen = "sinlogo"
             val resId = resources.getIdentifier(nombreImagen, "drawable", packageName)
 
             val drawable = ContextCompat.getDrawable(this, resId)
-            logoEmpresa!!.setImageDrawable(drawable)
+            binding.imgLogoEmpresa.setImageDrawable(drawable)
         }
 
 
@@ -176,23 +145,24 @@ class Configuracion : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         GetServerData()
-        atras!!.setOnClickListener {
+        binding.imgbtnatras.setOnClickListener {
             val intento = Intent(this, Inicio::class.java)
             startActivity(intento)
             finish()
         }//boton atras
-        btnGuardar!!.setOnClickListener {
+
+        binding.btnReconectar.setOnClickListener {
             val contexto = this
             alerta!!.Cargando()
 
             CoroutineScope(Dispatchers.IO).launch {
-                ValidateConnection(ip!!.text.toString(), puerto!!.text.toString(), contexto)
+                ValidateConnection(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), contexto)
             }
 
         }//guarda los datos del servidor
 
-        btnConfig.setOnClickListener {
-            if (funciones!!.isInternetAvailable(this@Configuracion)) {
+        binding.btnCargarConfig.setOnClickListener {
+            if (funciones.isInternetAvailable(this@Configuracion)) {
                 alerta!!.Cargando()
                 CoroutineScope(Dispatchers.IO).launch {
 
@@ -226,7 +196,7 @@ class Configuracion : AppCompatActivity() {
             }
         }
 
-        logoEmpresa!!.setOnClickListener {
+        binding.imgLogoEmpresa.setOnClickListener {
             seleccionarImagen()
         }
 
@@ -246,7 +216,7 @@ class Configuracion : AppCompatActivity() {
                 val savedFile = guardarImagenEnInterno(uri, fileName)
 
                 if (savedFile != null) {
-                    logoEmpresa!!.setImageURI(Uri.fromFile(savedFile))
+                    binding.imgLogoEmpresa.setImageURI(Uri.fromFile(savedFile))
 
                     // Guardar en SharedPreferences
                     val prefs = getSharedPreferences("MisImagenes", MODE_PRIVATE)
@@ -276,15 +246,16 @@ class Configuracion : AppCompatActivity() {
 
     //FUNCION PARA OBTENER LA IP DEL SERVIDOR Y EL PUERTO DE CONEXION
     private fun GetServerData() {
-        val e = preferencias!!
-        ip!!.text = e.getString("ip", "")
-        puerto!!.text = e.getInt("puerto", 0).toString()
-        puntoVenta.text = e.getString("puntoVenta", "").toString()
+        binding.apply {
+            txtip.setText(preferencias!!.getString("ip", "").toString())
+            txtpuerto.setText(preferencias!!.getInt("puerto", 0).toString())
+            tvPuntoVenta.setText(preferencias!!.getString("puntoVenta", "").toString())
+        }
     } //obtiene la ip y el puerto del servidor
 
     private fun ValidateConnection(ip: String, puerto: String, context: Context) {
         if (ip.length > 0 && puerto.length > 0) {
-            if (funciones!!.isInternetAvailable(this)) {
+            if (funciones.isInternetAvailable(this)) {
                 try {
                     val ruta: String = "http://$ip:$puerto/conexion"
                     val url = URL(ruta)
@@ -312,7 +283,7 @@ class Configuracion : AppCompatActivity() {
                                         }
 
                                         alerta!!.dismisss()
-                                        val alert: Snackbar = Snackbar.make(vista!!, res.getString("response"), Snackbar.LENGTH_LONG)
+                                        val alert: Snackbar = Snackbar.make(binding.vistaalerta, res.getString("response"), Snackbar.LENGTH_LONG)
                                         alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.btnVerde))
                                         alert.show()
 
@@ -330,14 +301,14 @@ class Configuracion : AppCompatActivity() {
                 } catch (e: Exception) {
                     alerta!!.dismisss()
                     val alert: Snackbar =
-                        Snackbar.make(this.vista!!, e.message.toString(), Snackbar.LENGTH_LONG)
+                        Snackbar.make(binding.vistaalerta, e.message.toString(), Snackbar.LENGTH_LONG)
                     alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
                     alert.show()
                 } //valida se si presenta algun error de conexion u otro
             } else {
                 alerta!!.dismisss()
                 val alert: Snackbar = Snackbar.make(
-                    this.vista!!,
+                    binding.vistaalerta,
                     "Enciende los Datos o el Wifi",
                     Snackbar.LENGTH_LONG
                 )
@@ -347,7 +318,7 @@ class Configuracion : AppCompatActivity() {
         } else {
             alerta!!.dismisss()
             val alert: Snackbar =
-                Snackbar.make(this.vista!!, "Debes llenar los campos", Snackbar.LENGTH_LONG)
+                Snackbar.make(binding.vistaalerta, "Debes llenar los campos", Snackbar.LENGTH_LONG)
             alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
             alert.show()
         } //valida los campos no sean vacios
@@ -391,8 +362,8 @@ class Configuracion : AppCompatActivity() {
                                 for (i in 0 until respuesta.length()) {
                                     val dato = respuesta.getJSONObject(i)
 
-                                    versionAppServer = funciones!!.validateJsonIsnullString(dato, "version")
-                                    urlAppServer = funciones!!.validateJsonIsnullString(dato, "url")
+                                    versionAppServer = funciones.validateJsonIsnullString(dato, "version")
+                                    urlAppServer = funciones.validateJsonIsnullString(dato, "url")
 
                                     runOnUiThread {
                                         if(versionActual >= versionAppServer!!.toFloat()){
@@ -426,7 +397,7 @@ class Configuracion : AppCompatActivity() {
     }
 
     private fun ShowAlert(mensaje: String) {
-        val alert: Snackbar = Snackbar.make(vista!!, mensaje, Snackbar.LENGTH_LONG)
+        val alert: Snackbar = Snackbar.make(binding.vistaalerta, mensaje, Snackbar.LENGTH_LONG)
         alert.view.setBackgroundColor(ContextCompat.getColor(this@Configuracion, R.color.moderado))
         alert.show()
     }

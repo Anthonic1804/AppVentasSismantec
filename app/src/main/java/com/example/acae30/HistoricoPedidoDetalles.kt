@@ -83,10 +83,8 @@ class HistoricoPedidoDetalles : AppCompatActivity() {
                     )
                     lista.add(datos)
                 }while (cursor.moveToNext())
-                cursor.close()
-            }else{
-                cursor.close()
             }
+            cursor.close()
         }catch (e: Exception) {
             throw Exception(e.message)
         }

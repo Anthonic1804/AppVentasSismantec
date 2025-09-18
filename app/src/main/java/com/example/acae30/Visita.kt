@@ -105,17 +105,18 @@ class Visita : AppCompatActivity() {
             try {
                 val consulta = "select c.codigo as codigo, v.Id as idvisita, c.id as idcliente, c.cliente as nombre from visitas v inner join clientes c on v.id_cliente = c.Id where v.id = ${idvisitaGLOBAL}"
                 val cursor = base.query(consulta)
-                if (cursor.count > 0) {
-                    cursor.moveToFirst()
-                    codigo = cursor.getString(0)
-                    idvisitaGLOBAL = cursor.getInt(1)
-                    idcliente = cursor.getInt(2)
-                    nombre = cursor.getString(3)
+                cursor.use {
+                    if (cursor.count > 0) {
+                        cursor.moveToFirst()
+                        codigo = cursor.getString(0)
+                        idvisitaGLOBAL = cursor.getInt(1)
+                        idcliente = cursor.getInt(2)
+                        nombre = cursor.getString(3)
 
-                    binding.txtcodigo.text = codigo
-                    cursor.close()
-                } else {
-                    throw Exception("Error al obtener código de cliente")
+                        binding.txtcodigo.text = codigo
+                    } else {
+                        throw Exception("Error al obtener código de cliente")
+                    }
                 }
             } catch (e: Exception) {
                 throw Exception(e.message)
@@ -472,28 +473,29 @@ class Visita : AppCompatActivity() {
 
             val consulta = "SELECT * FROM visitas where Id=${id.toInt()}"
             val cursor = base.query(consulta)
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                val datos = Visitas(
-                    cursor.getInt(0),
-                    cursor.getInt(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getString(5),
-                    cursor.getString(6),
-                    cursor.getInt(7),
-                    cursor.getString(8),
-                    cursor.getString(9),
-                    cursor.getString(10),
-                    cursor.getInt(11) == 1,
-                    cursor.getInt(12) == 1,
-                    cursor.getInt(13) == 1
-                )
-                cursor.close()
-                return datos
-            } else {
-                throw Exception("Error al obtener los datos")
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    val datos = Visitas(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getInt(7),
+                        cursor.getString(8),
+                        cursor.getString(9),
+                        cursor.getString(10),
+                        cursor.getInt(11) == 1,
+                        cursor.getInt(12) == 1,
+                        cursor.getInt(13) == 1
+                    )
+                    return datos
+                } else {
+                    throw Exception("Error al obtener los datos")
+                }
             }
             //return id.toInt()
         } catch (e: Exception) {
@@ -506,28 +508,29 @@ class Visita : AppCompatActivity() {
         try {
             val consulta = "SELECT * FROM visitas where Id=${idvisitaparam}"
             val cursor = base.query(consulta)
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                val datos = Visitas(
-                    cursor.getInt(0),
-                    cursor.getInt(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getString(5),
-                    cursor.getString(6),
-                    cursor.getInt(7),
-                    cursor.getString(8),
-                    cursor.getString(9),
-                    cursor.getString(10),
-                    cursor.getInt(11) == 1,
-                    cursor.getInt(12) == 1,
-                    cursor.getInt(13) == 1
-                )
-                cursor.close()
-                return datos
-            } else {
-                throw Exception("Error al obtener los datos")
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    val datos = Visitas(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getInt(7),
+                        cursor.getString(8),
+                        cursor.getString(9),
+                        cursor.getString(10),
+                        cursor.getInt(11) == 1,
+                        cursor.getInt(12) == 1,
+                        cursor.getInt(13) == 1
+                    )
+                    return datos
+                } else {
+                    throw Exception("Error al obtener los datos")
+                }
             }
             //return id.toInt()
         } catch (e: Exception) {
@@ -641,32 +644,31 @@ class Visita : AppCompatActivity() {
             val consulta = "SELECT * FROM visitas where Id=${idvisita}"
             val cursor = base.query(consulta)
 
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                val datos = Visitas(
-                    cursor.getInt(0),
-                    cursor.getInt(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getString(5),
-                    cursor.getString(6),
-                    cursor.getInt(7),
-                    cursor.getString(8),
-                    cursor.getString(9),
-                    cursor.getString(10),
-                    cursor.getInt(11) == 1,
-                    cursor.getInt(12) == 1,
-                    cursor.getInt(13) == 1
-                )
-
-                cursor.close()
-
-                return datos
-
-            } else {
-                throw Exception("Error al obtener los datos")
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    val datos = Visitas(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getInt(7),
+                        cursor.getString(8),
+                        cursor.getString(9),
+                        cursor.getString(10),
+                        cursor.getInt(11) == 1,
+                        cursor.getInt(12) == 1,
+                        cursor.getInt(13) == 1
+                    )
+                    return datos
+                } else {
+                    throw Exception("Error al obtener los datos")
+                }
             }
+
         } catch (e: Exception) {
             throw Exception(e.message)
         }

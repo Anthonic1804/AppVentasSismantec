@@ -401,7 +401,7 @@
                 </androidx.cardview.widget.CardView>
 
                 <Button
-                    android:id="@+id/btnupdate"
+                    android:id="@+id/btnReconectar"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_margin="16dp"
@@ -426,7 +426,7 @@
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/btnupdate" />
+                    app:layout_constraintTop_toBottomOf="@+id/btnReconectar" />
 
                 <TextView
                     android:id="@+id/tvVersionActualApp"

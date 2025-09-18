@@ -295,10 +295,10 @@ class Detallepedido : AppCompatActivity() {
                     idvisita = cursor.getInt(3)
                     visita_enviada = cursor.getInt(4) == 1
                     binding.fechaCreacion.text = cursor.getString(5)
-                    cursor.close()
                 } else {
                     throw Exception("Error al obtener código de cliente")
                 }
+                cursor.close()
             } catch (e: Exception) {
                 throw Exception(e.message)
             }
@@ -753,18 +753,20 @@ class Detallepedido : AppCompatActivity() {
             val sql = "SELECT Enviado, nombre_sucursal, tipo_envio, tipo_documento, terminos FROM pedidos WHERE id=$ipPedido"
             val getTipo = dataBase.query(sql)
             val getPedidoData = ArrayList<dataPedidos>()
-            if(getTipo.count > 0){
-                getTipo.moveToFirst()
-                do {
-                    val data = dataPedidos(
-                        getTipo.getInt(0) == 1,
-                        getTipo.getString(1),
-                        getTipo.getInt(2),
-                        getTipo.getString(3),
-                        getTipo.getString(4)
-                    )
-                    getPedidoData.add(data)
-                }while (getTipo.moveToNext())
+            getTipo.use { c ->
+                if(c.count > 0){
+                    c.moveToFirst()
+                    do {
+                        val data = dataPedidos(
+                            c.getInt(0) == 1,
+                            c.getString(1),
+                            c.getInt(2),
+                            c.getString(3),
+                            c.getString(4)
+                        )
+                        getPedidoData.add(data)
+                    }while (c.moveToNext())
+                }
             }
 
             for(data in getPedidoData){
@@ -774,7 +776,6 @@ class Detallepedido : AppCompatActivity() {
                 tipoDocumento = data.tipoDocumento!!.toString()
                 terminosPedidos = data.terminosPedido!!.toString()
             }
-            getTipo.close()
         }catch (e: Exception) {
             throw Exception(e.message)
         }
@@ -795,28 +796,30 @@ class Detallepedido : AppCompatActivity() {
             val cursor = db.query(sql)
             //val cursor = db.rawQuery("SELECT * FROM cliente_sucursal WHERE id_cliente=$idCliente and nombre_sucursal like '%$sucursal%'", null)
             val listaSucursales = ArrayList<InformacionSucursal>()
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                do{
-                    val data = InformacionSucursal(
-                        cursor.getInt(0),
-                        cursor.getInt(1),
-                        cursor.getString(2),
-                        cursor.getString(3),
-                        cursor.getString(4),
-                        cursor.getString(5),
-                        cursor.getString(6),
-                        cursor.getString(7),
-                        cursor.getString(8),
-                        cursor.getInt(9),
-                        cursor.getString(10),
-                        cursor.getString(11),
-                        cursor.getString(12),
-                        cursor.getString(13),
-                        cursor.getString(14)
-                    )
-                    listaSucursales.add(data)
-                }while (cursor.moveToNext())
+            cursor.use { c ->
+                if(c.count > 0){
+                    c.moveToFirst()
+                    do{
+                        val data = InformacionSucursal(
+                            c.getInt(0),
+                            c.getInt(1),
+                            c.getString(2),
+                            c.getString(3),
+                            c.getString(4),
+                            c.getString(5),
+                            c.getString(6),
+                            c.getString(7),
+                            c.getString(8),
+                            c.getInt(9),
+                            c.getString(10),
+                            c.getString(11),
+                            c.getString(12),
+                            c.getString(13),
+                            c.getString(14)
+                        )
+                        listaSucursales.add(data)
+                    }while (c.moveToNext())
+                }
             }
 
             for (data in listaSucursales) {
@@ -845,7 +848,6 @@ class Detallepedido : AppCompatActivity() {
                     "DTECorreo = '$DTECorreo'," +
                     "DTETelefono = '$DTETelefono' " +
                     "WHERE id=$idpedidos")
-            cursor.close()
 
         }catch (e: Exception) {
             throw Exception(e.message)
@@ -887,21 +889,22 @@ class Detallepedido : AppCompatActivity() {
 
             val sql = "SELECT * FROM cliente_sucursal WHERE id_cliente='$idCliente'"
             val dataSucursal = db.query(sql)
-            if(dataSucursal.count > 0){
-                dataSucursal.moveToFirst()
-                do{
-                    val data = Sucursales(
-                        dataSucursal.getString(0),
-                        dataSucursal.getString(2),
-                        dataSucursal.getString(3)
-                    )
-                    listaSucursales.add(data)
-                }while (dataSucursal.moveToNext())
-            }else{
-                binding.spSucursal.visibility = View.GONE
-                binding.sinSucursal.visibility = View.VISIBLE
+            dataSucursal.use {
+                if(dataSucursal.count > 0){
+                    dataSucursal.moveToFirst()
+                    do{
+                        val data = Sucursales(
+                            dataSucursal.getString(0),
+                            dataSucursal.getString(2),
+                            dataSucursal.getString(3)
+                        )
+                        listaSucursales.add(data)
+                    }while (dataSucursal.moveToNext())
+                }else{
+                    binding.spSucursal.visibility = View.GONE
+                    binding.sinSucursal.visibility = View.VISIBLE
+                }
             }
-            dataSucursal.close()
         }catch (e: Exception) {
             throw Exception(e.message)
         }
@@ -1109,28 +1112,127 @@ class Detallepedido : AppCompatActivity() {
         try {
             val sql = "SELECT * FROM pedidos where Id=$idpedido and Enviado=1"
             val cursor = bd.query(sql)
-            if (cursor.count > 0) {
-                throw Exception("Este pedido ya fue enviado no se puede eliminar")
-            } else {
-                bd.execSQL("DELETE FROM detalle_pedidos WHERE Id_pedido=$idpedido")
-                bd.execSQL("DELETE FROM pedidos where Id=$idpedido")
+            cursor.use {
+                if (cursor.count > 0) {
+                    throw Exception("Este pedido ya fue enviado no se puede eliminar")
+                } else {
+                    bd.execSQL("DELETE FROM detalle_pedidos WHERE Id_pedido=$idpedido")
+                    bd.execSQL("DELETE FROM pedidos where Id=$idpedido")
+                }
             }
-            cursor.close()
         } catch (e: Exception) {
             throw Exception(e.message)
         }
     }
 
     //AGREGANDO CAMPOS DE SUCURSAL Y TIPO DE ENVIO A LA CABECERA DEL PEDIDO
-    private fun getPedidoSend(idpedido: Int): CabezeraPedidoSend? {
+    /*private fun getPedidoSend(idpedido: Int): CabezeraPedidoSend? {
         val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
             var envio: CabezeraPedidoSend? = null
             val sql = "SELECT * FROM pedidos where Id=$idpedido"
             val pedido = base.query(sql)
-            if (pedido.count > 0) {
+            pedido.use {
+                if (pedido.count > 0) {
+                    pedido.moveToFirst()
+                    envio = CabezeraPedidoSend(
+                        pedido.getInt(1),//id del cliente
+                        pedido.getString(2), //nombre del cliente
+                        pedido.getFloat(11), //POR EL MOMENTO TIENE EL DATO DEL TOTAL
+                        pedido.getFloat(5),
+                        pedido.getFloat(11),
+                        pedido.getInt(12),
+                        pedido.getInt(16),
+                        pedido.getInt(19),
+                        pedido.getString(20),
+                        pedido.getString(21),
+                        pedido.getInt(23),
+                        pedido.getString(22),
+                        0,
+                        "",
+                        pedido.getString(18),
+                        pedido.getString(24),
+                        pedido.getFloat(25),
+                        pedido.getFloat(26),
+                        pedido.getFloat(27),
+                        pedido.getFloat(28),
+                        pedido.getString(39),
+                        pedido.getString(29),
+                        pedido.getString(30),
+                        pedido.getString(31),
+                        pedido.getString(32),
+                        pedido.getString(33),
+                        pedido.getString(34),
+                        pedido.getString(35),
+                        pedido.getString(36),
+                        pedido.getString(37),
+                        pedido.getString(38),
+                        pedido.getInt(47),
+                        pedido.getString(48),
+                        pedido.getString(49),
+                        pedido.getString(50),
+                        pedido.getString(51),
+                        pedido.getString(52),
+                        pedido.getString(53),
+                        pedido.getString(54),
+                        pedido.getString(55),
+                        null
+                    )
+                    val consulta = "SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido"
+                    val cdetalle =
+                        base.query(consulta)
+                    val list = ArrayList<DetallePedido>()
+                    cdetalle.use {
+                        if (cdetalle.count > 0) {
+                            cdetalle.moveToFirst()
+                            do {
+                                val detalle = DetallePedido(
+                                    cdetalle.getInt(0),
+                                    cdetalle.getInt(1),
+                                    cdetalle.getInt(2),
+                                    cdetalle.getString(3),
+                                    cdetalle.getString(4),
+                                    cdetalle.getFloat(5),
+                                    cdetalle.getFloat(6),
+                                    cdetalle.getFloat(7),
+                                    cdetalle.getFloat(8),
+                                    cdetalle.getFloat(9),
+                                    cdetalle.getFloat(10),
+                                    cdetalle.getFloat(11),
+                                    cdetalle.getFloat(12),
+                                    cdetalle.getFloat(13),
+                                    cdetalle.getFloat(14),
+                                    cdetalle.getFloat(15),
+                                    cdetalle.getString(16),
+                                    cdetalle.getInt(17),
+                                    cdetalle.getFloat(18),
+                                    cdetalle.getString(19),
+                                    cdetalle.getInt(20),
+                                    cdetalle.getString(21)
+                                )
+                                list.add(detalle)
+                            } while (cdetalle.moveToNext())
+                        }
+                    }
+
+                    envio.detalle = list //se agrega al objecto el detalle del pedido
+                }
+            }
+            return envio
+        } catch (e: Exception) {
+            throw Exception(e)
+        }
+    }*///obtiene el pedido
+    //obtiene el pedido de la base de datos
+    private fun getPedidoSend(idpedido: Int): CabezeraPedidoSend? {
+        val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
+        try {
+            val sql = "SELECT * FROM pedidos where Id=$idpedido"
+            base.query(sql).use { pedido ->
+                if (pedido.count == 0) return null
                 pedido.moveToFirst()
-                envio = CabezeraPedidoSend(
+
+                val envioLocal = CabezeraPedidoSend(
                     pedido.getInt(1),//id del cliente
                     pedido.getString(2), //nombre del cliente
                     pedido.getFloat(11), //POR EL MOMENTO TIENE EL DATO DEL TOTAL
@@ -1173,50 +1275,50 @@ class Detallepedido : AppCompatActivity() {
                     pedido.getString(55),
                     null
                 )
-                pedido.close()
+
                 val consulta = "SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido"
-                val cdetalle =
-                    base.query(consulta)
-                if (cdetalle.count > 0) {
-                    val list = ArrayList<DetallePedido>() //lista donde se guardara el pedido
-                    cdetalle.moveToFirst()
-                    do {
-                        val detalle = DetallePedido(
-                            cdetalle.getInt(0),
-                            cdetalle.getInt(1),
-                            cdetalle.getInt(2),
-                            cdetalle.getString(3),
-                            cdetalle.getString(4),
-                            cdetalle.getFloat(5),
-                            cdetalle.getFloat(6),
-                            cdetalle.getFloat(7),
-                            cdetalle.getFloat(8),
-                            cdetalle.getFloat(9),
-                            cdetalle.getFloat(10),
-                            cdetalle.getFloat(11),
-                            cdetalle.getFloat(12),
-                            cdetalle.getFloat(13),
-                            cdetalle.getFloat(14),
-                            cdetalle.getFloat(15),
-                            cdetalle.getString(16),
-                            cdetalle.getInt(17),
-                            cdetalle.getFloat(18),
-                            cdetalle.getString(19),
-                            cdetalle.getInt(20),
-                            cdetalle.getString(21)
-                        )
-                        list.add(detalle)
-                    } while (cdetalle.moveToNext())
-                    cdetalle.close()
-                    envio.detalle = list //se agrega al objecto el detalle del pedido
+                base.query(consulta).use { cdetalle ->
+                    if (cdetalle.count > 0) {
+                        val list = ArrayList<DetallePedido>()
+                        cdetalle.moveToFirst()
+                        do {
+                            val detalle = DetallePedido(
+                                cdetalle.getInt(0),
+                                cdetalle.getInt(1),
+                                cdetalle.getInt(2),
+                                cdetalle.getString(3),
+                                cdetalle.getString(4),
+                                cdetalle.getFloat(5),
+                                cdetalle.getFloat(6),
+                                cdetalle.getFloat(7),
+                                cdetalle.getFloat(8),
+                                cdetalle.getFloat(9),
+                                cdetalle.getFloat(10),
+                                cdetalle.getFloat(11),
+                                cdetalle.getFloat(12),
+                                cdetalle.getFloat(13),
+                                cdetalle.getFloat(14),
+                                cdetalle.getFloat(15),
+                                cdetalle.getString(16),
+                                cdetalle.getInt(17),
+                                cdetalle.getFloat(18),
+                                cdetalle.getString(19),
+                                cdetalle.getInt(20),
+                                cdetalle.getString(21)
+                            )
+                            list.add(detalle)
+                        } while (cdetalle.moveToNext())
+
+                        envioLocal.detalle = list
+                    }
                 }
+
+                return envioLocal
             }
-            return envio
         } catch (e: Exception) {
             throw Exception(e)
         }
-    }//obtiene el pedido
-    //obtiene el pedido de la base de datos
+    }
 
     private fun SendPedido(pedido: CabezeraPedidoSend, idpedido: Int) : Boolean  {
         var enviado = false
@@ -1313,12 +1415,13 @@ class Detallepedido : AppCompatActivity() {
         try {
             val sql = "select count(id_pedido) as cantidad from detalle_pedidos where id_pedido = ${idpedido}"
             val cursor = bd.query(sql)
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                cantidadDetallepedido = cursor.getInt(0)
-                cursor.close()
-            } else {
-                throw Exception("Error al buscar productos del pedidos.")
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    cantidadDetallepedido = cursor.getInt(0)
+                } else {
+                    throw Exception("Error al buscar productos del pedidos.")
+                }
             }
         } catch (e: Exception) {
             throw Exception(e.message)
@@ -1339,12 +1442,13 @@ class Detallepedido : AppCompatActivity() {
         try {
             val sql = "select v.Idvisita from visitas v inner join pedidos p on v.id = p.idvisita where p.id = ${idpedido_param}"
             val cursor = base.query(sql)
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                idvisita_v = cursor.getInt(0)
-                cursor.close()
-            } else {
-                throw Exception("Error al obtener código de cliente")
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    idvisita_v = cursor.getInt(0)
+                } else {
+                    throw Exception("Error al obtener código de cliente")
+                }
             }
         } catch (e: Exception) {
             throw Exception(e.message)

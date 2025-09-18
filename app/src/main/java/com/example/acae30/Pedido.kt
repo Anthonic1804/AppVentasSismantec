@@ -245,41 +245,42 @@ class Pedido : AppCompatActivity() {
                         "order by id desc"
             )
             var lista = ArrayList<Pedidos>()
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                do {
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    do {
 
-                    val pedido = Pedidos(
-                        cursor.getInt(0),
-                        cursor.getInt(1),
-                        cursor.getString(2),
-                        cursor.getFloat(3),
-                        cursor.getFloat(4),
-                        cursor.getInt(5),
-                        cursor.getString(6),
-                        cursor.getInt(7),
-                        cursor.getString(8),
-                        cursor.getInt(9),
-                        cursor.getInt(10),
-                        cursor.getString(11),
-                        cursor.getFloat(12),
-                        cursor.getFloat(13),
-                        cursor.getFloat(14),
-                        cursor.getInt(15),
-                        cursor.getInt(16),
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        ""
-                    )
-                    lista.add(pedido)
+                        val pedido = Pedidos(
+                            cursor.getInt(0),
+                            cursor.getInt(1),
+                            cursor.getString(2),
+                            cursor.getFloat(3),
+                            cursor.getFloat(4),
+                            cursor.getInt(5),
+                            cursor.getString(6),
+                            cursor.getInt(7),
+                            cursor.getString(8),
+                            cursor.getInt(9),
+                            cursor.getInt(10),
+                            cursor.getString(11),
+                            cursor.getFloat(12),
+                            cursor.getFloat(13),
+                            cursor.getFloat(14),
+                            cursor.getInt(15),
+                            cursor.getInt(16),
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            ""
+                        )
+                        lista.add(pedido)
 
-                } while (cursor.moveToNext())
-                cursor.close()
+                    } while (cursor.moveToNext())
+                }
             }
             return lista
         } catch (e: Exception) {
@@ -593,17 +594,18 @@ class Pedido : AppCompatActivity() {
         try {
             val cursor = base.query("SELECT *  FROM reporteTemp")
             val lista = ArrayList<DatosReporteJSON>()
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                do {
-                    val detalle = DatosReporteJSON(
-                        cursor.getString(0),
-                        cursor.getString(1),
-                        cursor.getFloat(2)
-                    )
-                    lista.add(detalle)
-                } while (cursor.moveToNext())
-                cursor.close()
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    do {
+                        val detalle = DatosReporteJSON(
+                            cursor.getString(0),
+                            cursor.getString(1),
+                            cursor.getFloat(2)
+                        )
+                        lista.add(detalle)
+                    } while (cursor.moveToNext())
+                }
             }
             return lista
         } catch (e: Exception) {

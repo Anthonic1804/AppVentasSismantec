@@ -682,9 +682,8 @@ class Producto_agregar : AppCompatActivity() {
                     cursor.getInt(20),
                     cursor.getString(21)
                 )
-
-                cursor.close()
             }
+            cursor.close()
             return vista
         } catch (e: Exception) {
             throw Exception(e.message)
@@ -750,6 +749,7 @@ class Producto_agregar : AppCompatActivity() {
             } else {
                 throw Exception("No se encontro el pedido asociado")
             }
+            cursor.close() // -----> Este no lo habia cerrado 18/09/2025
             base.setTransactionSuccessful()
         } catch (e: Exception) {
             throw Exception(e.message)
@@ -781,6 +781,7 @@ class Producto_agregar : AppCompatActivity() {
             } else {
                 throw Exception("No se encontro el pedido asociado")
             }
+            cursor.close() // -----> Este no lo habia cerrado 18/09/2025
             base.setTransactionSuccessful()
         } catch (e: Exception) {
             throw Exception(e.message)
@@ -799,12 +800,11 @@ class Producto_agregar : AppCompatActivity() {
                 var i = 0
                 cursor.moveToFirst()
                 i = cursor.getInt(0)
-                cursor.close()
                 return i
             } else {
                 return 0
             }
-
+            cursor.close()
         } catch (e: Exception) {
             throw Exception(e.message)
         }

@@ -191,36 +191,37 @@ class PedidosController {
         try{
             val consulta = "SELECT * FROM pedidos WHERE Id=$idPedido"
             val cursor = base.query(consulta)
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                infoPedido = Pedidos(
-                    cursor.getInt(0),
-                    cursor.getInt(1),
-                    cursor.getString(2),
-                    cursor.getFloat(11),
-                    cursor.getFloat(5),
-                    cursor.getInt(12),
-                    cursor.getString(13),
-                    cursor.getInt(14),
-                    cursor.getString(15),
-                    cursor.getInt(16),
-                    cursor.getInt(17),
-                    cursor.getString(18),
-                    cursor.getFloat(6),
-                    cursor.getFloat(7),
-                    cursor.getFloat(10),
-                    cursor.getInt(40),
-                    cursor.getInt(41),
-                    cursor.getString(42),
-                    cursor.getString(43),
-                    cursor.getString(44),
-                    cursor.getString(45),
-                    cursor.getString(22),
-                    cursor.getString(24),
-                    cursor.getString(21),
-                    cursor.getString(49)
-                )
-                cursor.close()
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    infoPedido = Pedidos(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getFloat(11),
+                        cursor.getFloat(5),
+                        cursor.getInt(12),
+                        cursor.getString(13),
+                        cursor.getInt(14),
+                        cursor.getString(15),
+                        cursor.getInt(16),
+                        cursor.getInt(17),
+                        cursor.getString(18),
+                        cursor.getFloat(6),
+                        cursor.getFloat(7),
+                        cursor.getFloat(10),
+                        cursor.getInt(40),
+                        cursor.getInt(41),
+                        cursor.getString(42),
+                        cursor.getString(43),
+                        cursor.getString(44),
+                        cursor.getString(45),
+                        cursor.getString(22),
+                        cursor.getString(24),
+                        cursor.getString(21),
+                        cursor.getString(49)
+                    )
+                }
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER LA INFORMACION DEL PEDIDO -> ${e.message}")
@@ -235,36 +236,37 @@ class PedidosController {
         try{
             val consulta = "SELECT *  FROM detalle_producto where Id_pedido=$idPedido"
             val cdetalle = base.query(consulta)
-            if (cdetalle.count > 0) {
-                cdetalle.moveToFirst()
-                do {
-                    val detalle = DetallePedido(
-                        cdetalle.getInt(0),
-                        cdetalle.getInt(1),
-                        cdetalle.getInt(2),
-                        cdetalle.getString(3),
-                        cdetalle.getString(4),
-                        cdetalle.getFloat(5),
-                        cdetalle.getFloat(6),
-                        cdetalle.getFloat(7),
-                        cdetalle.getFloat(8),
-                        cdetalle.getFloat(9),
-                        cdetalle.getFloat(10),
-                        cdetalle.getFloat(11),
-                        cdetalle.getFloat(12),
-                        cdetalle.getFloat(13),
-                        cdetalle.getFloat(14),
-                        cdetalle.getFloat(15),
-                        cdetalle.getString(16),
-                        cdetalle.getInt(17),
-                        cdetalle.getFloat(18),
-                        cdetalle.getString(19),
-                        cdetalle.getInt(20),
-                        cdetalle.getString(21)
-                    )
-                    lista.add(detalle)
-                } while (cdetalle.moveToNext())
-                cdetalle.close()
+            cdetalle.use {
+                if (cdetalle.count > 0) {
+                    cdetalle.moveToFirst()
+                    do {
+                        val detalle = DetallePedido(
+                            cdetalle.getInt(0),
+                            cdetalle.getInt(1),
+                            cdetalle.getInt(2),
+                            cdetalle.getString(3),
+                            cdetalle.getString(4),
+                            cdetalle.getFloat(5),
+                            cdetalle.getFloat(6),
+                            cdetalle.getFloat(7),
+                            cdetalle.getFloat(8),
+                            cdetalle.getFloat(9),
+                            cdetalle.getFloat(10),
+                            cdetalle.getFloat(11),
+                            cdetalle.getFloat(12),
+                            cdetalle.getFloat(13),
+                            cdetalle.getFloat(14),
+                            cdetalle.getFloat(15),
+                            cdetalle.getString(16),
+                            cdetalle.getInt(17),
+                            cdetalle.getFloat(18),
+                            cdetalle.getString(19),
+                            cdetalle.getInt(20),
+                            cdetalle.getString(21)
+                        )
+                        lista.add(detalle)
+                    } while (cdetalle.moveToNext())
+                }
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER EL DETALLE DEL PEDIDO -> ${e.message}")

@@ -253,7 +253,7 @@ class SolicitudRecargasController {
                     )
                     lista.add(arreglo)
                 } while (cursor.moveToNext())
-                cursor.close()
+                //cursor.close()
             }
             cursor.close()
         }catch (e:Exception){
