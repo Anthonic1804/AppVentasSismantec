@@ -297,8 +297,9 @@ class Inventario : AppCompatActivity() {
                         recicle!!.layoutManager = mLayoutManager
                         val adapter = InventarioAdapter(list, this, vistaInventario) { position ->
                             if (busquedaProducto) {
-                                val existeniasProducto = list.get(position).Existencia!!.toFloat()
-                                if(sinExistencias == 0 && existeniasProducto == 0f || existeniasProducto < 0f){
+                                val existeniasProducto = list[position].Existencia!!.toFloat()
+                                val tipo = list[position].Tipo.toString()
+                                if((sinExistencias == 0 && existeniasProducto <= 0f)  && tipo == "Producto"){
                                     Toast.makeText(this@Inventario, "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS", Toast.LENGTH_SHORT).show()
                                 }else{
 
@@ -346,8 +347,9 @@ class Inventario : AppCompatActivity() {
                         recicle!!.layoutManager = gridLayoutManayer
                         val adapter = InventarioAdapter(list, this, vistaInventario) { position ->
                             if (busquedaProducto) {
-                                val existeniasProducto = list.get(position).Existencia!!.toFloat()
-                                if(sinExistencias == 0 && existeniasProducto == 0f || existeniasProducto < 0f){
+                                val existeniasProducto = list[position].Existencia!!.toFloat()
+                                val tipo = list[position].Tipo.toString()
+                                if((sinExistencias == 0 && existeniasProducto <= 0f)  && tipo == "Producto"){
                                     Toast.makeText(this@Inventario, "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS", Toast.LENGTH_SHORT).show()
                                 }else{
 

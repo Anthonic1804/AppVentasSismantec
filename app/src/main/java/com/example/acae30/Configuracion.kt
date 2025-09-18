@@ -67,8 +67,11 @@ class Configuracion : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_configuracion)
         supportActionBar?.hide()
+
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
+
         funciones = Funciones()
+
         vista = findViewById(R.id.vistaalerta)
         ip = findViewById(R.id.txtip)
         puerto = findViewById(R.id.txtpuerto)

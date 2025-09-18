@@ -107,8 +107,8 @@ class Producto_agregar : AppCompatActivity() {
     private var bonificacion : Float = 0f
     private var mostrarPrecioApp : Int = 0 //MOSTRARA EL PRECIO CONFIGURADO EN LA BD DEL SERVIDOR
     private var idUnidad = 0
-    private var editarProducto = false
 
+    private var tipoProducto = ""
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -140,7 +140,6 @@ class Producto_agregar : AppCompatActivity() {
         getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
         proviene = intent.getStringExtra("proviene")
         total_param = intent.getFloatExtra("total_param", 0.toFloat())
-        editarProducto = intent.getBooleanExtra("Editar", false)
 
         cargarOpcionesGenerales()
 
@@ -398,6 +397,8 @@ class Producto_agregar : AppCompatActivity() {
             //---------
             datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!, false)
 
+            //SELECCIONANDO EL TIPO DE PRODUCTO
+            tipoProducto = datosProducto!!.Tipo.toString()
 
             //DESHABILITANDO EL PRECIO PERSONALIZADO
             binding.tvPrecioPersonalizado.visibility = View.GONE
@@ -417,8 +418,20 @@ class Producto_agregar : AppCompatActivity() {
             }
 
             //OBTENIENDO LA BONIFICACION PERSONALIZADA POR CLIENTE
-            bonificacion = clientesController.obtenerBonificacionCliente(idcliente!!,
+            val clienteBonificado = clientesController.obtenerBonificacionCliente(idcliente!!,
                 idproducto!!,this@Producto_agregar)
+
+ 
+            bonificacion = if(clienteBonificado > 0){
+                clienteBonificado
+            }else{
+                if(unidadActual == "UNI"){
+                    datosProducto!!.Bonificado!!.toFloat()
+                } else {
+                    0f
+                }
+            }
+
 
             //TOMANDO LA CANTIDAD DE LAS ESCALA SELECCIONADA.
             //09/01/2024
@@ -475,7 +488,7 @@ class Producto_agregar : AppCompatActivity() {
 
             //FUNCION PARA MOSTRAR EL PRECIO POR DEFECTO EN EL LISTADO DEL PRODUCTO
             //SOLO CUANDO SE AGREGA EL PRODUCTO POR PRIMERA VEZ
-            if(!editarProducto){
+            if(proviene == "editar"){
                 val totalIndices = binding.spprecio.adapter?.count ?: 0
                 if(mostrarPrecioApp in 0 until totalIndices){
                     binding.spprecio.setSelection(mostrarPrecioApp, true)
@@ -492,7 +505,7 @@ class Producto_agregar : AppCompatActivity() {
         if(cantidadIngresada.isNotEmpty() && isInteger(cantidadIngresada)){
             cantidad = cantidadIngresada.toFloat()
 
-            if(cantidad > existenciaProducto || cantidad == 0f){
+            if((cantidad > existenciaProducto || cantidad == 0f) && tipoProducto == "Producto"){
                 binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
                 binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
                 binding.btnagregar.isEnabled = false
@@ -541,7 +554,7 @@ class Producto_agregar : AppCompatActivity() {
 
         binding.txttotal.text = "${String.format("%.4f".format(total) )}"
 
-        if(bonificacion > 0){
+        if(bonificacion > 0 && bonificacion != null){
             val productosBonificados = cantidad / bonificacion
             binding.txtBonificados.text = productosBonificados.toInt().toString()
         }
@@ -1176,7 +1189,7 @@ class Producto_agregar : AppCompatActivity() {
         }
 
         // Verificamos que la cantidad si corresponda a la escala seleccionada
-        if (cantidad >= cantidadEscala && precio > 0) {
+        if (cantidad >= cantidadEscala) { //&& precio > 0
 
             try {
 

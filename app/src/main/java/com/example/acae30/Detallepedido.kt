@@ -1056,7 +1056,6 @@ class Detallepedido : AppCompatActivity() {
                 intento.putExtra("total_param", data.Total_iva)
                 intento.putExtra("sucursalPosition", getSucursalPosition)
                 intento.putExtra("facturaExportacion", FacturaExportacion)
-                intento.putExtra("Editar", true)
                 startActivity(intento)
                 finish()
             }
