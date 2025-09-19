@@ -46,54 +46,55 @@ class InventarioController {
         try {
             val consulta = "SELECT * FROM inventario WHERE Id=$idInventario"
             val cursor = base.query(consulta)
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                if(facExpo){
-                    //FACTURA DE EXPORTACION ACTIVA
-                    datos = Inventario(
-                        cursor.getInt(0),
-                        cursor.getString(1),
-                        cursor.getString(3),
-                        cursor.getString(4),
-                        cursor.getString(5),
-                        cursor.getFloat(6),
-                        cursor.getString(7),
-                        cursor.getInt(12),
-                        cursor.getFloat(8),
-                        cursor.getFloat(9),
-                        cursor.getFloat(17),
-                        cursor.getFloat(14)/1.13f,
-                        cursor.getFloat(15)/1.13f,
-                        cursor.getFloat(16),
-                        cursor.getString(27),
-                        cursor.getFloat(18),
-                        cursor.getFloat(13),
-                        cursor.getString(2)
-                    )
-                }else{
-                    datos = Inventario(
-                        cursor.getInt(0),
-                        cursor.getString(1),
-                        cursor.getString(3),
-                        cursor.getString(4),
-                        cursor.getString(5),
-                        cursor.getFloat(6),
-                        cursor.getString(7),
-                        cursor.getInt(12),
-                        cursor.getFloat(8),
-                        cursor.getFloat(9),
-                        cursor.getFloat(17),
-                        cursor.getFloat(14),
-                        cursor.getFloat(15),
-                        cursor.getFloat(16),
-                        cursor.getString(27),
-                        cursor.getFloat(18),
-                        cursor.getFloat(13),
-                        cursor.getString(2)
-                    )
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    if(facExpo){
+                        //FACTURA DE EXPORTACION ACTIVA
+                        datos = Inventario(
+                            cursor.getInt(0),
+                            cursor.getString(1),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getString(5),
+                            cursor.getFloat(6),
+                            cursor.getString(7),
+                            cursor.getInt(12),
+                            cursor.getFloat(8),
+                            cursor.getFloat(9),
+                            cursor.getFloat(17),
+                            cursor.getFloat(14)/1.13f,
+                            cursor.getFloat(15)/1.13f,
+                            cursor.getFloat(16),
+                            cursor.getString(27),
+                            cursor.getFloat(18),
+                            cursor.getFloat(13),
+                            cursor.getString(2)
+                        )
+                    }else{
+                        datos = Inventario(
+                            cursor.getInt(0),
+                            cursor.getString(1),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getString(5),
+                            cursor.getFloat(6),
+                            cursor.getString(7),
+                            cursor.getInt(12),
+                            cursor.getFloat(8),
+                            cursor.getFloat(9),
+                            cursor.getFloat(17),
+                            cursor.getFloat(14),
+                            cursor.getFloat(15),
+                            cursor.getFloat(16),
+                            cursor.getString(27),
+                            cursor.getFloat(18),
+                            cursor.getFloat(13),
+                            cursor.getString(2)
+                        )
+                    }
                 }
             }
-            cursor.close()
         }catch (e:Exception){
             println("ERROR: DETALLE DEL PRODUCTO -> ${e.message}")
         }
@@ -108,49 +109,50 @@ class InventarioController {
         try {
             val consulta = "SELECT * FROM Inventario_precios WHERE id_inventario = '$idInventario' AND unidad='${unidadMedida.trim()}'"
             val cursor = base.query(consulta)
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
 
-                if(facExpo){
-                    //ACTIVANDO FACTURA DE EXPORTACION
-                    do {
-                        val escalas = InventarioPrecios(
-                            cursor.getInt(0),
-                            cursor.getInt(1),
-                            cursor.getString(2),
-                            cursor.getString(3),
-                            cursor.getString(4),
-                            cursor.getFloat(5),
-                            cursor.getString(6),
-                            cursor.getFloat(7),
-                            cursor.getFloat(8),
-                            cursor.getFloat(9)/1.13f,
-                            cursor.getFloat(9),
-                            cursor.getInt(11)
-                        )
-                        listaEscalas.add(escalas)
-                    } while (cursor.moveToNext())
-                }else{
-                    //SIN FACTURA DE EXPORTACION
-                    do {
-                        val escalas = InventarioPrecios(
-                            cursor.getInt(0),
-                            cursor.getInt(1),
-                            cursor.getString(2),
-                            cursor.getString(3),
-                            cursor.getString(4),
-                            cursor.getFloat(5),
-                            cursor.getString(6),
-                            cursor.getFloat(7),
-                            cursor.getFloat(8),
-                            cursor.getFloat(9),
-                            cursor.getFloat(10),
-                            cursor.getInt(11)
-                        )
-                        listaEscalas.add(escalas)
-                    } while (cursor.moveToNext())
+                    if(facExpo){
+                        //ACTIVANDO FACTURA DE EXPORTACION
+                        do {
+                            val escalas = InventarioPrecios(
+                                cursor.getInt(0),
+                                cursor.getInt(1),
+                                cursor.getString(2),
+                                cursor.getString(3),
+                                cursor.getString(4),
+                                cursor.getFloat(5),
+                                cursor.getString(6),
+                                cursor.getFloat(7),
+                                cursor.getFloat(8),
+                                cursor.getFloat(9)/1.13f,
+                                cursor.getFloat(9),
+                                cursor.getInt(11)
+                            )
+                            listaEscalas.add(escalas)
+                        } while (cursor.moveToNext())
+                    }else{
+                        //SIN FACTURA DE EXPORTACION
+                        do {
+                            val escalas = InventarioPrecios(
+                                cursor.getInt(0),
+                                cursor.getInt(1),
+                                cursor.getString(2),
+                                cursor.getString(3),
+                                cursor.getString(4),
+                                cursor.getFloat(5),
+                                cursor.getString(6),
+                                cursor.getFloat(7),
+                                cursor.getFloat(8),
+                                cursor.getFloat(9),
+                                cursor.getFloat(10),
+                                cursor.getInt(11)
+                            )
+                            listaEscalas.add(escalas)
+                        } while (cursor.moveToNext())
+                    }
                 }
-                cursor.close()
             }
         }catch (e:Exception){
             println("ERROR: OBTENER ESCALAS DE PRECIOS -> ${e.message}")
@@ -194,34 +196,35 @@ class InventarioController {
             } else {
                 base.query(query)
             }
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                do {
-                    val arreglo = Inventario(
-                        cursor.getInt(0),
-                        cursor.getString(1),
-                        cursor.getString(3),
-                        cursor.getString(4),
-                        cursor.getString(5),
-                        cursor.getFloat(6),
-                        cursor.getString(7),
-                        cursor.getInt(12),
-                        cursor.getFloat(8),
-                        cursor.getFloat(9),
-                        cursor.getFloat(17),
-                        cursor.getFloat(14),
-                        cursor.getFloat(15),
-                        cursor.getFloat(16),
-                        cursor.getString(27),
-                        cursor.getFloat(18),
-                        cursor.getFloat(13),
-                        cursor.getString(2)
-                    )
-                    lista.add(arreglo)
-                } while (cursor.moveToNext())
-                //cursor.close()
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    do {
+                        val arreglo = Inventario(
+                            cursor.getInt(0),
+                            cursor.getString(1),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getString(5),
+                            cursor.getFloat(6),
+                            cursor.getString(7),
+                            cursor.getInt(12),
+                            cursor.getFloat(8),
+                            cursor.getFloat(9),
+                            cursor.getFloat(17),
+                            cursor.getFloat(14),
+                            cursor.getFloat(15),
+                            cursor.getFloat(16),
+                            cursor.getString(27),
+                            cursor.getFloat(18),
+                            cursor.getFloat(13),
+                            cursor.getString(2)
+                        )
+                        lista.add(arreglo)
+                    } while (cursor.moveToNext())
+                    //cursor.close()
+                }
             }
-            cursor.close()
         }catch (e:Exception){
             println("ERROR AL REALIZAR LA BUSQUEDA EN INVENTARIO -> ${e.message}")
         }
@@ -235,17 +238,15 @@ class InventarioController {
         try {
             var fechaInventario: String = "NULL"
             val consulta = base.query("SELECT Fecha_inventario FROM inventario LIMIT 1")
-
-            if(consulta.count > 0){
-                consulta.moveToFirst()
-                fechaInventario = consulta.getString(0).toString()
+            consulta.use {
+                if(consulta.count > 0){
+                    consulta.moveToFirst()
+                    fechaInventario = consulta.getString(0).toString()
+                }
             }
-
             preferences.edit {
                 putString("fechaInventario", fechaInventario)
             }
-
-            consulta.close()
         }catch (e:Exception){
             print("ERROR: ${e.message}")
         }
@@ -485,24 +486,25 @@ class InventarioController {
         try {
             val consulta = "SELECT ID_PRODUCTO, (CANTIDAD + BONIFICADO) AS CANTIDAD, Unidad FROM DETALLE_PEDIDOS WHERE ID_PEDIDO=$idPedido"
             val cursor = base.query(consulta)
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                do {
-                    try {
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    do {
+                        try {
 
-                        base.execSQL("UPDATE Inventario SET Existencia = (Existencia - ${cursor.getInt(1)}) WHERE Id=${cursor.getInt(0)}")
+                            base.execSQL("UPDATE Inventario SET Existencia = (Existencia - ${cursor.getInt(1)}) WHERE Id=${cursor.getInt(0)}")
 
-                        //DESCARGA DE INVENTARIO PARA HOJAS DE CARGA CON FRACCIONES
-                        /*when(cursor.getString(2)){
-                            "UNI" -> descargarUnidades(context, cursor.getInt(0), cursor.getInt(1))
-                            "FRA" -> descargarFracciones(context, cursor.getInt(0), cursor.getInt(1))
-                            else -> descargarUnidadesMedida(context,cursor.getInt(0), cursor.getInt(1), cursor.getString(2))
-                        }*/
-                    }catch (e:Exception){
-                        println("ERROR: NO SE ACTUALIZARON LAS EXITENCIAS EN INVENTARIO -> ${e.message}")
-                    }
-                } while (cursor.moveToNext())
-                cursor.close()
+                            //DESCARGA DE INVENTARIO PARA HOJAS DE CARGA CON FRACCIONES
+                            /*when(cursor.getString(2)){
+                                "UNI" -> descargarUnidades(context, cursor.getInt(0), cursor.getInt(1))
+                                "FRA" -> descargarFracciones(context, cursor.getInt(0), cursor.getInt(1))
+                                else -> descargarUnidadesMedida(context,cursor.getInt(0), cursor.getInt(1), cursor.getString(2))
+                            }*/
+                        }catch (e:Exception){
+                            println("ERROR: NO SE ACTUALIZARON LAS EXITENCIAS EN INVENTARIO -> ${e.message}")
+                        }
+                    } while (cursor.moveToNext())
+                }
             }
         }catch (e:Exception){
             println("ERROR: NO SE ENCONTRARON REGISTROS EN EL PEDIDO -> ${e.message}")
@@ -1192,11 +1194,11 @@ class InventarioController {
         """.trimIndent()
 
             val cursor = bd.query(query, arrayOf(idProducto.toString(), precio.toString(), unidad))
-
-            if (cursor.moveToFirst()) {
-                cantidadEscala = cursor.getInt(0)
+            cursor.use {
+                if (cursor.moveToFirst()) {
+                    cantidadEscala = cursor.getInt(0)
+                }
             }
-            cursor.close()
         } catch (e: Exception) {
             println("ERROR AL OBTENER LA CANTIDAD DE LA ESCALA SELECCIONADA: ${e.message}")
         }
@@ -1293,11 +1295,12 @@ class InventarioController {
             try {
                 val consulta = "SELECT fraccion FROM Inventario WHERE Id=$idProducto"
                 val cursor = bd.query(consulta)
-                if(cursor.count > 0){
-                    cursor.moveToFirst()
-                    inventarioFraccion = cursor.getFloat(0)
+                cursor.use {
+                    if(cursor.count > 0){
+                        cursor.moveToFirst()
+                        inventarioFraccion = cursor.getFloat(0)
+                    }
                 }
-                cursor.close()
 
                 if(inventarioFraccion > 1){
                     listado.add("FRACCION")
@@ -1305,15 +1308,14 @@ class InventarioController {
 
                 val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
                 val cursor2 = bd.query(consulta2)
-                if(cursor2.count > 0){
-                    cursor2.moveToFirst()
-                    do {
-                        listado.add(cursor2.getString(0))
-                    }while (cursor2.moveToNext())
+                cursor2.use {
+                    if(cursor2.count > 0){
+                        cursor2.moveToFirst()
+                        do {
+                            listado.add(cursor2.getString(0))
+                        }while (cursor2.moveToNext())
+                    }
                 }
-                cursor2.close()
-
-
             }catch (e:Exception){
                 println("ERROR NO SE ENCONTRARON UNIDADES EN INVENTARIO -> " + e.message)
             }
@@ -1331,11 +1333,12 @@ class InventarioController {
         try {
             val consulta = "SELECT Id FROM inventario_unidades WHERE Id_inventario = $idProducto AND Nombre_unidad = '$unidadMedida' "
             val cursor = bd.query(consulta)
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                idUnidadMedida = cursor.getInt(0)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    idUnidadMedida = cursor.getInt(0)
+                }
             }
-            cursor.close()
         }catch (e: Exception){
             println("Error: no se obtuvo la unidad de medida -> " + e.message)
         }

@@ -327,59 +327,59 @@ class ClientesController {
 
         try {
             val consulta = base.query(consultaSql, argumentos)
+            consulta.use {
+                if (consulta.count > 0) {
+                    consulta.moveToFirst()
+                    do {
+                        val listado = Cliente(
+                            consulta.getInt(0),
+                            consulta.getString(1),
+                            consulta.getString(2),
+                            consulta.getString(3),
+                            consulta.getString(4),
+                            consulta.getString(5),
+                            consulta.getString(6),
+                            consulta.getString(7),
+                            consulta.getString(8),
+                            consulta.getInt(9),
+                            consulta.getFloat(10),
+                            consulta.getFloat(11),
+                            consulta.getString(12),
+                            consulta.getString(13),
+                            consulta.getString(14),
+                            consulta.getString(15),
+                            consulta.getString(16),
+                            consulta.getString(17),
+                            consulta.getString(18),
+                            consulta.getString(19),
+                            consulta.getInt(20),
+                            consulta.getInt(21),
+                            consulta.getString(22),
+                            consulta.getString(23),
+                            consulta.getString(24),
+                            consulta.getFloat(25),
+                            consulta.getInt(27),
+                            consulta.getString(28),
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            ""
+                        )
+                        listaClientes.add(listado)
 
-            if (consulta.count > 0) {
-                consulta.moveToFirst()
-                do {
-                    val listado = Cliente(
-                        consulta.getInt(0),
-                        consulta.getString(1),
-                        consulta.getString(2),
-                        consulta.getString(3),
-                        consulta.getString(4),
-                        consulta.getString(5),
-                        consulta.getString(6),
-                        consulta.getString(7),
-                        consulta.getString(8),
-                        consulta.getInt(9),
-                        consulta.getFloat(10),
-                        consulta.getFloat(11),
-                        consulta.getString(12),
-                        consulta.getString(13),
-                        consulta.getString(14),
-                        consulta.getString(15),
-                        consulta.getString(16),
-                        consulta.getString(17),
-                        consulta.getString(18),
-                        consulta.getString(19),
-                        consulta.getInt(20),
-                        consulta.getInt(21),
-                        consulta.getString(22),
-                        consulta.getString(23),
-                        consulta.getString(24),
-                        consulta.getFloat(25),
-                        consulta.getInt(27),
-                        consulta.getString(28),
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        ""
-                    )
-                    listaClientes.add(listado)
-
-                } while (consulta.moveToNext())
-                consulta.close()
+                    } while (consulta.moveToNext())
+                }
             }
         } catch (e: Exception) {
             throw Exception(e.message)
@@ -519,11 +519,12 @@ class ClientesController {
 
         try {
             val cursor = base.query(consulta)
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                precioIva = cursor.getFloat(0)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    precioIva = cursor.getFloat(0)
+                }
             }
-            cursor.close()
         }catch (e:Exception){
             println("ERROR AL BUSCAR EL PRECIO PERSONALIZADO -> ${e.message}")
         }
@@ -540,12 +541,12 @@ class ClientesController {
             val consulta = "SELECT bonificado FROM cliente_precios " +
                     "WHERE id_cliente = $idCliente AND id_inventario = $idProducto"
             val cursor = base.query(consulta)
-
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                bonificacion = cursor.getFloat(0)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    bonificacion = cursor.getFloat(0)
+                }
             }
-            cursor.close()
         }catch (e:Exception){
             println("ERROR AL BUSCAR LA BONIFICACIONI PERSONALIZADA ->  ${e.message}")
         }

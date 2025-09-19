@@ -162,25 +162,26 @@ class VisitaController {
         try {
             var visita: Visitas? = null
             val cursor = base.query("SELECT * FROM visitas where Id_cliente= ? ", arrayOf(idcliente))
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                visita = Visitas(
-                    cursor.getInt(0),
-                    cursor.getInt(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getString(5),
-                    cursor.getString(6),
-                    cursor.getInt(7),
-                    cursor.getString(8),
-                    cursor.getString(9),
-                    cursor.getString(10),
-                    cursor.getInt(11) == 1,
-                    cursor.getInt(12) == 1,
-                    cursor.getInt(13) == 1
-                )
-                cursor.close()
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    visita = Visitas(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getInt(7),
+                        cursor.getString(8),
+                        cursor.getString(9),
+                        cursor.getString(10),
+                        cursor.getInt(11) == 1,
+                        cursor.getInt(12) == 1,
+                        cursor.getInt(13) == 1
+                    )
+                }
             }
             return visita
         } catch (e: Exception) {
@@ -194,25 +195,26 @@ class VisitaController {
         try {
             var visita: Visitas? = null
             val cursor = base.query("SELECT * FROM visitas where id=?", arrayOf(idVisita))
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                visita = Visitas(
-                    cursor.getInt(0),
-                    cursor.getInt(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getString(5),
-                    cursor.getString(6),
-                    cursor.getInt(7),
-                    cursor.getString(8),
-                    cursor.getString(9),
-                    cursor.getString(10),
-                    cursor.getInt(11) == 1,
-                    cursor.getInt(12) == 1,
-                    cursor.getInt(13) == 1
-                )
-                cursor.close()
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    visita = Visitas(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getInt(7),
+                        cursor.getString(8),
+                        cursor.getString(9),
+                        cursor.getString(10),
+                        cursor.getInt(11) == 1,
+                        cursor.getInt(12) == 1,
+                        cursor.getInt(13) == 1
+                    )
+                }
             }
             return visita
         } catch (e: Exception) {

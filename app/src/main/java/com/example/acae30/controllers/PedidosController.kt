@@ -146,38 +146,38 @@ class PedidosController {
                     "pedido_dte_error FROM pedidos WHERE Enviado=1 AND pedido_dte=0" +
                     " order by id desc limit 1"
             val cursor = db.query(consulta)
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                pedido = Pedidos(
-                    cursor.getInt(0),
-                    cursor.getInt(1),
-                    cursor.getString(2),
-                    cursor.getFloat(3),
-                    cursor.getFloat(4),
-                    cursor.getInt(5),
-                    cursor.getString(6),
-                    cursor.getInt(7),
-                    cursor.getString(8),
-                    cursor.getInt(9),
-                    cursor.getInt(10),
-                    cursor.getString(11),
-                    cursor.getFloat(12),
-                    cursor.getFloat(13),
-                    cursor.getFloat(14),
-                    cursor.getInt(15),
-                    cursor.getInt(16),
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                    ""
-                )
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    pedido = Pedidos(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getFloat(3),
+                        cursor.getFloat(4),
+                        cursor.getInt(5),
+                        cursor.getString(6),
+                        cursor.getInt(7),
+                        cursor.getString(8),
+                        cursor.getInt(9),
+                        cursor.getInt(10),
+                        cursor.getString(11),
+                        cursor.getFloat(12),
+                        cursor.getFloat(13),
+                        cursor.getFloat(14),
+                        cursor.getInt(15),
+                        cursor.getInt(16),
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    )
+                }
             }
-
-            cursor.close()
             return pedido
         }catch (e:Exception){
             throw Exception("ERROR NO SE ENCONTRARON PEDIDOS -> " + e.message)
@@ -281,16 +281,17 @@ class PedidosController {
         try {
             bd.beginTransaction()
             val cursor = bd.query("SELECT * FROM pedidos where Enviado=1 AND Fecha_creado != ?", arrayOf(fechanow))
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                do {
-                    val id = cursor.getInt(0)
-                    bd.delete("detalle_pedidos", "Id_pedido=?", arrayOf(id.toString()))
-                    bd.delete("pedidos", "Id=?", arrayOf(id.toString()))
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    do {
+                        val id = cursor.getInt(0)
+                        bd.delete("detalle_pedidos", "Id_pedido=?", arrayOf(id.toString()))
+                        bd.delete("pedidos", "Id=?", arrayOf(id.toString()))
 
-                } while (cursor.moveToNext())
-                cursor.close()
-                bd.setTransactionSuccessful()
+                    } while (cursor.moveToNext())
+                    bd.setTransactionSuccessful()
+                }
             }
         } catch (e: Exception) {
             throw Exception(e.message)
@@ -325,30 +326,31 @@ class PedidosController {
 
             val consulta = "SELECT * FROM detalle_pedidos where id_pedido=$idPedido LIMIT 1"
             val cursor = bd.query(consulta)
-            if (cursor.count > 0) {
-                if(precioConIvaShared != precioConIVASeleccionado){
-                    if(!precioConIVASeleccionado){
-                        //actualizar quitando iva
-                        bd.execSQL("UPDATE detalle_pedidos SET precio=(precio/1.13), precio_iva=(precio_iva/1.13), " +
-                                "total=cantidad*(precio/1.13), total_iva=cantidad*(precio_iva/1.13) WHERE Id_pedido=$idPedido")
+            cursor.use {
+                if (cursor.count > 0) {
+                    if(precioConIvaShared != precioConIVASeleccionado){
+                        if(!precioConIVASeleccionado){
+                            //actualizar quitando iva
+                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio/1.13), precio_iva=(precio_iva/1.13), " +
+                                    "total=cantidad*(precio/1.13), total_iva=cantidad*(precio_iva/1.13) WHERE Id_pedido=$idPedido")
 
-                        actualizarTotalPedido(context, idPedido)
-                        println("SE QUITO IVA")
-                    }else{
-                        //actualiar agregando iva
-                        bd.execSQL("UPDATE detalle_pedidos SET precio=(precio*1.13), precio_iva=(precio_iva*1.13), " +
-                                "total=cantidad*(precio*1.13), total_iva=cantidad*(precio_iva*1.13) WHERE Id_pedido=$idPedido")
+                            actualizarTotalPedido(context, idPedido)
+                            println("SE QUITO IVA")
+                        }else{
+                            //actualiar agregando iva
+                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio*1.13), precio_iva=(precio_iva*1.13), " +
+                                    "total=cantidad*(precio*1.13), total_iva=cantidad*(precio_iva*1.13) WHERE Id_pedido=$idPedido")
 
-                        actualizarTotalPedido(context, idPedido)
-                        println("SE AGREGO IVA")
-                    }
-                    preferences.edit {
-                        remove("precioConIva")
-                        putBoolean("precioConIva", precioConIVASeleccionado)
+                            actualizarTotalPedido(context, idPedido)
+                            println("SE AGREGO IVA")
+                        }
+                        preferences.edit {
+                            remove("precioConIva")
+                            putBoolean("precioConIva", precioConIVASeleccionado)
+                        }
                     }
                 }
             }
-            cursor.close()
         }catch (e:Exception){
             throw Exception("ERROR AL ACTUALIZAR LOS PRECIOS CON IVA O SIN IVA -> " + e.message)
         }
@@ -360,21 +362,21 @@ class PedidosController {
         try{
             val consulta = "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idPedido"
             val cursor = bd.query(consulta)
+            cursor.use {
+                var total = 0.toFloat()
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
 
-            var total = 0.toFloat()
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                total = cursor.getFloat(0)
-                cursor.close()
-                //if(total > 0){
-                val t = ContentValues()
-                t.put("Total", total)
-                bd.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?",arrayOf(idPedido.toString()))
-//                }else{
-//                    throw Exception("Error en el total")
-//                }
-            } else {
-                throw Exception("No se encontro el pedido asociado")
+                    total = cursor.getFloat(0)
+
+                    val t = ContentValues()
+                    t.put("Total", total)
+
+                    bd.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?",arrayOf(idPedido.toString()))
+
+                } else {
+                    throw Exception("No se encontro el pedido asociado")
+                }
             }
         }catch (e:Exception){
             throw Exception("ERROR AL ACTUALIZAR TOTAL EN PEDIDO -> " + e.message)
@@ -498,14 +500,13 @@ class PedidosController {
         try {
             // 1. Buscar los Id de los pedidos que cumplen la condición
             val idsPedidos = mutableListOf<String>()
-            val cursor = bd.query(
-                "SELECT Id FROM Pedidos WHERE Enviado = 0 AND Cerrado = 0"
-            )
-
-            while (cursor.moveToNext()) {
-                idsPedidos.add(cursor.getInt(0).toString())
+            val consulta = "SELECT Id FROM Pedidos WHERE Enviado = 0 AND Cerrado = 0"
+            val cursor = bd.query(consulta)
+            cursor.use {
+                while (cursor.moveToNext()) {
+                    idsPedidos.add(cursor.getInt(0).toString())
+                }
             }
-            cursor.close()
 
             // 2. Eliminar pedidos
             val pedidosEliminados = bd.delete(
@@ -539,11 +540,12 @@ class PedidosController {
         try {
             val sql = "SELECT COUNT(*) AS Cantidad FROM detalle_pedidos WHERE Id_pedido = $idPedido"
             val cursor = bd.query(sql)
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                cantidadItems = cursor.getInt(0)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    cantidadItems = cursor.getInt(0)
+                }
             }
-            cursor.close()
         }catch (e: Exception){
             println("ERROR NO SE LOGRO OBTENER LA CANTIDAD DE REGISTROS EN EL PEDIDO -> " + e.message)
         }
