@@ -78,7 +78,12 @@ class ConfigController {
                                         nit = dato.getString("nit"),
                                         giro = dato.getString("giro"),
                                         dteUrlQRHacienda = dato.optString("dteUrlQR_Hacienda", "0"),
-                                        dteUrlQRempresa = dato.optString("dteUrlQR_empresa", "0")
+                                        dteUrlQRempresa = dato.optString("dteUrlQR_empresa", "0"),
+                                        numItemFactura = dato.getInt("numItemFactura"),
+                                        numItemCreFiscal = dato.getInt("numItemCreFiscal"),
+                                        numItemRecibo = dato.getInt("numItemRecibo"),
+                                        numItemRemision = dato.getInt("numItemRemision"),
+                                        tipoVentaLocal = dato.getBoolean("tipoVentaLocal")
                                     )
 
                                     confirmarPagareObligatorio(item, context)
@@ -143,6 +148,14 @@ class ConfigController {
             putString("dteUrlQRHacienda", obj.dteUrlQRHacienda)
             putString("dteUrlQRempresa", obj.dteUrlQRempresa)
 
+            //Item por documento
+            putInt("numItemFactura", obj.numItemFactura)
+            putInt("numItemCreFiscal", obj.numItemCreFiscal)
+            putInt("numItemRecibo", obj.numItemRecibo)
+            putInt("numItemRemision", obj.numItemRemision)
+
+            //Modo de configuraion Local o Ruta
+            putBoolean("tipoVentaLocal", obj.tipoVentaLocal)
 
         }
     }
@@ -180,6 +193,13 @@ class ConfigController {
             remove("giro")
             remove("dteUrlQR_Hacienda")
             remove("dteUrlQR_empresa")
+            //Item por documento
+            remove("numItemFactura")
+            remove("numItemCreFiscal")
+            remove("numItemRecibo")
+            remove("numItemRemision")
+            //Modo de configuraion Local o Ruta
+            remove("tipoVentaLocal")
         }
     }
 }

@@ -278,30 +278,36 @@ class Clientes : AppCompatActivity() {
     }
     private fun MostrarLista(list: ArrayList<Cliente>?) {
         try {
-            if (list!!.size > 0) {
+            if (list!!.isNotEmpty()) {
                 val mLayoutManager =
                     LinearLayoutManager(this@Clientes, LinearLayoutManager.VERTICAL, false)
                 recicle!!.layoutManager = mLayoutManager
                 val adapter = ClienteAdapter(list, this@Clientes, this@Clientes, 0) { position ->
-                    val cliente = list.get(position)
+                    val cliente = list[position]
                     if (busquedaPedido) {
-
-                        val pagareFirmado = clienteController.obtenerInformacionCliente(this@Clientes, cliente.Id!!)?.Firmar_pagare_app!!.toInt()
+                        //REALIZANDO UN NUEVO PEDIDO
+                        /*val pagareFirmado = clienteController.obtenerInformacionCliente(this@Clientes, cliente.Id!!)?.Firmar_pagare_app!!.toInt()
                         val terminosCliente = clienteController.obtenerInformacionCliente(this@Clientes, cliente.Id!!)?.Terminos_cliente.toString()
                         val idCiente = cliente.Id!!
                         val nomCliente = cliente.Cliente
-                        val codCliente = cliente.Codigo
+                        val codCliente = cliente.Codigo*/
 
                         if(pagare){
-                            if((pagareFirmado == 1 && terminosCliente == "Credito") || (terminosCliente == "Contado")){
-                                clienteController.verificarPagareObligatorio(this@Clientes, idCiente, nomCliente!!, codCliente!!,visita)
+                            //OPCION PARA VERIFICAR LA FIRMA DEL PAGARE
+                            if((cliente.Firmar_pagare_app!!.toInt() == 1 && cliente.Terminos_cliente == "Credito") || (cliente.Terminos_cliente == "Contado")){
+
+                                clienteController.verificarPagareObligatorio(this@Clientes, cliente.Id!!, cliente.Cliente!!, cliente.Codigo!!, visita)
+
                             }else{
+                                //OPCION PARA OBLIGAR LA FIRMA DEL PAGARE
                                 mensajeDialogo(cliente.Id!!)
                             }
                         }else{
-                            clienteController.verificarPagareObligatorio(this@Clientes, idCiente, nomCliente!!, codCliente!!,visita)
+                            //SIN VERIFICACION DE LA FIRMA DEL PAGARE
+                            clienteController.verificarPagareObligatorio(this@Clientes, cliente.Id!!, cliente.Cliente!!, cliente.Codigo!!,visita)
                         }
                     }else {
+                        //VERIFICANDO EL HISTORICO O LOS DATOS DEL CLIENTE
                         if(clienteHistorio){
                             val intento = Intent(this@Clientes, HistoricoPedidos::class.java)
                             intento.putExtra("idCliente", cliente.Id!!)

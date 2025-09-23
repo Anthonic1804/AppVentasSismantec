@@ -9,15 +9,11 @@ import android.view.View
 import com.example.acae30.Detallepedido
 import com.example.acae30.Funciones
 import com.example.acae30.Visita
-import com.example.acae30.modelos.Abono
 import com.example.acae30.modelos.Cliente
-import com.example.acae30.modelos.InformacionSucursal
 import com.example.acae30.modelos.JSONmodels.ActualizarPagareFirmadoCliente
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject

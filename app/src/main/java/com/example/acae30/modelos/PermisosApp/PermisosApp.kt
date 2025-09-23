@@ -36,5 +36,14 @@ data class PermisosApp(
 
     //datos Qr
     var dteUrlQRHacienda: String,
-    var dteUrlQRempresa: String
+    var dteUrlQRempresa: String,
+
+    //Item por documento
+    var numItemFactura : Int,
+    var numItemCreFiscal : Int,
+    var numItemRecibo : Int,
+    var numItemRemision: Int,
+
+    //Modo de configuracion Local o Ruta
+    var tipoVentaLocal : Boolean
 )

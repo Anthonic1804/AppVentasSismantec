@@ -168,6 +168,12 @@ class Detallepedido : AppCompatActivity() {
         }
     }
 
+    //-----------
+    // VARIABLES PARA VALIDACION DE LIMITE DE ITEMS POR DOCUMENTO
+    //-----------
+    private var cantidadItemsPedido : Int = 0
+    private var limiteItemPedido : Int = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -245,24 +251,32 @@ class Detallepedido : AppCompatActivity() {
             "FC" -> {
                 binding.tvDocumentoSeleccionado.text = getString(R.string.factura)
                 binding.spDocumento.setSelection(0, true)
+                limiteItemPedido = preferencias.getInt("numItemFactura", 0)
+
                 actualizarVistaTotales()
                 actualizarTotales()
             }
             "CF" -> {
                 binding.tvDocumentoSeleccionado.text = getString(R.string.credito_fiscal)
                 binding.spDocumento.setSelection(1, true)
+                limiteItemPedido = preferencias.getInt("numItemCreFiscal", 0)
+
                 actualizarVistaTotales()
                 actualizarTotales()
             }
             "RC" -> {
                 binding.tvDocumentoSeleccionado.text = getString(R.string.recibo)
                 binding.spDocumento.setSelection(2, true)
+                limiteItemPedido = preferencias.getInt("numItemRecibo", 0)
+
                 actualizarVistaTotales()
                 actualizarTotales()
             }
             "RE" -> {
                 binding.tvDocumentoSeleccionado.text = getString(R.string.remisi_n)
                 binding.spDocumento.setSelection(3, true)
+                limiteItemPedido = preferencias.getInt("numItemRemision", 0)
+
                 actualizarVistaTotales()
                 actualizarTotales()
             }
@@ -285,20 +299,32 @@ class Detallepedido : AppCompatActivity() {
         if (idpedido > 0) {
             val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
             try {
-                val sql = "select c.codigo as codigo, c.cliente as nombre, c.id as idcliente, v.id as idvisita, v.enviado as visita_enviada, strftime('%d/%m/%Y %H:%M', p.fecha_creado) as fecha_creado from pedidos p inner join clientes c on p.Id_cliente = c.Id inner join visitas v on p.idvisita = v.id where p.id = ${idpedido}"
+                val sql = "select c.codigo as codigo, " +
+                        "c.cliente as nombre, " +
+                        "c.id as idcliente, " +
+                        "v.id as idvisita, " +
+                        "v.enviado as visita_enviada, " +
+                        "strftime('%d/%m/%Y %H:%M', p.fecha_creado) as fecha_creado " +
+                        "from pedidos p " +
+                        "inner join clientes c " +
+                        "on p.Id_cliente = c.Id " +
+                        "inner join visitas v on p.idvisita = v.id " +
+                        "where p.id = ${idpedido}"
+
                 val cursor = base.query(sql)
-                if (cursor.count > 0) {
-                    cursor.moveToFirst()
-                    codigo = cursor.getString(0)
-                    nombre = cursor.getString(1)
-                    idcliente = cursor.getInt(2)
-                    idvisita = cursor.getInt(3)
-                    visita_enviada = cursor.getInt(4) == 1
-                    binding.fechaCreacion.text = cursor.getString(5)
-                } else {
-                    throw Exception("Error al obtener código de cliente")
+                cursor.use {
+                    if (cursor.count > 0) {
+                        cursor.moveToFirst()
+                        codigo = cursor.getString(0)
+                        nombre = cursor.getString(1)
+                        idcliente = cursor.getInt(2)
+                        idvisita = cursor.getInt(3)
+                        visita_enviada = cursor.getInt(4) == 1
+                        binding.fechaCreacion.text = cursor.getString(5)
+                    } else {
+                        throw Exception("Error al obtener código de cliente")
+                    }
                 }
-                cursor.close()
             } catch (e: Exception) {
                 throw Exception(e.message)
             }
@@ -319,7 +345,7 @@ class Detallepedido : AppCompatActivity() {
         } //regresa al menu principal
 
         binding.imgbtnadd.setOnClickListener {
-            if (idcliente >= 0) {
+            if (cantidadItemsPedido < limiteItemPedido) {
                 val intento = Intent(this, Inventario::class.java)
                 intento.putExtra("idcliente", idcliente)
                 intento.putExtra("nombrecliente", binding.txtCliente.text.toString())
@@ -331,6 +357,9 @@ class Detallepedido : AppCompatActivity() {
                 intento.putExtra("sucursalPosition", getSucursalPosition)
                 intento.putExtra("facturaExportacion", FacturaExportacion)
                 startActivity(intento)
+            }else{
+                Toast.makeText(this@Detallepedido, "YA NO PUEDE AGREGAR MAS PRODUCTOS AL PEDIDO",
+                    Toast.LENGTH_SHORT).show()
             }
         }
         //muestra el listado de los productos
@@ -340,53 +369,61 @@ class Detallepedido : AppCompatActivity() {
 
         //EVENTRO CLIC DEL BOTON ENVIAR
         binding.btnenviar.setOnClickListener {
-
-            if(codigo == "01"){
-                nombre = binding.txtCliente.text.toString()
-                CoroutineScope(Dispatchers.IO).launch {
-                    pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
+            if(cantidadItemsPedido <= limiteItemPedido){
+                if(codigo == "01"){
+                    nombre = binding.txtCliente.text.toString()
+                    CoroutineScope(Dispatchers.IO).launch {
+                        pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
+                    }
                 }
-            }
 
-            if (ConfirmarDetallePedido() > 0) {
-                val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-                enviandoPedido = true
-
-                if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
-                    alertaPago(binding.txttotal.text.toString().toFloat())
-                }else{
-                    verificarConexionEnvio()
-                }
-            } else {
-                funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
-            }
-            /*if(clienteMosoro == 1 && terminosPedidos != "Contado"){
-                funciones.mostrarAlerta("ERROR: NO PUEDE FACTURAR AL CREDITO A CLIENTE EN MORA", this@Detallepedido, binding.lienzo)
-            }else{
                 if (ConfirmarDetallePedido() > 0) {
                     val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
                     enviandoPedido = true
 
                     if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
-                        alertaPago(total)
+                        alertaPago(binding.txttotal.text.toString().toFloat())
                     }else{
                         verificarConexionEnvio()
                     }
                 } else {
                     funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
                 }
-            }*/
+                /*if(clienteMosoro == 1 && terminosPedidos != "Contado"){
+                    funciones.mostrarAlerta("ERROR: NO PUEDE FACTURAR AL CREDITO A CLIENTE EN MORA", this@Detallepedido, binding.lienzo)
+                }else{
+                    if (ConfirmarDetallePedido() > 0) {
+                        val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
+                        enviandoPedido = true
+
+                        if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
+                            alertaPago(total)
+                        }else{
+                            verificarConexionEnvio()
+                        }
+                    } else {
+                        funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
+                    }
+                }*/
+            }else{
+                Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido",
+                    Toast.LENGTH_SHORT).show()
+            }
         }
 
         //EVENTO CLIC DEL BOTON GUARDAR.
         binding.btnguardar.setOnClickListener {
-            if (ConfirmarDetallePedido() > 0) {
-                guardandoPedido = true
-                alertaPago(binding.txttotal.text.toString().toFloat())
-            } else {
-                funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
+            if(cantidadItemsPedido <= limiteItemPedido){
+                if (ConfirmarDetallePedido() > 0) {
+                    guardandoPedido = true
+                    alertaPago(binding.txttotal.text.toString().toFloat())
+                } else {
+                    funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
+                }
+            }else{
+                Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido",
+                    Toast.LENGTH_SHORT).show()
             }
-
         }
 
         //BOTON DE EXPORTAR A PDF EL PEDIDO
@@ -459,6 +496,8 @@ class Detallepedido : AppCompatActivity() {
                         FacturaExportacion = false
                         precioConIVA = true
 
+                        limiteItemPedido = preferencias.getInt("numItemFactura", 0)
+
                         pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
                         actualizarVistaTotales()
 
@@ -469,6 +508,8 @@ class Detallepedido : AppCompatActivity() {
                         tipoDocumento = "CF"
                         FacturaExportacion = false
                         precioConIVA = true
+
+                        limiteItemPedido = preferencias.getInt("numItemCreFiscal", 0)
 
 
                         pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
@@ -495,6 +536,8 @@ class Detallepedido : AppCompatActivity() {
                         FacturaExportacion = false
                         precioConIVA = true
 
+                        limiteItemPedido = preferencias.getInt("numItemRecibo", 0)
+
                         pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
                         actualizarVistaTotales()
 
@@ -505,6 +548,8 @@ class Detallepedido : AppCompatActivity() {
                         tipoDocumento = "RE"
                         FacturaExportacion = false
                         precioConIVA = true
+
+                        limiteItemPedido = preferencias.getInt("numItemRemision", 0)
 
 
                         pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
@@ -521,11 +566,9 @@ class Detallepedido : AppCompatActivity() {
     //FUNCION PARA OBTENER LA CANTIDAD DE ITEMS Y SETEARLO EN PANTALLA
     private fun obtenerCantidadItemsPedido(){
         this@Detallepedido.lifecycleScope.launch {
-            var cantidadItems : Int = 0
+            cantidadItemsPedido = pedidosController.obtenerCantidadItemsPedido(this@Detallepedido, idpedido)
 
-            cantidadItems = pedidosController.obtenerCantidadItemsPedido(this@Detallepedido, idpedido)
-
-            binding.cantidadItems.text = "CANT. ITEMS: $cantidadItems"
+            binding.cantidadItems.text = "CANT. ITEMS: $cantidadItemsPedido"
         }
     }
 
@@ -1126,104 +1169,6 @@ class Detallepedido : AppCompatActivity() {
     }
 
     //AGREGANDO CAMPOS DE SUCURSAL Y TIPO DE ENVIO A LA CABECERA DEL PEDIDO
-    /*private fun getPedidoSend(idpedido: Int): CabezeraPedidoSend? {
-        val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        try {
-            var envio: CabezeraPedidoSend? = null
-            val sql = "SELECT * FROM pedidos where Id=$idpedido"
-            val pedido = base.query(sql)
-            pedido.use {
-                if (pedido.count > 0) {
-                    pedido.moveToFirst()
-                    envio = CabezeraPedidoSend(
-                        pedido.getInt(1),//id del cliente
-                        pedido.getString(2), //nombre del cliente
-                        pedido.getFloat(11), //POR EL MOMENTO TIENE EL DATO DEL TOTAL
-                        pedido.getFloat(5),
-                        pedido.getFloat(11),
-                        pedido.getInt(12),
-                        pedido.getInt(16),
-                        pedido.getInt(19),
-                        pedido.getString(20),
-                        pedido.getString(21),
-                        pedido.getInt(23),
-                        pedido.getString(22),
-                        0,
-                        "",
-                        pedido.getString(18),
-                        pedido.getString(24),
-                        pedido.getFloat(25),
-                        pedido.getFloat(26),
-                        pedido.getFloat(27),
-                        pedido.getFloat(28),
-                        pedido.getString(39),
-                        pedido.getString(29),
-                        pedido.getString(30),
-                        pedido.getString(31),
-                        pedido.getString(32),
-                        pedido.getString(33),
-                        pedido.getString(34),
-                        pedido.getString(35),
-                        pedido.getString(36),
-                        pedido.getString(37),
-                        pedido.getString(38),
-                        pedido.getInt(47),
-                        pedido.getString(48),
-                        pedido.getString(49),
-                        pedido.getString(50),
-                        pedido.getString(51),
-                        pedido.getString(52),
-                        pedido.getString(53),
-                        pedido.getString(54),
-                        pedido.getString(55),
-                        null
-                    )
-                    val consulta = "SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido"
-                    val cdetalle =
-                        base.query(consulta)
-                    val list = ArrayList<DetallePedido>()
-                    cdetalle.use {
-                        if (cdetalle.count > 0) {
-                            cdetalle.moveToFirst()
-                            do {
-                                val detalle = DetallePedido(
-                                    cdetalle.getInt(0),
-                                    cdetalle.getInt(1),
-                                    cdetalle.getInt(2),
-                                    cdetalle.getString(3),
-                                    cdetalle.getString(4),
-                                    cdetalle.getFloat(5),
-                                    cdetalle.getFloat(6),
-                                    cdetalle.getFloat(7),
-                                    cdetalle.getFloat(8),
-                                    cdetalle.getFloat(9),
-                                    cdetalle.getFloat(10),
-                                    cdetalle.getFloat(11),
-                                    cdetalle.getFloat(12),
-                                    cdetalle.getFloat(13),
-                                    cdetalle.getFloat(14),
-                                    cdetalle.getFloat(15),
-                                    cdetalle.getString(16),
-                                    cdetalle.getInt(17),
-                                    cdetalle.getFloat(18),
-                                    cdetalle.getString(19),
-                                    cdetalle.getInt(20),
-                                    cdetalle.getString(21)
-                                )
-                                list.add(detalle)
-                            } while (cdetalle.moveToNext())
-                        }
-                    }
-
-                    envio.detalle = list //se agrega al objecto el detalle del pedido
-                }
-            }
-            return envio
-        } catch (e: Exception) {
-            throw Exception(e)
-        }
-    }*///obtiene el pedido
-    //obtiene el pedido de la base de datos
     private fun getPedidoSend(idpedido: Int): CabezeraPedidoSend? {
         val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
