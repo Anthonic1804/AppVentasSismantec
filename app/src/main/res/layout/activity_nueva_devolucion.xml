@@ -31,165 +31,184 @@
 
     </LinearLayout>
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvHoja"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/margin_default_16dp"
-        app:cardCornerRadius="@dimen/corner_radious_card_15dp"
-        app:cardElevation="@dimen/margin_4dp"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lyEncabezado"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lyEncabezado">
-
-        <LinearLayout
-            android:id="@+id/lyHojaCarga"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/margin_default_16dp"
-            android:orientation="vertical"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <TextView
-                android:id="@+id/tvHojaEncabezado"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="HOJA DE CARGA"
-                android:layout_margin="@dimen/margin_8dp"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/black"/>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <TextView
-                        android:id="@+id/tvIdHeader"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="EMPLEADO: "
-                        android:textStyle="bold"
-                        android:textColor="@color/black"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"/>
-
-                    <TextView
-                        android:id="@+id/tvEmpleadoDevolucion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="NOMBRE DEL EMPLEADO"
-                        android:textColor="@color/moderado"
-                        app:layout_constraintStart_toEndOf="@id/tvIdHeader"
-                        app:layout_constraintTop_toTopOf="parent"/>
-
-                    <TextView
-                        android:id="@+id/tvHojaHeader"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="NUMERO: "
-                        android:textStyle="bold"
-                        android:textColor="@color/black"
-                        app:layout_constraintTop_toBottomOf="@id/tvIdHeader"
-                        app:layout_constraintStart_toStartOf="parent"/>
-
-                    <TextView
-                        android:id="@+id/tvHojaCarga"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="NUMERO HOJA DE CARGA"
-                        android:textColor="@color/moderado"
-                        app:layout_constraintStart_toEndOf="@id/tvHojaHeader"
-                        app:layout_constraintTop_toBottomOf="@id/tvEmpleadoDevolucion"/>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="350dp"
-        android:layout_margin="@dimen/margin_default_16dp"
-        app:cardCornerRadius="@dimen/corner_radious_card_15dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cvHoja">
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:minHeight="300dp"
-            android:layout_margin="@dimen/margin_default_16dp"
-            android:orientation="vertical">
+            android:layout_height="0dp">
 
-            <TextView
-                android:id="@+id/tvheaderDevolucion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="DETALLE DE DEVOLUCIÓN"
-                android:layout_margin="@dimen/margin_8dp"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvDetalleDevolucion"
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cvHoja"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="250dp"
+                android:layout_margin="@dimen/margin_default_16dp"
+                app:cardCornerRadius="@dimen/corner_radious_card_15dp"
+                app:cardElevation="@dimen/margin_4dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvheaderDevolucion"/>
+                app:layout_constraintTop_toTopOf="parent">
 
-            <LinearLayout
-                android:id="@+id/layout_buttons"
+                <LinearLayout
+                    android:id="@+id/lyHojaCarga"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/margin_default_16dp"
+                    android:orientation="vertical"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent">
+
+                    <TextView
+                        android:id="@+id/tvHojaEncabezado"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="HOJA DE CARGA"
+                        android:layout_margin="@dimen/margin_8dp"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"/>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:id="@+id/tvIdHeader"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="EMPLEADO: "
+                            android:textStyle="bold"
+                            android:textColor="@color/black"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"/>
+
+                        <TextView
+                            android:id="@+id/tvEmpleadoDevolucion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="NOMBRE DEL EMPLEADO"
+                            android:textColor="@color/moderado"
+                            app:layout_constraintStart_toEndOf="@id/tvIdHeader"
+                            app:layout_constraintTop_toTopOf="parent"/>
+
+                        <TextView
+                            android:id="@+id/tvHojaHeader"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="NUMERO: "
+                            android:textStyle="bold"
+                            android:textColor="@color/black"
+                            app:layout_constraintTop_toBottomOf="@id/tvIdHeader"
+                            app:layout_constraintStart_toStartOf="parent"/>
+
+                        <TextView
+                            android:id="@+id/tvHojaCarga"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="NUMERO HOJA DE CARGA"
+                            android:textColor="@color/moderado"
+                            app:layout_constraintStart_toEndOf="@id/tvHojaHeader"
+                            app:layout_constraintTop_toBottomOf="@id/tvEmpleadoDevolucion"/>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_default_16dp"
-                android:gravity="center"
-                android:orientation="horizontal"
-                app:layout_constraintEnd_toEndOf="parent"
+                android:minHeight="350dp"
+                android:layout_margin="@dimen/margin_default_16dp"
+                app:cardCornerRadius="@dimen/corner_radious_card_15dp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/rvDetalleDevolucion">
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/cvHoja"
+                app:layout_constraintBottom_toBottomOf="parent">
 
-                <Button
-                    android:id="@+id/btnaceptar"
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/border_btnenviar"
-                    android:text="REGISTRAR"
-                    android:textAlignment="center"
-                    android:textColor="@color/colorAccent"
-                    android:textStyle="bold"/>
+                    android:layout_height="match_parent"
+                    android:minHeight="300dp"
+                    android:layout_margin="@dimen/margin_default_16dp"
+                    android:orientation="vertical">
 
-                <Button
-                    android:id="@+id/btnAtras"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="10dp"
-                    android:background="@drawable/btn_eliminarpedido"
-                    android:text="CANCELAR"
-                    android:textAlignment="center"
-                    android:textColor="@color/colorAccent"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/tvheaderDevolucion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="DETALLE DE DEVOLUCIÓN"
+                        android:layout_margin="@dimen/margin_8dp"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
 
-            </LinearLayout>
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvDetalleDevolucion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="250dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvheaderDevolucion"/>
+
+                    <LinearLayout
+                        android:id="@+id/layout_buttons"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/rvDetalleDevolucion">
+
+                        <Button
+                            android:id="@+id/btnaceptar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/border_btnenviar"
+                            android:text="REGISTRAR"
+                            android:textAlignment="center"
+                            android:textColor="@color/colorAccent"
+                            android:textStyle="bold"/>
+
+                        <Button
+                            android:id="@+id/btnAtras"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="10dp"
+                            android:background="@drawable/btn_eliminarpedido"
+                            android:text="CANCELAR"
+                            android:textAlignment="center"
+                            android:textColor="@color/colorAccent"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            </androidx.cardview.widget.CardView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-    </androidx.cardview.widget.CardView>
+    </ScrollView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnAgregarProducto"

@@ -77,6 +77,17 @@ class Configuracion : AppCompatActivity() {
         binding.swlista.isChecked = preferencias!!.getInt("vistaInventario", 0) == 2
         binding.swminiatura.isChecked = preferencias!!.getInt("vistaInventario", 0) == 1
 
+        //ACTIVANDO SWITCH DE IMRPESORES
+        binding.swBluetooth.isChecked = preferencias!!.getString("tipoImpresora", "") == "BT"
+        binding.swIntegrada.isChecked = preferencias!!.getString("tipoImpresora", "") == "INT"
+
+        if(preferencias!!.getString("tipoImpresora", "") == "BT"){
+            binding.lyImpresor.visibility = View.GONE
+        }
+
+        binding.txtImpresor.setText(preferencias!!.getString("impresorIntegrado", ""))
+
+
         binding.tvVersionActualApp.setText("ACAE APP Ver. $versionActual")
 
         binding.swlista.setOnCheckedChangeListener { _, isChecked ->
@@ -103,6 +114,54 @@ class Configuracion : AppCompatActivity() {
                     putInt("vistaInventario", 2)
                 }
             }
+        }
+
+        //ACTIVANDO LOGICA DE SWITCH DE IMPRESORES
+        binding.swBluetooth.setOnCheckedChangeListener { _, isChecked ->
+            preferencias!!.edit {
+                remove("tipoImpresora")
+                if (isChecked) {
+                    binding.swIntegrada.isChecked = false
+                    putString("tipoImpresora", "BT")
+                    binding.lyImpresor.visibility = View.GONE
+                    remove("impresorIntegrado")
+                } else {
+                    binding.swIntegrada.isChecked = true
+                    putString("tipoImpresora", "INT")
+                    binding.lyImpresor.visibility = View.VISIBLE
+                }
+            }
+
+        }
+
+        binding.swIntegrada.setOnCheckedChangeListener { _, isChecked ->
+            preferencias!!.edit {
+                remove("tipoImpresora")
+                if (isChecked) {
+                    binding.swBluetooth.isChecked = false
+                    putString("tipoImpresora", "INT")
+                    binding.lyImpresor.visibility = View.VISIBLE
+                } else {
+                    binding.swBluetooth.isChecked = true
+                    putString("tipoImpresora", "BT")
+                    binding.lyImpresor.visibility = View.GONE
+                    remove("impresorIntegrado")
+                }
+            }
+
+        }
+
+        binding.btnImpresor.setOnClickListener {
+
+            var impresor = binding.txtImpresor.text
+
+            preferencias!!.edit{
+                remove("impresorIntegrado")
+                putString("impresorIntegrado", impresor.toString())
+            }
+
+            Toast.makeText(this@Configuracion, "IMPRESOR CONFIGURADO", Toast.LENGTH_SHORT)
+                .show()
         }
 
         binding.btnBuscarUpdate.setOnClickListener {

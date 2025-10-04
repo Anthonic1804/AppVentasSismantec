@@ -269,6 +269,7 @@ class Inventario : AppCompatActivity() {
             intento.putExtra("sucursalPosition", getSucursalPosition)
             intento.putExtra("facturaExportacion", FacturaExportacion)
             startActivity(intento)
+            finish()
         } else {
 
             if(busquedaToken){
@@ -318,6 +319,7 @@ class Inventario : AppCompatActivity() {
                                     intento.putExtra("sucursalPosition", getSucursalPosition)
                                     intento.putExtra("facturaExportacion",FacturaExportacion)
                                     startActivity(intento)
+                                    finish()
                                 }
                             } else {
 
@@ -368,6 +370,7 @@ class Inventario : AppCompatActivity() {
                                     intento.putExtra("sucursalPosition", getSucursalPosition)
                                     intento.putExtra("facturaExportacion", FacturaExportacion)
                                     startActivity(intento)
+                                    finish()
                                 }
                             } else {
 
@@ -384,6 +387,7 @@ class Inventario : AppCompatActivity() {
                                     val intento = Intent(this@Inventario, Inventariodetalle::class.java)
                                     intento.putExtra("idproducto", list.get(position).Id)
                                     startActivity(intento)
+                                    finish()
                                 }
                             }
                         }

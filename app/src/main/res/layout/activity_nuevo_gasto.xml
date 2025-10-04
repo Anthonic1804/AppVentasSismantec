@@ -29,203 +29,220 @@
 
     </LinearLayout>
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvFormularioGasto"
-        android:layout_width="0dp"
+    <ScrollView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/margin_default_16dp"
-        app:cardCornerRadius="@dimen/corner_radious_card_15dp"
-        app:cardElevation="@dimen/margin_4dp"
+        app:layout_constraintTop_toBottomOf="@+id/lyEncabezado"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lyEncabezado"
         app:layout_constraintBottom_toBottomOf="parent">
+
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="@dimen/margin_default_16dp">
+            android:layout_height="0dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/lyDescripcion"
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cvFormularioGasto"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:hint="DESCRIPCION"
+                android:layout_margin="@dimen/margin_default_16dp"
+                app:cardCornerRadius="@dimen/corner_radious_card_15dp"
+                app:cardElevation="@dimen/margin_4dp"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/txtDescripcion"
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:textSize="16sp"
-                    android:textColor="@color/colorHint"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:id="@+id/tvFormaPago"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/forma_de_pago"
-                android:textColor="@color/colordark"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginTop="@dimen/margin_4dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/lyDescripcion" />
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/lyFormaPago"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:background="@drawable/spinner_bg"
-                app:layout_constraintTop_toBottomOf="@id/tvFormaPago"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-
-                <Spinner
-                    android:id="@+id/spFormaPago"
-                    android:layout_width="match_parent"
-                    android:layout_height="55dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"/>
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <LinearLayout
-                android:id="@+id/lyFormularioPago"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintTop_toBottomOf="@id/lyFormaPago"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-
-                <LinearLayout
-                    android:id="@+id/lyContenedorCheque"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
+                    android:layout_height="match_parent"
+                    android:padding="@dimen/margin_default_16dp">
 
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/lyBanco"
-                        android:layout_width="match_parent"
+                        android:id="@+id/lyDescripcion"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="@string/banco">
+                        android:hint="DESCRIPCION"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
 
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/tvBanco"
+                            android:id="@+id/txtDescripcion"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="text"
-                            android:textAlignment="center"
-                            android:textColor="@color/colorHint"
                             android:textSize="16sp"
-                            android:textStyle="bold"/>
+                            android:textColor="@color/colorHint"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/lyNumCuentaCheque"
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/tvFormaPago"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="@string/n_cuenta">
+                        android:text="@string/forma_de_pago"
+                        android:textColor="@color/colordark"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="@dimen/margin_4dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/lyDescripcion" />
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/tvNumCuentaCheque"
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/lyFormaPago"
+                        android:layout_width="match_parent"
+                        android:layout_height="55dp"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:background="@drawable/spinner_bg"
+                        app:layout_constraintTop_toBottomOf="@id/tvFormaPago"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent">
+
+                        <Spinner
+                            android:id="@+id/spFormaPago"
+                            android:layout_width="match_parent"
+                            android:layout_height="55dp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"/>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <LinearLayout
+                        android:id="@+id/lyFormularioPago"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintTop_toBottomOf="@id/lyFormaPago"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent">
+
+                        <LinearLayout
+                            android:id="@+id/lyContenedorCheque"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:textAlignment="center"
-                            android:textColor="@color/colorHint"
-                            android:textSize="16sp"
-                            android:textStyle="bold"/>
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/lyBanco"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                android:hint="@string/banco">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/tvBanco"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="text"
+                                    android:textAlignment="center"
+                                    android:textColor="@color/colorHint"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/lyNumCuentaCheque"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                android:hint="@string/n_cuenta">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/tvNumCuentaCheque"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="text"
+                                    android:textAlignment="center"
+                                    android:textColor="@color/colorHint"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/lyNumCheque"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                android:hint="@string/n_cheque">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/tvNumCheque"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="text"
+                                    android:textAlignment="center"
+                                    android:textColor="@color/colorHint"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/lyNumCheque"
-                        android:layout_width="match_parent"
+                        android:id="@+id/lyMonto"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/margin_4dp"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:hint="@string/n_cheque">
+                        android:hint="TOTAL"
+                        app:startIconDrawable="@drawable/ic_dolar"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/lyFormularioPago">
 
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/tvNumCheque"
+                            android:id="@+id/txtMonto"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:textAlignment="center"
-                            android:textColor="@color/colorHint"
-                            android:textSize="16sp"
-                            android:textStyle="bold"/>
+                            android:inputType="numberDecimal"
+                            android:textSize="18sp"
+                            android:textColor="@color/colorHint"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
-                </LinearLayout>
+                    <Button
+                        android:id="@+id/btnAceptar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/border_btnactualizar"
+                        android:text="INGRESAR GASTO"
+                        android:textAlignment="center"
+                        android:textColor="@color/colorAccent"
+                        android:textStyle="bold"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/lyMonto"/>
 
-            </LinearLayout>
+                    <Button
+                        android:id="@+id/btnCancelar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/btn_eliminarpedido"
+                        android:text="@string/cancelar_proceso"
+                        android:textAlignment="center"
+                        android:textColor="@color/colorAccent"
+                        android:textStyle="bold"
+                        android:layout_marginTop="@dimen/margin_default_16dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/btnAceptar"/>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/lyMonto"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_4dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:hint="TOTAL"
-                app:startIconDrawable="@drawable/ic_dolar"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/lyFormularioPago">
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/txtMonto"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal"
-                    android:textSize="18sp"
-                    android:textColor="@color/colorHint"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/btnAceptar"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:background="@drawable/border_btnactualizar"
-                android:text="INGRESAR GASTO"
-                android:textAlignment="center"
-                android:textColor="@color/colorAccent"
-                android:textStyle="bold"
-                android:layout_marginTop="@dimen/margin_default_16dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/lyMonto"/>
-
-            <Button
-                android:id="@+id/btnCancelar"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:background="@drawable/btn_eliminarpedido"
-                android:text="@string/cancelar_proceso"
-                android:textAlignment="center"
-                android:textColor="@color/colorAccent"
-                android:textStyle="bold"
-                android:layout_marginTop="@dimen/margin_default_16dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/btnAceptar"/>
+            </androidx.cardview.widget.CardView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.cardview.widget.CardView>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

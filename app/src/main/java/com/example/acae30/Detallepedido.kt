@@ -1,23 +1,38 @@
 package com.example.acae30
 
+
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Dialog
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Typeface
+import android.graphics.pdf.PdfDocument
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
-import android.os.Build
 import android.os.Bundle
+import android.os.CancellationSignal
+import android.os.ParcelFileDescriptor
+import android.print.PageRange
+import android.print.PrintAttributes
+import android.print.PrintDocumentAdapter
+import android.print.PrintDocumentInfo
+import android.print.PrintManager
 import android.text.Editable
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
@@ -27,12 +42,14 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.scale
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.dantsu.escposprinter.EscPosCharsetEncoding
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
@@ -54,6 +71,9 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.WriterException
+import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -61,6 +81,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.io.Reader
@@ -148,25 +169,6 @@ class Detallepedido : AppCompatActivity() {
     private var clienteMosoro = 0
 
     private var P_Imprimir_TK_Venta: Boolean = false
-
-    companion object {
-        const val ACTION_USB_PERMISSION = "com.example.acae30.USB_PERMISSION"
-        private var usbReceiverRegistered = false
-    }
-
-    private val usbReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTION_USB_PERMISSION) {
-                val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
-                val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
-                if (granted && device != null) {
-                    imprimirTicket(device)
-                } else {
-                    Toast.makeText(context, "Permiso USB denegado", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
 
     //-----------
     // VARIABLES PARA VALIDACION DE LIMITE DE ITEMS POR DOCUMENTO
@@ -357,6 +359,7 @@ class Detallepedido : AppCompatActivity() {
                 intento.putExtra("sucursalPosition", getSucursalPosition)
                 intento.putExtra("facturaExportacion", FacturaExportacion)
                 startActivity(intento)
+                finish()
             }else{
                 Toast.makeText(this@Detallepedido, "YA NO PUEDE AGREGAR MAS PRODUCTOS AL PEDIDO",
                     Toast.LENGTH_SHORT).show()
@@ -1696,30 +1699,29 @@ class Detallepedido : AppCompatActivity() {
 
 
 //FUNCION PARA DETERMINAR LA CONEXION DE LA IMPRESORA
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun imprimirRecibo() {
         try {
-            // ===============================
-            // Detectar impresora USB
-            // ===============================
-            val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-            val usbDevices = usbManager.deviceList
-
-            if (usbDevices.isNotEmpty()) {
-                val device = usbDevices.values.first()
-                solicitarPermisoUsb(device)
-                return
+            val tipoImpresora = preferencias.getString("tipoImpresora", "")
+            when(tipoImpresora){
+                "BT" -> {
+                    // ===============================
+                    // Si no hay USB, probar Bluetooth
+                    // ===============================
+                    val btConnection = BluetoothPrintersConnections.selectFirstPaired()
+                    if (btConnection != null) {
+                        imprimirTicket(btConnection)
+                    } else {
+                        Toast.makeText(this, "No se encontró impresora USB ni Bluetooth", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                else -> {
+                    // ===============================
+                    // Detectar impresora Integrada
+                    // ===============================
+                    imprimirReciboIntegrado()
+                }
             }
-
-            // ===============================
-            // Si no hay USB, probar Bluetooth
-            // ===============================
-            val btConnection = BluetoothPrintersConnections.selectFirstPaired()
-            if (btConnection != null) {
-                imprimirTicket(btConnection)
-            } else {
-                Toast.makeText(this, "No se encontró impresora USB ni Bluetooth", Toast.LENGTH_SHORT).show()
-            }
-
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "Error al imprimir: ${e.message}", Toast.LENGTH_LONG).show()
@@ -2029,36 +2031,279 @@ class Detallepedido : AppCompatActivity() {
         if (deniedPermissions.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, deniedPermissions.toTypedArray(), 1001)
         } else {
-            Toast.makeText(this, "Permisos Bluetooth concedidos ✅", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(this, "Permisos Bluetooth concedidos ✅", Toast.LENGTH_SHORT).show()
         }
     }
 
-    //Funcion para los permisos USB
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    private fun solicitarPermisoUsb(device: UsbDevice) {
-        val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-        val pendingIntentFlag =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
-        val permissionIntent = PendingIntent.getBroadcast(
-            this,
-            0,
-            Intent(ACTION_USB_PERMISSION),
-            pendingIntentFlag
-        )
+    //FUNCION PARA IMPRIMIR EL RECIBO INTREGRADO
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    private fun imprimirReciboIntegrado(){
+        val empresa = preferencias.getString("empresa", "").orEmpty()
+        val direccion = preferencias.getString("direccion", "").orEmpty()
+        val nrc = preferencias.getString("nrc", "").orEmpty()
+        val nit = preferencias.getString("nit", "").orEmpty()
+        val giro = preferencias.getString("giro", "").orEmpty()
+        val dteUrlQRHacienda = preferencias.getString("dteUrlQRHacienda", "").orEmpty()
+        val dteUrlQRempresa = preferencias.getString("dteUrlQRempresa", "").orEmpty()
+        val textoPie = "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL"
 
-        if (!usbReceiverRegistered) {
-            registerReceiver(usbReceiver, IntentFilter(ACTION_USB_PERMISSION))
-            usbReceiverRegistered = true
+        val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
+        val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
+
+        val printManager = getSystemService(Context.PRINT_SERVICE) as PrintManager
+        val impresorIntegrado = preferencias.getString("impresorIntegrado", "sinNombre")
+
+        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        val device : BluetoothDevice? = bluetoothAdapter.bondedDevices.firstOrNull {
+            it.name.contains(impresorIntegrado.toString())
         }
 
-        usbManager.requestPermission(device, permissionIntent)
+        if(device != null){
+            val connection = BluetoothConnection(device)
+            val printer = EscPosPrinter(connection, 160, 48f, 32)
+
+
+            // ===============================
+            // Preparar logo y texto
+            // ===============================
+            val prefs = getSharedPreferences("MisImagenes", MODE_PRIVATE)
+            val filePath = prefs.getString("imagenFile", null)
+
+            // Variable para el logo final
+            val logoOriginal: Bitmap = if (filePath != null) {
+                val file = File(filePath)
+                if (file.exists()) {
+                    BitmapFactory.decodeFile(file.absolutePath)
+                } else {
+                    BitmapFactory.decodeResource(resources, R.drawable.nologo)
+                }
+            } else {
+                BitmapFactory.decodeResource(resources, R.drawable.nologo)
+            }
+
+            // Redimensionar
+            val logoRedimensionado = redimensionarLogo(logoOriginal, 384)
+
+            val direccionFormateada = dividirEnLineas(direccion, 32)
+            val empresaFormateada = dividirEnLineas(empresa, 32)
+            val giroFormateada = dividirEnLineas(giro, 32)
+            val textoPieFormateado = dividirEnLineas(textoPie, 32)
+            val giroCliente = dividirEnLineas(infoCliente!!.dteGiro!!, 32)
+            val direccionCliente = dividirEnLineas(infoPedido!!.Sucursal_Direccion!!,32)
+
+            // ===============================
+            // Formateando Datos Fiscales DTE
+            // ===============================
+
+            val codigoGeneracion = dividirEnLineas(infoPedido.dteCodigoGeneracion!!, 32)
+            val numeroControl = dividirEnLineas(infoPedido.dteNumeroControl!!, 32)
+            val selloRecepcion = dividirEnLineas(infoPedido.dteSelloRecibido!!, 32)
+
+            val fecha = infoPedido.Fecha_creado?.substring(0, 10).orEmpty()
+            val documento = when(infoPedido.Tipo_documento){
+                "CF" -> "CREDITO FISCAL"
+                "FC" -> "FACTURA"
+                "RE" -> "REMISIÓN"
+                else -> "RECIBO"
+            }
+
+            // ===============================
+            // Configurando la impresion de los Qr
+            // ===============================
+            val qrHacienda = dteUrlQRHacienda + "${infoPedido.dteAmbiente}&codGen=${infoPedido.dteCodigoGeneracion}&fechaEmi=$fecha"
+            val qrEmpresa = dteUrlQRempresa + "${infoPedido.dteCodigoGeneracion}"
+
+            val textoVerificacion = dividirEnLineas("Verificacion con $empresa",32)
+
+            val qr =if(dteUrlQRempresa != "0") {("[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
+                    "[C] Qr Hacienda \n" +
+                    "\n" +
+                    "[C]<qrcode size='30'>$qrEmpresa</qrcode>\n" +
+                    "[C] $textoVerificacion \n")}
+            else{
+                "[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
+                        " \n" +
+                        "[C] Qr Hacienda \n"
+            }
+
+
+            // ===============================
+            // Detalle del pedido desde controlador
+            // ===============================
+            val listaDetalle = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
+            var total = 0f
+            val detalleBuilder = StringBuilder()
+
+            // ===============================
+            // Concatenando a la Descripcion, la Cantidad, Codigo de Barra y Bonificados
+            // ===============================
+            listaDetalle.forEach { item ->
+                val descripcionPartes = if(item.Bonificado!! > 0){
+                    if(infoCliente.Nrc == "193-7" || infoCliente.Nrc == "1937"){
+                        dividirDescripcion(
+                            (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion + " - BONIFICADOS: " + item.Bonificado) ?: ""
+                        )
+                    }else{
+                        dividirDescripcion(
+                            (item.Cantidad.toString() + " " + item.Descripcion + " - BONIFICADOS: " + item.Bonificado) ?: ""
+                        )
+                    }
+                }else{
+                    if(infoCliente.Nrc == "193-7" || infoCliente.Nrc == "1937"){
+                        dividirDescripcion(
+                            (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion) ?: ""
+                        )
+                    }else{
+                        dividirDescripcion(
+                            (item.Cantidad.toString() + " " + item.Descripcion) ?: ""
+                        )
+                    }
+                }
+
+                // ===============================
+                // Calculo del detalle para mostrar precio sin iva
+                // ===============================
+                val totalVenta = if(documento.contentEquals("CREDITO FISCAL")){
+                    item.Total_iva!!.toDouble() / 1.13
+                }else{
+                    item.Total_iva
+                }
+
+                //Funcion para cortar la descripcion en varias lineas
+                descripcionPartes.forEachIndexed { index, parte ->
+                    if (index == 0) {
+                        detalleBuilder.append("[L]- $parte [R]$ ${String.format("%.4f", totalVenta)}\n")
+                    } else {
+                        detalleBuilder.append("[L]$parte\n")
+                    }
+                }
+
+                total += item.Total_iva ?: 0f
+            }
+
+            total -= infoPedido.Iva_Percibido!!
+
+            if(infoPedido.Enviado == 1 && infoPedido.pedido_dte == 1){
+                // ===============================
+                // Construir ticket completo DTE
+                // ===============================
+                val ticket = StringBuilder()
+                    .append("[C]<img>")
+                    .append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado))
+                    .append("</img>\n")
+                    .append("[C]$empresaFormateada\n")
+                    .append("[C]$direccionFormateada\n")
+                    .append("[C]NIT: $nit\n")
+                    .append("[C]NRC: $nrc\n")
+                    .append("[C]$giroFormateada\n")
+                    .append("[L]--------------------------------\n")
+                    .append("[C]DATOS DEL CLIENTE\n")
+                    .append("[L]--------------------------------\n")
+                    .append("[L]NOMBRE:\n")
+                    .append("[C]${infoCliente.Cliente}\n")
+                    .append("[L]DOCUMENTO: \n")
+                    .append("[C]${infoCliente.Nit} / ${infoCliente.Dui} \n")
+                    .append("[L]N.R.C: ${infoCliente.Nrc} \n")
+                    .append("[L]ACTIVIDAD ECONOMICA: \n")
+                    .append("[C]$giroCliente \n")
+                    .append("[L]NOMBRE SUCURSAL: \n")
+                    .append("[C]${infoPedido.Nombre_sucursal}\n")
+                    .append("[L]DIRECCION: \n")
+                    .append("[C]$direccionCliente\n")
+                    .append("[L]--------------------------------\n")
+                    .append("[C]DOCUMENTO TRIBUTARIO ELECTRONICO\n")
+                    .append("[L]--------------------------------\n")
+                    .append("[L]TIPO DOCUMENTO:\n")
+                    .append("[C]$documento \n")
+                    .append("[L]FECHA DE EMISIÓN\n")
+                    .append("[C]${infoPedido.Fecha_creado} \n")
+                    .append("[L]CODIGO DE GENERACION \n")
+                    .append("[C]$codigoGeneracion \n")
+                    .append("[L]NUMERO DE CONTROL \n")
+                    .append("[C]$numeroControl \n")
+                    .append("[L]SELLO DE RECEPCION\n")
+                    .append("[C]$selloRecepcion \n")
+                    .append("[C]TERMINOS: ${infoPedido.Terminos}\n")
+                    .append("[L]--------------------------------\n")
+                    .append(qr)
+                    .append("[L]--------------------------------\n")
+                    .append("[C]DETALLE DEL DOCUMENTO\n")
+                    .append("[L]--------------------------------\n")
+                    .append(detalleBuilder.toString())
+                    .append("[L]--------------------------------\n")
+                    .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
+                    .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
+                    .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
+                    .append("[L]TOTAL: [R] $ ${String.format("%.2f", total)} \n")
+                    .append("[L]VENDIDO POR: $vendedor\n")
+                    .append("[L]FECHA: $fecha \n")
+                    .append("[C]¡GRACIAS POR SU COMPRA! \n")
+                    .append("[C]<b>$textoPieFormateado</b>\n")
+                    .append(" \n")
+                    .append(" \n")
+                    .append(" \n")
+
+                printer.printFormattedText(ticket.toString())
+            }else{
+                // ===============================
+                // Construir ticket Normal
+                // ===============================
+                val ticket = StringBuilder()
+                    .append("[C]<img>")
+                    .append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado))
+                    .append("</img>\n")
+                    .append("[C]$empresaFormateada\n")
+                    .append("[C]$direccionFormateada\n")
+                    .append("[C]NIT: $nit\n")
+                    .append("[C]NRC: $nrc\n")
+                    .append("[C]$giroFormateada\n")
+                    .append("[L]--------------------------------\n")
+                    .append("[C]DATOS DEL CLIENTE\n")
+                    .append("[L]--------------------------------\n")
+                    .append("[L]NOMBRE:\n")
+                    .append("[C]${infoCliente.Cliente}\n")
+                    .append("[L]DOCUMENTO: \n")
+                    .append("[C]${infoCliente.Nit} / ${infoCliente.Dui} \n")
+                    .append("[L]N.R.C: ${infoCliente.Nrc} \n")
+                    .append("[L]ACTIVIDAD ECONOMICA: \n")
+                    .append("[C]$giroCliente \n")
+                    .append("[L]NOMBRE SUCURSAL: \n")
+                    .append("[C]${infoPedido.Nombre_sucursal}\n")
+                    .append("[L]DIRECCION: \n")
+                    .append("[C]$direccionCliente\n")
+                    .append("[L]TIPO DOCUMENTO:\n")
+                    .append("[C]$documento \n")
+                    .append("[L]--------------------------------\n")
+                    .append("[C]DETALLE DEL DOCUMENTO\n")
+                    .append("[L]--------------------------------\n")
+                    .append(detalleBuilder.toString())
+                    .append("[L]--------------------------------\n")
+                    .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
+                    .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
+                    .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
+                    .append("[L]TOTAL: [R] $ ${String.format("%.2f", total)} \n")
+                    .append("[L]VENDIDO POR: $vendedor\n")
+                    .append("[L]FECHA: $fecha \n")
+                    .append("[C]¡GRACIAS POR SU COMPRA! \n")
+                    .append("[C]<b>$textoPieFormateado</b>\n")
+                    .append(" \n")
+                    .append(" \n")
+                    .append(" \n")
+
+                printer.printFormattedText(ticket.toString())
+            }
+
+        }else{
+            Toast.makeText(this@Detallepedido, "NO ENCONTRADO", Toast.LENGTH_SHORT)
+                .show()
+        }
+
     }
+
+
 
     override fun onDestroy() {
         super.onDestroy()
-        if (usbReceiverRegistered) {
-            unregisterReceiver(usbReceiver)
-        }
     }
 
 }

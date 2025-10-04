@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -11,7 +11,11 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         android:background="@color/colorAccent">
+
 
         <LinearLayout
             android:id="@+id/lyEncabezado"
@@ -23,423 +27,440 @@
             android:background="@color/colorPrimaryDark"
             android:orientation="horizontal" />
 
-        <FrameLayout
-            android:id="@+id/lyDetalle"
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_default_16dp"
+            app:layout_constraintTop_toBottomOf="@+id/lyEncabezado"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/lyEncabezado">
+            app:layout_constraintBottom_toBottomOf="parent">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="350dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="32dp"
-                android:layout_marginBottom="@dimen/margin_default_16dp"
-                app:cardCornerRadius="@dimen/margin_4dp"
-                app:cardElevation="@dimen/margin_4dp">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp">
+
+                <FrameLayout
+                    android:id="@+id/lyDetalle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_default_16dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="350dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="32dp"
+                        android:layout_marginBottom="@dimen/margin_default_16dp"
+                        app:cardCornerRadius="@dimen/margin_4dp"
+                        app:cardElevation="@dimen/margin_4dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/detalle_de_pago"
+                                android:layout_marginStart="16dp"
+                                android:layout_marginTop="16dp"
+                                android:textColor="@color/moderado"
+                                android:textSize="22sp"
+                                android:textStyle="bold"/>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="55dp"
+                                android:orientation="horizontal"
+                                android:gravity="center"
+                                android:background="@drawable/spinner_bg"
+                                android:layout_marginStart="@dimen/margin_default_16dp"
+                                android:layout_marginEnd="@dimen/margin_default_16dp"
+                                android:layout_marginTop="@dimen/margin_default_16dp">
+
+                                <Spinner
+                                    android:id="@+id/spFormaPago"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="55dp"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"
+                                    android:entries="@array/formaPago"
+                                    android:spinnerMode="dropdown"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyEfectivo"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="@dimen/margin_default_16dp"
+                                    android:layout_marginEnd="@dimen/margin_4dp"
+                                    android:layout_marginTop="@dimen/margin_4dp"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="@string/efectivo">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/txtEfectivoPago"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="number|numberDecimal"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold" />
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyNumeroOrden"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="@dimen/margin_4dp"
+                                    android:layout_marginEnd="@dimen/margin_default_16dp"
+                                    android:layout_marginTop="@dimen/margin_4dp"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="@string/numero_orden">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/txtNumeroOrden"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="number"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/lyContenedorCheque"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:visibility="gone"
+                                android:layout_marginStart="@dimen/margin_default_16dp"
+                                android:layout_marginEnd="@dimen/margin_default_16dp"
+                                android:layout_marginTop="@dimen/margin_4dp">
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyBanco"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="BANCO">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvBanco"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyNumCuentaCheque"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="N° CUENTA">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvNumCuentaCheque"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyNumCheque"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="N° CHEQUE">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvNumCheque"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/lyContenedorTarjeta"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:visibility="gone"
+                                android:layout_marginStart="@dimen/margin_default_16dp"
+                                android:layout_marginEnd="@dimen/margin_default_16dp"
+                                android:layout_marginTop="@dimen/margin_4dp">
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyTarjeta"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="TARJETA">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvTarjeta"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyNombreTajeta"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="NOMBRE">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvNombreTarjeta"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyNumTarjeta"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="N° TARJETA">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvNumTarjeta"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/lyContenedorDeposito"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:visibility="gone"
+                                android:layout_marginStart="@dimen/margin_default_16dp"
+                                android:layout_marginEnd="@dimen/margin_default_16dp"
+                                android:layout_marginTop="@dimen/margin_4dp">
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyDeposito"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="BANCO">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvDeposito"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyNumCuentaDeposito"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="N° CUENTA">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvNumCuentaDeposito"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyNumDeposito"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="N° DEPOSITO">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/tvNumDeposito"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:baselineAligned="false">
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyTotal"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="@dimen/margin_default_16dp"
+                                    android:layout_marginEnd="@dimen/margin_4dp"
+                                    android:layout_marginTop="@dimen/margin_4dp"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="@string/total">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/txtTotalPago"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="number"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/moderado"
+                                        android:textSize="20sp"
+                                        android:textStyle="bold"
+                                        android:focusable="false"
+                                        android:clickable="false" />
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/lyCambio"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="@dimen/margin_4dp"
+                                    android:layout_marginEnd="@dimen/margin_default_16dp"
+                                    android:layout_marginTop="4dp"
+                                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                    android:hint="@string/cambio">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/txtCambioPago"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="number"
+                                        android:textAlignment="center"
+                                        android:textColor="@color/colorHint"
+                                        android:textSize="20sp"
+                                        android:textStyle="bold"
+                                        android:focusable="false"
+                                        android:clickable="false"
+                                        android:layout_marginBottom="@dimen/margin_default_16dp"/>
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+
+                    </androidx.cardview.widget.CardView>
+
+                    <ImageView
+                        android:layout_width="90dp"
+                        android:layout_height="110dp"
+                        android:src="@drawable/pago"
+                        android:layout_marginEnd="@dimen/margin_default_16dp"
+                        android:layout_gravity="top|end"
+                        android:elevation="10dp"
+                        android:rotation="-12"
+                        android:contentDescription="@string/imgpago" />
+
+                </FrameLayout>
 
                 <LinearLayout
+                    android:id="@+id/layout_buttons"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_8dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="32dp"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/lyDetalle"
+                    app:layout_constraintBottom_toBottomOf="parent">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <Button
+                        android:id="@+id/btnaceptar"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/detalle_de_pago"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
-                        android:textColor="@color/moderado"
-                        android:textSize="22sp"
+                        android:layout_weight="1"
+                        android:background="@drawable/border_btnenviar"
+                        android:text="ACEPTAR"
+                        android:textAlignment="center"
+                        android:textColor="@color/colorAccent"
                         android:textStyle="bold"/>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="55dp"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:background="@drawable/spinner_bg"
-                        android:layout_marginStart="@dimen/margin_default_16dp"
-                        android:layout_marginEnd="@dimen/margin_default_16dp"
-                        android:layout_marginTop="@dimen/margin_default_16dp">
-
-                        <Spinner
-                            android:id="@+id/spFormaPago"
-                            android:layout_width="match_parent"
-                            android:layout_height="55dp"
-                            android:textSize="20sp"
-                            android:textStyle="bold"
-                            android:entries="@array/formaPago"
-                            android:spinnerMode="dropdown"
-                            android:textAlignment="center" />
-
-                    </LinearLayout>
-                    <LinearLayout
+                    <Button
+                        android:id="@+id/btncancelar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyEfectivo"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="@dimen/margin_default_16dp"
-                            android:layout_marginEnd="@dimen/margin_4dp"
-                            android:layout_marginTop="@dimen/margin_4dp"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="@string/efectivo">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/txtEfectivoPago"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="number|numberDecimal"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyNumeroOrden"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="@dimen/margin_4dp"
-                            android:layout_marginEnd="@dimen/margin_default_16dp"
-                            android:layout_marginTop="@dimen/margin_4dp"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="@string/numero_orden">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/txtNumeroOrden"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="number"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/lyContenedorCheque"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"
-                        android:layout_marginStart="@dimen/margin_default_16dp"
-                        android:layout_marginEnd="@dimen/margin_default_16dp"
-                        android:layout_marginTop="@dimen/margin_4dp">
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyBanco"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="BANCO">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvBanco"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyNumCuentaCheque"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="N° CUENTA">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvNumCuentaCheque"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyNumCheque"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="N° CHEQUE">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvNumCheque"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/lyContenedorTarjeta"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"
-                        android:layout_marginStart="@dimen/margin_default_16dp"
-                        android:layout_marginEnd="@dimen/margin_default_16dp"
-                        android:layout_marginTop="@dimen/margin_4dp">
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyTarjeta"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="TARJETA">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvTarjeta"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyNombreTajeta"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="NOMBRE">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvNombreTarjeta"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyNumTarjeta"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="N° TARJETA">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvNumTarjeta"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/lyContenedorDeposito"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"
-                        android:layout_marginStart="@dimen/margin_default_16dp"
-                        android:layout_marginEnd="@dimen/margin_default_16dp"
-                        android:layout_marginTop="@dimen/margin_4dp">
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyDeposito"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="BANCO">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvDeposito"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyNumCuentaDeposito"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="N° CUENTA">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvNumCuentaDeposito"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyNumDeposito"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="N° DEPOSITO">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/tvNumDeposito"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:baselineAligned="false">
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyTotal"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="@dimen/margin_default_16dp"
-                            android:layout_marginEnd="@dimen/margin_4dp"
-                            android:layout_marginTop="@dimen/margin_4dp"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="@string/total">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/txtTotalPago"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="number"
-                                android:textAlignment="center"
-                                android:textColor="@color/moderado"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                android:focusable="false"
-                                android:clickable="false" />
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/lyCambio"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="@dimen/margin_4dp"
-                            android:layout_marginEnd="@dimen/margin_default_16dp"
-                            android:layout_marginTop="4dp"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            android:hint="@string/cambio">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/txtCambioPago"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="number"
-                                android:textAlignment="center"
-                                android:textColor="@color/colorHint"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                android:focusable="false"
-                                android:clickable="false"
-                                android:layout_marginBottom="@dimen/margin_default_16dp"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                    </LinearLayout>
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/btn_eliminarpedido"
+                        android:text="CANCELAR"
+                        android:textAlignment="center"
+                        android:textColor="@color/colorAccent"
+                        android:textStyle="bold" />
 
                 </LinearLayout>
 
 
-            </androidx.cardview.widget.CardView>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <ImageView
-                android:layout_width="90dp"
-                android:layout_height="110dp"
-                android:src="@drawable/pago"
-                android:layout_marginEnd="@dimen/margin_default_16dp"
-                android:layout_gravity="top|end"
-                android:elevation="10dp"
-                android:rotation="-12"
-                android:contentDescription="@string/imgpago" />
-
-        </FrameLayout>
-
-        <LinearLayout
-            android:id="@+id/layout_buttons"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_8dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="@dimen/margin_default_16dp"
-            android:gravity="center"
-            android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/lyDetalle"
-            app:layout_constraintBottom_toBottomOf="parent">
-
-            <Button
-                android:id="@+id/btnaceptar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/border_btnenviar"
-                android:text="ACEPTAR"
-                android:textAlignment="center"
-                android:textColor="@color/colorAccent"
-                android:textStyle="bold"/>
-
-            <Button
-                android:id="@+id/btncancelar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="10dp"
-                android:background="@drawable/btn_eliminarpedido"
-                android:text="CANCELAR"
-                android:textAlignment="center"
-                android:textColor="@color/colorAccent"
-                android:textStyle="bold" />
-
-        </LinearLayout>
+        </ScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

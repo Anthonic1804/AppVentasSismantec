@@ -157,6 +157,10 @@ class ConfigController {
             //Modo de configuraion Local o Ruta
             putBoolean("tipoVentaLocal", obj.tipoVentaLocal)
 
+            //IMPRESORA POR DEFECTO
+            putString("tipoImpresora", "BT")
+            putString("impresorIntegrado", "sinNombre")
+
         }
     }
 
@@ -200,6 +204,10 @@ class ConfigController {
             remove("numItemRemision")
             //Modo de configuraion Local o Ruta
             remove("tipoVentaLocal")
+
+            //eliminado tipo de impresora
+            remove("tipoImpresora")
+            remove("impresorIntegrado")
         }
     }
 }
