@@ -79,11 +79,11 @@ class ConfigController {
                                         giro = dato.getString("giro"),
                                         dteUrlQRHacienda = dato.optString("dteUrlQR_Hacienda", "0"),
                                         dteUrlQRempresa = dato.optString("dteUrlQR_empresa", "0"),
-                                        numItemFactura = dato.getInt("numItemFactura"),
-                                        numItemCreFiscal = dato.getInt("numItemCreFiscal"),
-                                        numItemRecibo = dato.getInt("numItemRecibo"),
-                                        numItemRemision = dato.getInt("numItemRemision"),
-                                        tipoVentaLocal = dato.getBoolean("tipoVentaLocal")
+                                        numItemFactura = dato.optInt("numItemFactura", 100),
+                                        numItemCreFiscal = dato.optInt("numItemCreFiscal",100),
+                                        numItemRecibo = dato.optInt("numItemRecibo", 100),
+                                        numItemRemision = dato.optInt("numItemRemision", 100),
+                                        tipoVentaLocal = dato.optBoolean("tipoVentaLocal", false)
                                     )
 
                                     confirmarPagareObligatorio(item, context)
