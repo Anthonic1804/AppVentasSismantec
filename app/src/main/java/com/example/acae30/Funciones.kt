@@ -67,7 +67,7 @@ class Funciones {
 
                 return httpConnection.responseCode == 204
             } catch (e: IOException) {
-                e.printStackTrace()
+                println("ERROR AL VERIFICAR LA CONEXION A INTERNET" + e.printStackTrace())
             }
         }
         return false

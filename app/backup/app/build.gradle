@@ -100,6 +100,9 @@ dependencies {
     //IMPLEMENTANDO LIBRERIA ESCPOSTPRINTER
     implementation files('libs/escposprinter-release.aar')
 
+    //IMPLEMENTANDO KOTZILLA -> monitor de rendimiento + crash analytics
+    implementation("io.kotzilla:kotzilla-sdk:VERSION")
+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'

@@ -11,15 +11,18 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
+import io.kotzilla.sdk.KotzillaSDK
+import io.kotzilla.sdk.analytics.koin.analytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.GlobalContext.startKoin
 import java.net.HttpURLConnection
 import java.net.URL
-
 
 class MainActivity : AppCompatActivity() {
     private var ip: TextView? = null
@@ -39,7 +42,6 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.hide()
         funciones = Funciones()
         reconfig = intent.getBooleanExtra("reconfig", false)
-
 
         alerta = AlertDialogo(this, this)
         ip = findViewById(R.id.txtip)

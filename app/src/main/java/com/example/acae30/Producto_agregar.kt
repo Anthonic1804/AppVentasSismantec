@@ -370,7 +370,7 @@ class Producto_agregar : AppCompatActivity() {
                         Totalizar(cantidad)
 
                     } else {
-                        throw Exception("No se Han encontrado los datos")
+                        println("No se Han encontrado los datos")
                     }
                 } catch (e: Exception) {
                     /*  runOnUiThread {
@@ -650,15 +650,15 @@ class Producto_agregar : AppCompatActivity() {
 
     private fun getPedidodetalle(id: Int): DetallePedido? {
         val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
+        var visita : DetallePedido? = null
         try {
-            var vista: DetallePedido? = null
             val consulta = "SELECT * FROM detalle_producto where Id=$id"
             val cursor = base.query(consulta)
 
             if (cursor.count > 0) {
                 cursor.moveToFirst()
 
-                vista = DetallePedido(
+                visita = DetallePedido(
                     cursor.getInt(0),
                     cursor.getInt(1),
                     cursor.getInt(2),
@@ -684,11 +684,10 @@ class Producto_agregar : AppCompatActivity() {
                 )
             }
             cursor.close()
-            return vista
         } catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR BUSCAR EL DETALLE DEL PEDIDO -> " + e.message)
         }
-
+        return visita
     } //obtiene el detalle del pedido
 
     private fun updateDetalle(iddetalle: Int?, esPrecioEditado: Boolean, bonificado: Int, precio: Float) {
@@ -747,12 +746,12 @@ class Producto_agregar : AppCompatActivity() {
 //                    throw Exception("Error en el total")
 //                }
             } else {
-                throw Exception("No se encontro el pedido asociado")
+                println("No se encontro el pedido asociado")
             }
             cursor.close() // -----> Este no lo habia cerrado 18/09/2025
             base.setTransactionSuccessful()
         } catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR LA ACTUALIZAR EL DETALLE DEL PEDIDO -> " + e.message)
         } finally {
             base.endTransaction()
         }
@@ -779,12 +778,12 @@ class Producto_agregar : AppCompatActivity() {
 //                    throw Exception("Error en el total")
 //                }
             } else {
-                throw Exception("No se encontro el pedido asociado")
+                println("No se encontro el pedido asociado")
             }
             cursor.close() // -----> Este no lo habia cerrado 18/09/2025
             base.setTransactionSuccessful()
         } catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR AL ELIMINAR DEL DETALLE DEL PEDIDO -> " + e.message)
         } finally {
             base.endTransaction()
         }
@@ -792,22 +791,21 @@ class Producto_agregar : AppCompatActivity() {
 
     private fun validateProduct(idproducto: Int): Int {
         val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
+        var i = 0
         try {
 
             val consulta = "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual'"
             val cursor = base.query(consulta)
             if (cursor.count > 0) {
-                var i = 0
                 cursor.moveToFirst()
                 i = cursor.getInt(0)
                 return i
-            } else {
-                return 0
             }
             cursor.close()
         } catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR AL VALIDAR EL PRODUCTO -> " + e.message)
         }
+        return 0
     }//valida si ya existe el producto en el detalle
 
 
@@ -919,7 +917,7 @@ class Producto_agregar : AppCompatActivity() {
 
         // Acccion de click al agregar precio
         dialogo.findViewById<Button>(R.id.btnguardarnuevoprecio).setOnClickListener {
-            GlobalScope.launch(Dispatchers.Main) {
+            lifecycleScope.launch(Dispatchers.IO){
 
                 //VARIABLE PARA DETERMINAR SI EL PRECIO ES MODIFICADO O NO
                 precioAutorizadoUtilizado = if(!modificarPrecio) 1 else 0
@@ -1060,7 +1058,7 @@ class Producto_agregar : AppCompatActivity() {
                                     AlertaPrecio(this@Producto_agregar)
                                 }
                             } catch (e: Exception) {
-                                throw Exception(e.message)
+                                println("ERROR AL VERIFICAR EL PRECIO AUTORIZADO -> " + e.message)
                             }
                         }
                     }else {
@@ -1069,7 +1067,7 @@ class Producto_agregar : AppCompatActivity() {
                         }
                     }
                 } catch (e: Exception) {
-                    throw  Exception("error: " + e.message)
+                    println("error: " + e.message)
                 }
             }
         } catch (e: Exception) {
@@ -1111,11 +1109,11 @@ class Producto_agregar : AppCompatActivity() {
                         }
                     }
                 } catch (e: Exception) {
-                    throw  Exception("error: " + e.message)
+                    println("error: " + e.message)
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            println("error: " + e.message)
         }
     }
 

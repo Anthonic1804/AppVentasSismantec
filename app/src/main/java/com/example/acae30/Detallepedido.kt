@@ -328,16 +328,16 @@ class Detallepedido : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                throw Exception(e.message)
+                println("ERROR AL OBTENER INFORMACION DE LA VISITA DEL CLIENTE -> " + e.message)
             }
         }
 
         //MODIFICACION 04/12/2023
         // VERIFICAMOS SI TENEMOS CONEXION A INTERNET PARA PODER ENVIAR EL PEDIDO O ALMACENARLO
-        if(!funciones.isInternetAvailable(this@Detallepedido)){
-            binding.btnenviar.isEnabled = false
-            binding.btnenviar.setBackgroundResource(R1.drawable.border_btndisable)
-        }
+//        if(!funciones.isInternetAvailable(this@Detallepedido)){
+//            binding.btnenviar.isEnabled = false
+//            binding.btnenviar.setBackgroundResource(R1.drawable.border_btndisable)
+//        }
 
         binding.imbtnatras.setOnClickListener {
             val intento = Intent(this, Pedido::class.java)
@@ -769,7 +769,7 @@ class Detallepedido : AppCompatActivity() {
     }
 
     private fun verificarConexionEnvio() {
-        if(funciones.isInternetAvailable(this)){
+        if(funciones.isInternetAvailable(this@Detallepedido)){
             alerta!!.pedidoEnviado()
 
             CoroutineScope(Dispatchers.IO).launch {
@@ -823,7 +823,7 @@ class Detallepedido : AppCompatActivity() {
                 terminosPedidos = data.terminosPedido!!.toString()
             }
         }catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR AL OBTENER LA INFORMACION DEL PEDIDO -> " + e.message)
         }
     }
 
@@ -896,7 +896,7 @@ class Detallepedido : AppCompatActivity() {
                     "WHERE id=$idpedidos")
 
         }catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR AL ACTUALIZAR LA INFORMACION DE LA SUCURSAL EN EL PEDIDO -> " + e.message)
         }
     }
 
@@ -912,7 +912,7 @@ class Detallepedido : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            println("ERROR AL MOSTRAR LA TABLA CONFIG")
+            println("ERROR AL MOSTRAR LA TABLA CONFIG -> " + e.message)
         }
         return nombreSucursal
     }
@@ -952,7 +952,7 @@ class Detallepedido : AppCompatActivity() {
                 }
             }
         }catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR AL OBTENER LAS SUCURSALES POR CLIENTE -> " + e.message)
         }
         return listaSucursales
     }
@@ -1167,7 +1167,7 @@ class Detallepedido : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR AL TRATAR DE ELIMINAR EL PEDIDO -> " + e.message)
         }
     }
 
@@ -1931,7 +1931,8 @@ class Detallepedido : AppCompatActivity() {
                 .append(" \n")
                 .append(" \n")
 
-            printer.printFormattedText(ticket.toString())
+            val textoImprmir = normalizarTexto(ticket.toString())
+            printer.printFormattedText(textoImprmir)
         }else{
             // ===============================
             // Construir ticket Normal
@@ -1978,7 +1979,8 @@ class Detallepedido : AppCompatActivity() {
                 .append(" \n")
                 .append(" \n")
 
-            printer.printFormattedText(ticket.toString())
+            val textoImprmir = normalizarTexto(ticket.toString())
+            printer.printFormattedText(textoImprmir)
         }
     }
 
@@ -2060,6 +2062,9 @@ class Detallepedido : AppCompatActivity() {
 
         if(device != null){
             val connection = BluetoothConnection(device)
+
+            connection.connect()
+
             val printer = EscPosPrinter(connection, 160, 48f, 32)
 
 
@@ -2243,7 +2248,8 @@ class Detallepedido : AppCompatActivity() {
                     .append(" \n")
                     .append(" \n")
 
-                printer.printFormattedText(ticket.toString())
+                val textoImprmir = normalizarTexto(ticket.toString())
+                printer.printFormattedText(textoImprmir)
             }else{
                 // ===============================
                 // Construir ticket Normal
@@ -2290,7 +2296,8 @@ class Detallepedido : AppCompatActivity() {
                     .append(" \n")
                     .append(" \n")
 
-                printer.printFormattedText(ticket.toString())
+                val textoImprmir = normalizarTexto(ticket.toString())
+                printer.printFormattedText(textoImprmir)
             }
 
         }else{
@@ -2298,6 +2305,21 @@ class Detallepedido : AppCompatActivity() {
                 .show()
         }
 
+    }
+
+
+    fun normalizarTexto(texto: String): String {
+        val original = "ÁÀÂÄáàâäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖóòôöÚÙÛÜúùûüÑñÇç"
+        val reemplazo = "AAAAaaaaEEEEeeeeIIIIiiiiOOOOooooUUUUuuuuNnCc"
+
+        var resultado = texto
+        for (i in original.indices) {
+            resultado = resultado.replace(original[i], reemplazo[i])
+        }
+
+        // Elimina caracteres no ASCII
+        resultado = resultado.replace(Regex("[^\\x00-\\x7F]"), "")
+        return resultado
     }
 
 

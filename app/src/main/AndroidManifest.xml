@@ -23,6 +23,7 @@
     <uses-feature android:name="android.hardware.usb.host" />
 
     <application
+        android:name=".MyApp"
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"

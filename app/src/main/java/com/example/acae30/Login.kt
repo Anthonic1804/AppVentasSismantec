@@ -17,9 +17,12 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.lifecycleScope
 import com.example.acae30.modelos.JSONmodels.Login
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -445,7 +448,7 @@ class Login : AppCompatActivity() {
         dialogo.setContentView(R.layout.alert_cerrar_sesion_dispositivos)
         dialogo.findViewById<Button>(R.id.btncerrar).setOnClickListener {
             try {
-                GlobalScope.launch(Dispatchers.Main) {
+                lifecycleScope.launch(Dispatchers.IO) {
                     IniciarSesion(usuario, clave, identidad)
                 }
             } catch (e: java.lang.Exception) {

@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -70,7 +71,6 @@ class Configuracion : AppCompatActivity() {
         //ACTUALIZAR CONFIG PARA PEDIDOS SIN EXISTENCIAS
         binding.swSinExistencias.isChecked = preferencias!!.getString("pedidos_sin_existencia", "") == "S"
 
-        versionActual = preferencias!!.getFloat("versionActualApp", 1f)
 
         // 2 -> LISTADO
         // 1 -> VISTA MINIATURA
@@ -87,8 +87,8 @@ class Configuracion : AppCompatActivity() {
 
         binding.txtImpresor.setText(preferencias!!.getString("impresorIntegrado", ""))
 
-
-        binding.tvVersionActualApp.setText("ACAE APP Ver. $versionActual")
+        versionActualApp()
+        binding.tvVersionActualApp.text = "ACAE APP Ver. $versionActual"
 
         binding.swlista.setOnCheckedChangeListener { _, isChecked ->
             preferencias!!.edit {
@@ -485,7 +485,6 @@ class Configuracion : AppCompatActivity() {
             //updateDialog.dismiss()
             //Toast.makeText(applicationContext, "FUNCION EN DESARROLLO", Toast.LENGTH_SHORT).show()
             updateDialog.dismiss()
-            updateVersionApp(versionServer)
             Descargar(urlServer, "UpdateApp_$versionServer")
         }
 
@@ -498,11 +497,20 @@ class Configuracion : AppCompatActivity() {
     }
 
     //FUNCION PARA ACTUALIZAR LA VERSION ACTUAL DE LA APP
-    private fun updateVersionApp(versionApp:String){
-        preferencias!!.edit {
-            remove("versionActualApp")
-            putFloat("versionActualApp", versionApp.toFloat())
+    private fun versionActualApp(){
+        val versionName = try{
+            val packageInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                packageManager.getPackageInfo(packageName, 0)
+            }
+            packageInfo.versionName
+        }catch (e: Exception){
+            1f
         }
+
+        versionActual = versionName.toString().toFloat()
+
     }
 
     //FUNCION PARA DESCARGAR Y EJECUTAR LA INSTALACION DE LA ACTUALIZACION
