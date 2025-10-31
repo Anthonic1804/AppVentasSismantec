@@ -11,11 +11,11 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        startKoin {
+        /*startKoin {
             androidContext(this@MyApp) // OBLIGATORIO
 
             analytics() // si usas Kotzilla Analytics
-        }
+        }*/
 
     }
 

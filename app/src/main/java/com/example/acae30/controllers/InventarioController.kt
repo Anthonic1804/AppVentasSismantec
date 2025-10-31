@@ -460,11 +460,13 @@ class InventarioController {
                 bd.insert("inventario", SQLiteDatabase.CONFLICT_REPLACE, data)
             }
 
-            //ALAMACENANDO EN SHARED PREFERENCES EL ID DE LA HOJA DE CARGA ACTIVA
-            preferences.edit {
-                putInt("idHojaCarga", idHojaCarga)
-                putInt("idRutaHojaCarga", idRutaHojaCarga)
-                putString("rutaHojaCarga", rutaHojaCarga)
+            //ALAMACENANDO EN SHARED PREFERENCES EL ID DE LA HOJA DE CARGA ACTIVA SI NO ES RECARGA
+            if(recarga == 0){
+                preferences.edit {
+                    putInt("idHojaCarga", idHojaCarga)
+                    putInt("idRutaHojaCarga", idRutaHojaCarga)
+                    putString("rutaHojaCarga", rutaHojaCarga)
+                }
             }
 
             bd.setTransactionSuccessful()

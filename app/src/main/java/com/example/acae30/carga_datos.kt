@@ -293,14 +293,18 @@ class carga_datos : AppCompatActivity() {
         }
 
         binding.cvEliminarPedidos.setOnClickListener {
-            try {
+
+            Toast.makeText(this@carga_datos, "FUNCION EN VERIFICACION", Toast.LENGTH_SHORT)
+                .show()
+
+            /*try {
                 CoroutineScope(Dispatchers.IO).launch {
                     pedidosController.eliminarPedidosAntiguos(this@carga_datos)
                 }
                 funciones.mostrarMensaje("PEDIDOS ELIMINADOS", this@carga_datos, binding.vistaalerta)
             } catch (e: Exception) {
                 funciones.mostrarAlerta("ERROR AL ELIMINAR LOS PEDIDOS -> ${e.message}", this@carga_datos, binding.vistaalerta)
-            }
+            }*/
 
         }
     }
