@@ -122,7 +122,13 @@ class carga_datos : AppCompatActivity() {
                         delay(1000)
 
                         try {
+                            val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
+                            bd.execSQL("DELETE FROM Inventario")
+                            bd.execSQL("DELETE FROM Inventario_precios")
+                            bd.execSQL("DELETE FROM Inventario_unidades")
+
                             getInventario()
+
                         }catch (e:Exception){
                             println("ERROR AL CARGAR LA INFORMACION DE INVENTARIO " + e.message)
                         }

@@ -1308,7 +1308,9 @@ class InventarioController {
                     listado.add("FRACCION")
                 }
 
-                val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
+                //Comentado momentaneamente para configurar bien las unidades de medida al momento de editar el producto
+                //agregado al pedido
+                /*val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
                 val cursor2 = bd.query(consulta2)
                 cursor2.use {
                     if(cursor2.count > 0){
@@ -1317,7 +1319,7 @@ class InventarioController {
                             listado.add(cursor2.getString(0))
                         }while (cursor2.moveToNext())
                     }
-                }
+                }*/
             }catch (e:Exception){
                 println("ERROR NO SE ENCONTRARON UNIDADES EN INVENTARIO -> " + e.message)
             }

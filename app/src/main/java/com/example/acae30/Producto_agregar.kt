@@ -268,6 +268,8 @@ class Producto_agregar : AppCompatActivity() {
                 }
                 cargarListadoPrecios(unidadActual)
 
+                verificarBonificados(unidadActual)
+
                 if(unidadActual != "UNI" || unidadActual != "FRA"){
                     CoroutineScope(Dispatchers.IO).launch {
                         idUnidad = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
@@ -391,7 +393,6 @@ class Producto_agregar : AppCompatActivity() {
 
     private fun cargarOpcionesGenerales(){
         this@Producto_agregar.lifecycleScope.launch {
-
             //---------
             //LA UNIDADES SE GENERAN AUTOMATICAS SI EL PRODUCTO LAS TIENE CONFIGURADAS
             //---------
@@ -417,21 +418,7 @@ class Producto_agregar : AppCompatActivity() {
                 }
             }
 
-            //OBTENIENDO LA BONIFICACION PERSONALIZADA POR CLIENTE
-            val clienteBonificado = clientesController.obtenerBonificacionCliente(idcliente!!,
-                idproducto!!,this@Producto_agregar)
-
- 
-            bonificacion = if(clienteBonificado > 0){
-                clienteBonificado
-            }else{
-                if(unidadActual == "UNI"){
-                    datosProducto!!.Bonificado!!.toFloat()
-                } else {
-                    0f
-                }
-            }
-
+            verificarBonificados(unidadActual)
 
             //TOMANDO LA CANTIDAD DE LAS ESCALA SELECCIONADA.
             //09/01/2024
@@ -446,16 +433,50 @@ class Producto_agregar : AppCompatActivity() {
         }
     }
 
+    //FUNCION PARA OBTENER LA BONIFICACION POR PRODUCTO O CLIENTE
+    private fun verificarBonificados(unidad: String){
+        //OBTENIENDO LA BONIFICACION PERSONALIZADA POR CLIENTE
+        val clienteBonificado = clientesController.obtenerBonificacionCliente(idcliente!!,
+            idproducto!!,this@Producto_agregar)
+        bonificacion = if(unidad == "UNI"){
+            if(clienteBonificado > 0){
+                clienteBonificado
+            }else{
+                datosProducto!!.Bonificado!!.toFloat()
+            }
+        } else {
+            0f
+        }
+    }
+
     private fun cargarUnidadesMedida(){
         this@Producto_agregar.lifecycleScope.launch {
             try {
 
-                val hojaCarga = preferencias!!.getBoolean("Hoja_carga_inventario_app", false)
+                if(proviene == "editar"){
+                    val hojaCarga = preferencias!!.getBoolean("Hoja_carga_inventario_app", false)
+                    val producto = getPedidodetalle(idpedidodetalle!!)
+                    val unidadSelecciona = producto!!.Unidad!!.trim().toString()
 
-                val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
-                val unidadesMedida = ArrayAdapter<String>(this@Producto_agregar, android.R.layout.simple_spinner_dropdown_item)
-                unidadesMedida.addAll(unidades)
-                binding.spunidad.adapter = unidadesMedida
+                    val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
+                    val unidadesMedida = ArrayAdapter<String>(this@Producto_agregar, android.R.layout.simple_spinner_dropdown_item)
+
+                    unidadesMedida.add(unidadSelecciona)
+                    unidadActual = when(unidadSelecciona){
+                        "UNIDAD" -> { "UNI" }
+                        else -> { "FRA" }
+                    }
+
+                    unidadesMedida.addAll(unidades)
+                    binding.spunidad.adapter = unidadesMedida
+                }else{
+                    val hojaCarga = preferencias!!.getBoolean("Hoja_carga_inventario_app", false)
+                    val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
+                    val unidadesMedida = ArrayAdapter<String>(this@Producto_agregar, android.R.layout.simple_spinner_dropdown_item)
+                    unidadesMedida.addAll(unidades)
+                    binding.spunidad.adapter = unidadesMedida
+                }
+
 
             }catch (e:Exception){
                 println("ERROR AL CARGAR LAS UNIDADESD DE MEDIDA -> "  + e.message)
@@ -466,8 +487,15 @@ class Producto_agregar : AppCompatActivity() {
     private fun cargarListadoPrecios(unidadMedida : String){
         this@Producto_agregar.lifecycleScope.launch {
             listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false, unidadMedida)
-
             val precioss = ArrayList<String>()
+
+            if(proviene == "editar"){
+                val producto = getPedidodetalle(idpedidodetalle!!)
+                val precioSeleccionado = producto!!.Precio_venta
+                precioss.add("${String.format("%.2f".format(precioSeleccionado))}")
+            }
+
+
             if(unidadMedida == "UNI"){
                 precioss.add("${String.format("%.2f".format(datosProducto!!.Precio_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
             }
@@ -488,7 +516,7 @@ class Producto_agregar : AppCompatActivity() {
 
             //FUNCION PARA MOSTRAR EL PRECIO POR DEFECTO EN EL LISTADO DEL PRODUCTO
             //SOLO CUANDO SE AGREGA EL PRODUCTO POR PRIMERA VEZ
-            if(proviene == "editar"){
+            if(proviene != "editar"){
                 val totalIndices = binding.spprecio.adapter?.count ?: 0
                 if(mostrarPrecioApp in 0 until totalIndices){
                     binding.spprecio.setSelection(mostrarPrecioApp, true)
@@ -554,9 +582,11 @@ class Producto_agregar : AppCompatActivity() {
 
         binding.txttotal.text = "${String.format("%.4f".format(total) )}"
 
-        if(bonificacion > 0 && bonificacion != null){
+        if(bonificacion > 0 && bonificacion != null && unidadActual == "UNI"){
             val productosBonificados = cantidad / bonificacion
             binding.txtBonificados.text = productosBonificados.toInt().toString()
+        }else{
+            binding.txtBonificados.text = 0.toString()
         }
 
     }

@@ -552,5 +552,4 @@ class PedidosController {
 
         return  cantidadItems
     }
-
 }
