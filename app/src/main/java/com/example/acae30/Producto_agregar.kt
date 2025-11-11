@@ -56,7 +56,6 @@ class Producto_agregar : AppCompatActivity() {
     private var codigo = ""
     private var idapi = 0
     private var listPrecios: ArrayList<InventarioPrecios>? = null
-    private var unidadActual: String = "UNI"
     private var datosProducto: com.example.acae30.modelos.Inventario? = null
     private var proviene: String? = ""
     private var total_param: Float? = null
@@ -106,7 +105,12 @@ class Producto_agregar : AppCompatActivity() {
     private var precioIvaPersonalizado : Float = 0f
     private var bonificacion : Float = 0f
     private var mostrarPrecioApp : Int = 0 //MOSTRARA EL PRECIO CONFIGURADO EN LA BD DEL SERVIDOR
+
+    private var unidadActual: String = "UNI"
     private var idUnidad = 0
+    private var equivaleUni: Float = 0f
+    private var equivaleFra: Float = 0f
+    private var uniEquivale: String? = null
 
     private var tipoProducto = ""
 
@@ -271,8 +275,24 @@ class Producto_agregar : AppCompatActivity() {
                 verificarBonificados(unidadActual)
 
                 if(unidadActual != "UNI" || unidadActual != "FRA"){
-                    CoroutineScope(Dispatchers.IO).launch {
-                        idUnidad = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val unidadMedida = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
+
+                        if(unidadMedida != null){
+                            idUnidad = unidadMedida.id ?: 0
+
+                            uniEquivale = unidadMedida.unidades
+
+                            equivaleUni = when(uniEquivale){
+                                "UNI" -> {unidadMedida.equivale}
+                                else -> {0f}
+                            }
+
+                            equivaleFra = when(uniEquivale){
+                                "FRA" -> {unidadMedida.equivale}
+                                else -> {0f}
+                            }
+                        }
                     }
                 }
 
@@ -456,7 +476,12 @@ class Producto_agregar : AppCompatActivity() {
                 if(proviene == "editar"){
                     val hojaCarga = preferencias!!.getBoolean("Hoja_carga_inventario_app", false)
                     val producto = getPedidodetalle(idpedidodetalle!!)
+
                     val unidadSelecciona = producto!!.Unidad!!.trim().toString()
+                    idUnidad = producto.Idunidad!!
+                    equivaleFra = producto.EquivaleFra
+                    equivaleUni = producto.EquivaleUni
+                    uniEquivale = producto.UniEquivale
 
                     val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
                     val unidadesMedida = ArrayAdapter<String>(this@Producto_agregar, android.R.layout.simple_spinner_dropdown_item)
@@ -464,7 +489,8 @@ class Producto_agregar : AppCompatActivity() {
                     unidadesMedida.add(unidadSelecciona)
                     unidadActual = when(unidadSelecciona){
                         "UNIDAD" -> { "UNI" }
-                        else -> { "FRA" }
+                        "FRACCION" -> { "FRAC" }
+                        else -> { unidadSelecciona }
                     }
 
                     unidadesMedida.addAll(unidades)
@@ -635,6 +661,11 @@ class Producto_agregar : AppCompatActivity() {
 
             detalle.put("Id_Inventario_Precios", idEscala)
             detalle.put("Codigo_de_barra", datosProducto!!.codigo_de_barra)
+            detalle.put("EquivaleUni", equivaleUni)
+            detalle.put("EquivaleFra", equivaleFra)
+            detalle.put("UniEquivale", uniEquivale)
+
+
 
             val idpedidodetalle = base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
 
@@ -710,7 +741,10 @@ class Producto_agregar : AppCompatActivity() {
                     cursor.getFloat(18),
                     cursor.getString(19),
                     cursor.getInt(20),
-                    cursor.getString(21)
+                    cursor.getString(21),
+                    cursor.getFloat(22),
+                    cursor.getFloat(23),
+                    cursor.getString(24)
                 )
             }
             cursor.close()
@@ -751,6 +785,11 @@ class Producto_agregar : AppCompatActivity() {
             } else {
                 detalle.put("Precio_editado", "")
             }
+
+            detalle.put("EquivaleUni", equivaleUni)
+            detalle.put("EquivaleFra", equivaleFra)
+            detalle.put("UniEquivale", uniEquivale)
+
 
             val idpedidodetalle = base.update(
                 "detalle_pedidos",

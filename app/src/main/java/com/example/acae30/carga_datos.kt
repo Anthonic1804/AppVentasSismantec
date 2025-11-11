@@ -426,7 +426,7 @@ class carga_datos : AppCompatActivity() {
 
             try {
                 //OBTENIENDO INVENTARIO DESDE HOJA DE CARGA
-                inventarioController.obtenerInventarioHojaCarga(0, numero.toInt(), idVendedor, this@carga_datos)
+                inventarioController.obtenerInventarioHojaCarga(false, numero.toInt(), idVendedor, this@carga_datos)
             }catch (e:Exception){
                 println("ERROR AL CARGAR LA HOJA DE INVENTARIO " + e.message)
             }

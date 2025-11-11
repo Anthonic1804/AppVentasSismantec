@@ -22,5 +22,8 @@ data class DetallePedido(
     var Descuento: Float?,
     var Precio_editado: String?,
     var Idunidad: Int?,
-    var Codigo_de_barra: String?
+    var Codigo_de_barra: String?,
+    var EquivaleUni: Float,
+    var EquivaleFra: Float,
+    var UniEquivale: String?
 )

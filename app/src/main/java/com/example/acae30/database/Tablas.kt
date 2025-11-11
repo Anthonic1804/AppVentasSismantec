@@ -444,6 +444,9 @@ class Tablas {
                 "Id_talla INTEGER NOT NULL DEFAULT 0," +
                 "Id_Inventario_Precios INTEGER NOT NULL DEFAULT 0," +
                 "Codigo_de_barra VARCHAR(50) NOT NULL DEFAULT ''," +
+                "EquivaleUni NUMERIC(18,2) NOT NULL DEFAULT 0," +
+                "EquivaleFra NUMERIC(18,2) NOT NULL DEFAULT 0," +
+                "UniEquivale VARCHAR(5) NULL, " +
                 "FOREIGN KEY(Id_pedido) REFERENCES pedidos(Id_pedido)" +
                 ")"
     } //tabla detalle pedidos
@@ -471,7 +474,10 @@ class Tablas {
                     "detalle_pedidos.descuento," +
                     "detalle_pedidos.precio_editado," +
                     "detalle_pedidos.idunidad," +
-                    "detalle_pedidos.Codigo_de_barra " +
+                    "detalle_pedidos.Codigo_de_barra, " +
+                    "detalle_pedidos.EquivaleUni, " +
+                    "detalle_pedidos.EquivaleFra, " +
+                    "detalle_pedidos.UniEquivale " +
                 "FROM detalle_pedidos " +
                 "INNER JOIN inventario " +
                 "ON inventario.Id = detalle_pedidos.Id_producto;"

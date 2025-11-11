@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
+import android.text.BoringLayout
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.contentValuesOf
@@ -30,6 +31,7 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import androidx.core.content.edit
+import com.example.acae30.modelos.UnidadMedidaModelo
 import com.google.gson.JsonArray
 
 class InventarioController {
@@ -294,27 +296,18 @@ class InventarioController {
 
     //FUNCIONES PARA HOJA DE CARGA
     //FUNCION PARA OBTENER EL INVENTARIO DESDE LA HOJA DE CARGA DE ESCARRSA
-    suspend fun obtenerInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context) {
+    suspend fun obtenerInventarioHojaCarga(esRecarga: Boolean, numeroHoja: Int, id_vendedor: Int, context: Context) {
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
-
-        //OBTENIENDO HOJA DE CARGA ACTIVA
-        val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
 
         //OBTENIENDO FECHA
         val fecha = funciones.obtenerFecha()
 
         try {
-            val datos = HojaCargaJSON(
-                id,
-                numero,
-                id_vendedor,
-                fecha!!
-            )
-            val objecto =
-                Gson().toJson(datos)
-            println(objecto)
+            val datos = HojaCargaJSON(0, numeroHoja, id_vendedor, fecha!!)
+            val objecto = Gson().toJson(datos)
+
             val ruta: String = servidor + "inventario/hojacarga"
             val url = URL(ruta)
             with(withContext(Dispatchers.IO) {
@@ -344,24 +337,16 @@ class InventarioController {
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
 
-                                        //VERIFICANDO SI LA HOJA CORRESPONDE AL MISMO DIA
-                                        if(!verificarFechaInventario(context) || numero != hojaCargaActiva){
-
-                                            //LIMPIANDO INVENTARIO YA QUE NO CORRESPONDE AL MISMO DIA U HOJA DE CARGA
-                                            limpiarInventarioHojaCarga(context) //LIMPIAR LAS TABLAS
+                                        if(!esRecarga){
+                                            //LIMPIANDO INVENTARIO
+                                            limpiarInventarioHojaCarga(context)
 
                                             //INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA
                                             //ALMACENANDO INVENTARIO NUEVO
-                                            saveInventarioDatabase(res, context, numero,0)
-
+                                            saveInventarioDatabase(res, context, numeroHoja,false)
                                         }else{
 
-                                            //AQUI SE CARGAR SOLO LAS EXISTENCIA DE ACUERDO A LA HOJA DE CARGA
-                                            //INSERTANDO INSERTANDO INFORMACION SOLO EN HOJA DE CARGA Y DETALLE
-                                            //ALMACENANDO INVENTARIO NUEVO
-                                            insertarHojaDeCargar(res, context, numero)
                                         }
-
                                     } else {
                                         //println("ERROR: ERROR NO SE ENCONTRARON DATOS PARA ALMACENAR 222222")
                                         withContext(Dispatchers.Main){
@@ -373,16 +358,11 @@ class InventarioController {
                                 }
                             }
                         }
-                        400 -> {
-                            println("ERROR: ERROR AL CARGAR EL INVENTARIO POR HOJA DE CARGA")
-                        }
-
                         404 -> {
                             withContext(Dispatchers.Main){
                                 funciones.mensaje(context, "ERROR: NO SE ENCONTRO LA HOJA DE CARGA")
                             }
                         }
-
                         else -> {
                             println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR")
                         }
@@ -401,7 +381,7 @@ class InventarioController {
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    private fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, recarga: Int) {
+    private fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, esRecarga: Boolean) {
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
@@ -436,7 +416,7 @@ class InventarioController {
                 data.put("costo_iva", funciones.validateJsonIsNullFloat(dato, "costo_iva"))
                 data.put("ult_costo", funciones.validateJsonIsNullFloat(dato, "ult_costo"))
                 data.put("ult_costo_iva", funciones.validateJsonIsNullFloat(dato, "ult_costo_iva"))
-                data.put("existencia", 0)
+                data.put("existencia", funciones.validateJsonIsNullFloat(dato, "existencia"))
                 data.put("existencia_u", funciones.validateJsonIsNullFloat(dato, "existencia_u"))
                 data.put("precio", funciones.validateJsonIsNullFloat(dato, "precio"))
                 data.put("precio_u", funciones.validateJsonIsNullFloat(dato, "precio_u"))
@@ -461,7 +441,7 @@ class InventarioController {
             }
 
             //ALAMACENANDO EN SHARED PREFERENCES EL ID DE LA HOJA DE CARGA ACTIVA SI NO ES RECARGA
-            if(recarga == 0){
+            if(!esRecarga){
                 preferences.edit {
                     putInt("idHojaCarga", idHojaCarga)
                     putInt("idRutaHojaCarga", idRutaHojaCarga)
@@ -471,10 +451,10 @@ class InventarioController {
 
             bd.setTransactionSuccessful()
         } catch (e: Exception) {
-            throw Exception(e.message)
+            println("ERROR AL INSERTAR EL INVENTARIO DE LA HOJA DE CARGA -> " + e.message)
         } finally {
             bd.endTransaction()
-            if(recarga == 0){
+            if(!esRecarga){
                 CoroutineScope(Dispatchers.IO).launch {
                     insertarHojaDeCargar(json, context, numeroHojaCarga)
                 }
@@ -672,9 +652,9 @@ class InventarioController {
                 bd.insert("hoja_carga_detalle", SQLiteDatabase.CONFLICT_REPLACE, data)
 
                 //ACTUALIZANDO EXISTENCIAS
-                CoroutineScope(Dispatchers.IO).launch {
+                /*CoroutineScope(Dispatchers.IO).launch {
                     actualizarExistenciasInventario(context, funciones.validateJsonIsNullFloat(dato, "existencia"), dato.getInt("id"))
-                }
+                }*/
 
             }
             bd.setTransactionSuccessful()
@@ -1019,7 +999,7 @@ class InventarioController {
                                     val res = JSONArray(respuesta.toString())
                                     if (res.length() > 0) {
                                         //Almacenar registro en tbl inventario
-                                        saveInventarioDatabase(res, context, 0,1)
+                                        saveInventarioDatabase(res, context, 0,true)
                                         encontrado = 1
                                     }
                                 } catch (e: Exception) {
@@ -1308,9 +1288,10 @@ class InventarioController {
                     listado.add("FRACCION")
                 }
 
-                //Comentado momentaneamente para configurar bien las unidades de medida al momento de editar el producto
-                //agregado al pedido
-                /*val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
+                //----------------------
+                // CARGANDO LAS UNIDADES DE MEDIDA
+                //----------------------
+                val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
                 val cursor2 = bd.query(consulta2)
                 cursor2.use {
                     if(cursor2.count > 0){
@@ -1319,7 +1300,7 @@ class InventarioController {
                             listado.add(cursor2.getString(0))
                         }while (cursor2.moveToNext())
                     }
-                }*/
+                }
             }catch (e:Exception){
                 println("ERROR NO SE ENCONTRARON UNIDADES EN INVENTARIO -> " + e.message)
             }
@@ -1330,23 +1311,28 @@ class InventarioController {
     }
 
     //OBTENER EL ID DE LA UNIDAD DE MEDIDA PARA VENTAS
-    fun obtenerIdUnidadMedida(context: Context, idProducto: Int, unidadMedida: String) : Int{
-
+    fun obtenerIdUnidadMedida(context: Context, idProducto: Int, unidadMedida: String) : UnidadMedidaModelo?{
         val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
-        var idUnidadMedida = 0
+        var unidad : UnidadMedidaModelo? = null
         try {
-            val consulta = "SELECT Id FROM inventario_unidades WHERE Id_inventario = $idProducto AND Nombre_unidad = '$unidadMedida' "
+            val consulta = "SELECT * FROM inventario_unidades WHERE Id_inventario = $idProducto AND Nombre_unidad = '$unidadMedida' "
             val cursor = bd.query(consulta)
             cursor.use {
                 if(cursor.count > 0){
                     cursor.moveToFirst()
-                    idUnidadMedida = cursor.getInt(0)
+                    unidad = UnidadMedidaModelo(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getFloat(3),
+                        cursor.getString(4)
+                    )
                 }
             }
         }catch (e: Exception){
             println("Error: no se obtuvo la unidad de medida -> " + e.message)
         }
-        return idUnidadMedida
+        return unidad
     }
 
 }

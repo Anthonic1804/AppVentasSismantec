@@ -1252,7 +1252,10 @@ class Detallepedido : AppCompatActivity() {
                                 cdetalle.getFloat(18),
                                 cdetalle.getString(19),
                                 cdetalle.getInt(20),
-                                cdetalle.getString(21)
+                                cdetalle.getString(21),
+                                cdetalle.getFloat(22),
+                                cdetalle.getFloat(23),
+                                cdetalle.getString(24)
                             )
                             list.add(detalle)
                         } while (cdetalle.moveToNext())
@@ -1273,6 +1276,8 @@ class Detallepedido : AppCompatActivity() {
         try {
             val objecto = convertToJson(pedido, idpedido) //convertimos a json el objecto pedido
             val ruta: String = "http://$ip:$puerto/pedido" //ruta para enviar el pedido
+
+            println("JSON ENVIADO -> " + objecto )
 
             val url = URL(ruta)
             with(url.openConnection() as HttpURLConnection) {
@@ -1482,6 +1487,9 @@ class Detallepedido : AppCompatActivity() {
             d.addProperty("Descuento", data.Descuento)
             d.addProperty("Precio_editado", data.Precio_editado)
             d.addProperty("Idunidad", data.Idunidad)
+            d.addProperty("EquivaleUni", data.EquivaleUni)
+            d.addProperty("EquivaleFra", data.EquivaleFra)
+            d.addProperty("UniEquivale", data.UniEquivale)
             d.addProperty("FechaCreado", pedido.fechaCreado) /*ENVIANDO LA MISMA FECHA DEL PEDIDO DESDE EL CEL*/
             detalle.add(d)
         }
@@ -1607,10 +1615,11 @@ class Detallepedido : AppCompatActivity() {
         //PROCESO DEL BOTON ACEPTAR
         dialogo.findViewById<Button>(R1.id.btnaceptar).setOnClickListener {
             numeroOrden = dialogo.findViewById<TextInputEditText>(R1.id.txtNumeroOrden).text.toString()
-            if(terminosPedidos == "Contado" && etPago.text.toString().isEmpty()){
+            /*if(terminosPedidos == "Contado" && etPago.text.toString().isEmpty()){
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL PAGO DEL CLIENTE", Toast.LENGTH_SHORT)
                     .show()
-            }else if(codigo == "00037" && numeroOrden.isEmpty()){
+            }else */
+            if(codigo == "00037" && numeroOrden.isEmpty()){
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL NUMERO DE ORDEN", Toast.LENGTH_SHORT)
                     .show()
             }

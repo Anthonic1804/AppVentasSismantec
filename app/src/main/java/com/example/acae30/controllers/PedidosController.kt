@@ -262,7 +262,10 @@ class PedidosController {
                             cdetalle.getFloat(18),
                             cdetalle.getString(19),
                             cdetalle.getInt(20),
-                            cdetalle.getString(21)
+                            cdetalle.getString(21),
+                            cdetalle.getFloat(22),
+                            cdetalle.getFloat(23),
+                            cdetalle.getString(24)
                         )
                         lista.add(detalle)
                     } while (cdetalle.moveToNext())
