@@ -85,6 +85,7 @@ class carga_datos : AppCompatActivity() {
         binding.imgbtnatras.setOnClickListener {
             val intento = Intent(this@carga_datos, Inicio::class.java)
             startActivity(intento)
+            finish()
         }
 
         binding.cvClientes.setOnClickListener {

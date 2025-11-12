@@ -453,7 +453,8 @@ class Inventario : AppCompatActivity() {
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
 
-        val idHojaCarga = preferences.getInt("idHojaCarga", 0)
+        val numeroHojaCarga = preferences.getInt("hojaCarga", 0)
+        val idVendedor = preferences.getInt("Idvendedor", 0)
 
         updateDialog.setContentView(R.layout.dialog_cancelar)
         tvUpdate = updateDialog.findViewById(R.id.tvUpdate)
@@ -467,7 +468,9 @@ class Inventario : AppCompatActivity() {
 
         tvUpdate.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
-                inventarioController.obtenerHojaRecargas(this@Inventario,idHojaCarga, vista!!)
+                //inventarioController.obtenerHojaRecargas(this@Inventario,idHojaCarga, vista!!)
+
+                inventarioController.obtenerInventarioHojaCarga(true, numeroHojaCarga, idVendedor, this@Inventario)
             }
             updateDialog.dismiss()
         }
