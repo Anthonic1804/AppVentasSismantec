@@ -3,10 +3,7 @@ package com.example.acae30
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.SolicitudDevolucionesController
 import com.example.acae30.databinding.ActivityAgregarProductosDevolucionBinding
@@ -121,6 +118,13 @@ class AgregarProductosDevolucion : AppCompatActivity() {
         startActivity(intento)
         finish()
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
+    }//anula el boton atras
 
 
 

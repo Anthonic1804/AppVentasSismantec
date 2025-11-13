@@ -5,18 +5,13 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivitySolicitudCargaMenuBinding
-import com.example.acae30.listas.AbonosAdapter
 import com.example.acae30.listas.SolicitudAdapter
-import com.example.acae30.modelos.Abono
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -83,9 +78,10 @@ class SolicitudCargaMenu : AppCompatActivity() {
             0,
             0,
             0,
-            "N",
+            "-- SELECCIONE --",
             "",
-            0f
+            0f,
+            0
         )
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -100,6 +96,7 @@ class SolicitudCargaMenu : AppCompatActivity() {
     private fun nuevaSolicitud(solicitud : Int){
         val intent = Intent(this, NuevaSolicitud::class.java)
         intent.putExtra("idSolicitud", solicitud)
+        intent.putExtra("proceso", "nuevo")
         startActivity(intent)
         finish()
     }
@@ -150,25 +147,8 @@ class SolicitudCargaMenu : AppCompatActivity() {
         )
         binding.listaSolicitud.layoutManager = mLayoutManager
         val adapter = SolicitudAdapter(lista, this@SolicitudCargaMenu){ i ->
-            /* if(pedido!!.Enviado != 1 && from == "visita"){
-                 val data = lista[i]
-                 val intento = Intent(this@Detallepedido, Producto_agregar::class.java)
-                 intento.putExtra("idpedidodetalle", data.Id)
-                 intento.putExtra("idpedido", data.Id_pedido)
-                 intento.putExtra("idcliente", idcliente)
-                 intento.putExtra("nombrecliente", nombre)
-                 intento.putExtra("idproducto", data.Id_producto)
-                 intento.putExtra("proviene", "editar")
-                 intento.putExtra("total_param", data.Total_iva)
-                 intento.putExtra("sucursalPosition", getSucursalPosition)
-                 intento.putExtra("facturaExportacion", FacturaExportacion)
-                 startActivity(intento)
-                 finish()
-             }*/
-            val data = lista[i]
-            if(data.enviado == 0){
-                mensajeEnvio(data.id)
-            }
+            val item = lista[i]
+            nuevaSolicitud(item.id)
         }
         binding.listaSolicitud.adapter = adapter
 
@@ -230,4 +210,11 @@ class SolicitudCargaMenu : AppCompatActivity() {
 
         dialog.show()
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
+    }//anula el boton atras
 }

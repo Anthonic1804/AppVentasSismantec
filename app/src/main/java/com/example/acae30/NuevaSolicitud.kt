@@ -9,26 +9,18 @@ import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivityNuevaSolicitudBinding
-import com.example.acae30.listas.PedidoDetalleAdapter
 import com.example.acae30.listas.SolicitudDetalleAdapter
-import com.example.acae30.modelos.DetallePedido
-import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
-import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDTO
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class NuevaSolicitud : AppCompatActivity() {
     private lateinit var binding : ActivityNuevaSolicitudBinding
@@ -42,6 +34,7 @@ class NuevaSolicitud : AppCompatActivity() {
     private var idVendedor = 0
 
     private var idSolicitud : Int = 0
+    private var proceso : String = ""
 
     var rutaSeleccionada : String = "-- SELECCIONE --"
     var idRutaSeleccionada : Int = 0
@@ -57,6 +50,12 @@ class NuevaSolicitud : AppCompatActivity() {
         idVendedor = preferencias!!.getInt("Idvendedor", 0)
 
         idSolicitud = intent.getIntExtra("idSolicitud", 0)
+        proceso = intent.getStringExtra("proceso").toString()
+
+
+        if(proceso.contains("nuevo")){
+            binding.btnImprimir.visibility = View.GONE
+        }
 
         cargarDetalle()
         cargarRutas()
@@ -66,7 +65,7 @@ class NuevaSolicitud : AppCompatActivity() {
         super.onStart()
 
         binding.btncancelar.setOnClickListener {
-            mensajeCancelar()
+            mensajeCancelar("CANCELAR")
         }
 
         binding.btnenviar.setOnClickListener {
@@ -84,12 +83,15 @@ class NuevaSolicitud : AppCompatActivity() {
 
                                 enviado = solicitudController.enviarSolicitudCargaAlServidor(this@NuevaSolicitud, idSolicitud)
 
+                                if(enviado){
+                                    //ACTUALIZANDO EL DETALLA DE LA SOLICITUD A ENVIADO = 1
+                                    solicitudController.actualizarEstadoAlDetalle(this@NuevaSolicitud, idSolicitud)
+
+                                }
+
                                 runOnUiThread {
                                     mensajeConfirmacion(enviado)
                                 }
-                            }
-                            CoroutineScope(Dispatchers.IO).launch {
-
                             }
                         }else{
                             Toast.makeText(this,"EL DETALLE NO SE PUEDE ENVIAR SIN PRODUCTOS", Toast.LENGTH_SHORT)
@@ -100,12 +102,10 @@ class NuevaSolicitud : AppCompatActivity() {
             }
         }
 
-        binding.txtEmpleado.setText(vendedor)
-
         binding.imgbtnadd.setOnClickListener {
             val intent = Intent(this, ListadoProductosSolicitud::class.java)
             intent.putExtra("idSolicitud", idSolicitud)
-            intent.putExtra("proceso", "agregar")
+            intent.putExtra("proceso", "nuevo")
             startActivity(intent)
             finish()
         }
@@ -139,31 +139,59 @@ class NuevaSolicitud : AppCompatActivity() {
 
         val fecha = funciones.getFechaHoraProceso()
         binding.fechaSolicitud.text = fecha.toString()
+
+        binding.btnGuardar.setOnClickListener {
+            mensajeCancelar("GUARDAR")
+        }
     }
 
     //FUNCION PARA CARGAR LAS RUTAS
     private fun cargarRutas(){
         this.lifecycleScope.launch {
             try{
-                val listaRustas = catalagosController.obtenerListadoRutaSQLite(this@NuevaSolicitud, "", "")
+                val solicitud = solicitudController.obtenerSolicitudCargaPorId(this@NuevaSolicitud, idSolicitud)
+                val rutaSeleccionada = solicitud!!.ruta
 
-                val rutas = ArrayAdapter(this@NuevaSolicitud, android.R.layout.simple_spinner_item, listaRustas)
-                rutas.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
+                val listaRustas = catalagosController.obtenerListadoRutaSQLite(this@NuevaSolicitud, "", "", true)
+                val rutas = ArrayAdapter<String>(this@NuevaSolicitud, android.R.layout.simple_spinner_dropdown_item)
+                rutas.add(rutaSeleccionada)
+                rutas.addAll(listaRustas)
                 binding.spRuta.adapter = rutas
+
             }catch (e: Exception){
-                throw Exception(e.message)
+                println("ERROR AL CARGAR LAS RUTAS A LA SOLICITUD DE CARGA -> " + e.message)
             }
         }
     }
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
-    private fun mensajeCancelar(){
+    private fun mensajeCancelar(tipo: String){
+
+        val mensaje = when(tipo){
+            "CANCELAR" -> "¿DESEA ELIMINAR EL PROCESO?"
+            else -> "¿DESEA GUARDAR EL PROCESO?"
+        }
+
         val dialog = AlertDialog.Builder(this)
             .setTitle("INFORMACION")
-            .setMessage("¿DESEA CANCELAR EL PROCESO?")
+            .setMessage(mensaje)
             .setPositiveButton("ACEPTAR") { view, _ ->
-                CoroutineScope(Dispatchers.IO).launch {
-                    solicitudController.eliminarSolicitud(this@NuevaSolicitud, idSolicitud)
+
+                when(tipo){
+                    "CANCELAR" -> {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            solicitudController.eliminarSolicitud(this@NuevaSolicitud, idSolicitud)
+                        }
+                    }
+                    else -> {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            solicitudController.actualizarEstadoGuardado(this@NuevaSolicitud, idSolicitud)
+                        }
+
+                        Toast.makeText(this, "SOLICITUD GUARDADA CORRECTAMENTE", Toast.LENGTH_SHORT)
+                            .show()
+
+                    }
                 }
                 view.dismiss()
                 menuSolicitudCarga()
@@ -179,7 +207,7 @@ class NuevaSolicitud : AppCompatActivity() {
     }
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
-    fun mensajeConfirmacion(enviado : Boolean){
+    private fun mensajeConfirmacion(enviado : Boolean){
         val mensaje = if(enviado){
             "SOLICITUD ENVIADA CORRECTAMENTE"
         }else{
@@ -191,6 +219,13 @@ class NuevaSolicitud : AppCompatActivity() {
             .setMessage(mensaje)
             .setPositiveButton("ACEPTAR") { view, _ ->
                 view.dismiss()
+
+                if(!enviado){
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        solicitudController.actualizarEstadoGuardado(this@NuevaSolicitud, idSolicitud)
+                    }
+                }
+
                 solicitudListado()
             }
             .setCancelable(false)
@@ -235,25 +270,27 @@ class NuevaSolicitud : AppCompatActivity() {
             false
         )
         binding.cvProductosSolicitados.layoutManager = mLayoutManager
-        val adapter = SolicitudDetalleAdapter(lista, this@NuevaSolicitud) { i ->
-           /* if(pedido!!.Enviado != 1 && from == "visita"){
-                val data = lista[i]
-                val intento = Intent(this@Detallepedido, Producto_agregar::class.java)
-                intento.putExtra("idpedidodetalle", data.Id)
-                intento.putExtra("idpedido", data.Id_pedido)
-                intento.putExtra("idcliente", idcliente)
-                intento.putExtra("nombrecliente", nombre)
-                intento.putExtra("idproducto", data.Id_producto)
-                intento.putExtra("proviene", "editar")
-                intento.putExtra("total_param", data.Total_iva)
-                intento.putExtra("sucursalPosition", getSucursalPosition)
-                intento.putExtra("facturaExportacion", FacturaExportacion)
-                startActivity(intento)
-                finish()
-            }*/
+        val adapter = SolicitudDetalleAdapter(lista, this@NuevaSolicitud) { indice ->
+            val item = lista[indice]
+            val intento = Intent(this@NuevaSolicitud, AgregarProductoSolicitud::class.java)
+            intento.putExtra("proceso", "editar")
+            intento.putExtra("idSolicitud", idSolicitud)
+            intento.putExtra("idProducto", item.id)
+            intento.putExtra("codigo", item.codigoProducto)
+            intento.putExtra("descripcion", item.descripcion)
+            intento.putExtra("cantidad", item.cantidad)
+            startActivity(intento)
+            finish()
+
         }
-        //binding.txttotal.text = "$" + "${String.format("%.4f", total)}"
         binding.cvProductosSolicitados.adapter = adapter
 
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
+    }//anula el boton atras
 }

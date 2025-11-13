@@ -656,7 +656,7 @@ class CatalogosController {
     }
 
     //FUNCION PARA OBTENER EL LISTADO DE RUTAS.
-    fun obtenerListadoRutaSQLite(context: Context, vista: String, ruta: String): ArrayList<String> {
+    fun obtenerListadoRutaSQLite(context: Context, vista: String, ruta: String, esSolicitudCarga: Boolean): ArrayList<String> {
         val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listadoRutas = ArrayList<String>()
 
@@ -666,7 +666,9 @@ class CatalogosController {
                 if(vista == "editar"){
                     listadoRutas.add(ruta)
                 }else{
-                    listadoRutas.add("-- SELECCIONE --")
+                    if(!esSolicitudCarga){
+                        listadoRutas.add("-- SELECCIONE --")
+                    }
                 }
 
                 cursor.moveToFirst()

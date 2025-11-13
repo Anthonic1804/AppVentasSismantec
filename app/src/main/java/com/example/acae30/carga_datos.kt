@@ -472,7 +472,7 @@ class carga_datos : AppCompatActivity() {
 
         this.lifecycleScope.launch {
             try{
-                val listaRustas = catalagosController.obtenerListadoRutaSQLite(this@carga_datos, "", "")
+                val listaRustas = catalagosController.obtenerListadoRutaSQLite(this@carga_datos, "", "", false)
 
                 val rutas = ArrayAdapter(this@carga_datos, android.R.layout.simple_spinner_item, listaRustas)
                 rutas.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)

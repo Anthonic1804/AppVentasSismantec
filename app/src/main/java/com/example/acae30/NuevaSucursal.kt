@@ -333,7 +333,7 @@ class NuevaSucursal : AppCompatActivity() {
     private fun cargarRutas(){
         this@NuevaSucursal.lifecycleScope.launch {
             try{
-                val listaRustas = catalogoController.obtenerListadoRutaSQLite(this@NuevaSucursal,"","")
+                val listaRustas = catalogoController.obtenerListadoRutaSQLite(this@NuevaSucursal,"","", false)
 
                 val rutas = ArrayAdapter(this@NuevaSucursal, android.R.layout.simple_spinner_item, listaRustas)
                 rutas.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)

@@ -1,11 +1,9 @@
 package com.example.acae30.controllers
 
-import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
-import androidx.core.content.contentValuesOf
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
 import com.example.acae30.modelos.Inventario
@@ -15,10 +13,8 @@ import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -262,6 +258,68 @@ class SolicitudRecargasController {
         return lista
     }
 
+    //FUNCION PARA OBTENER LA INFORMACION DEL PRODUCTO POR CODIGO
+    fun obtenerInformacionProductoPorCodigo(context: Context, codigoProducto: String) : Inventario?{
+
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        var producto : Inventario? = null
+
+        try {
+            val consutla = "SELECT * FROM inventario_solicitud_carga WHERE codigo='$codigoProducto'"
+            val cursor = bd.query(consutla)
+
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+
+                producto = Inventario(
+                    cursor.getInt(0),
+                    cursor.getString(1),
+                    cursor.getString(3),
+                    cursor.getString(4),
+                    cursor.getString(5),
+                    cursor.getFloat(6),
+                    cursor.getString(7),
+                    cursor.getInt(12),
+                    cursor.getFloat(8),
+                    cursor.getFloat(9),
+                    cursor.getFloat(17),
+                    cursor.getFloat(14),
+                    cursor.getFloat(15),
+                    cursor.getFloat(16),
+                    cursor.getString(27),
+                    cursor.getFloat(18),
+                    cursor.getFloat(13),
+                    cursor.getString(2)
+                )
+            }
+        }catch (e:Exception){
+            println("ERROR AL BUSCAR EL PRODUCTO POR ID -> " + e.message)
+        }
+
+        return producto
+    }
+
+    //FUNCION PARA ELIMINAR EL PRODUCTO DEL DETALLE DE LA SOLICITUD
+    fun eliminarProductoDelDetalle(context: Context, idSolicitud: Int, codigoProducto: String){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.execSQL("DELETE FROM solicitudCargaDetalle WHERE Id_solicitud_carga = $idSolicitud AND Codigo_Producto = '$codigoProducto'")
+        }catch (e:Exception){
+            println("ERROR AL ELIMINAR EL PRODUCTO DE LA SOLICITUD -> " + e.message)
+        }
+    }
+
+    //FUNCION PARA ACTUALIZAR EL PRODUCTO DEL DETALLE DE LA SOLICITUD
+    fun actualizarProductoDelDetalle(context: Context, idSolicitud: Int, codigoProducto: String, cantidad: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.execSQL("UPDATE solicitudCargaDetalle SET Cantidad = $cantidad, Total = (Precio_u_iva * $cantidad) " +
+                    "WHERE Id_solicitud_carga = $idSolicitud AND Codigo_Producto = '$codigoProducto'")
+        }catch (e:Exception){
+            println("ERROR AL ACTUALIZAR EL PRODUCTO DE LA SOLICITUD -> " + e.message)
+        }
+    }
+
     //FUNCION PARA CREAR UNA NUEVA SOLICITUD
     fun guardarNuevaSolicitud(context: Context , solicitud: SolicitudCarga) : Int{
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
@@ -272,6 +330,7 @@ class SolicitudRecargasController {
             data.put("Id_Empleado", solicitud.idEmpleado)
             data.put("Empleado", solicitud.empleado)
             data.put("Fecha", solicitud.fecha.toString())
+            data.put("Ruta", solicitud.ruta)
             idSolicitud = bd.insert("solicitudCarga", SQLiteDatabase.CONFLICT_REPLACE, data).toInt()
             bd.setTransactionSuccessful()
         }catch (e:Exception){
@@ -459,6 +518,26 @@ class SolicitudRecargasController {
         return  json
     }
 
+    //ACTUALIZAR ESTADO DEL DETALLE A ENVIADO
+    fun actualizarEstadoAlDetalle(context: Context, idSolicitud: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.execSQL("UPDATE solicitudCargaDetalle SET Enviado = 1 WHERE Id_solicitud_carga = $idSolicitud")
+        }catch (e:Exception){
+            println("ERROR AL ACTUALIZAR EL ESTADO DEL DETALLE -> " + e.message)
+        }
+    }
+
+    //FUNCION PARA ACTUALIZAR EL ESTADO GUARDADO DE LA SOLICITUD DE CARGA CUANDO NO ES ENVIADA O DA ERROR
+    fun actualizarEstadoGuardado(context: Context, idSolicitud: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.execSQL("UPDATE solicitudCarga SET Guardado = 1 WHERE Id = $idSolicitud")
+        }catch (e:Exception){
+            println("ERROR AL ACTUALIZAR EL ESTADO GUARDADO DE LA SOLICITUD -> " + e.message)
+        }
+    }
+
     //Funcion actualizar ruta de solicitud
     fun actualizarRuta(context: Context, idRuta: Int, ruta: String, idSolicitud: Int){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
@@ -577,7 +656,8 @@ class SolicitudRecargasController {
                         cursor.getInt(6),
                         cursor.getString(7),
                         cursor.getString(8),
-                        cursor.getFloat(9)
+                        cursor.getFloat(9),
+                        cursor.getInt(10)
                     )
                     listaSolicitud.add(listado)
                 }while (cursor.moveToNext())
@@ -587,6 +667,38 @@ class SolicitudRecargasController {
             println("ERROR AL OBTENER EL LISTADO DE SOLICITUDES -> ${e.message}")
         }
         return listaSolicitud
+    }
+
+    //FUNCION PARA OBTENER LA SOLICITUD POR ID
+    fun obtenerSolicitudCargaPorId(context: Context, idSolicitud: Int) : SolicitudCarga?{
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        var item : SolicitudCarga? = null
+
+        try {
+            val consulta = "SELECT * FROM solicitudCarga WHERE Id = $idSolicitud"
+            val cursor = bd.query(consulta)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    item = SolicitudCarga(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getInt(4),
+                        cursor.getInt(5),
+                        cursor.getInt(6),
+                        cursor.getString(7),
+                        cursor.getString(8),
+                        cursor.getFloat(9),
+                        cursor.getInt(10)
+                    )
+                }
+            }
+        }catch (e:Exception){
+            println("ERROR AL OBTENER LA SOLICITUD DE CARGA POR ID -> " + e.message)
+        }
+        return item
     }
 
 }

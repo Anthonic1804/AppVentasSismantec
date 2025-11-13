@@ -485,7 +485,7 @@ class NuevoCliente : AppCompatActivity() {
     private fun cargarRutas(){
         this@NuevoCliente.lifecycleScope.launch {
             try{
-                val listaRustas = catalogoController.obtenerListadoRutaSQLite(this@NuevoCliente, vista, ruta)
+                val listaRustas = catalogoController.obtenerListadoRutaSQLite(this@NuevoCliente, vista, ruta, false)
 
                 val rutas = ArrayAdapter(this@NuevoCliente, android.R.layout.simple_spinner_item, listaRustas)
                 rutas.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)

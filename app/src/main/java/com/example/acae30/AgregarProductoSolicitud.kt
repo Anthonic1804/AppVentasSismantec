@@ -6,14 +6,16 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivityAgregarProductoSolicitudBinding
+import com.example.acae30.modelos.Inventario
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AgregarProductoSolicitud : AppCompatActivity() {
 
@@ -42,17 +44,41 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         idProducto = intent.getIntExtra("idProducto", 0)
         codigo = intent.getStringExtra("codigo").toString()
         descripcion = intent.getStringExtra("descripcion").toString()
-        existencia = intent.getFloatExtra("existencia", 0f)
-        costo = intent.getFloatExtra("costo", 0f)
-        costoIva = intent.getFloatExtra("costoIva", 0f)
-        precio = intent.getFloatExtra("precio_u", 0f)
-        precio_iva = intent.getFloatExtra("precio_u_iva", 0f)
 
-        if(proceso == "agregar"){
+
+        if(proceso == "nuevo"){
             binding.btneliminar.visibility = View.GONE
+
+            existencia = intent.getFloatExtra("existencia", 0f)
+            costo = intent.getFloatExtra("costo", 0f)
+            costoIva = intent.getFloatExtra("costoIva", 0f)
+            precio = intent.getFloatExtra("precio_u", 0f)
+            precio_iva = intent.getFloatExtra("precio_u_iva", 0f)
+
         }else{
             binding.btnagregar.text = "ACTUALIZAR PRODUCTO"
             binding.btneliminar.visibility = View.VISIBLE
+            binding.txttituloproducto.text = "ACTUALIZAR PRODUCTO"
+
+            val cantidadActual = intent.getFloatExtra("cantidad", 0f).toInt().toString()
+            binding.txtcantidad.setText(cantidadActual)
+
+            //OBTENINDO EL REGISTRO DEL PRODUCTO POR ID
+            lifecycleScope.launch(Dispatchers.IO) {
+                val item : Inventario? = solicitudController.obtenerInformacionProductoPorCodigo(this@AgregarProductoSolicitud, codigo)
+                if(item != null){
+                    existencia = item.Existencia!!.toFloat()
+                    costo = item.Costo!!.toFloat()
+                    costoIva = item.costo_iva!!.toFloat()
+                    precio = item.Precio!!.toFloat()
+                    precio_iva = item.Precio_iva!!.toFloat()
+                }
+
+                withContext(Dispatchers.Main){
+                    totalizar(cantidadActual.toFloat())
+                }
+            }
+
         }
 
     }
@@ -62,7 +88,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
 
 
         binding.btnAtras.setOnClickListener {
-            mensajeCancelar()
+            mensajeCancelar("")
         }
 
         binding.txtcodigo.text = codigo
@@ -83,27 +109,40 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         })
 
         binding.btnagregar.setOnClickListener {
-            total = precio_iva * cantidad
-            val obj : SolicitudCargaDetalle = SolicitudCargaDetalle(
-                0,
-                idSolicitud,
-                idProducto,
-                codigo,
-                descripcion,
-                cantidad,
-                0f,
-                costo,
-                costoIva,
-                precio,
-                precio_iva,
-                total
-            )
+            when(proceso){
+                "nuevo" -> {agregarProducto()}
+                else -> {actualizarProducto()}
+            }
+        }
 
-            registrarDetalle(obj)
+        binding.btneliminar.setOnClickListener {
+            mensajeCancelar("ELIMINAR")
         }
 
     }
 
+    //FUNCION QUE GENERA EL OBJETO DETALLE
+    private fun agregarProducto(){
+        total = precio_iva * cantidad
+        val obj : SolicitudCargaDetalle = SolicitudCargaDetalle(
+            0,
+            idSolicitud,
+            idProducto,
+            codigo,
+            descripcion,
+            cantidad,
+            0f,
+            costo,
+            costoIva,
+            precio,
+            precio_iva,
+            total
+        )
+
+        registrarDetalle(obj)
+    }
+
+    //FUNCION QUE REGISTRA EL DETALLE EN LA TBL
     private fun registrarDetalle(obj: SolicitudCargaDetalle) {
         val encontrado = solicitudController.validarProductoDetalle(this@AgregarProductoSolicitud, obj)
         var registro : Boolean = false
@@ -122,8 +161,34 @@ class AgregarProductoSolicitud : AppCompatActivity() {
 
             val intent = Intent(this, NuevaSolicitud::class.java)
             intent.putExtra("idSolicitud", idSolicitud)
+            intent.putExtra("proceso", proceso)
             startActivity(intent)
             finish()
+        }
+    }
+
+    //FUNCION PARA ACTUALIZAR EL PRODUCTO ENE L DETALLE
+    private fun actualizarProducto(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            val cantidad = binding.txtcantidad.text.trim().toString()
+            solicitudController.actualizarProductoDelDetalle(this@AgregarProductoSolicitud, idSolicitud, codigo, cantidad.toInt())
+            withContext(Dispatchers.Main){
+                Toast.makeText(this@AgregarProductoSolicitud, "PRODUCTO ACTUALIZADO CORRECTAMENTE", Toast.LENGTH_SHORT)
+                    .show()
+                nuevaSolicitud()
+            }
+        }
+    }
+
+    //FUNCION PARA ELIMINAR EL PRODUCTO DEL DETALLE DE LA SOLICITUD
+    private fun eliminarProducto(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            solicitudController.eliminarProductoDelDetalle(this@AgregarProductoSolicitud, idSolicitud, codigo)
+            withContext(Dispatchers.Main){
+                Toast.makeText(this@AgregarProductoSolicitud, "PRODUCTO ELIMINADO CORRECTAMENTE", Toast.LENGTH_SHORT)
+                    .show()
+                nuevaSolicitud()
+            }
         }
     }
 
@@ -169,13 +234,27 @@ class AgregarProductoSolicitud : AppCompatActivity() {
     }
 
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
-    private fun mensajeCancelar(){
+    private fun mensajeCancelar(tipo: String){
+
+        val mensaje = when(tipo){
+            "ELIMINAR" -> "¿DESEA ELIMINAR EL PRODUCTO?"
+            else -> "¿DESEA CANCELAR EL PROCESO?"
+        }
+
         val dialog = AlertDialog.Builder(this)
             .setTitle("INFORMACION")
-            .setMessage("¿DESEA CANCELAR EL PROCESO?")
+            .setMessage(mensaje)
             .setPositiveButton("ACEPTAR") { view, _ ->
                 view.dismiss()
-                listadoInventario()
+
+                if(tipo.contains("ELIMINAR")){
+                    eliminarProducto()
+                }else{
+                    when(proceso){
+                        "editar" -> {nuevaSolicitud()}
+                        else -> {listadoInventario()}
+                    }
+                }
             }
             .setNegativeButton("CANCELAR"){view, _ ->
                 view.dismiss()
@@ -194,4 +273,19 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+    private fun nuevaSolicitud(){
+        val intento = Intent(this@AgregarProductoSolicitud, NuevaSolicitud::class.java)
+        intento.putExtra("proceso", "nuevo")
+        intento.putExtra("idSolicitud", idSolicitud)
+        startActivity(intento)
+        finish()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
+    }//anula el boton atras
 }

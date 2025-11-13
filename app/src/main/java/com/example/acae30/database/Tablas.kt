@@ -610,7 +610,8 @@ class Tablas {
                 "Id_ruta INTEGER NOT NULL DEFAULT 0," +
                 "Ruta VARCHAR(50) NOT NULL DEFAULT ''," +
                 "Estado VARCHAR(25) NOT NULL DEFAULT 'EMITIDO'," +
-                "NumHoja NUMERIC(18,0) NOT NULL DEFAULT 0)"
+                "NumHoja NUMERIC(18,0) NOT NULL DEFAULT 0," +
+                "Guardado INTEGER NOT NULL DEFAULT 0)"
     }
 
     //TABLA SOLICITUD DE CARGA DETALLE
@@ -626,7 +627,8 @@ class Tablas {
                 "Costo_iva NUMERIC(18,4) NOT NULL," +
                 "Precio_u NUMERIC(18,4) NOT NULL," +
                 "Precio_u_iva NUMERIC(18,4) NOT NULL," +
-                "Total NUMERIC(18,4) NOT NULL)"
+                "Total NUMERIC(18,4) NOT NULL," +
+                "Enviado INT NOT NULL DEFAULT 0)"
     }
 
     //TABLA PARA SOLICITUD DE DEVOLUCION

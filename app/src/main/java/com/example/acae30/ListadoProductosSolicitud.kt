@@ -7,11 +7,8 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,8 +18,6 @@ import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivityListadoProductosSolicitudBinding
 import com.example.acae30.listas.InventarioAdapter
 import com.example.acae30.modelos.Inventario
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class ListadoProductosSolicitud : AppCompatActivity() {
@@ -254,6 +249,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
     private fun nuevaSolicitud(){
         val intent = Intent(this, NuevaSolicitud::class.java)
         intent.putExtra("idSolicitud", idSolicitud)
+        intent.putExtra("proceso", proceso)
         startActivity(intent)
         finish()
     }
@@ -264,4 +260,11 @@ class ListadoProductosSolicitud : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
+    }//anula el boton atras
 }
