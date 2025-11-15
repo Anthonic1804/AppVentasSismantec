@@ -88,15 +88,16 @@ class SolicitudCargaMenu : AppCompatActivity() {
             idSolicitud = solicitudController.guardarNuevaSolicitud(this@SolicitudCargaMenu, obj)
 
             withContext(Dispatchers.Main){
-                nuevaSolicitud(idSolicitud)
+                nuevaSolicitud(idSolicitud, 0)
             }
         }
     }
 
-    private fun nuevaSolicitud(solicitud : Int){
+    private fun nuevaSolicitud(solicitud : Int, idServidorSolicitud: Int){
         val intent = Intent(this, NuevaSolicitud::class.java)
         intent.putExtra("idSolicitud", solicitud)
         intent.putExtra("proceso", "nuevo")
+        intent.putExtra("idServidorSolicitud", idServidorSolicitud)
         startActivity(intent)
         finish()
     }
@@ -148,7 +149,7 @@ class SolicitudCargaMenu : AppCompatActivity() {
         binding.listaSolicitud.layoutManager = mLayoutManager
         val adapter = SolicitudAdapter(lista, this@SolicitudCargaMenu){ i ->
             val item = lista[i]
-            nuevaSolicitud(item.id)
+            nuevaSolicitud(item.id, item.idServidor)
         }
         binding.listaSolicitud.adapter = adapter
 

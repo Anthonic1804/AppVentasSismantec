@@ -9,9 +9,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.R
-import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
-import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
 
 class SolicitudAdapter(
     private var list: ArrayList<SolicitudCarga>, private var context: Context,
@@ -28,7 +26,7 @@ class SolicitudAdapter(
 
     override fun onBindViewHolder(vista: SolicitudAdapter.MyViewHolder, position: Int) {
         val data = list[position]
-        vista.empleado.text = data.empleado
+        vista.ruta.text = data.ruta
         vista.fecha.text = data.fecha
         vista.estado.text = data.estado
         vista.hoja.text = data.numHoja.toInt().toString()
@@ -49,14 +47,14 @@ class SolicitudAdapter(
     override fun getItemCount(): Int = list.size
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        internal var empleado: TextView
+        internal var ruta: TextView
         internal var fecha: TextView
         internal var card : CardView
         internal var estado : TextView
         internal var hoja : TextView
 
         init {
-            empleado = itemView.findViewById(R.id.tvEmpleadoSolicitud)
+            ruta = itemView.findViewById(R.id.tvRutaSolicitud)
             fecha = itemView.findViewById(R.id.tvFechaSolicitud)
             card = itemView.findViewById(R.id.colorCard)
             estado = itemView.findViewById(R.id.txtEstadoSolicitud)

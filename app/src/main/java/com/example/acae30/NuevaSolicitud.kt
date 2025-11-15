@@ -34,6 +34,7 @@ class NuevaSolicitud : AppCompatActivity() {
     private var idVendedor = 0
 
     private var idSolicitud : Int = 0
+    private var idServidorSolicitud : Int = 0
     private var proceso : String = ""
 
     var rutaSeleccionada : String = "-- SELECCIONE --"
@@ -50,6 +51,7 @@ class NuevaSolicitud : AppCompatActivity() {
         idVendedor = preferencias!!.getInt("Idvendedor", 0)
 
         idSolicitud = intent.getIntExtra("idSolicitud", 0)
+        idServidorSolicitud = intent.getIntExtra("idServidorSolicitud", 0)
         proceso = intent.getStringExtra("proceso").toString()
 
 
@@ -75,23 +77,22 @@ class NuevaSolicitud : AppCompatActivity() {
                         .show()
                 }
                 else -> {
-                    val lista = solicitudController.obtenerDetalleSolicitud(this@NuevaSolicitud, idSolicitud)
+                    val lista = solicitudController.obtenerDetalleSolicitudNoEnviado(this@NuevaSolicitud, idSolicitud)
                     if (lista != null) {
                         if(lista.size > 0){
                             this@NuevaSolicitud.lifecycleScope.launch {
-                                var enviado = false
 
-                                enviado = solicitudController.enviarSolicitudCargaAlServidor(this@NuevaSolicitud, idSolicitud)
+                                val enviado = solicitudController.enviarSolicitudCargaAlServidor(this@NuevaSolicitud, idSolicitud)
 
                                 if(enviado){
                                     //ACTUALIZANDO EL DETALLA DE LA SOLICITUD A ENVIADO = 1
                                     solicitudController.actualizarEstadoAlDetalle(this@NuevaSolicitud, idSolicitud)
 
                                 }
-
                                 runOnUiThread {
                                     mensajeConfirmacion(enviado)
                                 }
+
                             }
                         }else{
                             Toast.makeText(this,"EL DETALLE NO SE PUEDE ENVIAR SIN PRODUCTOS", Toast.LENGTH_SHORT)
@@ -106,6 +107,7 @@ class NuevaSolicitud : AppCompatActivity() {
             val intent = Intent(this, ListadoProductosSolicitud::class.java)
             intent.putExtra("idSolicitud", idSolicitud)
             intent.putExtra("proceso", "nuevo")
+            intent.putExtra("idServidorSolicitud", idServidorSolicitud)
             startActivity(intent)
             finish()
         }
@@ -279,6 +281,8 @@ class NuevaSolicitud : AppCompatActivity() {
             intento.putExtra("codigo", item.codigoProducto)
             intento.putExtra("descripcion", item.descripcion)
             intento.putExtra("cantidad", item.cantidad)
+            intento.putExtra("enviado", item.enviado)
+            intento.putExtra("idServidorSolicitud", idServidorSolicitud)
             startActivity(intento)
             finish()
 

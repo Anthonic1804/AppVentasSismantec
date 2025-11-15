@@ -13,6 +13,7 @@ import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.itextpdf.text.pdf.AcroFields.Item
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -422,6 +423,9 @@ class SolicitudRecargasController {
         try {
             val objecto =
                 Gson().toJson(solicitudJson)
+
+            println(objecto)
+
             val ruta: String = servidor + "Solicitudes/registrar_solicitud"
             val url = URL(ruta)
 
@@ -491,6 +495,7 @@ class SolicitudRecargasController {
         json.addProperty("punto_venta", puntoVenta)
         json.addProperty("id_ruta", solicitud.id_ruta)
         json.addProperty("ruta", solicitud.ruta)
+        json.addProperty("idServidor", solicitud.idServidor)
 
         val detalle = JsonArray()
         for(i in 0..<solicitud.detalle!!.size){
@@ -516,6 +521,148 @@ class SolicitudRecargasController {
         json.add("detalle", detalle)
 
         return  json
+    }
+
+    //Funcion para eliminar un producto de la solicitud en el servidor
+    suspend fun eliminarProductoEnSolicitudServidor(context: Context, idSolicitudServidor: Int, codigoProducto: String) : Boolean{
+        var eliminado : Boolean = false
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+
+        try {
+            val ruta: String = servidor + "Solicitudes/eliminar_producto_solicitud/" + idSolicitudServidor.toString()  +"/" +  codigoProducto.toString()
+            val url = URL(ruta)
+
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 10000
+                    requestMethod = "DELETE"
+                    when(responseCode){
+                        200 -> {
+                            BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                                try {
+                                    val respuesta = StringBuffer()
+                                    var inpuline = it.readLine()
+                                    while (inpuline != null) {
+                                        respuesta.append(inpuline)
+                                        inpuline = it.readLine()
+                                    }
+                                    it.close()
+
+                                    val res: JSONObject = JSONObject(respuesta.toString())
+                                    if (res.getInt("error") == 0) {
+                                        eliminado = true
+                                    }
+                                } catch (e: Exception) {
+                                    println("ERROR DE LECTURA EN LA RESPUESTA 201 " + e.message)
+                                    eliminado = false
+                                }
+                            }
+                        }
+                        else -> {
+                            println("ERRR AL ELIMINAR EL PRODUCTO EN LA SOLICITUD -> $responseCode")
+                            eliminado = false
+                        }
+                    }
+                } catch (e: Exception) {
+                    println("INESTABILIDAD DE CONEXION")
+                    eliminado = false
+                }
+            }
+        }catch (e:Exception){
+            println("ERROR AL CONECTAR AL SERVIDOR PARA ELIMINAR EL PRODUCTO -> " + e.message)
+            eliminado = false
+        }
+
+        return  eliminado
+    }
+
+    //Funcion para actualizar un producto de la solicitud en el servidor
+    suspend fun actualizarProductoEnSolicitudServidor(context: Context, item: SolicitudCargaDetalle) : Boolean{
+        var actualizado : Boolean = false
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+        val detalleJson = convertirDetalleSolicitudJSON(context, item)
+
+        try {
+            val objecto =
+                Gson().toJson(detalleJson)
+
+            val ruta: String = servidor + "Solicitudes/actualizar_producto_solicitud"
+            val url = URL(ruta)
+
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 10000
+                    setRequestProperty(
+                        "Content-Type",
+                        "application/json;charset=utf-8"
+                    )
+                    requestMethod = "PUT"
+                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+                    or.write(objecto)
+                    or.flush()
+                    if (responseCode == 200) {
+                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                            try {
+                                val respuesta = StringBuffer()
+                                var inpuline = it.readLine()
+                                while (inpuline != null) {
+                                    respuesta.append(inpuline)
+                                    inpuline = it.readLine()
+                                }
+                                it.close()
+
+                                val res: JSONObject = JSONObject(respuesta.toString())
+                                if (res.getInt("error") == 0) {
+                                    actualizado = true
+                                }
+                            } catch (e: Exception) {
+                                println("ERROR DE LECTURA EN LA RESPUESTA 201 " + e.message)
+                                actualizado = false
+                            }
+                        }
+                    }else {
+                        println("ERROR NO SE LOGRO ACTUALIZAR EL PRODUCTO EN EL SERVIDOR -> $responseCode -> $responseMessage")
+                        actualizado = false
+                    }
+
+                } catch (e: Exception) {
+                    println("INESTABILIDAD DE CONEXION")
+                    actualizado = false
+                }
+            }
+        } catch (e: Exception) {
+            println("PROBLEMAS DE CONEXION CON EL SERVIDOR")
+            actualizado = false
+        }
+
+        return actualizado
+    }
+
+    //Funcion convertir detalle solicitud del producto en JSON para enviar al servidor
+    private fun convertirDetalleSolicitudJSON(context: Context, item: SolicitudCargaDetalle) : JsonObject{
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val json = JsonObject()
+
+        json.addProperty("id", item.id)
+        json.addProperty("id_solicitud_carga", item.idSolicitudCarga)
+        json.addProperty("id_producto", item.idProducto)
+        json.addProperty("codigo_producto", item.codigoProducto)
+        json.addProperty("descripcion", item.descripcion)
+        json.addProperty("cantidad", item.cantidad)
+        json.addProperty("fraccion", item.fraccion)
+        json.addProperty("costo", item.costo)
+        json.addProperty("costo_iva", item.costoIva)
+        json.addProperty("precio_u", item.precio)
+        json.addProperty("precio_u_iva", item.precio_iva)
+        json.addProperty("total", item.total)
+
+        return json
     }
 
     //ACTUALIZAR ESTADO DEL DETALLE A ENVIADO
@@ -567,20 +714,22 @@ class SolicitudRecargasController {
         try {
             val consulta = "SELECT * FROM solicitudCarga WHERE Id = $idSolicitud"
             val cursor = bd.query(consulta)
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                solicitud = SolicitudCargaDTO(
-                    cursor.getInt(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    "",
-                    cursor.getInt(6),
-                    cursor.getString(7),
-                    null
-                )
-                cursor.close()
-                val cdetalle = obtenerDetalleSolicitud(context, idSolicitud)
-                solicitud.detalle = cdetalle
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    solicitud = SolicitudCargaDTO(
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        "",
+                        cursor.getInt(6),
+                        cursor.getString(7),
+                        cursor.getInt(5),
+                        null
+                    )
+                    val cdetalle = obtenerDetalleSolicitudNoEnviado(context, idSolicitud)
+                    solicitud!!.detalle = cdetalle
+                }
             }
         }catch (e: Exception){
             println("ERROR AL OBTENER EL ENCABEZADO DE LA SOLICITUDA -> ${e.message}")
@@ -588,33 +737,71 @@ class SolicitudRecargasController {
         return solicitud
     }
 
+    //FUNCION PARA MOSTRAR EL DETALLE DE LA SOLICITUD NO ENVIADO AL SERVIDOR
+    fun obtenerDetalleSolicitudNoEnviado(context: Context, idSolicitud : Int) : ArrayList<SolicitudCargaDetalle> {
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        val detalleSolicitud = ArrayList<SolicitudCargaDetalle>()
+        try{
+            val consulta = "SELECT * FROM solicitudCargaDetalle WHERE Id_solicitud_carga = $idSolicitud AND Enviado = 0"
+            val cursor = bd.query(consulta)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    do {
+                        val detalle = SolicitudCargaDetalle(
+                            cursor.getInt(0),
+                            cursor.getInt(1),
+                            cursor.getInt(2),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getFloat(5),
+                            0f,
+                            cursor.getFloat(6),
+                            cursor.getFloat(7),
+                            cursor.getFloat(8),
+                            cursor.getFloat(9),
+                            cursor.getFloat(10),
+                            cursor.getInt(11)
+                        )
+                        detalleSolicitud.add(detalle)
+                    }while (cursor.moveToNext())
+                }
+            }
+        }catch (e:Exception){
+            println("ERROR AL OBTENER EL DETALLE DE LA SOLICITUD -> ${e.message}")
+        }
+        return detalleSolicitud
+    }
+
     //FUNCION PARA MOSTRAR EL DETALLE DE LA SOLICITUD
-    fun obtenerDetalleSolicitud(context: Context, idSolicitud : Int) : ArrayList<SolicitudCargaDetalle>?{
+    fun obtenerDetalleSolicitud(context: Context, idSolicitud : Int) : ArrayList<SolicitudCargaDetalle> {
         val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val detalleSolicitud = ArrayList<SolicitudCargaDetalle>()
         try{
             val consulta = "SELECT * FROM solicitudCargaDetalle WHERE Id_solicitud_carga = $idSolicitud"
             val cursor = bd.query(consulta)
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                do {
-                    val detalle = SolicitudCargaDetalle(
-                        cursor.getInt(0),
-                        cursor.getInt(1),
-                        cursor.getInt(2),
-                        cursor.getString(3),
-                        cursor.getString(4),
-                        cursor.getFloat(5),
-                        0f,
-                        cursor.getFloat(6),
-                        cursor.getFloat(7),
-                        cursor.getFloat(8),
-                        cursor.getFloat(9),
-                        cursor.getFloat(10)
-                    )
-                    detalleSolicitud.add(detalle)
-                }while (cursor.moveToNext())
-                cursor.close()
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    do {
+                        val detalle = SolicitudCargaDetalle(
+                            cursor.getInt(0),
+                            cursor.getInt(1),
+                            cursor.getInt(2),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getFloat(5),
+                            0f,
+                            cursor.getFloat(6),
+                            cursor.getFloat(7),
+                            cursor.getFloat(8),
+                            cursor.getFloat(9),
+                            cursor.getFloat(10),
+                            cursor.getInt(11)
+                        )
+                        detalleSolicitud.add(detalle)
+                    }while (cursor.moveToNext())
+                }
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER EL DETALLE DE LA SOLICITUD -> ${e.message}")
@@ -623,7 +810,7 @@ class SolicitudRecargasController {
     }
 
     //FUNCION PARA ACTUALIZAR EL ESTADO DE LA SOLICITUD
-    fun actualizarEstadoSolicitud(context: Context, idSolicitud : Int, idServidor : Int) : Boolean{
+    private fun actualizarEstadoSolicitud(context: Context, idSolicitud : Int, idServidor : Int) : Boolean{
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         var actualizado : Boolean = false
 
@@ -643,25 +830,26 @@ class SolicitudRecargasController {
         val listaSolicitud = ArrayList<SolicitudCarga>()
         try {
             val cursor = bd.query("SELECT * FROM solicitudCarga ORDER BY id DESC LIMIT 20")
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                do {
-                    val listado = SolicitudCarga(
-                        cursor.getInt(0),
-                        cursor.getInt(1),
-                        cursor.getString(2),
-                        cursor.getString(3),
-                        cursor.getInt(4),
-                        cursor.getInt(5),
-                        cursor.getInt(6),
-                        cursor.getString(7),
-                        cursor.getString(8),
-                        cursor.getFloat(9),
-                        cursor.getInt(10)
-                    )
-                    listaSolicitud.add(listado)
-                }while (cursor.moveToNext())
-                cursor.close()
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    do {
+                        val listado = SolicitudCarga(
+                            cursor.getInt(0),
+                            cursor.getInt(1),
+                            cursor.getString(2),
+                            cursor.getString(3),
+                            cursor.getInt(4),
+                            cursor.getInt(5),
+                            cursor.getInt(6),
+                            cursor.getString(7),
+                            cursor.getString(8),
+                            cursor.getFloat(9),
+                            cursor.getInt(10)
+                        )
+                        listaSolicitud.add(listado)
+                    }while (cursor.moveToNext())
+                }
             }
         }catch (e:Exception){
             println("ERROR AL OBTENER EL LISTADO DE SOLICITUDES -> ${e.message}")

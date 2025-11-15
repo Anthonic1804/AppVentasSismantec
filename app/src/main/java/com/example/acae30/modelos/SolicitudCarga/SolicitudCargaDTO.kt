@@ -7,5 +7,6 @@ class SolicitudCargaDTO (
     val punto_venta : String,
     val id_ruta : Int,
     val ruta : String,
+    var idServidor: Int,
     var detalle : ArrayList<SolicitudCargaDetalle>?
 )

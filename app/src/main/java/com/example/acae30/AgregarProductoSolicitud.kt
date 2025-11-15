@@ -33,6 +33,8 @@ class AgregarProductoSolicitud : AppCompatActivity() {
     private var cantidad : Float = 0f
     private var total : Float = 0f
     private var proceso : String = ""
+    private var enviado : Int = 0
+    private var idServidorSolicitud : Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,9 +43,11 @@ class AgregarProductoSolicitud : AppCompatActivity() {
 
         proceso = intent.getStringExtra("proceso").toString()
         idSolicitud = intent.getIntExtra("idSolicitud", 0)
+        idServidorSolicitud = intent.getIntExtra("idServidorSolicitud", 0)
         idProducto = intent.getIntExtra("idProducto", 0)
         codigo = intent.getStringExtra("codigo").toString()
         descripcion = intent.getStringExtra("descripcion").toString()
+        enviado = intent.getIntExtra("enviado", 0)
 
 
         if(proceso == "nuevo"){
@@ -136,7 +140,8 @@ class AgregarProductoSolicitud : AppCompatActivity() {
             costoIva,
             precio,
             precio_iva,
-            total
+            total,
+            0
         )
 
         registrarDetalle(obj)
@@ -162,6 +167,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
             val intent = Intent(this, NuevaSolicitud::class.java)
             intent.putExtra("idSolicitud", idSolicitud)
             intent.putExtra("proceso", proceso)
+            intent.putExtra("idServidorSolicitud", idServidorSolicitud)
             startActivity(intent)
             finish()
         }
@@ -171,11 +177,52 @@ class AgregarProductoSolicitud : AppCompatActivity() {
     private fun actualizarProducto(){
         lifecycleScope.launch(Dispatchers.IO) {
             val cantidad = binding.txtcantidad.text.trim().toString()
-            solicitudController.actualizarProductoDelDetalle(this@AgregarProductoSolicitud, idSolicitud, codigo, cantidad.toInt())
-            withContext(Dispatchers.Main){
-                Toast.makeText(this@AgregarProductoSolicitud, "PRODUCTO ACTUALIZADO CORRECTAMENTE", Toast.LENGTH_SHORT)
-                    .show()
-                nuevaSolicitud()
+            when(enviado){
+                1 -> {
+                    val total = precio_iva * cantidad.toFloat()
+
+                    val obj : SolicitudCargaDetalle = SolicitudCargaDetalle(
+                        0,
+                        idServidorSolicitud,
+                        idProducto,
+                        codigo,
+                        descripcion,
+                        cantidad.toFloat(),
+                        0f,
+                        costo,
+                        costoIva,
+                        precio,
+                        precio_iva,
+                        total,
+                        enviado
+                    )
+
+                    //ACTUALIZAMOS EN SERVIDOR
+                    val actualizado = solicitudController.actualizarProductoEnSolicitudServidor(this@AgregarProductoSolicitud, obj)
+
+                    if(actualizado){
+                        solicitudController.actualizarProductoDelDetalle(this@AgregarProductoSolicitud, idSolicitud, codigo, cantidad.toInt())
+                        withContext(Dispatchers.Main){
+                            Toast.makeText(this@AgregarProductoSolicitud, "PRODUCTO ACTUALIZADO CORRECTAMENTE", Toast.LENGTH_SHORT)
+                                .show()
+                            nuevaSolicitud()
+                        }
+                    }else{
+                        withContext(Dispatchers.Main){
+                            Toast.makeText(this@AgregarProductoSolicitud, "ERROR AL ACTUALIZAR EL PRODUCTO", Toast.LENGTH_SHORT)
+                                .show()
+                            nuevaSolicitud()
+                        }
+                    }
+                }
+                else -> {
+                    solicitudController.actualizarProductoDelDetalle(this@AgregarProductoSolicitud, idSolicitud, codigo, cantidad.toInt())
+                    withContext(Dispatchers.Main){
+                        Toast.makeText(this@AgregarProductoSolicitud, "PRODUCTO ACTUALIZADO CORRECTAMENTE", Toast.LENGTH_SHORT)
+                            .show()
+                        nuevaSolicitud()
+                    }
+                }
             }
         }
     }
@@ -183,11 +230,32 @@ class AgregarProductoSolicitud : AppCompatActivity() {
     //FUNCION PARA ELIMINAR EL PRODUCTO DEL DETALLE DE LA SOLICITUD
     private fun eliminarProducto(){
         lifecycleScope.launch(Dispatchers.IO) {
-            solicitudController.eliminarProductoDelDetalle(this@AgregarProductoSolicitud, idSolicitud, codigo)
-            withContext(Dispatchers.Main){
-                Toast.makeText(this@AgregarProductoSolicitud, "PRODUCTO ELIMINADO CORRECTAMENTE", Toast.LENGTH_SHORT)
-                    .show()
-                nuevaSolicitud()
+            when(enviado){
+                1 -> {
+                    val eliminado = solicitudController.eliminarProductoEnSolicitudServidor(this@AgregarProductoSolicitud, idServidorSolicitud, codigo)
+                    if(eliminado){
+                        solicitudController.eliminarProductoDelDetalle(this@AgregarProductoSolicitud, idSolicitud, codigo)
+                        withContext(Dispatchers.Main){
+                            Toast.makeText(this@AgregarProductoSolicitud, "PRODUCTO ELIMINADO CORRECTAMENTE", Toast.LENGTH_SHORT)
+                                .show()
+                            nuevaSolicitud()
+                        }
+                    }else{
+                        withContext(Dispatchers.Main){
+                            Toast.makeText(this@AgregarProductoSolicitud, "ERROR AL ELIMINAR EL PRODUCTO", Toast.LENGTH_SHORT)
+                                .show()
+                            nuevaSolicitud()
+                        }
+                    }
+                }
+                else -> {
+                    solicitudController.eliminarProductoDelDetalle(this@AgregarProductoSolicitud, idSolicitud, codigo)
+                    withContext(Dispatchers.Main){
+                        Toast.makeText(this@AgregarProductoSolicitud, "PRODUCTO ELIMINADO CORRECTAMENTE", Toast.LENGTH_SHORT)
+                            .show()
+                        nuevaSolicitud()
+                    }
+                }
             }
         }
     }
@@ -270,6 +338,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         val intent = Intent(this, ListadoProductosSolicitud::class.java)
         intent.putExtra("proceso", proceso)
         intent.putExtra("idSolicitud", idSolicitud)
+        intent.putExtra("idServidorSolicitud", idServidorSolicitud)
         startActivity(intent)
         finish()
     }
@@ -278,6 +347,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         val intento = Intent(this@AgregarProductoSolicitud, NuevaSolicitud::class.java)
         intento.putExtra("proceso", "nuevo")
         intento.putExtra("idSolicitud", idSolicitud)
+        intento.putExtra("idServidorSolicitud", idServidorSolicitud)
         startActivity(intento)
         finish()
     }

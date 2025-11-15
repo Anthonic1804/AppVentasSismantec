@@ -13,6 +13,7 @@ data class SolicitudCargaDetalle (
     val costoIva : Float,
     val precio : Float,
     val precio_iva : Float,
-    val total : Float
+    val total : Float,
+    val enviado : Int
 
 )

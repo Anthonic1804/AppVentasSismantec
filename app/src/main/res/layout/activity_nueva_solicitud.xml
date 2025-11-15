@@ -132,7 +132,7 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/cvProductosSolicitados"
                 android:layout_width="0dp"
-                android:layout_height="275dp"
+                android:layout_height="350dp"
                 android:background="@drawable/spinner_bg"
                 android:padding="@dimen/margin_4dp"
                 app:layout_constraintEnd_toEndOf="parent"

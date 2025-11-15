@@ -258,7 +258,7 @@ class InventarioController {
     }
 
     //FUNCION PARA ALMACENAR LOS PRECIOS EN LA BASE DE DATOS
-    fun saveInventarioPreciosDatabase(json: JSONArray, context: Context) {
+    private fun saveInventarioPreciosDatabase(json: JSONArray, context: Context) {
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.beginTransaction()

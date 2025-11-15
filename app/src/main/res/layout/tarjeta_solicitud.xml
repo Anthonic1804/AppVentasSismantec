@@ -58,7 +58,7 @@
                     android:layout_marginTop="@dimen/margin_8dp"/>
 
                 <TextView
-                    android:id="@+id/tvEmpleadoSolicitud"
+                    android:id="@+id/tvRutaSolicitud"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/margin_default_card_4dp"

@@ -29,7 +29,7 @@ class DevolucionAdapter (
 
     override fun onBindViewHolder(vista: DevolucionAdapter.MyViewHolder, position: Int) {
         val data = list[position]
-        vista.empleado.text = data.Vendedor
+        vista.ruta.text = data.Ruta
         vista.fecha.text = data.Fecha
         vista.header.text = "SOLICITUD DE DEVOLUCION"
         vista.estado.visibility = View.GONE
@@ -52,7 +52,7 @@ class DevolucionAdapter (
     override fun getItemCount(): Int = list.size
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        internal var empleado: TextView
+        internal var ruta: TextView
         internal var fecha: TextView
         internal var card : CardView
         internal var header : TextView
@@ -61,7 +61,7 @@ class DevolucionAdapter (
         internal  var txtNumHoja : TextView
 
         init {
-            empleado = itemView.findViewById(R.id.tvEmpleadoSolicitud)
+            ruta = itemView.findViewById(R.id.tvRutaSolicitud)
             fecha = itemView.findViewById(R.id.tvFechaSolicitud)
             card = itemView.findViewById(R.id.colorCard)
             header = itemView.findViewById(R.id.txtcodigo)
