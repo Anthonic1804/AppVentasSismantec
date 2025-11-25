@@ -205,7 +205,8 @@ class Tablas {
                 "precio_u2_iva REAL NOT NULL," +
                 "precio_viñeta REAL NOT NULL," +
                 "precio_viñeta_iva REAL NOT NULL," +
-                "fecha_inventario TEXT NOT NULL)"
+                "fecha_inventario TEXT NOT NULL," +
+                "validadoHoja INTEGER NOT NULL DEFAULT 0)"
 
     } //tabla inventario
 

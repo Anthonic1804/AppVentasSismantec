@@ -236,6 +236,25 @@ class Funciones {
         }
     }
 
+    //FUNCION PARA LIMPIAR HOJA DE CARGA
+    fun limpiarHojaCarga(context: Context){
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val db = obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            db.execSQL("DELETE FROM Inventario")
+            db.execSQL("DELETE FROM inventario_precios")
+            db.execSQL("DELETE FROM inventario_unidades")
+            db.execSQL("DELETE FROM hoja_carga")
+            db.execSQL("DELETE FROM hoja_carga_detalle")
+        }catch (e:Exception){
+            throw Exception("ERROR AL LIMPIAR LA HOJA DE CARGA -> " + e.message)
+        }
+
+        preferences.edit {
+            remove("hojaCarga")
+        }
+    }
+
     //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
     fun mensaje(context: Context, mensaje: String){
         val dialog = AlertDialog.Builder(context)

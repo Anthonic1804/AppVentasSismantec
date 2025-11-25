@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -42,8 +43,6 @@ class SolicitudCargaMenu : AppCompatActivity() {
         vendedor =  preferencias!!.getString("Vendedor", "").toString()
         idVendedor = preferencias!!.getInt("Idvendedor", 0)
 
-        binding.btnsincronizar.visibility = View.GONE
-
     }
 
     override fun onStart() {
@@ -64,6 +63,15 @@ class SolicitudCargaMenu : AppCompatActivity() {
         binding.nuevaSolicitud.setOnClickListener {
             insertarNuevaSoliciud()
         }
+
+        binding.btnsincronizar.setOnClickListener {
+            sincronizarSolicitud()
+        }
+    }
+
+    //FUNCION PARA SINCRONIZAR LA SOLICITUD
+    private fun sincronizarSolicitud(){
+        mensajeActualizarListado()
     }
 
     //INSERTANDO NUEVA SOLICITUD
@@ -88,16 +96,17 @@ class SolicitudCargaMenu : AppCompatActivity() {
             idSolicitud = solicitudController.guardarNuevaSolicitud(this@SolicitudCargaMenu, obj)
 
             withContext(Dispatchers.Main){
-                nuevaSolicitud(idSolicitud, 0)
+                nuevaSolicitud(idSolicitud, 0, "EMITIDO")
             }
         }
     }
 
-    private fun nuevaSolicitud(solicitud : Int, idServidorSolicitud: Int){
+    private fun nuevaSolicitud(solicitud : Int, idServidorSolicitud: Int, estado: String){
         val intent = Intent(this, NuevaSolicitud::class.java)
         intent.putExtra("idSolicitud", solicitud)
         intent.putExtra("proceso", "nuevo")
         intent.putExtra("idServidorSolicitud", idServidorSolicitud)
+        intent.putExtra("estado", estado)
         startActivity(intent)
         finish()
     }
@@ -149,61 +158,38 @@ class SolicitudCargaMenu : AppCompatActivity() {
         binding.listaSolicitud.layoutManager = mLayoutManager
         val adapter = SolicitudAdapter(lista, this@SolicitudCargaMenu){ i ->
             val item = lista[i]
-            nuevaSolicitud(item.id, item.idServidor)
+
+            if(item.estado.contains("EMITIDO")){
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val procesada = solicitudController.validarSolicitudProcesadaEnServidor(this@SolicitudCargaMenu, item.idServidor)
+                    if(procesada){
+                        withContext(Dispatchers.Main){
+                            Toast.makeText(this@SolicitudCargaMenu, "SOLICITUD YA HA SIDO PROCESADA, FAVOR ACTUALICE", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }else{
+                        nuevaSolicitud(item.id, item.idServidor, item.estado)
+                    }
+                }
+            }else{
+                nuevaSolicitud(item.id, item.idServidor, item.estado)
+            }
         }
         binding.listaSolicitud.adapter = adapter
 
     }
 
-    //Funcion para envio de solicitud
-    private fun enviarSolicitudCargaServidor(idSolicitudCarga: Int){
-        this@SolicitudCargaMenu.lifecycleScope.launch {
-            var enviado = false
-
-            enviado = solicitudController.enviarSolicitudCargaAlServidor(this@SolicitudCargaMenu, idSolicitudCarga)
-
-            runOnUiThread {
-                mensajeConfirmacion(enviado)
-            }
-        }
-    }
-
     //FUNCION DE MENSAJES DE ENVIO
-    fun mensajeEnvio(idSolicitudCarga : Int){
+    private fun mensajeActualizarListado(){
         val dialog = AlertDialog.Builder(this)
             .setTitle("INFORMACION")
-            .setMessage("¿DESEA ENVIAR LA SOLICITUD DE CARGA AL SERVIDOR?")
+            .setMessage("¿DESEA ACTUALIZAR EL LISTADO DE SOLICITUDES?")
             .setPositiveButton("ACEPTAR") { view, _ ->
                 view.dismiss()
-                enviarSolicitudCargaServidor(idSolicitudCarga)
+                mostrarDatos()
             }
             .setNegativeButton("CANCELAR"){view, _ ->
                 view.dismiss()
-            }
-            .setCancelable(false)
-            .setIcon(R.drawable.ic_information)
-            .create()
-
-        dialog.show()
-    }
-
-    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
-    fun mensajeConfirmacion(enviado : Boolean){
-        val mensaje = if(enviado){
-            "SOLICITUD ENVIADA CORRECTAMENTE"
-        }else{
-            "ERROR PROBLEMAS DE CONEXION \n" +
-                    " SOLICITUD ALMACENADA, TRATE DE ENVIAR MAS TARDE"
-        }
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("INFORMACION")
-            .setMessage(mensaje)
-            .setPositiveButton("ACEPTAR") { view, _ ->
-                view.dismiss()
-                val intent = Intent(this, SolicitudCargaMenu::class.java)
-                startActivity(intent)
-                finish()
             }
             .setCancelable(false)
             .setIcon(R.drawable.ic_information)

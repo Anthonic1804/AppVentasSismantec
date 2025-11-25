@@ -36,6 +36,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
     private var proceso : String = ""
     private var idDevolucion : Int = 0
     private var idServidorSolicitud : Int = 0
+    private var estado: String = ""
 
     private var vista : String = ""
 
@@ -53,6 +54,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
         idServidorSolicitud = intent.getIntExtra("idServidorSolicitud", 0)
         idDevolucion = intent.getIntExtra("idDevolucion", 0)
         proceso = intent.getStringExtra("proceso").toString()
+        estado = intent.getStringExtra("estado").toString()
 
         vista = intent.getStringExtra("vista").toString()
 
@@ -156,6 +158,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                                     intento.putExtra("precio_u", list[position].Precio!!.toFloat())
                                     intento.putExtra("precio_u_iva", list[position].Precio_iva!!.toFloat())
                                     intento.putExtra("idServidorSolicitud", idServidorSolicitud)
+                                    intento.putExtra("estado", estado)
                                     startActivity(intento)
                                     finish()
                                 }
@@ -203,6 +206,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                                     intento.putExtra("precio_u", list[position].Precio!!.toFloat())
                                     intento.putExtra("precio_u_iva", list[position].Precio_iva!!.toFloat())
                                     intento.putExtra("idServidorSolicitud", idServidorSolicitud)
+                                    intento.putExtra("estado", estado)
                                     startActivity(intento)
                                     finish()
                                 }
@@ -255,6 +259,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
         intent.putExtra("idSolicitud", idSolicitud)
         intent.putExtra("proceso", proceso)
         intent.putExtra("idServidorSolicitud", idServidorSolicitud)
+        intent.putExtra("estado", estado)
         startActivity(intent)
         finish()
     }

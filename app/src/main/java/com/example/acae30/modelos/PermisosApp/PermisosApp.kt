@@ -19,6 +19,7 @@ data class PermisosApp(
     var pMantto_Clientes: Boolean,
     var pImprimirTKVenta: Boolean,
     var solicitudCargaSinExistencia: Boolean,
+    var validarHojaCarga: Boolean,
 
     //Documento Permitidos
     var docFactura: Boolean,
@@ -45,5 +46,8 @@ data class PermisosApp(
     var numItemRemision: Int,
 
     //Modo de configuracion Local o Ruta
-    var tipoVentaLocal : Boolean
+    var tipoVentaLocal : Boolean,
+
+    //Modo Desarrollo
+    var modoDesarrollo : Boolean
 )

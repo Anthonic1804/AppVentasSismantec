@@ -299,8 +299,9 @@ class InventarioController {
 
     //FUNCIONES PARA HOJA DE CARGA
     //FUNCION PARA OBTENER EL INVENTARIO DESDE LA HOJA DE CARGA DE ESCARRSA
-    suspend fun obtenerInventarioHojaCarga(esRecarga: Boolean, numeroHoja: Int, id_vendedor: Int, context: Context) {
+    suspend fun obtenerInventarioHojaCarga(esRecarga: Boolean, numeroHoja: Int, id_vendedor: Int, context: Context) : Int {
 
+        var hojaRegistrada: Int = 0
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
 
@@ -347,6 +348,8 @@ class InventarioController {
                                             //INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA
                                             //ALMACENANDO INVENTARIO NUEVO
                                             saveInventarioDatabase(res, context, numeroHoja,false)
+
+                                            hojaRegistrada = 1
                                         }else{
                                             val productosActualizados = hojaController.compararActualizarInventarioYHojaDeCarga(context, res)
                                             if(productosActualizados > 0){
@@ -376,9 +379,11 @@ class InventarioController {
                                         withContext(Dispatchers.Main){
                                             funciones.mensaje(context, "ERROR: NO SE ENCONTRO LA HOJA DE CARGA")
                                         }
+                                        hojaRegistrada = 0
                                     }
                                 } catch (e: Exception) {
                                     throw Exception(e.message)
+                                    hojaRegistrada = 0
                                 }
                             }
                         }
@@ -386,22 +391,27 @@ class InventarioController {
                             withContext(Dispatchers.Main){
                                 funciones.mensaje(context, "ERROR: NO SE ENCONTRO LA HOJA DE CARGA")
                             }
+                            hojaRegistrada = 0
                         }
                         else -> {
                             println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR")
+                            hojaRegistrada = 0
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main){
                         funciones.mensaje(context, "ERROR -> " + e.message)
                     }
+                    hojaRegistrada = 0
                 }
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main){
                 funciones.mensaje(context, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
             }
+            hojaRegistrada = 0
         }
+        return hojaRegistrada
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
@@ -413,6 +423,12 @@ class InventarioController {
         var idHojaCarga : Int = 0
         var idRutaHojaCarga : Int = 0
         var rutaHojaCarga : String = ""
+        val validarHoja = preferences.getBoolean("validarHojaCarga", false)
+        var productoValidado = if(validarHoja){ 0 }else{ 1 }
+
+        if(esRecarga){
+            productoValidado = 1
+        }
 
         try {
             bd.beginTransaction()
@@ -456,6 +472,7 @@ class InventarioController {
                 data.put("precio_viñeta", funciones.validateJsonIsNullFloat(dato, "precio_viñeta"))
                 data.put("precio_viñeta_iva", funciones.validateJsonIsNullFloat(dato, "precio_viñeta_iva"))
                 data.put("fecha_inventario", LocalDate.now().toString())
+                data.put("validadoHoja", productoValidado)
 
                 idHojaCarga = funciones.validateJsonIsNullInt(dato, "idHojaCarga")
                 idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")
@@ -603,9 +620,9 @@ class InventarioController {
             }
 
             //funciones.mostrarMensaje("INVENTARIO CARGADO CORRECTAMENTE", context, view)
-            withContext(Dispatchers.Main){
-                funciones.mensaje(context, "INVENTARIO CARGADO CORRECTAMENTE")
-            }
+//            withContext(Dispatchers.Main){
+//                funciones.mensaje(context, "INVENTARIO CARGADO CORRECTAMENTE")
+//            }
         }
 
     }

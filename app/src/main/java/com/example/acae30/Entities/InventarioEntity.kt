@@ -34,5 +34,6 @@ data class InventarioEntity(
     val precio_u2_iva: Float,
     val precio_viñeta: Float,
     val precio_viñeta_iva: Float,
-    val fecha_inventario: String
+    val fecha_inventario: String,
+    val validadoHoja: Int
 )

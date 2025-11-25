@@ -14,6 +14,7 @@ import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
@@ -53,6 +54,7 @@ class carga_datos : AppCompatActivity() {
     private var instancia = "CONFIG_SERVIDOR"
     private lateinit var binding : ActivityCargaDatosBinding
     private var rutaClientes : String = "T"
+    private var validarHoja: Boolean = false
 
 
     private lateinit var inventarioDao: InventarioDao
@@ -76,6 +78,7 @@ class carga_datos : AppCompatActivity() {
         idVendedor = preferences.getInt("Idvendedor", 0)
 
         rutaClientes = preferences.getString("cargarClientesPorRuta", "T").toString()
+        validarHoja = preferences.getBoolean("validarHojaCarga", false)
 
     }
 
@@ -419,6 +422,8 @@ class carga_datos : AppCompatActivity() {
 
     private fun cargarInventarioDesdeHoja(numero: String) {
         CoroutineScope(Dispatchers.IO).launch {
+            var hojaRegistrada: Int = 0
+
             delay(1000)
 
             withContext(Dispatchers.Main){
@@ -427,7 +432,7 @@ class carga_datos : AppCompatActivity() {
 
             try {
                 //OBTENIENDO INVENTARIO DESDE HOJA DE CARGA
-                inventarioController.obtenerInventarioHojaCarga(false, numero.toInt(), idVendedor, this@carga_datos)
+                hojaRegistrada = inventarioController.obtenerInventarioHojaCarga(false, numero.toInt(), idVendedor, this@carga_datos)
             }catch (e:Exception){
                 println("ERROR AL CARGAR LA HOJA DE INVENTARIO " + e.message)
             }
@@ -451,8 +456,21 @@ class carga_datos : AppCompatActivity() {
                 alert!!.changeText("INVENTARIO CARGADO EXITOSAMENTE")
             }
 
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                mensajeInventarioHoja("INVENTARIO REGISTRADO CORRECTAMENTE", hojaRegistrada)
+            }
+
         }
 
+    }
+
+    //FUNCION PARA VALIDAR HOJA
+    private fun validarHojaCarga(){
+        val intent = Intent(this@carga_datos, ValidarHojaCarga::class.java)
+        startActivity(intent)
+        finish()
     }
 
     //FUNCION PARA MOSTRAR EL DIALOG DE CARGA DE CLIENTES POR RUTA
@@ -740,7 +758,8 @@ class carga_datos : AppCompatActivity() {
                             precio_u2_iva = it.precio_u2_iva ?: 0f,
                             precio_viñeta = it.precio_viñeta ?: 0f,
                             precio_viñeta_iva = it.precio_viñeta_iva ?: 0f,
-                            fecha_inventario = LocalDate.now().toString()
+                            fecha_inventario = LocalDate.now().toString(),
+                            validadoHoja = 1
                         )
                     }
 
@@ -893,7 +912,7 @@ class carga_datos : AppCompatActivity() {
         }
     }
 
-    fun messageAsync(mensaje: String) {
+    private fun messageAsync(mensaje: String) {
         if (alert != null) {
             runOnUiThread {
                 alert!!.changeText(mensaje)
@@ -1066,5 +1085,25 @@ class carga_datos : AppCompatActivity() {
 
     //   finish()
     }//anula el boton atras
+
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    private fun mensajeInventarioHoja(mensaje: String, hojaRegistrada: Int){
+        val dialog = AlertDialog.Builder(this@carga_datos)
+            .setTitle("INFORMACION")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                view.dismiss()
+
+                if(validarHoja && hojaRegistrada == 1){
+                    validarHojaCarga()
+                }
+
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
 
 }

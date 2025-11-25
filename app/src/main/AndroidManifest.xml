@@ -11,15 +11,16 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-
-    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-
-    <!-- Para Android 12 (API 31 - S) en adelante -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" /> <!-- Para Android 12 (API 31 - S) en adelante -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-
     <uses-permission android:name="android.permission.USB_PERMISSION" />
+
     <uses-feature android:name="android.hardware.usb.host" />
 
     <application
@@ -33,10 +34,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-
-
+        <activity
+            android:name=".ValidarHojaCarga"
+            android:exported="false" />
         <!-- Broadcast para permisos USB -->
-        <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+        <meta-data
+            android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
             android:value="true" />
 
         <activity
@@ -58,95 +61,82 @@
 
         <activity
             android:name=".AgregarProductoSolicitud"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".ListadoProductosSolicitud"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".NuevaSolicitud"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".SolicitudCargaMenu"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".NuevoGasto"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".MenuGasto"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".NuevaSucursal"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".Sucursales"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".NuevoCliente"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".ReporteLiquidacion"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".MenuReportes"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".NuevoAbono"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".AbonosCxc"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".HistoricoPedidoDetalles"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".HistoricoPedidos"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".PreciosAutorizados"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".NuevoPrecioAutorizado"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".firmarPagare"
-            android:exported="false"/>
-        <activity
-            android:name=".Visita"/>
-        <activity
-            android:name=".CuentasDetalle"/>
-        <activity
-            android:name=".Cuentas_list"/>
-        <activity
-            android:name=".Inventariodetalle"/>
+            android:exported="false" />
+        <activity android:name=".Visita" />
+        <activity android:name=".CuentasDetalle" />
+        <activity android:name=".Cuentas_list" />
+        <activity android:name=".Inventariodetalle" />
         <activity
             android:name=".ClientesDetalle"
-            android:parentActivityName=".Clientes"/>
-        <activity
-            android:name=".Producto_agregar"/>
-        <activity
-            android:name=".verPagare"/>
-        <activity
-            android:name=".Detallepedido"/>
+            android:parentActivityName=".Clientes" />
+        <activity android:name=".Producto_agregar" />
+        <activity android:name=".verPagare" />
+        <activity android:name=".Detallepedido" />
         <activity
             android:name=".Pedido"
             android:label="@string/title_activity_pedido"
             android:parentActivityName=".Inicio"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".Producto_detalle"/>
+        <activity android:name=".Producto_detalle" />
         <activity
             android:name=".Inventario"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".Clientes"/>
-        <activity
-            android:name=".Configuracion"/>
-        <activity
-            android:name=".carga_datos"/>
-        <activity
-            android:name=".Inicio"/>
-        <activity
-            android:name=".Login" />
+        <activity android:name=".Clientes" />
+        <activity android:name=".Configuracion" />
+        <activity android:name=".carga_datos" />
+        <activity android:name=".Inicio" />
+        <activity android:name=".Login" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -158,9 +148,9 @@
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
             </intent-filter>
 
-            <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />
-
         </activity>
 
         <provider

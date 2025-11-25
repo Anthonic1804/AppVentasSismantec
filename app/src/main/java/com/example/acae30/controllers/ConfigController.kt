@@ -67,6 +67,7 @@ class ConfigController {
                                         pMantto_Clientes = dato.getBoolean("p_Mantto_Clientes"),
                                         pImprimirTKVenta = dato.getBoolean("p_Imprimir_TK_Venta"),
                                         solicitudCargaSinExistencia = dato.getBoolean("solicitud_Carga_SinExistencia"),
+                                        validarHojaCarga = dato.optBoolean("validacionHojaCarga", false),
                                         docFactura = dato.getBoolean("doc_Factura"),
                                         docCreFiscal = dato.getBoolean("doc_CreFiscal"),
                                         docRecibo = dato.getBoolean("doc_Recibo"),
@@ -83,7 +84,8 @@ class ConfigController {
                                         numItemCreFiscal = dato.optInt("numItemCreFiscal",100),
                                         numItemRecibo = dato.optInt("numItemRecibo", 100),
                                         numItemRemision = dato.optInt("numItemRemision", 100),
-                                        tipoVentaLocal = dato.optBoolean("tipoVentaLocal", false)
+                                        tipoVentaLocal = dato.optBoolean("tipoVentaLocal", false),
+                                        modoDesarrollo = dato.optBoolean("validacionHojaCarga", false)
                                     )
 
                                     confirmarPagareObligatorio(item, context)
@@ -129,6 +131,7 @@ class ConfigController {
             putBoolean("P_Mantto_Clientes", obj.pMantto_Clientes)
             putBoolean("P_Imprimir_TK_Venta", obj.pImprimirTKVenta)
             putBoolean("Solicitud_Carga_SinExistencia", obj.solicitudCargaSinExistencia)
+            putBoolean("validarHojaCarga", obj.validarHojaCarga)
 
             //Documentos de Facturacion Permitidos
             putBoolean("Doc_Factura", obj.docFactura)
@@ -160,6 +163,9 @@ class ConfigController {
             //IMPRESORA POR DEFECTO
             putString("tipoImpresora", "BT")
             putString("impresorIntegrado", "sinNombre")
+
+            //Modo Desarrollo
+            putBoolean("modoDesarrollo", obj.modoDesarrollo)
 
         }
     }
@@ -208,6 +214,9 @@ class ConfigController {
             //eliminado tipo de impresora
             remove("tipoImpresora")
             remove("impresorIntegrado")
+
+            remove("validarHojaCarga")
+            remove("modoDesarrollo")
         }
     }
 }

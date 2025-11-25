@@ -5,11 +5,18 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
+import com.example.acae30.modelos.InventarioHojaValidar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.Reader
+import java.net.HttpURLConnection
+import java.net.URL
 import java.time.LocalDate
 
 class HojaCargaController {
@@ -154,6 +161,147 @@ class HojaCargaController {
         }catch (e:Exception){
             println("ERROR AL INSERTAR EL PRODUCTO EN HOJA DETALLE -> " + e.message)
         }
+    }
+
+    //FUNCION PARA OBTENER LA INFORMACION DEL PRODUCTO POR CODIGO O POR NOMBRE
+    fun validarProductoPorString(context: Context, busqueda: String): ArrayList<InventarioHojaValidar>{
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        val lista = ArrayList<InventarioHojaValidar>()
+
+        val query: String = if (busqueda.isNotEmpty()) {
+            """
+            SELECT * FROM inventario 
+            WHERE Descripcion LIKE '%' || ? || '%' OR Codigo LIKE '%' || ? || '%'
+            """
+        } else {
+            "SELECT * FROM inventario LIMIT 60"
+        }
+
+
+        try {
+            val cursor = if (busqueda.isNotEmpty()) {
+                base.query(query, arrayOf(busqueda, busqueda))
+            } else {
+                base.query(query)
+            }
+            cursor.use {
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+                    do {
+                        val arreglo = InventarioHojaValidar(
+                            cursor.getInt(0),
+                            cursor.getString(1),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getString(5),
+                            cursor.getFloat(6),
+                            cursor.getString(7),
+                            cursor.getInt(12),
+                            cursor.getFloat(8),
+                            cursor.getFloat(9),
+                            cursor.getFloat(17),
+                            cursor.getFloat(14),
+                            cursor.getFloat(15),
+                            cursor.getFloat(16),
+                            cursor.getString(27),
+                            cursor.getFloat(18),
+                            cursor.getFloat(13),
+                            cursor.getString(2),
+                            cursor.getInt(28)
+                        )
+                        lista.add(arreglo)
+                    } while (cursor.moveToNext())
+                    //cursor.close()
+                }
+            }
+        }catch (e:Exception){
+            println("ERROR AL REALIZAR LA BUSQUEDA EN INVENTARIO -> ${e.message}")
+        }
+        return lista
+    }
+
+    //FUNCION PARA ACTUALIZAR ESTADO DE PRODUCTO EN VALIDACION DE HOJA DE CARGA
+    fun actualizarProductoValidacionHojaCarga(context: Context, codigoInventario: String, validado: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.execSQL("UPDATE inventario SET validadoHoja = $validado WHERE codigo = '$codigoInventario'")
+        }catch (e:Exception){
+            println("ERROR AL ACTUALIZAR EL ESTADO DEL PRODUCO AL VALIDAR HOJA CARGA -> " + e.message)
+        }
+    }
+
+    //FUNCION PARA VERIFICAR SI TODOS LOS PRODUCTO YA FUERON VALIDADOS
+    fun obtenerProductosSinValidar(context: Context) : Int{
+        var productoSinValidar: Int = 0
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        try {
+            val consulta = "SELECT * FROM inventario WHERE validadoHoja = 0"
+            val cursor = bd.query(consulta)
+            if(cursor.count > 0){
+                productoSinValidar = 1
+            }
+        }catch (e:Exception){
+            println("ERROR AL OBTENER LOS PRODUCTO SIN VALIDAR -> " + e.message)
+            productoSinValidar = 0
+        }
+        return productoSinValidar
+    }
+
+    //FUNCION PARA VALIDAR HOJA DE CARGAR EN EL SERVIDOR
+    suspend fun validarHojaCargaServidor(context: Context, numeroHoja: Int, idVendedor: Int) : Boolean{
+
+        var aceptada: Boolean = false
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+        val ruta = servidor + "Inventario/validarHojaCarga/${numeroHoja.toString()}/${idVendedor.toString()}"
+        val url = URL(ruta)
+
+        with(withContext(Dispatchers.IO){
+            url.openConnection()
+        } as HttpURLConnection){
+
+            try {
+                connectTimeout = 10000
+                requestMethod = "GET"
+
+                when(responseCode){
+                    200 -> {
+                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                            try {
+                                val respuesta = StringBuffer()
+                                var inputline = it.readLine()
+                                while(inputline != null){
+                                    respuesta.append(inputline)
+                                    inputline = it.readLine()
+                                }
+                                it.close()
+                                val res: JSONObject = JSONObject(respuesta.toString())
+                                if(res.getString("respuesta").contains("HOJA_ACTUALIZADA")){
+                                    aceptada = true
+                                }
+                            }catch (e:Exception){
+                                println("ERROR AL OBTENER LA RESPUESTA DEL SERVIDOR -> " + e.message)
+                                aceptada = false
+                            }
+                        }
+                    }
+                    404-> {
+                        println("HOJA NO ENCONTRADA")
+                        aceptada = false
+                    }
+                    else -> {
+                        println("ERROR DE SERVIDOR")
+                        aceptada = false
+                    }
+                }
+
+            }catch (e:Exception){
+                println("ERROR AL PROCESAR LA CONEXION CON EL SERVIDOR -> " + e.message)
+                aceptada = false
+            }
+
+        }
+        return  aceptada
     }
 
 }

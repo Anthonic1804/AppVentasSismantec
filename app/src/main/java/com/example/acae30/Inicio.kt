@@ -18,6 +18,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
+import com.example.acae30.controllers.HojaCargaController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.databinding.ActivityInicioBinding
 import com.google.android.material.navigation.NavigationView
@@ -45,6 +47,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
     private var pedidosController = PedidosController()
+    private var hojaController = HojaCargaController()
 
     //VARIABLES PARA UN SLIDE MENU
     private lateinit var  drawerLayout: DrawerLayout
@@ -55,7 +58,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var puerto = 0
 
     //private var inventarioController = InventarioController()
-    var fechaInventario : String = ""
+    private var fechaInventario : String = ""
 
     //Acceso a modulos de la app
     private var M_Historio: Boolean = false
@@ -84,6 +87,11 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         //-----------------
         CoroutineScope(Dispatchers.IO).launch {
             pedidosController.eliminarPedidoConError(this@Inicio)
+
+            val productoSinValidar = hojaController.obtenerProductosSinValidar(this@Inicio)
+            if(productoSinValidar > 0){
+                funciones!!.limpiarHojaCarga(this@Inicio)
+            }
         }
 
         funciones = Funciones()
@@ -137,6 +145,10 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             navigationView.menu.setGroupVisible(R.id.group_gasto, false)
         }
 
+        if(!M_Abonos){
+            navigationView.menu.setGroupVisible(R.id.group_abonos, false)
+        }
+
         if(!M_Reportes){
             navigationView.menu.setGroupVisible(R.id.group_reporte, false)
         }
@@ -160,7 +172,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
 
         // COMPROBAR SI AUN ES VALIDO EL INICIO DE SESION
         if (isConnected()) {
-            GlobalScope.launch(Dispatchers.IO) {
+            lifecycleScope.launch(Dispatchers.IO) {
                 comprobarSesion()
             }
         }
@@ -463,7 +475,6 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             R.id.nav_gasto -> gastos()
             R.id.nav_abonos -> abonos()
             R.id.nav_reporte -> reportes()
-            R.id.nav_configuracion -> configuracion()
             R.id.nav_salir -> salir()
         }
         //drawerLayout.closeDrawer(GravityCompat.START)
@@ -501,12 +512,6 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         finish()
     }
 
-    private fun configuracion(){
-        val intento = Intent(this@Inicio, Configuracion::class.java)
-        startActivity(intento)
-        finish()
-    }
-
     private fun reportes(){
         val intento = Intent(this@Inicio, MenuReportes::class.java)
         startActivity(intento)
@@ -520,14 +525,9 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     }
 
     private fun abonos(){
-        if(!M_Abonos){
-            Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
-                .show()
-        }else{
-            val intento = Intent(this@Inicio, AbonosCxc::class.java)
-            startActivity(intento)
-            finish()
-        }
+        val intento = Intent(this@Inicio, AbonosCxc::class.java)
+        startActivity(intento)
+        finish()
     }
 
     private fun solicitudCarga() {

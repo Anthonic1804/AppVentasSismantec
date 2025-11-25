@@ -35,6 +35,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
     private var proceso : String = ""
     private var enviado : Int = 0
     private var idServidorSolicitud : Int = 0
+    private var estado: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +48,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         idProducto = intent.getIntExtra("idProducto", 0)
         codigo = intent.getStringExtra("codigo").toString()
         descripcion = intent.getStringExtra("descripcion").toString()
+        estado = intent.getStringExtra("estado").toString()
         enviado = intent.getIntExtra("enviado", 0)
 
 
@@ -168,6 +170,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
             intent.putExtra("idSolicitud", idSolicitud)
             intent.putExtra("proceso", proceso)
             intent.putExtra("idServidorSolicitud", idServidorSolicitud)
+            intent.putExtra("estado", estado)
             startActivity(intent)
             finish()
         }
@@ -339,6 +342,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         intent.putExtra("proceso", proceso)
         intent.putExtra("idSolicitud", idSolicitud)
         intent.putExtra("idServidorSolicitud", idServidorSolicitud)
+        intent.putExtra("estado", estado)
         startActivity(intent)
         finish()
     }
@@ -348,6 +352,7 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         intento.putExtra("proceso", "nuevo")
         intento.putExtra("idSolicitud", idSolicitud)
         intento.putExtra("idServidorSolicitud", idServidorSolicitud)
+        intento.putExtra("estado", estado)
         startActivity(intento)
         finish()
     }

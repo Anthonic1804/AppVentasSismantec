@@ -265,10 +265,22 @@ class Producto_agregar : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int,
                                         id: Long) {
-                unidadActual = when(binding.spunidad.selectedItem.toString()){
-                    "UNIDAD" -> "UNI"
-                    "FRACCION" -> "FRA"
-                    else -> binding.spunidad.selectedItem.toString()
+                when(binding.spunidad.selectedItem.toString()){
+                    "UNIDAD" -> {
+                        unidadActual = "UNI"
+                        calcularExitenciaSegunUnidadSeleccionada(unidadActual)
+                        equivaleUni = 0f
+                        equivaleFra = 0f
+                    }
+                    "FRACCION" -> {
+                        unidadActual = "FRA"
+                        calcularExitenciaSegunUnidadSeleccionada(unidadActual)
+                        equivaleUni = 0f
+                        equivaleFra = 0f
+                    }
+                    else -> {
+                        unidadActual = binding.spunidad.selectedItem.toString()
+                    }
                 }
                 cargarListadoPrecios(unidadActual)
 
@@ -283,7 +295,22 @@ class Producto_agregar : AppCompatActivity() {
 
                             uniEquivale = unidadMedida.unidades
 
-                            equivaleUni = when(uniEquivale){
+                            when(uniEquivale){
+                                "UNI" -> {
+                                    equivaleUni = unidadMedida.equivale
+                                    calcularExitenciaSegunUnidadSeleccionada(uniEquivale!!)
+                                }
+                                "FRA" -> {
+                                    equivaleFra = unidadMedida.equivale
+                                    calcularExitenciaSegunUnidadSeleccionada(uniEquivale!!)
+                                }
+                                else -> {
+                                    equivaleUni = 0f
+                                    equivaleFra = 0f
+                                }
+                            }
+
+                            /*equivaleUni = when(uniEquivale){
                                 "UNI" -> {unidadMedida.equivale}
                                 else -> {0f}
                             }
@@ -291,7 +318,7 @@ class Producto_agregar : AppCompatActivity() {
                             equivaleFra = when(uniEquivale){
                                 "FRA" -> {unidadMedida.equivale}
                                 else -> {0f}
-                            }
+                            }*/
                         }
                     }
                 }
@@ -337,8 +364,13 @@ class Producto_agregar : AppCompatActivity() {
                         Totalizar(cantidad)
                         binding.txtexistencia.text = "${datos.Existencia}"
                         binding.txtExistenciasFra.text = "${datos.Existencia_u}"
-                        existenciaProducto = datos.Existencia!!.toFloat()
-//                       txtprecio!!.text="$"+"${String.format("%.2f", datos!!.Precio_iva)}"
+
+
+                        //VALIDANDO PARA VENTA DE FACCIONES
+                        //existenciaProducto = datos.Existencia!!.toFloat()
+
+                        calcularExitenciaSegunUnidadSeleccionada(unidadActual)
+
 
                         // Agregar precios a lista
 
@@ -409,6 +441,20 @@ class Producto_agregar : AppCompatActivity() {
 
 
         CambioCantidad()
+    }
+
+    //FUNCION PARA VALIDAR LA CANTIDAD
+    private fun calcularExitenciaSegunUnidadSeleccionada(unidadMedida: String){
+        val datos = datosProducto
+
+        val fraccion = datos!!.Fraccion
+        val existencia = datos.Existencia
+        val existenciaU = datos.Existencia_u
+        existenciaProducto = if(unidadMedida == "FRA" && fraccion!!.toFloat() > 1f){
+            (existencia!!.toFloat() * fraccion) + existenciaU.toFloat()
+        }else{
+            datos.Existencia!!.toFloat()
+        }
     }
 
     private fun cargarOpcionesGenerales(){
@@ -558,12 +604,20 @@ class Producto_agregar : AppCompatActivity() {
     private fun validarCantidad(cantidadIngresada: String){
         if(cantidadIngresada.isNotEmpty() && isInteger(cantidadIngresada)){
             cantidad = cantidadIngresada.toFloat()
+            var cantidadVerificar = cantidad
+            if(equivaleUni > 0f){
+                cantidadVerificar = cantidad.toFloat() * equivaleUni
+            }
 
-            if((cantidad > existenciaProducto || cantidad == 0f) && tipoProducto == "Producto"){
+            if(equivaleFra > 0f){
+                cantidadVerificar = cantidad.toFloat() * equivaleFra
+            }
+
+            if((cantidadVerificar > existenciaProducto || cantidadVerificar == 0f) && tipoProducto == "Producto"){
                 binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
                 binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
                 binding.btnagregar.isEnabled = false
-            }else if(cantidad < cantidadEscala!!){ //VALIDADO EL PRECIO SELECCIONADO EN LAS ESCALAS.
+            }else if(cantidadVerificar < cantidadEscala){ //VALIDADO EL PRECIO SELECCIONADO EN LAS ESCALAS.
                 binding.txtcantidad.error = "La cantidad no es válida para el precio seleccionado"
                 binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
                 binding.btnagregar.isEnabled = false

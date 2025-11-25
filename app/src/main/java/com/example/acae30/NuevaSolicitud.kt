@@ -21,6 +21,7 @@ import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class NuevaSolicitud : AppCompatActivity() {
     private lateinit var binding : ActivityNuevaSolicitudBinding
@@ -36,6 +37,7 @@ class NuevaSolicitud : AppCompatActivity() {
     private var idSolicitud : Int = 0
     private var idServidorSolicitud : Int = 0
     private var proceso : String = ""
+    private var estado : String = ""
 
     var rutaSeleccionada : String = "-- SELECCIONE --"
     var idRutaSeleccionada : Int = 0
@@ -52,6 +54,7 @@ class NuevaSolicitud : AppCompatActivity() {
 
         idSolicitud = intent.getIntExtra("idSolicitud", 0)
         idServidorSolicitud = intent.getIntExtra("idServidorSolicitud", 0)
+        estado = intent.getStringExtra("estado").toString()
         proceso = intent.getStringExtra("proceso").toString()
 
 
@@ -61,6 +64,8 @@ class NuevaSolicitud : AppCompatActivity() {
 
         cargarDetalle()
         cargarRutas()
+
+        validarEstadoSolicitud()
     }
 
     override fun onStart() {
@@ -80,22 +85,9 @@ class NuevaSolicitud : AppCompatActivity() {
                     val lista = solicitudController.obtenerDetalleSolicitudNoEnviado(this@NuevaSolicitud, idSolicitud)
                     if (lista != null) {
                         if(lista.size > 0){
-                            this@NuevaSolicitud.lifecycleScope.launch {
-
-                                val enviado = solicitudController.enviarSolicitudCargaAlServidor(this@NuevaSolicitud, idSolicitud)
-
-                                if(enviado){
-                                    //ACTUALIZANDO EL DETALLA DE LA SOLICITUD A ENVIADO = 1
-                                    solicitudController.actualizarEstadoAlDetalle(this@NuevaSolicitud, idSolicitud)
-
-                                }
-                                runOnUiThread {
-                                    mensajeConfirmacion(enviado)
-                                }
-
-                            }
+                            mensajeCancelar("ENVIAR")
                         }else{
-                            Toast.makeText(this,"EL DETALLE NO SE PUEDE ENVIAR SIN PRODUCTOS", Toast.LENGTH_SHORT)
+                            Toast.makeText(this,"NO SE ENCONTRARON PRODUCTO NUEVOS EN EL DETALLE", Toast.LENGTH_SHORT)
                                 .show()
                         }
                     }
@@ -108,6 +100,7 @@ class NuevaSolicitud : AppCompatActivity() {
             intent.putExtra("idSolicitud", idSolicitud)
             intent.putExtra("proceso", "nuevo")
             intent.putExtra("idServidorSolicitud", idServidorSolicitud)
+            intent.putExtra("estado", estado)
             startActivity(intent)
             finish()
         }
@@ -147,6 +140,71 @@ class NuevaSolicitud : AppCompatActivity() {
         }
     }
 
+    //FUNCION PARA ENVIAR LA SOLICITUD DE CARGA AL SERVIDOR
+    private fun enviarSolicitudCarga(){
+        this@NuevaSolicitud.lifecycleScope.launch {
+
+            val enviado = solicitudController.enviarSolicitudCargaAlServidor(this@NuevaSolicitud, idSolicitud)
+
+            if(enviado){
+                //ACTUALIZANDO EL DETALLA DE LA SOLICITUD A ENVIADO = 1
+                solicitudController.actualizarEstadoAlDetalle(this@NuevaSolicitud, idSolicitud)
+
+            }
+
+            withContext(Dispatchers.Main){
+                mensajeConfirmacion(enviado)
+            }
+
+        }
+    }
+
+    //Funcion para validar Estado
+    private fun validarEstadoSolicitud(){
+
+
+        when(estado){
+            "PROCESADO" -> {
+                binding.apply {
+                    btnenviar.visibility = View.GONE
+                    btnGuardar.visibility = View.GONE
+                    btnImprimir.visibility = View.VISIBLE
+                    imgbtnadd.visibility = View.GONE
+
+                    btncancelar.text = "REGRESAR"
+                    lblTituloSolicitud.text = "SOLICITUD DE CARGA"
+                    spRuta.isEnabled = false
+                    cvProductosSolicitados.isEnabled = false
+
+                }
+            }
+            "ANULADO" -> {
+                binding.apply {
+                    btnenviar.visibility = View.GONE
+                    btnGuardar.visibility = View.GONE
+                    btnImprimir.visibility = View.GONE
+                    imgbtnadd.visibility = View.GONE
+
+                    btncancelar.text = "REGRESAR"
+                    lblTituloSolicitud.text = "SOLICITUD DE CARGA"
+                    spRuta.isEnabled = false
+                    cvProductosSolicitados.isEnabled = false
+
+                }
+            }
+            else -> {
+                binding.apply {
+                    btnenviar.visibility = View.VISIBLE
+                    btnGuardar.visibility = View.VISIBLE
+                    btnImprimir.visibility = View.GONE
+                    imgbtnadd.visibility = View.VISIBLE
+
+                }
+            }
+        }
+
+    }
+
     //FUNCION PARA CARGAR LAS RUTAS
     private fun cargarRutas(){
         this.lifecycleScope.launch {
@@ -170,7 +228,8 @@ class NuevaSolicitud : AppCompatActivity() {
     private fun mensajeCancelar(tipo: String){
 
         val mensaje = when(tipo){
-            "CANCELAR" -> "¿DESEA ELIMINAR EL PROCESO?"
+            "CANCELAR" -> "¿DESEA CANCELAR EL PROCESO?"
+            "ENVIAR" -> "¿DESEA ENVIAR LA SOLICITUD DE CARGA?"
             else -> "¿DESEA GUARDAR EL PROCESO?"
         }
 
@@ -178,12 +237,32 @@ class NuevaSolicitud : AppCompatActivity() {
             .setTitle("INFORMACION")
             .setMessage(mensaje)
             .setPositiveButton("ACEPTAR") { view, _ ->
-
+                view.dismiss()
                 when(tipo){
                     "CANCELAR" -> {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            solicitudController.eliminarSolicitud(this@NuevaSolicitud, idSolicitud)
+                        when(estado){
+                            "EMITIDO" -> {
+                                when(idServidorSolicitud){
+                                    0 -> {
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            solicitudController.eliminarSolicitud(this@NuevaSolicitud, idSolicitud)
+                                        }
+                                    }
+                                    else -> {
+                                        Toast.makeText(this@NuevaSolicitud, "NO PUEDE ELIMINAR LA SOLICITUD, YA HA SIDO ENVIADA AL SERVIDOR", Toast.LENGTH_SHORT)
+                                            .show()
+                                    }
+                                }
+
+                                menuSolicitudCarga()
+                            }
+                            else -> {
+                                menuSolicitudCarga()
+                            }
                         }
+                    }
+                    "ENVIAR" -> {
+                        enviarSolicitudCarga()
                     }
                     else -> {
                         CoroutineScope(Dispatchers.IO).launch {
@@ -193,10 +272,9 @@ class NuevaSolicitud : AppCompatActivity() {
                         Toast.makeText(this, "SOLICITUD GUARDADA CORRECTAMENTE", Toast.LENGTH_SHORT)
                             .show()
 
+                        menuSolicitudCarga()
                     }
                 }
-                view.dismiss()
-                menuSolicitudCarga()
             }
             .setNegativeButton("CANCELAR"){view, _ ->
                 view.dismiss()
@@ -228,19 +306,13 @@ class NuevaSolicitud : AppCompatActivity() {
                     }
                 }
 
-                solicitudListado()
+                menuSolicitudCarga()
             }
             .setCancelable(false)
             .setIcon(R.drawable.ic_information)
             .create()
 
         dialog.show()
-    }
-
-    fun solicitudListado(){
-        val intent = Intent(this, SolicitudCargaMenu::class.java)
-        startActivity(intent)
-        finish()
     }
 
     private fun menuSolicitudCarga() {
@@ -272,20 +344,25 @@ class NuevaSolicitud : AppCompatActivity() {
             false
         )
         binding.cvProductosSolicitados.layoutManager = mLayoutManager
-        val adapter = SolicitudDetalleAdapter(lista, this@NuevaSolicitud) { indice ->
-            val item = lista[indice]
-            val intento = Intent(this@NuevaSolicitud, AgregarProductoSolicitud::class.java)
-            intento.putExtra("proceso", "editar")
-            intento.putExtra("idSolicitud", idSolicitud)
-            intento.putExtra("idProducto", item.id)
-            intento.putExtra("codigo", item.codigoProducto)
-            intento.putExtra("descripcion", item.descripcion)
-            intento.putExtra("cantidad", item.cantidad)
-            intento.putExtra("enviado", item.enviado)
-            intento.putExtra("idServidorSolicitud", idServidorSolicitud)
-            startActivity(intento)
-            finish()
+        val adapter =  if(estado.contains("EMITIDO")){
+            SolicitudDetalleAdapter(lista, this@NuevaSolicitud) { indice ->
+                val item = lista[indice]
+                val intento = Intent(this@NuevaSolicitud, AgregarProductoSolicitud::class.java)
+                intento.putExtra("proceso", "editar")
+                intento.putExtra("idSolicitud", idSolicitud)
+                intento.putExtra("idProducto", item.id)
+                intento.putExtra("codigo", item.codigoProducto)
+                intento.putExtra("descripcion", item.descripcion)
+                intento.putExtra("cantidad", item.cantidad)
+                intento.putExtra("enviado", item.enviado)
+                intento.putExtra("idServidorSolicitud", idServidorSolicitud)
+                intento.putExtra("estado", estado)
+                startActivity(intento)
+                finish()
 
+            }
+        }else{
+            SolicitudDetalleAdapter(lista, this@NuevaSolicitud) { _ -> }
         }
         binding.cvProductosSolicitados.adapter = adapter
 

@@ -13,7 +13,6 @@ import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.itextpdf.text.pdf.AcroFields.Item
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -523,6 +522,86 @@ class SolicitudRecargasController {
         return  json
     }
 
+    //Funcion para validar una Solicitud Procesada
+    suspend fun validarSolicitudProcesadaEnServidor(context: Context, idSolicitudServidor: Int) : Boolean{
+        var procesada : Boolean = false
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+
+        try {
+            val ruta : String = servidor + "Solicitudes/verificar_solicitud/" + idSolicitudServidor.toString()
+            val url = URL(ruta)
+
+            with(withContext(Dispatchers.IO){
+                url.openConnection()
+            } as HttpURLConnection){
+                try {
+                    connectTimeout = 10000
+                    requestMethod = "GET"
+                    when(responseCode){
+                        200 -> {
+                            BufferedReader(InputStreamReader(inputStream) as Reader?).use {
+                                try {
+                                    val respuesta = StringBuffer()
+                                    var inpuline = it.readLine()
+                                    while (inpuline != null) {
+                                        respuesta.append(inpuline)
+                                        inpuline = it.readLine()
+                                    }
+                                    it.close()
+
+                                    val res: JSONObject = JSONObject(respuesta.toString())
+                                    val solicitud = res.getString("response")
+                                    val numHoja = res.getInt("numHojaCarga")
+                                    when(solicitud){
+                                        "SOLICITUD_PROCESADA" -> {
+                                            actualizarEstadoSolicitudCarga(context, idSolicitudServidor, numHoja, "PROCESADO")
+                                            procesada = true
+                                        }
+                                        "SOLICITUD_ANULADA" -> {
+                                            actualizarEstadoSolicitudCarga(context, idSolicitudServidor, numHoja, "ANULADO")
+                                            procesada = true
+                                        }
+                                        else -> {
+                                            //ESPACIO PARA LA SOLICITUD AUN EN EMITIDO
+                                            procesada = false
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    println("ERROR AL LEER LA RESPUESTA ->  $responseCode -> $responseMessage")
+                                    procesada = false
+                                }
+                            }
+                        }
+                        else -> {
+                            println("ERROR AL OBTENER LA RESPUESTA ->  $responseCode -> $responseMessage")
+                            procesada = false
+                        }
+                    }
+                }catch (e:Exception){
+                    println("ERROR AL PROCESAR LA CONEXION CON EL SERVIDOR -> " + e.message)
+                    procesada = false
+                }
+            }
+
+        }catch (e:Exception){
+            println("ERROR AL CONECTAR CON EL SERVIDOR -> " + e.message)
+            procesada = false
+        }
+
+        return procesada
+    }
+
+    //Funcion para actualizar el numero y estado de la Solicitud de Carga
+    private fun actualizarEstadoSolicitudCarga(context: Context, idSolicitudServidor: Int, numeroHoja: Int, estado: String){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.execSQL("UPDATE solicitudCarga SET NumHoja = $numeroHoja, Estado = '$estado' WHERE idServidor = $idSolicitudServidor")
+        }catch (e:Exception){
+            println("ERROR AL ACTUALIZAR EL ESTADO Y EL NUMERO DE LA SOLICITUD DE CARGA -> " + e.message)
+        }
+    }
+
     //Funcion para eliminar un producto de la solicitud en el servidor
     suspend fun eliminarProductoEnSolicitudServidor(context: Context, idSolicitudServidor: Int, codigoProducto: String) : Boolean{
         var eliminado : Boolean = false
@@ -888,5 +967,4 @@ class SolicitudRecargasController {
         }
         return item
     }
-
 }

@@ -45,7 +45,7 @@
             android:layout_weight="1"
             android:layout_marginEnd="@dimen/margin_default_16dp"
             android:backgroundTint="@color/SEGUNDOCOLORLOGO"
-            android:text="SINCRONIZAR"
+            android:text="ACTUALIZAR"
             android:textColor="@color/colorAccent"
             android:textSize="11sp"
             app:layout_constraintBottom_toBottomOf="parent"
