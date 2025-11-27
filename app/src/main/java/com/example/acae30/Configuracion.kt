@@ -198,6 +198,8 @@ class Configuracion : AppCompatActivity() {
             binding.imgLogoEmpresa.setImageDrawable(drawable)
         }
 
+        verificarModoDesarrollo()
+
 
     } //funcion que inicializa las variables
 
@@ -205,9 +207,7 @@ class Configuracion : AppCompatActivity() {
         super.onStart()
         GetServerData()
         binding.imgbtnatras.setOnClickListener {
-            val intento = Intent(this, Inicio::class.java)
-            startActivity(intento)
-            finish()
+            regresarMenuPrincipal()
         }//boton atras
 
         binding.btnReconectar.setOnClickListener {
@@ -248,6 +248,8 @@ class Configuracion : AppCompatActivity() {
 
                     withContext(Dispatchers.Main){
                         alerta!!.dismisss()
+
+                        regresarMenuPrincipal()
                     }
                 }
             } else {
@@ -259,8 +261,68 @@ class Configuracion : AppCompatActivity() {
             seleccionarImagen()
         }
 
+        binding.btnActualizarServidor.setOnClickListener {
+            val ip : String = binding.txtip.text!!.trim().toString()
+            val puerto : Int = binding.txtpuerto.text!!.trim().toString().toInt()
+            val puntoVenta : String = binding.tvPuntoVenta.text!!.trim().toString()
+
+            if(ip.isNotEmpty() && puerto > 0 && puntoVenta.isNotEmpty()){
+                actualizarConexionServidor(ip, puerto, puntoVenta)
+                Toast.makeText(this@Configuracion, "SERVIDOR ACTUALIZADO", Toast.LENGTH_SHORT)
+                    .show()
+
+                regresarMenuPrincipal()
+
+            }else{
+                Toast.makeText(this@Configuracion, "FALTAN DATOS IMPORTANTES", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+
 
     }
+
+    private fun regresarMenuPrincipal() {
+        val intento = Intent(this, Inicio::class.java)
+        startActivity(intento)
+        finish()
+    }
+
+    //FUNCION PARA AVERIFICAR SI ESTA EN MODO DESARROLLO
+    private fun verificarModoDesarrollo(){
+        val modoDesarrollo = preferencias!!.getBoolean("modoDesarrollo", false)
+        if(modoDesarrollo){
+            binding.apply {
+                txtip.isEnabled = true
+                txtpuerto.isEnabled = true
+                tvPuntoVenta.isEnabled = true
+                btnActualizarServidor.visibility = View.VISIBLE
+            }
+        }else{
+            binding.apply {
+                txtip.isEnabled = false
+                txtpuerto.isEnabled = false
+                tvPuntoVenta.isEnabled = false
+                btnActualizarServidor.visibility = View.GONE
+            }
+        }
+    }
+
+    //CAMBIAR DATOS DEL SERVIDOR
+    private fun actualizarConexionServidor(ip: String, puerto: Int, puntoVenta: String){
+        preferencias!!.edit {
+            remove("puerto")
+            remove("ip")
+            remove("puntoVenta")
+        }
+
+        preferencias!!.edit {
+            putString("ip", ip)
+            putInt("puerto", puerto)
+            putString("puntoVenta", puntoVenta)
+        }
+    }
+
 
     private fun seleccionarImagen() {
         seleccionarImagenLauncher.launch("image/*") // solo permite imágenes

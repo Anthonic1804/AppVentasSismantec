@@ -17,329 +17,322 @@
         app:layout_constraintTop_toTopOf="parent" >
 
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <ImageButton
                 android:id="@+id/imbtnatras"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
                 android:backgroundTint="@color/colorPrimary"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_baseline_arrow_back_24"
                 android:contentDescription="@string/imgregresar" />
 
-
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
                 android:text="NUEVO PEDIDO"
-                android:textAlignment="textStart"
+                android:textAlignment="center"
                 android:textColor="@color/colorAccent"
                 android:textSize="18sp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/imbtnatras"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                android:textStyle="bold"/>
+        </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="55dp"
+        android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardView11"
-        app:layout_constraintVertical_bias="0.0">
+        app:layout_constraintTop_toBottomOf="@+id/cardView11">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="wrap_content">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/lyCliente"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="@string/nombre_del_cliente"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/lyCliente"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/txtCliente"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:hint="@string/nombre_del_cliente"
+                    android:enabled="false"
+                    android:inputType="text"
+                    android:textAllCaps="true"
+                    android:textColor="@color/colorHint"
+                    android:textSize="14sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/tvsucursal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/sucursal"
+                android:textColor="@color/colordark"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/lyCliente" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/lySucursal"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/spinner_bg"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                app:layout_constraintTop_toBottomOf="@id/tvsucursal"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <Spinner
+                    android:id="@+id/spSucursal"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:layout_marginStart="@dimen/margin_4dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/txtCliente"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:enabled="false"
-                        android:inputType="text"
-                        android:textAllCaps="true"
-                        android:textColor="@color/colorHint"
-                        android:textSize="16sp" />
-                </com.google.android.material.textfield.TextInputLayout>
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
                 <TextView
-                    android:id="@+id/tvsucursal"
-                    android:layout_width="0dp"
+                    android:id="@+id/sinSucursal"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/sucursal"
+                    android:text="@string/no_tiene_sucursal_registrada"
                     android:textColor="@color/colordark"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
+                    android:textSize="14sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/lyCliente" />
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/lySucursal"
-                    android:layout_width="match_parent"
-                    android:layout_height="55dp"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:background="@drawable/spinner_bg"
-                    android:layout_marginStart="@dimen/margin_default_16dp"
-                    android:layout_marginEnd="@dimen/margin_default_16dp"
-                    app:layout_constraintTop_toBottomOf="@id/tvsucursal"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent">
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <Spinner
-                        android:id="@+id/spSucursal"
-                        android:layout_width="match_parent"
-                        android:layout_height="55dp"
-                        android:layout_marginStart="@dimen/margin_4dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"/>
-
-                    <TextView
-                        android:id="@+id/sinSucursal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginEnd="16dp"
-                        android:text="@string/no_tiene_sucursal_registrada"
-                        android:textColor="@color/colordark"
-                        android:textSize="16sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"/>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
+            <LinearLayout
+                android:id="@+id/lySeleccionables"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_8dp"
+                app:layout_constraintTop_toBottomOf="@id/lySucursal"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:baselineAligned="false">
 
                 <LinearLayout
-                    android:id="@+id/lySeleccionables"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginStart="@dimen/margin_default_16dp"
-                    android:layout_marginEnd="@dimen/margin_default_16dp"
-                    android:layout_marginTop="@dimen/margin_8dp"
-                    app:layout_constraintTop_toBottomOf="@id/lySucursal"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:baselineAligned="false">
+                    android:layout_marginEnd="@dimen/margin_4dp"
+                    android:orientation="vertical"
+                    android:layout_weight="1">
 
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tvTipoEnvio"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="@dimen/margin_4dp"
-                        android:orientation="vertical"
-                        android:layout_weight="1">
+                        android:text="TÉRMINOS"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
 
-                        <TextView
-                            android:id="@+id/tvTipoEnvio"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="TÉRMINOS"
-                            android:textColor="@color/colordark"
-                            android:textSize="18sp"
-                            android:textStyle="bold"/>
-
-                        <androidx.constraintlayout.widget.ConstraintLayout
-                            android:id="@+id/lyTipoEnvio"
-                            android:layout_width="match_parent"
-                            android:layout_height="55dp"
-                            android:orientation="horizontal"
-                            android:gravity="center"
-                            android:background="@drawable/spinner_bg">
-
-                            <Spinner
-                                android:id="@+id/spTipoEnvio"
-                                android:layout_width="match_parent"
-                                android:layout_height="55dp"
-                                android:layout_marginStart="@dimen/margin_4dp"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"/>
-
-                            <TextView
-                                android:id="@+id/tvTipoenvio"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="16dp"
-                                android:layout_marginEnd="16dp"
-                                tools:text="FACTURA"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"/>
-
-                        </androidx.constraintlayout.widget.ConstraintLayout>
-
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/lyTipoEnvio"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/margin_4dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:layout_height="45dp"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:background="@drawable/spinner_bg">
+
+                        <Spinner
+                            android:id="@+id/spTipoEnvio"
+                            android:layout_width="match_parent"
+                            android:layout_height="45dp"
+                            android:layout_marginStart="@dimen/margin_4dp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"/>
 
                         <TextView
-                            android:id="@+id/tvDocumento"
+                            android:id="@+id/tvTipoenvio"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/documento"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginEnd="16dp"
+                            tools:text="FACTURA"
                             android:textColor="@color/colordark"
-                            android:textSize="18sp"
-                            android:textStyle="bold"/>
+                            android:textSize="14sp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"/>
 
-                        <androidx.constraintlayout.widget.ConstraintLayout
-                            android:id="@+id/lyDocumento"
-                            android:layout_width="match_parent"
-                            android:layout_height="55dp"
-                            android:orientation="horizontal"
-                            android:gravity="center"
-                            android:background="@drawable/spinner_bg">
-
-                            <Spinner
-                                android:id="@+id/spDocumento"
-                                android:layout_width="match_parent"
-                                android:layout_height="55dp"
-                                android:layout_marginStart="@dimen/margin_4dp"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"/>
-
-                            <TextView
-                                android:id="@+id/tvDocumentoSeleccionado"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="16dp"
-                                android:layout_marginEnd="16dp"
-                                tools:text="FACTURA"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"/>
-
-                        </androidx.constraintlayout.widget.ConstraintLayout>
-
-                    </LinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                 </LinearLayout>
 
-
-                <TextView
-                    android:id="@+id/textView18"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:text="DETALLE DEL PEDIDO"
-                    android:textAlignment="viewStart"
-                    android:textColor="@color/colordark"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/lySeleccionables" />
+                    android:layout_marginStart="@dimen/margin_4dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/fecha_creacion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="10dp"
-                    android:text="dd/mm/yyyy hh:mm"
-                    android:textAlignment="viewStart"
-                    android:textColor="@color/colorPrimaryDark"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textView18" />
+                    <TextView
+                        android:id="@+id/tvDocumento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/documento"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
 
-                <TextView
-                    android:id="@+id/cantidadItems"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAlignment="center"
-                    android:text="CANT. ITEM: 14"
-                    android:textSize="12sp"
-                    android:textColor="@color/colorPrimaryDark"
-                    android:textStyle="bold"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="10dp"
-                    app:layout_constraintStart_toEndOf="@id/fecha_creacion"
-                    app:layout_constraintTop_toBottomOf="@+id/textView18"
-                    app:layout_constraintEnd_toEndOf="parent"/>
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/lyDocumento"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:background="@drawable/spinner_bg">
 
-                <ImageButton
-                    android:id="@+id/imgbtnadd"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="13dp"
-                    android:backgroundTint="@android:color/holo_green_dark"
-                    app:layout_constraintBottom_toTopOf="@+id/reciclerdetalle"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="1.0"
-                    app:layout_constraintStart_toEndOf="@+id/textView18"
-                    app:layout_constraintVertical_bias="0.876"
-                    app:srcCompat="@drawable/ic_baseline_add_box_24" />
+                        <Spinner
+                            android:id="@+id/spDocumento"
+                            android:layout_width="match_parent"
+                            android:layout_height="45dp"
+                            android:layout_marginStart="@dimen/margin_4dp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"/>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/reciclerdetalle"
-                    android:layout_width="0dp"
-                    android:layout_height="200dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="32dp"
-                    android:layout_marginEnd="16dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textView18" />
+                        <TextView
+                            android:id="@+id/tvDocumentoSeleccionado"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginEnd="16dp"
+                            tools:text="FACTURA"
+                            android:textColor="@color/colordark"
+                            android:textSize="14sp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"/>
 
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+
+            <TextView
+                android:id="@+id/textView18"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="@dimen/margin_8dp"
+                android:text="DETALLE DEL PEDIDO"
+                android:textAlignment="viewStart"
+                android:textColor="@color/colordark"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/lySeleccionables" />
+
+            <TextView
+                android:id="@+id/fecha_creacion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="@dimen/margin_8dp"
+                android:text="dd/mm/yyyy hh:mm"
+                android:textAlignment="viewStart"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView18" />
+
+            <TextView
+                android:id="@+id/cantidadItems"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:text="CANT. ITEM: 14"
+                android:textSize="12sp"
+                android:textColor="@color/colorPrimaryDark"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="@dimen/margin_8dp"
+                app:layout_constraintStart_toEndOf="@id/fecha_creacion"
+                app:layout_constraintTop_toBottomOf="@+id/textView18"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <ImageButton
+                android:id="@+id/imgbtnadd"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="13dp"
+                android:backgroundTint="@android:color/holo_green_dark"
+                app:layout_constraintBottom_toTopOf="@+id/reciclerdetalle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toEndOf="@+id/textView18"
+                app:layout_constraintVertical_bias="0.876"
+                app:srcCompat="@drawable/ic_baseline_add_box_24" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/reciclerdetalle"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/spinner_bg"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView18"
+                app:layout_constraintBottom_toTopOf="@+id/lyFooter"/>
+
+            <LinearLayout
+                android:id="@+id/lyFooter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="@dimen/margin_default_16dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
 
                 <LinearLayout
                     android:id="@+id/lyTotales"
@@ -348,10 +341,9 @@
                     android:layout_marginTop="@dimen/margin_4dp"
                     android:layout_marginStart="@dimen/margin_default_16dp"
                     android:layout_marginEnd="@dimen/margin_default_16dp"
-                    android:orientation="horizontal"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/reciclerdetalle">
+                    android:padding="2dp"
+                    android:background="@drawable/spinner_bg"
+                    android:orientation="horizontal">
 
                     <LinearLayout
                         android:id="@+id/lySumas"
@@ -367,7 +359,7 @@
                             android:text="SUMAS"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textAlignment="center"/>
                         <TextView
                             android:id="@+id/txtSumas"
@@ -376,7 +368,7 @@
                             android:text="0.0000"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="18sp"
+                            android:textSize="16sp"
                             android:textAlignment="center"/>
 
                     </LinearLayout>
@@ -395,7 +387,7 @@
                             android:text="IVA"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textAlignment="center"/>
                         <TextView
                             android:id="@+id/txtIva"
@@ -404,7 +396,7 @@
                             android:text="0.0000"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="18sp"
+                            android:textSize="16sp"
                             android:textAlignment="center"/>
 
                     </LinearLayout>
@@ -423,7 +415,7 @@
                             android:text="IVA RET."
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textAlignment="center"/>
                         <TextView
                             android:id="@+id/txtIvaPerci"
@@ -432,7 +424,7 @@
                             android:text="0.0000"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="18sp"
+                            android:textSize="16sp"
                             android:textAlignment="center"/>
 
                     </LinearLayout>
@@ -451,7 +443,7 @@
                             android:text="TOTAL"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textAlignment="center"/>
                         <TextView
                             android:id="@+id/txttotal"
@@ -460,7 +452,7 @@
                             android:text="0.0000"
                             android:textColor="@color/moderado"
                             android:textStyle="bold"
-                            android:textSize="18sp"
+                            android:textSize="16sp"
                             android:textAlignment="center"/>
 
                     </LinearLayout>
@@ -475,10 +467,7 @@
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
                     android:gravity="center"
-                    android:orientation="horizontal"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/lyTotales">
+                    android:orientation="horizontal">
 
                     <Button
                         android:id="@+id/btnenviar"
@@ -508,60 +497,48 @@
 
                 <Button
                     android:id="@+id/btncancelar"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/margin_8dp"
                     android:layout_marginEnd="16dp"
                     android:background="@drawable/btn_eliminarpedido"
                     android:text="ELIMINAR PEDIDO"
                     android:textAlignment="center"
                     android:textColor="@color/colorAccent"
-                    android:textStyle="bold"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/layout_buttons" />
+                    android:textStyle="bold"/>
 
                 <Button
                     android:id="@+id/btnexportar"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="@dimen/margin_8dp"
                     android:background="@drawable/border_btnenviar"
                     android:text="IMPRIMIR"
                     android:textAlignment="center"
                     android:textColor="@color/colorAccent"
-                    android:textStyle="bold"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/btncancelar"
-                    app:layout_constraintVertical_bias="0.0" />
+                    android:textStyle="bold"/>
 
                 <Button
                     android:id="@+id/btnInvalidar"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@drawable/btn_eliminarpedido"
                     android:layout_marginStart="@dimen/margin_default_16dp"
                     android:layout_marginEnd="@dimen/margin_default_16dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="@dimen/margin_8dp"
                     android:text="INVALIDAR PEDIDO"
                     android:textColor="@color/colorAccent"
-                    android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/btnexportar"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    />
+                    android:textStyle="bold"/>
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </LinearLayout>
+            </LinearLayout>
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
     </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

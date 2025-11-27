@@ -85,7 +85,7 @@ class ConfigController {
                                         numItemRecibo = dato.optInt("numItemRecibo", 100),
                                         numItemRemision = dato.optInt("numItemRemision", 100),
                                         tipoVentaLocal = dato.optBoolean("tipoVentaLocal", false),
-                                        modoDesarrollo = dato.optBoolean("validacionHojaCarga", false)
+                                        modoDesarrollo = dato.optBoolean("modoDesarrollo", false)
                                     )
 
                                     confirmarPagareObligatorio(item, context)

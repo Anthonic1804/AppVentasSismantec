@@ -145,16 +145,18 @@
                     android:id="@+id/cardView9"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:minHeight="325dp"
                     android:layout_margin="16dp"
                     app:cardBackgroundColor="@color/colorAccent"
                     app:cardElevation="5dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/cardConfig">
+                    app:layout_constraintTop_toBottomOf="@id/cardConfig"
+                    app:layout_constraintBottom_toTopOf="@+id/cardVersiones">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent">
+                        android:layout_height="wrap_content">
 
                         <TextView
                             android:id="@+id/textView10"
@@ -188,8 +190,6 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="text"
                                 android:textSize="18sp"
-                                android:focusable="false"
-                                android:clickable="false"
                                 android:textColor="@color/colorHint"/>
                         </com.google.android.material.textfield.TextInputLayout>
 
@@ -211,8 +211,6 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:inputType="text"
-                                android:focusable="false"
-                                android:clickable="false"
                                 android:textColor="@color/colorHint"
                                 android:textSize="18sp" />
                         </com.google.android.material.textfield.TextInputLayout>
@@ -227,7 +225,6 @@
                             app:startIconDrawable="@drawable/ic_pventa"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintTop_toBottomOf="@id/lyPuerto">
 
                             <com.google.android.material.textfield.TextInputEditText
@@ -235,12 +232,26 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:inputType="text"
-                                android:focusable="false"
-                                android:clickable="false"
                                 android:textSize="18sp"
                                 android:textColor="@color/colorHint"/>
 
                         </com.google.android.material.textfield.TextInputLayout>
+
+                        <Button
+                            android:id="@+id/btnActualizarServidor"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="16dp"
+                            android:background="@drawable/border_btnenviar"
+                            android:text="ACTUALIZAR"
+                            android:textColor="@color/colorAccent"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/lyPuntoVenta"/>
+
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </androidx.cardview.widget.CardView>
 
