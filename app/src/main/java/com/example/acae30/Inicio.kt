@@ -68,15 +68,6 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var M_CxC: Boolean = false
     private var M_Abonos: Boolean = false
 
-    @Deprecated("This method has been deprecated in favor of using the\n      " +
-            "{@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n     " +
-            " The OnBackPressedDispatcher controls how back button events are dispatched\n      " +
-            "to one or more {@link OnBackPressedCallback} objects.")
-    override fun onBackPressed() {
-        super.onBackPressed()
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityInicioBinding.inflate(layoutInflater)
@@ -541,5 +532,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         startActivity(intento)
         finish()
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
+    }//anula el boton atras
 
 }
