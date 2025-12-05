@@ -15,9 +15,11 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.lifecycle.lifecycleScope
 import com.dcastalia.localappupdate.DownloadApk
 import com.example.acae30.controllers.ConfigController
 import com.example.acae30.databinding.ActivityConfiguracionBinding
@@ -249,7 +251,14 @@ class Configuracion : AppCompatActivity() {
                     withContext(Dispatchers.Main){
                         alerta!!.dismisss()
 
-                        regresarMenuPrincipal()
+                        //AGREGAR CONDICION PARA CERRAR LA APP SI MODO DESARROLLO ESTÁ ACTIVO
+                        //PARA PODER ACTIVAR KOTZILLA
+                        val modoDesarrollo = preferencias!!.getBoolean("modoDesarrollo", false)
+                        if(modoDesarrollo){
+                            mensajeConfirmacion()
+                        }else{
+                            regresarMenuPrincipal()
+                        }
                     }
                 }
             } else {
@@ -579,6 +588,36 @@ class Configuracion : AppCompatActivity() {
     fun Descargar(url: String, filename: String){
         val downloadApk = DownloadApk(this@Configuracion)
         downloadApk.startDownloadingApk(url, filename);
+    }
+
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    private fun mensajeConfirmacion(){
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("INFORMACION")
+            .setMessage("LA APLICACIÓN SE REINICIARÁ PARA COMPLETAR EL PROCESO")
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                view.dismiss()
+                restartApp(this@Configuracion)
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
+
+    //FUNCION REINICIAR APP
+    private fun restartApp(context: Context) {
+        val intent = context.packageManager
+            .getLaunchIntentForPackage(context.packageName)
+
+        intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        context.startActivity(intent)
+
+        // Cierra el proceso actual
+        Runtime.getRuntime().exit(0)
     }
 
 }

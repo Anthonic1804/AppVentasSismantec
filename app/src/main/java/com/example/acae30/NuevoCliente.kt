@@ -411,7 +411,8 @@ class NuevoCliente : AppCompatActivity() {
             binding.txtNombreComercial.text.toString(),
             binding.txtCodGiro.text.toString(),
             distrito,
-            codigoDistri
+            codigoDistri,
+            "N"
         )
 
         registrado = clienteController.enviarRegistroClienteAlServidor(this@NuevoCliente, cliente)

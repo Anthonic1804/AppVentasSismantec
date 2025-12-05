@@ -18,5 +18,6 @@ data class Inventario (
     var Fecha_inventario:String?, // 27
     var Bonificado: Float?, // 18
     var Existencia_u:Float, // 13
-    var codigo_de_barra: String // 2
+    var codigo_de_barra: String, // 2
+    var condicionMercado : String //29
 )

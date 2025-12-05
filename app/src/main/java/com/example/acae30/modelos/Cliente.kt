@@ -41,9 +41,9 @@ data class Cliente (
     var Latitud : String,
     var Longitud : String,
     var NombreComercial : String,
-    //var Mayorista : String,
     var DTECodGiro: String,
     var DTEDistrito : String,
-    var DTECodDistrito : String
+    var DTECodDistrito : String,
+    var Mayorista : String
 
 )

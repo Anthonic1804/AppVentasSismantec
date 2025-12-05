@@ -105,6 +105,7 @@ class Inventario : AppCompatActivity() {
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         sinExistencias = if(preferences.getString("pedidos_sin_existencia", "") == "S") 1 else 0
+        println("PRODUCTOS SIN EXISTENCIAS -> " + sinExistencias)
         vistaInventario = preferences.getInt("vistaInventario", 0)
 
         vista = findViewById(R.id.vistaalerta)
@@ -299,8 +300,8 @@ class Inventario : AppCompatActivity() {
                         val adapter = InventarioAdapter(list, this, vistaInventario) { position ->
                             if (busquedaProducto) {
                                 val existeniasProducto = list[position].Existencia!!.toFloat()
-                                val tipo = list[position].Tipo.toString()
-                                if((sinExistencias == 0 && existeniasProducto <= 0f)  && tipo == "Producto"){
+                                val condicionMercado = list[position].condicionMercado.toString()
+                                if((sinExistencias == 0 && existeniasProducto <= 0f)  && condicionMercado != "OFERTA"){
                                     Toast.makeText(this@Inventario, "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS", Toast.LENGTH_SHORT).show()
                                 }else{
 
@@ -350,8 +351,8 @@ class Inventario : AppCompatActivity() {
                         val adapter = InventarioAdapter(list, this, vistaInventario) { position ->
                             if (busquedaProducto) {
                                 val existeniasProducto = list[position].Existencia!!.toFloat()
-                                val tipo = list[position].Tipo.toString()
-                                if((sinExistencias == 0 && existeniasProducto <= 0f)  && tipo == "Producto"){
+                                val condicionMercado = list[position].condicionMercado.toString()
+                                if((sinExistencias == 0 && existeniasProducto <= 0f)  && condicionMercado != "OFERTA"){
                                     Toast.makeText(this@Inventario, "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS", Toast.LENGTH_SHORT).show()
                                 }else{
 

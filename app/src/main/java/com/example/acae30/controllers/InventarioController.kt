@@ -74,7 +74,8 @@ class InventarioController {
                             cursor.getString(27),
                             cursor.getFloat(18),
                             cursor.getFloat(13),
-                            cursor.getString(2)
+                            cursor.getString(2),
+                            cursor.getString(29)
                         )
                     }else{
                         datos = Inventario(
@@ -95,7 +96,8 @@ class InventarioController {
                             cursor.getString(27),
                             cursor.getFloat(18),
                             cursor.getFloat(13),
-                            cursor.getString(2)
+                            cursor.getString(2),
+                            cursor.getString(29)
                         )
                     }
                 }
@@ -223,7 +225,8 @@ class InventarioController {
                             cursor.getString(27),
                             cursor.getFloat(18),
                             cursor.getFloat(13),
-                            cursor.getString(2)
+                            cursor.getString(2),
+                            cursor.getString(29)
                         )
                         lista.add(arreglo)
                     } while (cursor.moveToNext())
@@ -473,6 +476,7 @@ class InventarioController {
                 data.put("precio_viñeta_iva", funciones.validateJsonIsNullFloat(dato, "precio_viñeta_iva"))
                 data.put("fecha_inventario", LocalDate.now().toString())
                 data.put("validadoHoja", productoValidado)
+                data.put("condicion_mercado", "NORMAL")
 
                 idHojaCarga = funciones.validateJsonIsNullInt(dato, "idHojaCarga")
                 idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")

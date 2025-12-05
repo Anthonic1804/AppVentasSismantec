@@ -63,7 +63,8 @@ class CuentasController {
                             "",
                             "",
                             "",
-                            ""
+                            "",
+                            "N"
                         )
                         lista.add(listado)
 
@@ -136,7 +137,8 @@ class CuentasController {
                             "",
                             "",
                             "",
-                            ""
+                            "",
+                            "N"
                         )
                         lista.add(listado)
 

@@ -217,7 +217,8 @@ class ClientesController {
                     "Nombre_comercial , " +
                     "DTECodGiro, " +
                     "DTEDistrito, " +
-                    "DTECodDistrito FROM clientes " +
+                    "DTECodDistrito, " +
+                    "Mayorista FROM clientes " +
                     "WHERE id=?", arrayOf(idCliente))
             cursor.use {
                 if (cursor.count > 0) {
@@ -265,7 +266,8 @@ class ClientesController {
                         cursor.getString(39),
                         cursor.getString(40),
                         cursor.getString(41),
-                        cursor.getString(42)
+                        cursor.getString(42),
+                        cursor.getString(43)
                     )
                     // cursor.close()
                 }
@@ -370,7 +372,8 @@ class ClientesController {
                             "",
                             "",
                             "",
-                            ""
+                            "",
+                            "N"
                         )
                         listaClientes.add(listado)
 

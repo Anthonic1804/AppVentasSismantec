@@ -759,7 +759,8 @@ class carga_datos : AppCompatActivity() {
                             precio_viñeta = it.precio_viñeta ?: 0f,
                             precio_viñeta_iva = it.precio_viñeta_iva ?: 0f,
                             fecha_inventario = LocalDate.now().toString(),
-                            validadoHoja = 1
+                            validadoHoja = 1,
+                            condicion_mercado = it.condicion_mercado ?: "NORMAL"
                         )
                     }
 
@@ -996,7 +997,7 @@ class carga_datos : AppCompatActivity() {
                 data.put("Latitud_app", funciones.validate(dato.getString("latitud_app")))
                 data.put("Longitud_app", funciones.validate(dato.getString("longitud_app")))
                 data.put("Nombre_comercial", funciones.validate(dato.getString("nombre_comercial")))
-                //data.put("Mayorista", funciones.validate(dato.getString("mayorista")))
+                data.put("Mayorista", funciones.validate(dato.getString("mayorista")))
                 data.put("DTECodGiro", funciones.validate(dato.getString("dteCodGiro")))
                 data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
                 data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))

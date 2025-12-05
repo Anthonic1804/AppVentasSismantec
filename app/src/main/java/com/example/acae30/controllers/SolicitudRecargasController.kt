@@ -245,7 +245,8 @@ class SolicitudRecargasController {
                         cursor.getString(27),
                         cursor.getFloat(18),
                         cursor.getFloat(13),
-                        cursor.getString(2)
+                        cursor.getString(2),
+                        cursor.getString(29)
                     )
                     lista.add(arreglo)
                 } while (cursor.moveToNext())
@@ -289,7 +290,8 @@ class SolicitudRecargasController {
                     cursor.getString(27),
                     cursor.getFloat(18),
                     cursor.getFloat(13),
-                    cursor.getString(2)
+                    cursor.getString(2),
+                    cursor.getString(29)
                 )
             }
         }catch (e:Exception){

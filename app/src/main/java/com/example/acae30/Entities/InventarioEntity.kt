@@ -3,6 +3,7 @@ package com.example.acae30.Entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
+import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "inventario")
 data class InventarioEntity(
@@ -35,5 +36,6 @@ data class InventarioEntity(
     val precio_viñeta: Float,
     val precio_viñeta_iva: Float,
     val fecha_inventario: String,
-    val validadoHoja: Int
+    val validadoHoja: Int,
+    val condicion_mercado: String
 )

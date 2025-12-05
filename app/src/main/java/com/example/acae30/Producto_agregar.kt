@@ -24,6 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.databinding.ActivityProductoAgregarBinding
+import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.InventarioPrecios
 import com.example.acae30.modelos.JSONmodels.ActualizarPrecioPersonalizadoJSON
@@ -65,6 +66,7 @@ class Producto_agregar : AppCompatActivity() {
     private var codEmpleado: Int = 0
     private var url: String? = null
     private var codigoProducto: String = ""
+    private var clienteMayorista = "N"
 
 
     //---------
@@ -112,7 +114,7 @@ class Producto_agregar : AppCompatActivity() {
     private var equivaleFra: Float = 0f
     private var uniEquivale: String? = null
 
-    private var tipoProducto = ""
+    private var condicionMercado = ""
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -464,8 +466,15 @@ class Producto_agregar : AppCompatActivity() {
             //---------
             datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!, false)
 
-            //SELECCIONANDO EL TIPO DE PRODUCTO
-            tipoProducto = datosProducto!!.Tipo.toString()
+            //--------
+            // ASIGNADO DATOS DEL CLIENTE
+            //--------
+            clienteMayorista = clientesController.obtenerInformacionCliente(this@Producto_agregar, idcliente!!)!!.Mayorista.toString().trim()
+
+            println("CLIENTES ES MAYORISTA -> $clienteMayorista")
+
+            //SELECCIONANDO CONDICION DE MERCADO DEL PRODUCTO
+            condicionMercado = datosProducto!!.condicionMercado.toString()
 
             //DESHABILITANDO EL PRECIO PERSONALIZADO
             binding.tvPrecioPersonalizado.visibility = View.GONE
@@ -613,11 +622,11 @@ class Producto_agregar : AppCompatActivity() {
                 cantidadVerificar = cantidad.toFloat() * equivaleFra
             }
 
-            if((cantidadVerificar > existenciaProducto || cantidadVerificar == 0f) && tipoProducto == "Producto"){
+            if((cantidadVerificar > existenciaProducto || cantidadVerificar == 0f)  && sinExistencias == 0){
                 binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
                 binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
                 binding.btnagregar.isEnabled = false
-            }else if(cantidadVerificar < cantidadEscala){ //VALIDADO EL PRECIO SELECCIONADO EN LAS ESCALAS.
+            }else if(cantidadVerificar < cantidadEscala && clienteMayorista == "N"){ //VALIDADO EL PRECIO SELECCIONADO EN LAS ESCALAS.
                 binding.txtcantidad.error = "La cantidad no es válida para el precio seleccionado"
                 binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
                 binding.btnagregar.isEnabled = false
@@ -1309,41 +1318,75 @@ class Producto_agregar : AppCompatActivity() {
             precio = valor.substringBefore(" ").toDouble()
         }
 
-        // Verificamos que la cantidad si corresponda a la escala seleccionada
-        if (cantidad >= cantidadEscala) { //&& precio > 0
-
-            try {
-
-                if (idpedido > 0) {
-                    if (idpedidodetalle!! > 0) {
-                        updateDetalle(idpedidodetalle!!, esPrecioEditado, bonificacion, precio.toFloat())
-                    } else {
-                        val id = validateProduct(idproducto!!)
-                        if (id > 0) {
-                            val data = getPedidodetalle(id)
-                            cantidad += data!!.Cantidad!!
-                            var t =
-                                ((binding.txttotal.text.toString().toFloat()) + data.Total_iva!!)
-                            binding.txttotal.text = "${String.format("%.2f".format(t) )}"
-                            updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
+        when(clienteMayorista){
+            "S" -> {
+                try {
+                    if (idpedido > 0) {
+                        if (idpedidodetalle!! > 0) {
+                            updateDetalle(idpedidodetalle!!, esPrecioEditado, bonificacion, precio.toFloat())
                         } else {
-                            AddDetallePedido(esPrecioEditado, bonificacion, precio.toFloat())
+                            val id = validateProduct(idproducto!!)
+                            if (id > 0) {
+                                val data = getPedidodetalle(id)
+                                cantidad += data!!.Cantidad!!
+                                var t =
+                                    ((binding.txttotal.text.toString().toFloat()) + data.Total_iva!!)
+                                binding.txttotal.text = "${String.format("%.2f".format(t) )}"
+                                updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
+                            } else {
+                                AddDetallePedido(esPrecioEditado, bonificacion, precio.toFloat())
+                            }
+                        }
+                    }
+                    runOnUiThread {
+                        provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        funciones.mostrarAlerta("ERROR: ${e.message}", this@Producto_agregar, binding.lienzo)
+                    }
+                }
+            }
+            else -> {
+                // Verificamos que la cantidad si corresponda a la escala seleccionada
+                if (cantidad >= cantidadEscala) { //&& precio > 0
+
+                    try {
+
+                        if (idpedido > 0) {
+                            if (idpedidodetalle!! > 0) {
+                                updateDetalle(idpedidodetalle!!, esPrecioEditado, bonificacion, precio.toFloat())
+                            } else {
+                                val id = validateProduct(idproducto!!)
+                                if (id > 0) {
+                                    val data = getPedidodetalle(id)
+                                    cantidad += data!!.Cantidad!!
+                                    var t =
+                                        ((binding.txttotal.text.toString().toFloat()) + data.Total_iva!!)
+                                    binding.txttotal.text = "${String.format("%.2f".format(t) )}"
+                                    updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
+                                } else {
+                                    AddDetallePedido(esPrecioEditado, bonificacion, precio.toFloat())
+                                }
+                            }
+                        }
+                        runOnUiThread {
+                            provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
+                        }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            funciones.mostrarAlerta("ERROR: ${e.message}", this@Producto_agregar, binding.lienzo)
                         }
                     }
                 }
-                runOnUiThread {
-                    provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
+                else {
+                    runOnUiThread {
+                        funciones.mostrarAlerta("PRECIO O CANTIDAD SON VALORES INCORRECTOS", this@Producto_agregar, binding.lienzo)
+                    }
                 }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    funciones.mostrarAlerta("ERROR: ${e.message}", this@Producto_agregar, binding.lienzo)
-                }
-            }
-        } else {
-            runOnUiThread {
-                funciones.mostrarAlerta("PRECIO O CANTIDAD SON VALORES INCORRECTOS", this@Producto_agregar, binding.lienzo)
             }
         }
+
     }
 
     //SELECCIONANDO ESCALA PARA EDITAR PRODUCTO EN DETALL

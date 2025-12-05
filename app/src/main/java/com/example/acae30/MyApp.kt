@@ -1,21 +1,31 @@
 package com.example.acae30
 
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import io.kotzilla.sdk.analytics.koin.analytics
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
-import org.koin.mp.KoinPlatform.startKoin
 
 class MyApp : Application() {
 
+    private val instancia = "CONFIG_SERVIDOR"
+    private var preferencias: SharedPreferences? = null
+
     override fun onCreate() {
+
+        preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val modoDesarrollo = preferencias!!.getBoolean("modoDesarrollo", false)
+
         super.onCreate()
 
-        /*startKoin {
-            androidContext(this@MyApp) // OBLIGATORIO
+        if(modoDesarrollo){
+            startKoin {
+                androidContext(this@MyApp)
 
-            analytics() // si usas Kotzilla Analytics
-        }*/
+                analytics() //Kotzilla Analytics
+            }
+        }
 
     }
 
