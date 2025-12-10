@@ -195,7 +195,7 @@ class Producto_agregar : AppCompatActivity() {
             }
         }
 
-        binding.txtcantidad.setText(String.format("%.0f".format(cantidad)))
+        binding.txtcantidad.setText(String.format("%.2f".format(cantidad)))
 
         binding.imgbtnatras.setOnClickListener {
             if(proviene == "editar"){
@@ -245,23 +245,23 @@ class Producto_agregar : AppCompatActivity() {
             }
         }
 
-        binding.txtcantidad.filters = arrayOf<InputFilter>(object : InputFilter {
-            var decimalFormatSymbols: DecimalFormatSymbols = DecimalFormatSymbols()
-            override fun filter(
-                source: CharSequence,
-                start: Int,
-                end: Int,
-                dest: Spanned,
-                dstart: Int,
-                dend: Int
-            ): CharSequence {
-                val indexPoint: Int =
-                    dest.toString().indexOf(decimalFormatSymbols.decimalSeparator)
-                if (indexPoint == -1) return source
-                val decimals = dend - (indexPoint + 1)
-                return if (decimals < 4) source else ""
-            }
-        })
+//        binding.txtcantidad.filters = arrayOf<InputFilter>(object : InputFilter {
+//            var decimalFormatSymbols: DecimalFormatSymbols = DecimalFormatSymbols()
+//            override fun filter(
+//                source: CharSequence,
+//                start: Int,
+//                end: Int,
+//                dest: Spanned,
+//                dstart: Int,
+//                dend: Int
+//            ): CharSequence {
+//                val indexPoint: Int =
+//                    dest.toString().indexOf(decimalFormatSymbols.decimalSeparator)
+//                if (indexPoint == -1) return source
+//                val decimals = dend - (indexPoint + 1)
+//                return if (decimals < 4) source else ""
+//            }
+//        })
 
         binding.spunidad.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -611,7 +611,7 @@ class Producto_agregar : AppCompatActivity() {
 
     //FUNCION PARA VALIDAD CANTIDAD PARA ESCARRSA
     private fun validarCantidad(cantidadIngresada: String){
-        if(cantidadIngresada.isNotEmpty() && isInteger(cantidadIngresada)){
+        if(cantidadIngresada.isNotEmpty()){
             cantidad = cantidadIngresada.toFloat()
             var cantidadVerificar = cantidad
             if(equivaleUni > 0f){

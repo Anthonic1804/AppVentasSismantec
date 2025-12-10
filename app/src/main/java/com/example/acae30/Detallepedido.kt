@@ -385,7 +385,14 @@ class Detallepedido : AppCompatActivity() {
                     enviandoPedido = true
 
                     if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
-                        alertaPago(binding.txttotal.text.toString().toFloat())
+
+                        //MOSTRAR LA VENTA DE PAGO SI ESTÁ ACTIVA
+                        val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
+                        if(facturacionLocal){
+                            alertaPago(binding.txttotal.text.toString().toFloat())
+                        }else{
+                            envioAlerta()
+                        }
                     }else{
                         verificarConexionEnvio()
                     }
@@ -1099,7 +1106,7 @@ class Detallepedido : AppCompatActivity() {
                 intento.putExtra("idpedidodetalle", data.Id)
                 intento.putExtra("idpedido", data.Id_pedido)
                 intento.putExtra("idcliente", idcliente)
-                intento.putExtra("nombrecliente", nombre)
+                intento.putExtra("nombrecliente", binding.txtCliente.text.toString())
                 intento.putExtra("idproducto", data.Id_producto)
                 intento.putExtra("proviene", "editar")
                 intento.putExtra("total_param", data.Total_iva)
@@ -2317,7 +2324,7 @@ class Detallepedido : AppCompatActivity() {
     }
 
 
-    fun normalizarTexto(texto: String): String {
+    private fun normalizarTexto(texto: String): String {
         val original = "ÁÀÂÄáàâäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖóòôöÚÙÛÜúùûüÑñÇç"
         val reemplazo = "AAAAaaaaEEEEeeeeIIIIiiiiOOOOooooUUUUuuuuNnCc"
 
