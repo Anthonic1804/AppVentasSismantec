@@ -35,9 +35,17 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".ValidarHojaCarga"
+            android:name=".NuevoServidor"
             android:exported="false" />
-        <!-- Broadcast para permisos USB -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MenuAverias"
+            android:exported="false" />
+        <activity
+            android:name=".ValidarHojaCarga"
+            android:exported="false" /> <!-- Broadcast para permisos USB -->
         <meta-data
             android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
             android:value="true" />
@@ -138,7 +146,7 @@
         <activity android:name=".Inicio" />
         <activity android:name=".Login" />
         <activity
-            android:name=".MainActivity"
+            android:name=".MenuServidores"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

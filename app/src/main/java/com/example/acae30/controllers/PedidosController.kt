@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.example.acae30.Funciones
 import com.example.acae30.Pedido
@@ -24,6 +25,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import androidx.core.content.edit
+import androidx.core.database.getFloatOrNull
+import androidx.core.database.getStringOrNull
 
 class PedidosController {
 
@@ -122,9 +125,9 @@ class PedidosController {
     }
 
     //FUNCION PARA OBTENER PEDIDOS NO TRANSMITIDOS EN SQLITE
-    fun obtenerPedidosNoTransmitidos(context: Context) :Pedidos?{
+    fun obtenerPedidosNoTransmitidos(context: Context) :ArrayList<Pedidos>{
         val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
-        var pedido : Pedidos? = null
+        var pedido = ArrayList<Pedidos>()
         try {
             val consulta = "SELECT Id," +
                     " Id_cliente," +
@@ -143,39 +146,41 @@ class PedidosController {
                     "Iva," +
                     "Iva_percibido, " +
                     "pedido_dte, " +
-                    "pedido_dte_error FROM pedidos WHERE Enviado=1 AND pedido_dte=0" +
-                    " order by id desc limit 1"
+                    "pedido_dte_error FROM pedidos WHERE Enviado=1 AND pedido_dte=0 AND Tipo_documento != 'RC'"
             val cursor = db.query(consulta)
             cursor.use {
                 if(cursor.count > 0){
                     cursor.moveToFirst()
-                    pedido = Pedidos(
-                        cursor.getInt(0),
-                        cursor.getInt(1),
-                        cursor.getString(2),
-                        cursor.getFloat(3),
-                        cursor.getFloat(4),
-                        cursor.getInt(5),
-                        cursor.getString(6),
-                        cursor.getInt(7),
-                        cursor.getString(8),
-                        cursor.getInt(9),
-                        cursor.getInt(10),
-                        cursor.getString(11),
-                        cursor.getFloat(12),
-                        cursor.getFloat(13),
-                        cursor.getFloat(14),
-                        cursor.getInt(15),
-                        cursor.getInt(16),
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        ""
-                    )
+                    do {
+                        val item = Pedidos(
+                            cursor.getInt(0),
+                            cursor.getInt(1),
+                            cursor.getString(2),
+                            cursor.getFloat(3),
+                            cursor.getFloat(4),
+                            cursor.getInt(5),
+                            cursor.getString(6),
+                            cursor.getInt(7),
+                            cursor.getString(8),
+                            cursor.getInt(9),
+                            cursor.getInt(10),
+                            cursor.getString(11),
+                            cursor.getFloat(12),
+                            cursor.getFloat(13),
+                            cursor.getFloat(14),
+                            cursor.getInt(15),
+                            cursor.getInt(16),
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            ""
+                        )
+                        pedido.add(item)
+                    }while (cursor.moveToNext())
                 }
             }
             return pedido
@@ -236,6 +241,7 @@ class PedidosController {
         try{
             val consulta = "SELECT *  FROM detalle_producto where Id_pedido=$idPedido"
             val cdetalle = base.query(consulta)
+
             cdetalle.use {
                 if (cdetalle.count > 0) {
                     cdetalle.moveToFirst()
@@ -244,27 +250,27 @@ class PedidosController {
                             cdetalle.getInt(0),
                             cdetalle.getInt(1),
                             cdetalle.getInt(2),
-                            cdetalle.getString(3),
+                            cdetalle.getStringOrNull(3) ?: "",
                             cdetalle.getString(4),
-                            cdetalle.getFloat(5),
-                            cdetalle.getFloat(6),
-                            cdetalle.getFloat(7),
-                            cdetalle.getFloat(8),
-                            cdetalle.getFloat(9),
-                            cdetalle.getFloat(10),
-                            cdetalle.getFloat(11),
-                            cdetalle.getFloat(12),
-                            cdetalle.getFloat(13),
-                            cdetalle.getFloat(14),
-                            cdetalle.getFloat(15),
+                            cdetalle.getFloatOrNull(5) ?: 0f,
+                            cdetalle.getFloatOrNull(6) ?: 0f,
+                            cdetalle.getFloatOrNull(7) ?: 0f,
+                            cdetalle.getFloatOrNull(8) ?: 0f,
+                            cdetalle.getFloatOrNull(9) ?: 0f,
+                            cdetalle.getFloatOrNull(10) ?: 0f,
+                            cdetalle.getFloatOrNull(11) ?: 0f,
+                            cdetalle.getFloatOrNull(12) ?: 0f,
+                            cdetalle.getFloatOrNull(13) ?: 0f,
+                            cdetalle.getFloatOrNull(14) ?: 0f,
+                            cdetalle.getFloatOrNull(15) ?: 0f,
                             cdetalle.getString(16),
                             cdetalle.getInt(17),
-                            cdetalle.getFloat(18),
+                            cdetalle.getFloatOrNull(18) ?: 0f,
                             cdetalle.getString(19),
                             cdetalle.getInt(20),
                             cdetalle.getString(21),
-                            cdetalle.getFloat(22),
-                            cdetalle.getFloat(23),
+                            cdetalle.getFloatOrNull(22) ?: 0f,
+                            cdetalle.getFloatOrNull(23) ?: 0f,
                             cdetalle.getString(24)
                         )
                         lista.add(detalle)
@@ -278,12 +284,20 @@ class PedidosController {
     }
 
     //FUNCION PARA ELIMINAR PEDIDOS ANTIGUOS
-    fun eliminarPedidosAntiguos(context: Context) {
+    fun eliminarPedidosAntiguos(context: Context, local: Boolean) : Boolean{
+        var eliminados : Boolean = false
         val fechanow = funciones.obtenerFecha()
+
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        val consulta = if(local){
+            "SELECT * FROM pedidos where Enviado=1 AND pedido_dte=1"
+        }else{
+            "SELECT * FROM pedidos where Enviado=1 AND Fecha != '$fechanow'"
+        }
+
         try {
             bd.beginTransaction()
-            val cursor = bd.query("SELECT * FROM pedidos where Enviado=1 AND Fecha_creado != ?", arrayOf(fechanow))
+            val cursor = bd.query(consulta)
             cursor.use {
                 if (cursor.count > 0) {
                     cursor.moveToFirst()
@@ -293,15 +307,21 @@ class PedidosController {
                         bd.delete("pedidos", "Id=?", arrayOf(id.toString()))
 
                     } while (cursor.moveToNext())
+                    eliminados = true
                     bd.setTransactionSuccessful()
+                }else{
+                    eliminados = false
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            //throw Exception(e.message)
+            println("ERROR AL INTENTAR ELIMINAR LOS PEDIDOS -> " + e.message)
+            eliminados = false
         } finally {
             bd.endTransaction()
         }
 
+        return eliminados
     }
 
     //FUNCION PARA ACTUALIZAR EL ESTADO DE TRANSMISION
@@ -416,7 +436,8 @@ class PedidosController {
                     when (responseCode) {
                         200 -> {
                             withContext(Dispatchers.Main){
-                                funciones.mensaje(context, "DOCUMENTO INVALIDADO CORRECTAMENTE")
+                                Toast.makeText(context, "DOCUMENTO INVALIDADO CORRECTAMENTE", Toast.LENGTH_SHORT)
+                                    .show()
                             }
                             CoroutineScope(Dispatchers.IO).launch {
                                 actualizarInventarioAlInvalidar(context, idPedido)
@@ -468,7 +489,10 @@ class PedidosController {
 
         try{
             for(item in detallePedido){
-                inventarioController.actualizarExistenciasInventario(context, item.Cantidad!!, item.Id_producto!!)
+
+                val cantidad = item.Cantidad!! + item.Bonificado!!
+
+                inventarioController.actualizarExistenciasInventario(context, cantidad, item.Id_producto!!)
             }
 
             bd.execSQL("UPDATE pedidos set pedido_dte_error=2 WHERE id=$idPedido")
@@ -554,5 +578,66 @@ class PedidosController {
         }
 
         return  cantidadItems
+    }
+
+    //FUNCION PARA AGREGAR COMENTARIOS AL PEDIDOS
+    fun agregarComentarioAlPedido(context: Context, idPedido: Int, comentario: String){
+        val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
+
+        try {
+            base.beginTransaction()
+
+            val detalle = ContentValues()
+            detalle.put("Id_pedido", idPedido)
+            detalle.put("Id_producto", 0)
+            detalle.put("Cantidad", 1)
+            detalle.put("Unidad", "UNI")
+            detalle.put("Descripcion", comentario)
+            detalle.put("Idunidad", 0)
+            detalle.put("precio", 0f)
+            detalle.put("Precio_iva", 0f)
+            detalle.put("Precio_oferta", 0f)
+            detalle.put("Total", 0f)
+            detalle.put("Total_iva", 0f)
+            detalle.put("Descuento", 0f)
+            detalle.put("Bonificado", 0f)
+            detalle.put("Precio_editado", "")
+            detalle.put("Id_Inventario_Precios", 0)
+            detalle.put("Codigo_de_barra", "")
+            detalle.put("EquivaleUni", 0f)
+            detalle.put("EquivaleFra", 0f)
+            detalle.put("UniEquivale", "")
+            detalle.put("Comentario", 1)
+
+            base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
+
+            base.setTransactionSuccessful()
+        }catch (e: Exception){
+            println("ERROR AL AGREGAR EL COMENTARIO AL PEDIDO -> " + e.message)
+        }finally {
+            base.endTransaction()
+        }
+    }
+
+    //FUNCION PARA OBTENER TOTAL DE ENVIOS AL SERVIDOR
+    fun obtenerTotalFacturacion(context: Context) : Float {
+
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        var totalObtenido = 0f
+
+        val fecha = funciones.obtenerFecha()
+
+        val consulta = "SELECT SUM(Total) AS Total FROM pedidos WHERE Fecha='$fecha' AND Enviado = 1 AND pedido_dte_error = 0"
+        val cursor = bd.query(consulta)
+        cursor.use {
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                totalObtenido = cursor.getFloat(0)
+            }else{
+                totalObtenido = 0f
+            }
+        }
+
+        return totalObtenido
     }
 }

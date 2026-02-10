@@ -4,10 +4,15 @@ import com.example.acae30.Entities.InventarioEntity
 import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.listas.InventarioRetrofit
 import com.example.acae30.modelos.JSONmodels.HojaCargaJSON
+import com.example.acae30.modelos.RespuestaConexion
 import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface AppVentasApi {
+
+    //Conexion con el Servidor
+    @GET("conexion")
+    suspend fun conectarServidor() : List<RespuestaConexion>
 
     //ENDPOINTS DE INVENTARIO
 

@@ -1,11 +1,9 @@
 package com.example.acae30
 
 import android.app.Dialog
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -24,6 +22,7 @@ import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
+import com.example.acae30.controllers.HojaCargaController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.database.AppDatabase
@@ -34,9 +33,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import java.net.HttpURLConnection
-import java.net.URL
 import java.time.LocalDate
 
 class carga_datos : AppCompatActivity() {
@@ -45,9 +41,10 @@ class carga_datos : AppCompatActivity() {
     private var idVendedor = 0
     private var alert: AlertDialogo? = null
     private var inventarioController = InventarioController()
-    private var clietnesController = ClientesController()
+    private var clientesController = ClientesController()
     private var pedidosController = PedidosController()
     private var catalagosController = CatalogosController()
+    private var hojaController = HojaCargaController()
     private var funciones = Funciones()
 
     private lateinit var preferences: SharedPreferences
@@ -304,17 +301,26 @@ class carga_datos : AppCompatActivity() {
 
         binding.cvEliminarPedidos.setOnClickListener {
 
-            Toast.makeText(this@carga_datos, "FUNCION EN VERIFICACION", Toast.LENGTH_SHORT)
-                .show()
+            /*Toast.makeText(this@carga_datos, "FUNCION EN VERIFICACION", Toast.LENGTH_SHORT)
+                .show()*/
 
-            /*try {
-                CoroutineScope(Dispatchers.IO).launch {
-                    pedidosController.eliminarPedidosAntiguos(this@carga_datos)
+            try {
+                this@carga_datos.lifecycleScope.launch {
+                    val eliminados = pedidosController.eliminarPedidosAntiguos(this@carga_datos, false)
+                    if (eliminados){
+                        withContext(Dispatchers.Main){
+                            funciones.mostrarMensaje("PEDIDOS ELIMINADOS", this@carga_datos, binding.vistaalerta)
+                        }
+                    }else{
+                        withContext(Dispatchers.Main){
+                            funciones.mostrarAlerta("NO SE ENCONTRARON PEDIDOS", this@carga_datos, binding.vistaalerta)
+                        }
+                    }
                 }
-                funciones.mostrarMensaje("PEDIDOS ELIMINADOS", this@carga_datos, binding.vistaalerta)
+
             } catch (e: Exception) {
                 funciones.mostrarAlerta("ERROR AL ELIMINAR LOS PEDIDOS -> ${e.message}", this@carga_datos, binding.vistaalerta)
-            }*/
+            }
 
         }
     }
@@ -328,15 +334,29 @@ class carga_datos : AppCompatActivity() {
             delay(1000)
 
             withContext(Dispatchers.Main){
-                alert!!.changeText("CARGANDO INFORMACION DE LOS CLIENTES")
+                alert!!.changeText("CARGANDO INFORMACION DE CLIENTES")
             }
 
             delay(1000)
 
             try {
-                getClients()
+                clientesController.obtenerClientesServidor(this@carga_datos)
             }catch (e:Exception){
-                println("ERROR AL CARGAR LA INFORMACION DE LOS CLIENTES " + e.message)
+                println("ERROR AL OBTENER LOS CLIENES -> " + e.message)
+            }
+
+            delay(1000)
+
+            withContext(Dispatchers.Main){
+                alert!!.changeText("CARGANDO INFORMACION DE SUCURSALES")
+            }
+
+            delay(1000)
+
+            try {
+                clientesController.obtenerClienteSucursalesServidor(this@carga_datos)
+            }catch (e:Exception){
+                println("ERROR AL OBTENER LAS SUCURSALES -> " + e.message)
             }
 
             delay(1000)
@@ -345,10 +365,12 @@ class carga_datos : AppCompatActivity() {
                 alert!!.changeText("CARGANDO PRECIOS PERSONALIZADOS")
             }
 
+            delay(1000)
+
             try {
-                clietnesController.obtenerPreciosPersonalizados(this@carga_datos)
-            }catch (e:Exception){
-                println("ERROR AL CARGAR LOS PRECIOS PERSONALIZADOS " + e.message)
+                clientesController.obtenerPreciosPersonalizados(this@carga_datos)
+            }catch (e: Exception){
+                println("ERROR AL OBTENER LOS PRECIOS PERSONALIZADO")
             }
 
             delay(1000)
@@ -357,10 +379,12 @@ class carga_datos : AppCompatActivity() {
                 alert!!.changeText("CARGANDO CUENTAS POR COBRAR")
             }
 
+            delay(1000)
+
             try {
-                getCuentas()
+                clientesController.obtenerCxcServidor(this@carga_datos)
             }catch (e:Exception){
-                println("ERROR AL CARGAR LASC CUENTAS POR COBRAR DE LOS CLIENTES " + e.message)
+                println("ERROR AL OBTENER LAS CXC -> " + e.message)
             }
 
             delay(1000)
@@ -391,15 +415,17 @@ class carga_datos : AppCompatActivity() {
 
         btnAceptar.setOnClickListener {
 
-            val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
+            //val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
             val numero = hojaCargaDialog.findViewById<TextInputEditText>(R.id.tietNumeroCarga).text.toString()
+
+            val hojaYaRegistrada = hojaController.verificarHojaCargaIngresada(this@carga_datos, numero.trim().toInt())
 
             if (numero.isEmpty() || numero.toInt() == 0) {
 
                 hojaCargaDialog.dismiss()
                 funciones.mensaje(this@carga_datos, "INGRESE UN NUMERO DE HOJA DE CARGA")
 
-            }else if(numero.toInt() == hojaCargaActiva){
+            }else if(hojaYaRegistrada){
 
                 hojaCargaDialog.dismiss()
                 funciones.mensaje(this@carga_datos, "LA HOJA DE CARGA YA SE ENCUENTRA CARGADA")
@@ -443,6 +469,8 @@ class carga_datos : AppCompatActivity() {
                 alert!!.changeText("OBTENIENDO ESCALAS DE PRECIOS")
             }
 
+            delay(1000)
+
             try {
                 //OBTENIENDO ESCALAS DE PRECIOS
                 inventarioController.obtenerEscalasPrecios(this@carga_datos)
@@ -453,8 +481,17 @@ class carga_datos : AppCompatActivity() {
             delay(1000)
 
             withContext(Dispatchers.Main){
-                alert!!.changeText("INVENTARIO CARGADO EXITOSAMENTE")
+                alert!!.changeText("CARGANDO UNIDADES DE MEDIDA")
             }
+
+            delay(1000)
+
+            try{
+                inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
+            }catch (e:Exception){
+                println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
+            }
+
 
             delay(1000)
 
@@ -550,160 +587,6 @@ class carga_datos : AppCompatActivity() {
         clientesRuta.show()
 
     }
-
-    //OBTENIENDO SUCURSALES DESDE WEBSERVIS
-    //09-03-2023
-    private suspend fun getClients() {
-        try {
-            //val direccion = url!! + "clientes"
-            val id_vendedor = preferences.getInt("Idvendedor", 0)
-            val direccion = url + "clientes/vendedor/"+id_vendedor
-            val url = URL(direccion)
-            with(withContext(Dispatchers.IO) {
-                url.openConnection()
-            } as HttpURLConnection) {
-                try {
-                    connectTimeout = 30000
-                    requestMethod = "GET"
-                    if (responseCode == 200) {
-                        messageAsync("Cargando 10%")
-                        inputStream.bufferedReader().use { data ->
-                            var talla = 0
-                            val response = StringBuffer()
-                            var inputLine = data.readLine()
-                            while (inputLine != null) {
-                                response.append(inputLine)
-                                inputLine = data.readLine()
-                                talla++
-                                if (talla <= 45) {
-                                    messageAsync("Cargando $talla%")
-                                }
-                            }
-                            messageAsync("Cargando 45%")
-                            data.close()
-                            messageAsync("Cargando 50%")
-                            val respuesta = JSONArray(response.toString())
-                            if (respuesta.length() > 0) {
-                                saveClienteDataBase(respuesta)
-                            } else {
-                                throw Exception("Servidor no Devolvio datos")
-                            } //caso que la respuesta venga vacia
-                        }
-                    } else {
-                        throw Exception("Error de Comunicacion con el servidor:$responseCode")
-                    }
-                } catch (e: Exception) {
-                   /// alert!!.dismisss()
-                    funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
-                }
-            } //ABRIMOS LA CONEXION
-        } catch (e: Exception) {
-            //alert!!.dismisss()
-            funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
-        }
-
-        //IMPORTANDO DATOS DE TABLA SUCURSALES CLIENTE
-
-        try {
-            val direccion = url + "sucursales"
-            val url = URL(direccion)
-            with(withContext(Dispatchers.IO) {
-                url.openConnection()
-            } as HttpURLConnection) {
-                try {
-                    connectTimeout = 30000
-                    requestMethod = "GET"
-                    if (responseCode == 200) {
-                        messageAsync("Cargando 10%")
-                        inputStream.bufferedReader().use { data ->
-                            var talla = 0
-                            val response = StringBuffer()
-                            var inputLine = data.readLine()
-                            while (inputLine != null) {
-                                response.append(inputLine)
-                                inputLine = data.readLine()
-                                talla++
-                                if (talla <= 45) {
-                                    messageAsync("Cargando $talla%")
-                                }
-                            }
-                            messageAsync("Cargando 45%")
-                            data.close()
-                            messageAsync("Cargando 50%")
-                            val respuesta = JSONArray(response.toString())
-                            if (respuesta.length() > 0) {
-                                saveSucursalesDatabase(respuesta) //guarda los datos en la bd
-                                messageAsync("Cargando 100%")
-                                delay(1000)
-                                messageAsync("Datos del Cliente Almacenados Exitosamente")
-                                delay(1500)
-                            } else {
-                                messageAsync("Cargando 100%")
-                                delay(1000)
-                                messageAsync("Datos del Cliente Almacenados Exitosamente")
-                                delay(1500)
-                            } //caso que la respuesta venga vacia
-                        }
-                    } else {
-                        throw Exception("SERVIDOR: NO SE ENCONTRARON SUCURSALES REGISTRADAS")
-                    }
-                } catch (e: Exception) {
-                    throw Exception(e.message)
-                }
-            }//termina de obtener los datos
-        } catch (e: Exception) {
-           // alert!!.dismisss()
-            //funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
-            println("NO SE ENCONTRARON DATOS REGISTRADOS DE SUCURSALES")
-        }
-    } //obtiene los clientes del servidor
-
-    //GUARDANDO SUCURSALES EN SQLITE
-    //28-01-2023
-    private fun saveSucursalesDatabase(json: JSONArray) {
-        val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
-        val total = json.length()
-        val talla = (50.toFloat() / total.toFloat()).toFloat()
-        var contador: Float = 0.toFloat()
-        try {
-            bd.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
-            for (i in 0 until json.length()) {
-                val dato = json.getJSONObject(i)
-                val valor = ContentValues()
-                valor.put("Id", dato.getInt("id"))
-                valor.put("Id_cliente", dato.getInt("id_cliente"))
-                valor.put("codigo_sucursal", funciones.validateJsonIsnullString(dato, "codigo_sucursal"))
-                valor.put("nombre_sucursal", funciones.validateJsonIsnullString(dato, "nombre_sucursal"))
-                valor.put("direccion_sucursal", funciones.validateJsonIsnullString(dato, "dteDireccion"))//DATO DTE
-                valor.put("municipio_sucursal", funciones.validateJsonIsnullString(dato, "municipio"))//DATO DTE
-                valor.put("depto_sucursal", funciones.validateJsonIsnullString(dato, "departamento"))//DATO DTE
-                valor.put("telefono_1", funciones.validateJsonIsnullString(dato, "dteTelefono"))//DATO DTE
-                valor.put("telefono_2", funciones.validateJsonIsnullString(dato, "telefono2"))
-                valor.put("correo_sucursal", funciones.validateJsonIsnullString(dato, "correo"))
-                valor.put("contacto_sucursal", funciones.validateJsonIsnullString(dato, "contacto"))
-
-                //ARGEGANDO DATOS PENDIENTE Y DTE DE LA SUCURSAL
-                valor.put("Id_ruta", dato.getInt("id_ruta"))
-                valor.put("Ruta", funciones.validateJsonIsnullString(dato, "ruta"))
-                valor.put("DTECodDepto", funciones.validateJsonIsnullString(dato, "dteCodDepto"))
-                valor.put("DTECodMunicipio", funciones.validateJsonIsnullString(dato, "dteCodMunicipio"))
-                valor.put("DTECodPais", funciones.validateJsonIsnullString(dato, "dteCodPais"))
-                valor.put("DTEPais", funciones.validateJsonIsnullString(dato, "dtePais"))
-                valor.put("Latitud_app", funciones.validateJsonIsnullString(dato, "latitud_app"))
-                valor.put("Longitud_app", funciones.validateJsonIsnullString(dato, "longitud_app"))
-
-                bd.insert("cliente_sucursal", SQLiteDatabase.CONFLICT_REPLACE, valor)
-                contador += talla
-                val mensaje = contador + 50.toFloat()
-                messageAsync("Cargando ${mensaje.toInt()}%")
-            } //FINALIZANDO ITERACION FOR
-            bd.setTransactionSuccessful() //TRANSACCION COMPLETA
-        } catch (e: Exception) {
-            throw  Exception(e.message)
-        } finally {
-            bd.endTransaction()
-        }
-    } //INSERTANDO DATOS EN LA TABLA SUCURSALES EN SQLITE
 
     //FUNCION PARA LA LECTURA DEL ENDPOINT DE INVENTARIO
    private suspend fun getInventario() = withContext(Dispatchers.IO) {
@@ -856,63 +739,6 @@ class carga_datos : AppCompatActivity() {
 
     }
 
-
-    private suspend fun getCuentas() {
-        try {
-            val direccion = url + "cuentas"
-            val url = URL(direccion)
-            with(withContext(Dispatchers.IO) {
-                url.openConnection()
-            } as HttpURLConnection) {
-                try {
-                    connectTimeout = 30000
-                    requestMethod = "GET"
-                    if (responseCode == 200) {
-                        messageAsync("Cargando 10%")
-                        inputStream.bufferedReader().use { data ->
-                            var talla = 0
-                            val response = StringBuffer()
-                            var inputLine = data.readLine()
-                            while (inputLine != null) {
-                                response.append(inputLine)
-                                inputLine = data.readLine()
-                                talla++
-                                if (talla <= 45) {
-                                    messageAsync("Cargando $talla%")
-                                }
-                            }
-                            messageAsync("Cargando 45%")
-                            data.close()
-                            messageAsync("Cargando 50%")
-                            val respuesta = JSONArray(response.toString())
-                            if (respuesta.length() > 0) {
-                                saveCuentaDatabase(respuesta) //guarda los datos en la bd
-                                messageAsync("Cargando 100%")
-                                delay(1000)
-                                messageAsync("Cuentas Almacenadas Exitosamente")
-                                delay(1500)
-                                //alert!!.dismisss()
-                            } else {
-                                messageAsync("Cargando 100%")
-                                delay(1000)
-                                messageAsync("Cuentas Almacenados Exitosamente")
-                                delay(1500)
-                                //alert!!.dismisss()
-                            } //caso que la respuesta venga vacia
-                        }
-                    } else {
-                        throw Exception("Error de Comunicacion con el servidor:$responseCode")
-                    }
-                } catch (e: Exception) {
-                    throw Exception(e.message)
-                }
-            }//termina de obtener los datos
-        } catch (e: Exception) {
-            //alert!!.dismisss()
-            funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
-        }
-    }
-
     private fun messageAsync(mensaje: String) {
         if (alert != null) {
             runOnUiThread {
@@ -920,165 +746,6 @@ class carga_datos : AppCompatActivity() {
             }
         }
     }//muestra la carga del mensaje de forma asincrona
-
-    private fun saveClienteDataBase(json: JSONArray) {
-
-        val total = json.length()
-        val talla = (50.toFloat() / total.toFloat()).toFloat()
-        var contador: Float = 0.toFloat()
-        val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
-        try {
-            bd.beginTransaction() //inicio la transaccion
-
-            bd.execSQL("DELETE FROM clientes") //limpiamos los registros viejos par obtener los nuevos
-            bd.execSQL("DELETE FROM cliente_precios")
-            bd.execSQL("DELETE FROM cliente_sucursal") //LIMPIANDO TABLA SUCURSALES
-
-            for (i in 0 until json.length()) {
-                val dato = json.getJSONObject(i) //obtenemos el objecto json
-                val data = ContentValues()
-                data.put("Id", dato.getInt("id"))
-                data.put("Codigo", funciones.validate(dato.getString("codigo")))
-                data.put("Cliente", funciones.validate(dato.getString("cliente")))
-                data.put("Dui", funciones.validate(dato.getString("dui")))
-                data.put("Nit", funciones.validate(dato.getString("nit")))
-                data.put("Nrc", funciones.validate(dato.getString("nrc")))
-                data.put("Giro", funciones.validate(dato.getString("giro")))
-                data.put(
-                    "Categoria_cliente",
-                    funciones.validate(dato.getString("categoria_cliente"))
-                )
-                data.put(
-                    "Terminos_cliente",
-                    funciones.validate(dato.getString("terminos_cliente"))
-                )
-                data.put("Plazo_credito", funciones.validate(dato.getInt("plazo_credito")))
-                data.put("Limite_credito",
-                    funciones.validate(dato.getString("limite_credito").toFloat())
-                )
-                data.put("Balance", funciones.validate(dato.getString("balance").toFloat()))
-                data.put("Estado_credito", funciones.validate(dato.getString("estado_credito")))
-                data.put("Direccion", funciones.validate(dato.getString("direccion")))
-                data.put("Municipio", funciones.validate(dato.getString("municipio")))
-                data.put("Departamento", funciones.validate(dato.getString("departamento")))
-                data.put("Telefono_1", funciones.validate(dato.getString("telefono1")))
-                data.put("Telefono_2", funciones.validate(dato.getString("telefono2")))
-                data.put("Correo", funciones.validate(dato.getString("correo")))
-                data.put("Contacto", funciones.validate((dato.getString("contacto"))))
-                data.put("Id_ruta", funciones.validateJsonIsNullInt(dato, "id_ruta"))
-                data.put("Id_vendedor", funciones.validateJsonIsNullInt(dato, "id_vendedor"))
-                data.put("Vendedor", funciones.validate(dato.getString("vendedor")))
-                data.put("Status", funciones.validate(dato.getString("status")))
-                data.put("Ultima_venta", funciones.validate(dato.getString("fecha_ult_venta")))
-                data.put(
-                    "Aporte_mensual",
-                    funciones.validate(dato.getString("aporte_mensual").toFloat())
-                )
-
-                //AGREGADO EL CAMPO PARA VERIFICACION DEL PAGARE
-                val pagareFirmado = if(dato.getBoolean("pagare_Firmado_app")) 1 else 0
-                data.put("Firmar_pagare_app", pagareFirmado)
-
-                //AGREGANDO EL CAMPO PARA VERIFICACION DE PERSONA JURIDICA
-                data.put("Persona_juridica", funciones.validate(dato.getString("persona_juridica")))
-
-                //VALIDANDO EL DTEGIRO ALMACENADO EN EL SERVIDOR
-                data.put("dteGiro", funciones.validate(dato.getString("dteGiro")))
-                data.put("Ruta", funciones.validate(dato.getString("ruta")))
-
-                data.put("Ruta", funciones.validate(dato.getString("ruta")))
-                data.put("DTECodDepto", funciones.validate(dato.getString("dteCodDepto")))
-                data.put("DTECodMunicipio", funciones.validate(dato.getString("dteCodMunicipio")))
-                data.put("DTECodPais", funciones.validate(dato.getString("dteCodPais")))
-                data.put("DTEDireccion", funciones.validate(dato.getString("dteDireccion")))
-                data.put("DTEPais", funciones.validate(dato.getString("dtePais")))
-                data.put("DTETelefono", funciones.validate(dato.getString("dteTelefono")))
-                data.put("DTECorreo", funciones.validate(dato.getString("dteCorreo")))
-                data.put("Latitud_app", funciones.validate(dato.getString("latitud_app")))
-                data.put("Longitud_app", funciones.validate(dato.getString("longitud_app")))
-                data.put("Nombre_comercial", funciones.validate(dato.getString("nombre_comercial")))
-                data.put("Mayorista", funciones.validate(dato.getString("mayorista")))
-                data.put("DTECodGiro", funciones.validate(dato.getString("dteCodGiro")))
-                data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
-                data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))
-
-                bd.insert("clientes", SQLiteDatabase.CONFLICT_REPLACE, data)
-                contador += talla
-                val mensaje = contador + 50.toFloat()
-                messageAsync("Cargando ${mensaje.toInt()}%")
-            } //recorre el json array
-            bd.setTransactionSuccessful()
-
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        } finally {
-            bd.endTransaction()
-        }
-    }//guarda los datos en la bd
-
-    private fun saveCuentaDatabase(json: JSONArray) {
-        val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
-        val total = json.length()
-        val talla = (50.toFloat() / total.toFloat()).toFloat()
-        var contador: Float = 0.toFloat()
-        try {
-            bd.beginTransaction() //inicia la transaccion
-            bd.execSQL("DELETE FROM cuentas") //eliminamos la cuentas
-
-            val sql2 = "DELETE FROM SQLITE_SEQUENCE WHERE NAME = 'cuentas'"
-            bd.execSQL(sql2)
-
-            for (i in 0 until json.length()) {
-                val dato = json.getJSONObject(i)
-                val valor = ContentValues()
-                valor.put("Id", dato.getInt("id"))
-                valor.put("Id_cliente", dato.getInt("id_cliente"))
-                valor.put(
-                    "Codigo_cliente",
-                    funciones.validateJsonIsnullString(dato, "codigo_cliente")
-                )
-                valor.put("Documento", funciones.validateJsonIsnullString(dato, "documento"))
-                valor.put("Fecha", funciones.validateJsonIsnullString(dato, "fecha"))
-                valor.put("Valor", funciones.validateJsonIsNullFloat(dato, "valor"))
-                valor.put(
-                    "Abono_inicial",
-                    funciones.validateJsonIsNullFloat(dato, "abono_inicial")
-                )
-                valor.put(
-                    "Saldo_inicial",
-                    funciones.validateJsonIsNullFloat(dato, "saldo_inicial")
-                )
-                valor.put("Plazo", funciones.validateJsonIsNullFloat(dato, "plazo"))
-                valor.put(
-                    "Fecha_vencimiento",
-                    funciones.validateJsonIsnullString(dato, "fecha_vencimiento")
-                )
-                valor.put("Saldo_actual", funciones.validateJsonIsNullFloat(dato, "saldo_actual"))
-                valor.put(
-                    "Fecha_ult_pago",
-                    funciones.validateJsonIsnullString(dato, "fecha_ult_pago")
-                )
-                valor.put("Valor_pago", funciones.validateJsonIsNullFloat(dato, "valor_pago"))
-                valor.put("Relacionado", funciones.validateJsonIsnullString(dato, "relacionado"))
-                valor.put("Status", funciones.validateJsonIsnullString(dato, "status"))
-                valor.put(
-                    "Fecha_cancelado",
-                    funciones.validateJsonIsnullString(dato, "fecha_cancelado")
-                )
-                valor.put("dias_tardios", funciones.validateJsonIsNullInt(dato, "dias_tardios"))
-
-                bd.insert("cuentas", SQLiteDatabase.CONFLICT_REPLACE, valor)
-                contador = contador + talla
-                val mensaje = contador + 50.toFloat()
-                messageAsync("Cargando ${mensaje.toInt()}%")
-            } //termina el for
-            bd.setTransactionSuccessful() //transaccion exitosa
-        } catch (e: Exception) {
-            throw  Exception(e.message)
-        } finally {
-            bd.endTransaction()
-        }
-    } //inserta las cxc en la tabla
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {

@@ -32,6 +32,7 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import androidx.core.content.edit
+import androidx.room.util.recursiveFetchArrayMap
 import com.example.acae30.Inicio
 import com.example.acae30.modelos.UnidadMedidaModelo
 import com.google.gson.JsonArray
@@ -307,6 +308,7 @@ class InventarioController {
         var hojaRegistrada: Int = 0
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val multiplesHojaDeCarga = preferences.getBoolean("multiplesHojaDeCarga", false)
 
         //OBTENIENDO FECHA
         val fecha = funciones.obtenerFecha()
@@ -315,7 +317,18 @@ class InventarioController {
             val datos = HojaCargaJSON(0, numeroHoja, id_vendedor, fecha!!)
             val objecto = Gson().toJson(datos)
 
-            val ruta: String = servidor + "inventario/hojacarga"
+            //val ruta: String = servidor + "inventario/hojacarga"
+
+            val ruta : String = if(!esRecarga){
+                servidor + "inventario/hojacarga"
+            }else{
+                if(!multiplesHojaDeCarga){
+                    servidor + "inventario/hojacarga"
+                }else{
+                    servidor + "inventario/recargasMultiplesHojas/$fecha/$id_vendedor"
+                }
+            }
+
             val url = URL(ruta)
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
@@ -326,10 +339,19 @@ class InventarioController {
                         "Content-Type",
                         "application/json;charset=utf-8"
                     )
-                    requestMethod = "POST"
-                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                    or.write(objecto) //SE ESCRIBE EL OBJ JSON
-                    or.flush() //SE ENVIA EL OBJ JSON
+
+                    //requestMethod = "POST"
+                    requestMethod = if(!esRecarga){ "POST" }
+                    else{
+                        if(!multiplesHojaDeCarga){ "POST" }
+                        else{ "GET" }
+                    }
+
+                    if(requestMethod.contains("POST")){
+                        val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+                        or.write(objecto) //SE ESCRIBE EL OBJ JSON
+                        or.flush() //SE ENVIA EL OBJ JSON
+                    }
                     when (responseCode) {
                         200 -> {
                             BufferedReader(InputStreamReader(inputStream) as Reader?).use {
@@ -350,7 +372,7 @@ class InventarioController {
 
                                             //INSERTANDO INFORMACION EN TABLA DE INVENTARIO Y PRIMERA HOJA DE CARGA
                                             //ALMACENANDO INVENTARIO NUEVO
-                                            saveInventarioDatabase(res, context, numeroHoja,false)
+                                            almacenarInventarioHojaCargaSQLite(res, context, numeroHoja,false)
 
                                             hojaRegistrada = 1
                                         }else{
@@ -418,7 +440,7 @@ class InventarioController {
     }
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    private fun saveInventarioDatabase(json: JSONArray, context: Context, numeroHojaCarga:Int, esRecarga: Boolean) {
+    private fun almacenarInventarioHojaCargaSQLite(json: JSONArray, context: Context, numeroHojaCarga:Int, esRecarga: Boolean) {
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
@@ -437,52 +459,71 @@ class InventarioController {
             bd.beginTransaction()
             for (i in 0 until json.length()) {
                 val dato = json.getJSONObject(i)
-
                 val data = ContentValues()
-                data.put("id", dato.getInt("id"))
-                data.put("codigo", funciones.validateJsonIsnullString(dato, "codigo"))
-                data.put("codigo_de_barra", funciones.validateJsonIsnullString(dato, "codigo_de_barra"))
-                data.put("tipo", funciones.validateJsonIsnullString(dato, "tipo"))
-                data.put("descripcion", funciones.validateJsonIsnullString(dato, "descripcion"))
-                data.put(
-                    "unidad_medida",
-                    funciones.validateJsonIsnullString(dato, "unidad_medida")
-                )
-                data.put("fraccion", funciones.validateJsonIsNullFloat(dato, "fraccion"))
-                data.put(
-                    "nombre_fraccion", funciones.validateJsonIsnullString(
-                        dato,
-                        "nombre_fraccion"
-                    )
-                )
-                data.put("costo", funciones.validateJsonIsNullFloat(dato, "costo"))
-                data.put("costo_iva", funciones.validateJsonIsNullFloat(dato, "costo_iva"))
-                data.put("ult_costo", funciones.validateJsonIsNullFloat(dato, "ult_costo"))
-                data.put("ult_costo_iva", funciones.validateJsonIsNullFloat(dato, "ult_costo_iva"))
-                data.put("existencia", funciones.validateJsonIsNullFloat(dato, "existencia"))
-                data.put("existencia_u", funciones.validateJsonIsNullFloat(dato, "existencia_u"))
-                data.put("precio", funciones.validateJsonIsNullFloat(dato, "precio"))
-                data.put("precio_u", funciones.validateJsonIsNullFloat(dato, "precio_u"))
-                data.put("precio_u_iva", funciones.validateJsonIsNullFloat(dato, "precio_u_iva"))
-                data.put("precio_iva", funciones.validateJsonIsNullFloat(dato, "precio_iva"))
-                data.put("bonificado", funciones.validateJsonIsNullFloat(dato, "bonificado"))
-                data.put("lote", funciones.validateJsonIsnullString(dato, "lote"))
-                data.put("fecha_vencimiento", funciones.validateJsonDate(dato, "fecha_vencimiento"))
-                data.put("precio2", funciones.validateJsonIsNullFloat(dato, "precio2"))
-                data.put("precio2_iva", funciones.validateJsonIsNullFloat(dato, "precio2_iva"))
-                data.put("precio_u2", funciones.validateJsonIsNullFloat(dato, "precio_u2"))
-                data.put("precio_u2_iva", funciones.validateJsonIsNullFloat(dato, "precio_u2_iva"))
-                data.put("precio_viñeta", funciones.validateJsonIsNullFloat(dato, "precio_viñeta"))
-                data.put("precio_viñeta_iva", funciones.validateJsonIsNullFloat(dato, "precio_viñeta_iva"))
-                data.put("fecha_inventario", LocalDate.now().toString())
-                data.put("validadoHoja", productoValidado)
-                data.put("condicion_mercado", "NORMAL")
 
-                idHojaCarga = funciones.validateJsonIsNullInt(dato, "idHojaCarga")
-                idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")
-                rutaHojaCarga = funciones.validateJsonIsnullString(dato, "ruta")
+                //******************************
+                //VERIFICANDO SI MULTIPLES HOJAS ESTÁ ACTIVO
+                //SI ES ASI SUMARÁ LAS EXISTENCIAS AL PRODUCTO YA REGISTRADO
+                //******************************
 
-                bd.insert("inventario", SQLiteDatabase.CONFLICT_REPLACE, data)
+                val idProducto = dato.getInt("id")
+                val existenciaJSON = funciones.validateJsonIsNullFloat(dato, "existencia")
+                val existencia_uJSON = funciones.validateJsonIsNullFloat(dato, "existencia_u")
+
+                val consulta = "SELECT id FROM Inventario WHERE id = $idProducto"
+
+                val cursor = bd.query(consulta)
+                cursor.use {
+                    if(cursor.count > 0){
+                        bd.execSQL("UPDATE Inventario SET Existencia = (Existencia + $existenciaJSON), existencia_u = (existencia_u + $existencia_uJSON) WHERE Id=$idProducto")
+                    }else{
+                        data.put("id", dato.getInt("id"))
+                        data.put("codigo", funciones.validateJsonIsnullString(dato, "codigo"))
+                        data.put("codigo_de_barra", funciones.validateJsonIsnullString(dato, "codigo_de_barra"))
+                        data.put("tipo", funciones.validateJsonIsnullString(dato, "tipo"))
+                        data.put("descripcion", funciones.validateJsonIsnullString(dato, "descripcion"))
+                        data.put(
+                            "unidad_medida",
+                            funciones.validateJsonIsnullString(dato, "unidad_medida")
+                        )
+                        data.put("fraccion", funciones.validateJsonIsNullFloat(dato, "fraccion"))
+                        data.put(
+                            "nombre_fraccion", funciones.validateJsonIsnullString(
+                                dato,
+                                "nombre_fraccion"
+                            )
+                        )
+                        data.put("costo", funciones.validateJsonIsNullFloat(dato, "costo"))
+                        data.put("costo_iva", funciones.validateJsonIsNullFloat(dato, "costo_iva"))
+                        data.put("ult_costo", funciones.validateJsonIsNullFloat(dato, "ult_costo"))
+                        data.put("ult_costo_iva", funciones.validateJsonIsNullFloat(dato, "ult_costo_iva"))
+                        data.put("existencia", funciones.validateJsonIsNullFloat(dato, "existencia"))
+                        data.put("existencia_u", funciones.validateJsonIsNullFloat(dato, "existencia_u"))
+                        data.put("precio", funciones.validateJsonIsNullFloat(dato, "precio"))
+                        data.put("precio_u", funciones.validateJsonIsNullFloat(dato, "precio_u"))
+                        data.put("precio_u_iva", funciones.validateJsonIsNullFloat(dato, "precio_u_iva"))
+                        data.put("precio_iva", funciones.validateJsonIsNullFloat(dato, "precio_iva"))
+                        data.put("bonificado", funciones.validateJsonIsNullFloat(dato, "bonificado"))
+                        data.put("lote", funciones.validateJsonIsnullString(dato, "lote"))
+                        data.put("fecha_vencimiento", funciones.validateJsonDate(dato, "fecha_vencimiento"))
+                        data.put("precio2", funciones.validateJsonIsNullFloat(dato, "precio2"))
+                        data.put("precio2_iva", funciones.validateJsonIsNullFloat(dato, "precio2_iva"))
+                        data.put("precio_u2", funciones.validateJsonIsNullFloat(dato, "precio_u2"))
+                        data.put("precio_u2_iva", funciones.validateJsonIsNullFloat(dato, "precio_u2_iva"))
+                        data.put("precio_viñeta", funciones.validateJsonIsNullFloat(dato, "precio_viñeta"))
+                        data.put("precio_viñeta_iva", funciones.validateJsonIsNullFloat(dato, "precio_viñeta_iva"))
+                        data.put("fecha_inventario", LocalDate.now().toString())
+                        data.put("validadoHoja", productoValidado)
+                        data.put("condicion_mercado", "NORMAL")
+
+                        idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")
+                        rutaHojaCarga = funciones.validateJsonIsnullString(dato, "ruta")
+
+                        idHojaCarga = funciones.validateJsonIsNullInt(dato, "idHojaCarga")
+
+                        bd.insert("inventario", SQLiteDatabase.CONFLICT_REPLACE, data)
+                    }
+                }
             }
 
             //ALAMACENANDO EN SHARED PREFERENCES EL ID DE LA HOJA DE CARGA ACTIVA SI NO ES RECARGA
@@ -519,14 +560,15 @@ class InventarioController {
                     do {
                         try {
 
-                            base.execSQL("UPDATE Inventario SET Existencia = (Existencia - ${cursor.getInt(1)}) WHERE Id=${cursor.getInt(0)}")
+                            //DESCAR DE INVENTARIO SOLO UNIDADES
+                            //base.execSQL("UPDATE Inventario SET Existencia = (Existencia - ${cursor.getInt(1)}) WHERE Id=${cursor.getInt(0)}")
 
-                            //DESCARGA DE INVENTARIO PARA HOJAS DE CARGA CON FRACCIONES
-                            /*when(cursor.getString(2)){
+                            //DESCARGA DE INVENTARIO PARA HOJAS DE CARGA CON FRACCIONES Y UNIDADES DE MEDIDA
+                            when(cursor.getString(2)){
                                 "UNI" -> descargarUnidades(context, cursor.getInt(0), cursor.getInt(1))
                                 "FRA" -> descargarFracciones(context, cursor.getInt(0), cursor.getInt(1))
                                 else -> descargarUnidadesMedida(context,cursor.getInt(0), cursor.getInt(1), cursor.getString(2))
-                            }*/
+                            }
                         }catch (e:Exception){
                             println("ERROR: NO SE ACTUALIZARON LAS EXITENCIAS EN INVENTARIO -> ${e.message}")
                         }
@@ -538,17 +580,119 @@ class InventarioController {
         }
     }
 
-    //FUNCION PARA LIMPIAR TABLAS DE INVENTARIO Y HOJA DE CARGA
-    private fun limpiarInventarioHojaCarga(context: Context){
+    //FUNCION PARA DESCARGAR UNIDADES
+    private fun descargarUnidades(context: Context, idProducto: Int, cantidad: Int){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            bd.execSQL("DELETE FROM Inventario")
-            bd.execSQL("DELETE FROM hoja_carga")
-            bd.execSQL("DELETE FROM hoja_carga_detalle")
-            bd.execSQL("DELETE FROM hoja_detalle_recargas")
+            bd.execSQL("UPDATE Inventario SET Existencia = (Existencia - $cantidad) WHERE Id=$idProducto")
+        }catch (e: Exception){
+            println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA DEL PRODUCTO -> " + e.message)
+        }
+    }
+
+    //FUNCION PARA DESCARGAR FRACCIONES
+    private fun descargarFracciones(context: Context, idProducto: Int, cantidad: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try{
+            val sql = "SELECT Existencia, Existencia_u, Fraccion FROM inventario WHERE id = $idProducto"
+            val cursor = bd.query(sql)
+
+            var existenciaActual : Int = 0
+            var existenciaUActual : Int = 0
+            var fraccionamiento : Int = 0
+            var totalFraccionesActuales : Int = 0
+
+
+            var existenciaFinal : Int = 0
+            var existenciaUFinal : Int = 0
+            var totalFraccionesFinal : Int = 0
+
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                existenciaActual = cursor.getInt(0)
+                existenciaUActual = cursor.getInt(1)
+                fraccionamiento = cursor.getInt(2)
+            }
+            cursor.close()
+
+            //CALCULANDO EL TOTAL DE FACCIONES ACTUAL EN INVENTARIO
+            totalFraccionesActuales = (existenciaActual * fraccionamiento) + existenciaUActual
+
+            totalFraccionesFinal = totalFraccionesActuales - cantidad
+
+            existenciaFinal = totalFraccionesFinal / fraccionamiento   // cuántas unidades completas quedan
+            existenciaUFinal = totalFraccionesFinal % fraccionamiento  // fracciones restantes
+
+            bd.execSQL("UPDATE inventario SET Existencia = $existenciaFinal, Existencia_u = $existenciaUFinal WHERE Id = $idProducto")
+
+        }catch (e: Exception){
+            println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA EN FRACCION DEL PRODUCTO -> " + e.message)
+        }
+    }
+
+    //FUNCION PARA VALIDAR DESCARGA DE UNIDADES DE MEDIDA
+    private fun descargarUnidadesMedida(context: Context, idProducto: Int, cantidad: Int, unidadMedida: String){
+
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        try {
+            //SELECCIONANDO LA UNIDAD DE MEDIDA
+            val sql = "SELECT Equivale, Unidades FROM inventario_unidades WHERE id_inventario = $idProducto AND Nombre_unidad = '$unidadMedida'"
+            val cursor = bd.query(sql)
+
+            var cantidadDescargar: Int = 0
+
+            if(cursor.count > 0){
+                cursor.moveToFirst()
+                cantidadDescargar = cantidad * cursor.getInt(0)
+
+                when(cursor.getString(1)){
+                    "UNI" -> descargarUnidades(context, idProducto, cantidadDescargar)
+                    "FRA" -> descargarFracciones(context, idProducto, cantidadDescargar)
+                }
+            }
+            cursor.close()
+
+        }catch (e: Exception){
+            println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA DEL PRODUCTO POR UNIDAD DE MEDIDA -> " + e.message)
+        }
+    }
+
+    //FUNCION PARA LIMPIAR TABLAS DE INVENTARIO Y HOJA DE CARGA
+    private fun limpiarInventarioHojaCarga(context: Context){
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val multiplesHojasDeCarga = preferences.getBoolean("multiplesHojaDeCarga", false)
+
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+
+        val fecha = funciones.obtenerFecha()
+
+        try {
+
+            //VERIFICANDO SI MULTIPLES HOJAS ESTÁ ACTIVO
+            if(!multiplesHojasDeCarga){
+                //LIMPIANDO INVENTARIO PARA UNICA HOJA DE CARGA
+                limpiandoTablasInventario(context)
+            }else{
+                //LIMPIANDO INVENTARIO PARA MULTIPLES HOJAS DE CARGA
+                val consultaTblHojaCarga = "SELECT * FROM hoja_carga WHERE Fecha != '$fecha' LIMIT 1"
+                val cursor = bd.query(consultaTblHojaCarga)
+                cursor.use {
+                    if(cursor.count > 0){
+                        limpiandoTablasInventario(context)
+                    }
+                }
+            }
         }catch (e: Exception){
             throw Exception("ERROR LA ELIMINAR EL INVENTARIO -> " + e.message)
         }
+    }
+
+    private fun limpiandoTablasInventario(context: Context){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        bd.execSQL("DELETE FROM Inventario")
+        bd.execSQL("DELETE FROM hoja_carga")
+        bd.execSQL("DELETE FROM hoja_carga_detalle")
+        bd.execSQL("DELETE FROM hoja_detalle_recargas")
     }
 
     //FUNCION PARA INSERTAR MAESTRO HOJA CARGA
@@ -570,6 +714,7 @@ class InventarioController {
             data.put("Fecha_registro", fechaHojaCarga)
             data.put("Id_ruta", idRutaHojaCarga)
             data.put("Ruta", rutaHojaCarga)
+            data.put("Fecha", fechaHojaCarga)
             bd.insert("hoja_carga", SQLiteDatabase.CONFLICT_REPLACE, data)
 
             bd.setTransactionSuccessful()
@@ -584,23 +729,48 @@ class InventarioController {
     }
 
     //FUNCION PARA INSERTAR DETALLE DE HOJA DE CARGA
-    private suspend fun insertarDetalleHojaCarga(json: JSONArray, context: Context, numeroHojaCarga: Int){
+    private fun insertarDetalleHojaCarga(json: JSONArray, context: Context, numeroHojaCarga: Int){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
-        val idHojaCarga = preferences.getInt("idHojaCarga", 0)
+        var idHojaCarga = 0
+        val multiplesHojaDeCarga = preferences.getBoolean("multiplesHojaDeCarga", false)
+        val idHojaCargaMaster = preferences.getInt("idHojaCargaMaster", 0)
+
+        if(!multiplesHojaDeCarga){
+            idHojaCarga = preferences.getInt("idHojaCarga", 0)
+        }
 
         try {
             bd.beginTransaction()
             for (i in 0 until json.length()) {
                 val dato = json.getJSONObject(i)
-
                 val data = ContentValues()
-                data.put("Id_hojaCarga", idHojaCarga)
-                data.put("Id_inventario", dato.getInt("id"))
-                data.put("Codigo_inventario", funciones.validateJsonIsnullString(dato, "codigo"))
-                data.put("Cantidad", funciones.validateJsonIsNullFloat(dato, "existencia"))
-                bd.insert("hoja_carga_detalle", SQLiteDatabase.CONFLICT_REPLACE, data)
+
+                if(!multiplesHojaDeCarga){
+                    data.put("Id_hojaCarga", idHojaCarga)
+                    data.put("Id_inventario", dato.getInt("id"))
+                    data.put("Codigo_inventario", funciones.validateJsonIsnullString(dato, "codigo"))
+                    data.put("Cantidad", funciones.validateJsonIsNullFloat(dato, "existencia"))
+                    bd.insert("hoja_carga_detalle", SQLiteDatabase.CONFLICT_REPLACE, data)
+                }else{
+                    val idProducto = dato.getInt("id")
+                    val cantidad = funciones.validateJsonIsNullFloat(dato, "existencia")
+
+                    val consulta = "SELECT id_inventario FROM hoja_carga_detalle WHERE id_inventario = $idProducto"
+                    val cursor = bd.query(consulta)
+                    cursor.use {
+                        if (cursor.count > 0){
+                            bd.execSQL("UPDATE hoja_carga_detalle SET Cantidad = (Cantidad + $cantidad) WHERE id_inventario = $idProducto")
+                        }else{
+                            data.put("Id_hojaCarga", idHojaCarga)
+                            data.put("Id_inventario", dato.getInt("id"))
+                            data.put("Codigo_inventario", funciones.validateJsonIsnullString(dato, "codigo"))
+                            data.put("Cantidad", funciones.validateJsonIsNullFloat(dato, "existencia"))
+                            bd.insert("hoja_carga_detalle", SQLiteDatabase.CONFLICT_REPLACE, data)
+                        }
+                    }
+                }
 
                 //ACTUALIZANDO EXISTENCIAS
                 /*CoroutineScope(Dispatchers.IO).launch {
@@ -882,22 +1052,25 @@ class InventarioController {
     }
 
     //FUNCION PARA OBTENER LA CANTIDAD DE LA ESCALA SELECCIONADA
-    fun obtenerEscalaSeleccionada(context: Context, idProducto: Int, precio: Float, unidad : String): Int {
+    fun obtenerEscalaSeleccionada(context: Context, idProducto: Int, precio: Float, unidad : String): Float {
         val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
-        var cantidadEscala = 0
+        var cantidadEscala = 0f
         try {
-            val query = """
+            /*val query = """
             SELECT Cantidad 
             FROM inventario_precios 
             WHERE id_inventario = ? 
             AND ROUND(Precio_iva, 2) = ROUND(?, 2)
             AND unidad = ?
-        """.trimIndent()
+        """.trimIndent()*/
 
-            val cursor = bd.query(query, arrayOf(idProducto.toString(), precio.toString(), unidad))
+            val query = "SELECT cantidad FROM inventario_precios WHERE id_inventario = $idProducto AND ROUND(Precio_iva, 2) = ROUND($precio, 2) AND unidad = '${unidad.trim()}'"
+
+            //val cursor = bd.query(query, arrayOf(idProducto.toString(), precio.toString(), unidad))
+            val cursor = bd.query(query)
             cursor.use {
                 if (cursor.moveToFirst()) {
-                    cantidadEscala = cursor.getInt(0)
+                    cantidadEscala = cursor.getFloat(0)
                 }
             }
         } catch (e: Exception) {
@@ -992,7 +1165,8 @@ class InventarioController {
 
         listado.add("UNIDAD")
 
-        if(!hojaCargaActiva){
+        //HABILITANDO UNIDADES DE MEDIAS Y FRACCIONES CON HOJA DE CARGA  DESACTIVADA
+        /*if(!hojaCargaActiva){
             try {
                 val consulta = "SELECT fraccion FROM Inventario WHERE Id=$idProducto"
                 val cursor = bd.query(consulta)
@@ -1023,6 +1197,37 @@ class InventarioController {
             }catch (e:Exception){
                 println("ERROR NO SE ENCONTRARON UNIDADES EN INVENTARIO -> " + e.message)
             }
+        }*/
+
+        try {
+            val consulta = "SELECT fraccion FROM Inventario WHERE Id=$idProducto"
+            val cursor = bd.query(consulta)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    inventarioFraccion = cursor.getFloat(0)
+                }
+            }
+
+            if(inventarioFraccion > 1){
+                listado.add("FRACCION")
+            }
+
+            //----------------------
+            // CARGANDO LAS UNIDADES DE MEDIDA
+            //----------------------
+            val consulta2 = "SELECT Nombre_unidad FROM inventario_unidades WHERE Id_inventario=$idProducto"
+            val cursor2 = bd.query(consulta2)
+            cursor2.use {
+                if(cursor2.count > 0){
+                    cursor2.moveToFirst()
+                    do {
+                        listado.add(cursor2.getString(0))
+                    }while (cursor2.moveToNext())
+                }
+            }
+        }catch (e:Exception){
+            println("ERROR NO SE ENCONTRARON UNIDADES EN INVENTARIO -> " + e.message)
         }
 
         return listado

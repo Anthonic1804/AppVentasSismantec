@@ -49,5 +49,15 @@ data class PermisosApp(
     var tipoVentaLocal : Boolean,
 
     //Modo Desarrollo
-    var modoDesarrollo : Boolean
+    var modoDesarrollo : Boolean,
+
+    //Carga automatica de Catalogos Clientes
+    var cargaAutomaticaCatalogos: Boolean,
+
+    //Decimales para sumas y precios
+    var decPrecios : Int,
+    var decTotales : Int,
+
+    //Usar multiples hojas de carga
+    var multiplesHojaDeCarga: Boolean
 )

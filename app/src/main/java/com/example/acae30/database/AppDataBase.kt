@@ -66,6 +66,7 @@ abstract class AppDatabase : RoomDatabase() {
                         db.execSQL(tbl.solicitudCargaDetalle())
                         db.execSQL(tbl.devolucion())
                         db.execSQL(tbl.devolucionDetalle())
+                        db.execSQL(tbl.conexionServidores())
 
                     }
                 }).build().also {

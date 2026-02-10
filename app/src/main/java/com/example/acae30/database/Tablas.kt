@@ -273,7 +273,8 @@ class Tablas {
                 "Fecha_registro DATE DEFAULT CURRENT_DATE," +
                 "Id_ruta INTEGER NOT NULL DEFAULT 0," +
                 "Ruta VARCHAR(50) NULL," +
-                "Devolucion INTEGER NOT NULL DEFAULT 0)"
+                "Devolucion INTEGER NOT NULL DEFAULT 0," +
+                "Fecha VARCHAR(25) NOT NULL DEFAULT '')"
     }
 
     //CREADO TABLA HOJA DE CARGA DETALLE
@@ -422,7 +423,8 @@ class Tablas {
                 "DTECodPais VARCHAR(10) NOT NULL DEFAULT ''," +
                 "DTEPais VARCHAR(50) NOT NULL DEFAULT ''," +
                 "DTECorreo VARCHAR(100) NOT NULL DEFAULT ''," +
-                "DTETelefono VARCHAR(25) NOT NULL DEFAULT ''" +
+                "DTETelefono VARCHAR(25) NOT NULL DEFAULT ''," +
+                "Fecha VARCHAR(25) NOT NULL DEFAULT ''" +
                 ");"
     }
 
@@ -449,6 +451,7 @@ class Tablas {
                 "EquivaleUni NUMERIC(18,2) NOT NULL DEFAULT 0," +
                 "EquivaleFra NUMERIC(18,2) NOT NULL DEFAULT 0," +
                 "UniEquivale VARCHAR(5) NULL, " +
+                "Comentario INTEGER NOT NULL DEFAULT 0, " +
                 "FOREIGN KEY(Id_pedido) REFERENCES pedidos(Id_pedido)" +
                 ")"
     } //tabla detalle pedidos
@@ -481,7 +484,7 @@ class Tablas {
                     "detalle_pedidos.EquivaleFra, " +
                     "detalle_pedidos.UniEquivale " +
                 "FROM detalle_pedidos " +
-                "INNER JOIN inventario " +
+                "LEFT JOIN inventario " +
                 "ON inventario.Id = detalle_pedidos.Id_producto;"
 
     }
@@ -663,6 +666,14 @@ class Tablas {
                 "Bueno NUMERIC(18,0) NOT NULL," +
                 "Averia NUMERIC(18,0) NOT NULL," +
                 "Tipo_fiscal VARCHAR(10) NOT NULL)"
+    }
+
+    //CREANDO TABLA DE SERVIDORES
+    fun conexionServidores() : String{
+        return "CREATE TABLE servidores(" +
+                "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
+                "Ip VARCHAR(50) NOT NULL," +
+                "Puerto VARCHAR(4) NOT NULL)"
     }
 
 //    //TRIGGER PARA LA INSERCION DE DATOS EN TABLA FTS4 VIRTUAL INVENTARIO

@@ -1,11 +1,11 @@
 {
-  "sdkVersion": "1.3.0",
+  "sdkVersion": "2.0.0",
   "keys": [
     {
-      "appId": "2162b715-65dd-4056-b839-344a369188aa",
+      "appId": "019c0070-1d22-73e5-bcb5-0d355eebb7f9",
       "applicationPackageName": "com.example.acae30",
-      "keyId": "019a3090-95bd-72c6-a35e-a18e98301a51",
-      "apiKey": "ktz-sdk-qkZhL-7FTzvZOLlpmFx3os2iWgG7hvebvcWQFKvNp_k"
+      "keyId": "019c0070-3ca7-7863-bea8-a84402a07869",
+      "apiKey": "ktz-sdk-SS8oFObBssdHWpMqkNWCXH9uScrNCulpSrM-GUafXFE"
     }
   ]
 }

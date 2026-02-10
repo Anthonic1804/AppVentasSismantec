@@ -10,7 +10,7 @@
 
 
     <LinearLayout
-        android:id="@+id/barraSearch"
+        android:id="@+id/lyEncabezado"
         android:layout_width="0dp"
         android:layout_height="55dp"
         android:orientation="horizontal"
@@ -31,43 +31,71 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
 
-        <SearchView
-            android:id="@+id/busquedainv"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvInventarioHeader"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/border_textbox"
-            android:iconifiedByDefault="false"
-            android:inputType="textCapCharacters"
-            android:queryHint="Ingrese su Búsqueda"
-            android:searchIcon="@drawable/ic_baseline_search_24"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btnatras"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageButton
-            android:id="@+id/btnscanner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/colorPrimary"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_scanner_24"
-            app:tint="@color/colorAccent" />
+            android:layout_margin="@dimen/margin_8dp"
+            tools:text="INVENTARIO"
+            android:textAlignment="center"
+            android:textColor="@color/colorAccent"
+            android:textSize="@dimen/Titulo"
+            android:textStyle="bold"/>
 
     </LinearLayout>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/lyBusqueda"
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        app:cardElevation="@dimen/margin_8dp"
+        app:layout_constraintTop_toBottomOf="@id/lyEncabezado"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <SearchView
+                android:id="@+id/busquedainv"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/estandar_55dp"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:background="@drawable/spinner_bg"
+                android:iconifiedByDefault="false"
+                android:inputType="textCapCharacters"
+                android:queryHint="Ingrese su Búsqueda"
+                android:searchIcon="@drawable/ic_baseline_search_24"/>
+
+            <ImageButton
+                android:id="@+id/btnscanner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight=".15"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:backgroundTint="@color/colorAccent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_scanner_24" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/reciInvent"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/recicler"
+        android:background="@drawable/spinner_bg"
+        android:layout_margin="@dimen/margin_8dp"
+        android:padding="@dimen/margin_4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/barraSearch" />
+        app:layout_constraintTop_toBottomOf="@+id/lyBusqueda" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnBuscarRecargas"

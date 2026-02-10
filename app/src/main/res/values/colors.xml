@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#064870</color>
-    <color name="colorPrimaryDark">#064870</color>
+    <color name="colorPrimary">#00589A</color>
+    <color name="colorPrimaryDark">#00589A</color>
     <color name="colorAccent">#FFFFFF</color>
     <color name="colordark">#2A3132</color>
     <color name="moderado">#762626</color>
+
+    <color name="colorPrimary_bk">#064870</color>
+    <color name="colorPrimaryDark_bk">#064870</color>
 
     <color name="cart">#0C5891</color>
     <color name="cartold">#0C5891</color>
@@ -23,8 +26,12 @@
 
     <!-- COLORES PARA BOTONES -->
     <!-- AZUL -->
-    <color name="btnAzul">#064870</color>
-    <color name="btnAzulActivo">#026296</color>
+    <color name="btnAzul">#00589A</color>
+    <color name="btnAzulActivo">#0063AE</color>
+
+    <color name="btnAzul_bk">#064870</color>
+    <color name="btnAzulActivo_bk">#026296</color>
+
 
     <!-- VERDE -->
     <color name="btnVerde">#308C34</color>
@@ -39,4 +46,8 @@
     <color name="colorError">#FFCACA</color>
     <color name="colorVerde">#1F9A24</color>
     <color name="toastAccept">#C0EEC2</color>
+
+    <!-- COLOR NUEVO MENU -->
+    <color name="colorPrincipalOscuro">#00589A</color>
+    <color name="colorSecundarioClaro">#61B4FD</color>
 </resources>

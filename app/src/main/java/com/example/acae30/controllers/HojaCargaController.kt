@@ -44,7 +44,8 @@ class HojaCargaController {
                 val idProducto = dato.getInt("id")
                 val cantidadNuevaProducto = funciones.validateJsonIsNullFloat(dato, "existencia")
 
-                val consulta = "SELECT Id_hojaCarga, Id_inventario, Cantidad FROM hoja_carga_detalle WHERE Id_hojaCarga = $idHojaCarga AND Id_inventario = $idProducto"
+                //val consulta = "SELECT Id_hojaCarga, Id_inventario, Cantidad FROM hoja_carga_detalle WHERE Id_hojaCarga = $idHojaCarga AND Id_inventario = $idProducto"
+                val consulta = "SELECT Id_hojaCarga, Id_inventario, Cantidad FROM hoja_carga_detalle WHERE Id_inventario = $idProducto"
                 val cursor = bd.query(consulta)
 
                 cursor.use {
@@ -138,6 +139,8 @@ class HojaCargaController {
             data.put("precio_viñeta", funciones.validateJsonIsNullFloat(dato, "precio_viñeta"))
             data.put("precio_viñeta_iva", funciones.validateJsonIsNullFloat(dato, "precio_viñeta_iva"))
             data.put("fecha_inventario", LocalDate.now().toString())
+            data.put("validadoHoja", 1)
+            data.put("condicion_mercado", "NORMAL")
 
             bd.insert("inventario", SQLiteDatabase.CONFLICT_REPLACE, data)
         }catch (e:Exception){
@@ -302,6 +305,22 @@ class HojaCargaController {
 
         }
         return  aceptada
+    }
+
+    //FUNCION PARA VERIFICAR SI LA HOJA DE CARGA YA FUE INGRESADA
+    fun verificarHojaCargaIngresada(context: Context, numeroHojaCarga: Int) : Boolean{
+
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        var registrada : Boolean = false
+
+        val consulta = "SELECT numeroHoja FROM hoja_carga WHERE numeroHoja = $numeroHojaCarga"
+        val cursor = bd.query(consulta)
+        cursor.use {
+            if(cursor.count > 0){
+                registrada = true
+            }
+        }
+        return registrada
     }
 
 }

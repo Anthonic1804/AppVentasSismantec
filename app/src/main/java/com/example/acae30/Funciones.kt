@@ -225,8 +225,8 @@ class Funciones {
             db.execSQL("DELETE FROM cliente_sucursal")
             db.execSQL("DELETE FROM cliente_precios")
             db.execSQL("DELETE FROM inventario_precios")
-            //db.execSQL("DELETE FROM pedidos")
-            //db.execSQL("DELETE FROM detalle_pedidos")
+            db.execSQL("DELETE FROM pedidos")
+            db.execSQL("DELETE FROM detalle_pedidos")
         }catch (e:Exception){
             throw Exception("ERROR AL ELIMINAR LA INFORMACION AL CERRAR SESSION -> " + e.message)
         }

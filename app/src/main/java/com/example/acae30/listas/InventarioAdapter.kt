@@ -1,6 +1,7 @@
 package com.example.acae30.listas
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +21,10 @@ class InventarioAdapter(
 ) : RecyclerView.Adapter<InventarioAdapter.MyViewHolder>() {
     var ani: Funciones? = null
     var contador = 0
+
+    private var preferencias: SharedPreferences? = null
+    private val instancia = "CONFIG_SERVIDOR"
+
     //var colores: Array<String>? = null
 
     override fun onCreateViewHolder(p0: ViewGroup, p1: Int): InventarioAdapter.MyViewHolder {
@@ -51,6 +56,8 @@ class InventarioAdapter(
     }
 
     override fun onBindViewHolder(vista: InventarioAdapter.MyViewHolder, i: Int) {
+        preferencias = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val decPrecios = preferencias!!.getInt("decPrecios",2)
         if (contador > 6) {
             contador = 0
         }
@@ -59,7 +66,7 @@ class InventarioAdapter(
         val id = lista?.get(i)!!.Id
         vista.titulo.text = lista[i].Codigo
         vista.descripcion.text = lista[i].descripcion
-        vista.precio.text = "$" + String.format("%.4f", lista[i].Precio_iva)
+        vista.precio.text = "$" + String.format("%.${decPrecios}f", lista[i].Precio_iva)
         vista.existencia.text = lista[i].Existencia.toString() + " Unidades"
         vista.fraccion.text = lista[i].Fraccion.toString() + " Piezas por Uni."
 
@@ -74,7 +81,7 @@ class InventarioAdapter(
                 .error(R.drawable.no_photography)
                 .into(vista.imagen)
         }else{
-            val imgDrawable = R.drawable.inventory_ic
+            val imgDrawable = R.drawable.ic_newinventario
             vista.imagen.setImageResource(imgDrawable)
         }
         contador++

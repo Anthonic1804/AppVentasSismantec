@@ -85,7 +85,11 @@ class ConfigController {
                                         numItemRecibo = dato.optInt("numItemRecibo", 100),
                                         numItemRemision = dato.optInt("numItemRemision", 100),
                                         tipoVentaLocal = dato.optBoolean("tipoVentaLocal", false),
-                                        modoDesarrollo = dato.optBoolean("modoDesarrollo", false)
+                                        modoDesarrollo = dato.optBoolean("modoDesarrollo", false),
+                                        cargaAutomaticaCatalogos = dato.optBoolean("cargaAutomaticaCatalogos", false),
+                                        decPrecios = dato.optInt("decPrecios", 2),
+                                        decTotales = dato.optInt("decTotales", 2),
+                                        multiplesHojaDeCarga = dato.optBoolean("multiplesHojaDeCarga", false)
                                     )
 
                                     confirmarPagareObligatorio(item, context)
@@ -167,6 +171,16 @@ class ConfigController {
             //Modo Desarrollo
             putBoolean("modoDesarrollo", obj.modoDesarrollo)
 
+            //Carga automatica de Catalogos Cliente
+            putBoolean("cargaAutomaticaCatalogos", obj.cargaAutomaticaCatalogos)
+
+            //Decimales para totales y precios
+            putInt("decPrecios", obj.decPrecios)
+            putInt("decTotales", obj.decTotales)
+
+            //Uso de Multiples hojas de car
+            putBoolean("multiplesHojaDeCarga", obj.multiplesHojaDeCarga)
+
         }
     }
 
@@ -217,6 +231,15 @@ class ConfigController {
 
             remove("validarHojaCarga")
             remove("modoDesarrollo")
+
+            remove("cargaAutomaticaCatalogos")
+
+            //eliminando numero de decimales en precios y totales
+            remove("decTotales")
+            remove("decPrecios")
+
+            //Uso de multiples hojas de carga
+            remove("multiplesHojaDeCarga")
         }
     }
 }

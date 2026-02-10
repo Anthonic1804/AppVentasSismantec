@@ -737,6 +737,7 @@ class Visita : AppCompatActivity() {
     private fun CreatePedido() {
         val base = funciones.obtenerInstancia(this@Visita).openHelper.writableDatabase
         val fechanow = funciones.getFechaHoraProceso()
+        val fechaCreado = funciones.obtenerFecha()
         val terminos = clientesController.obtenerInformacionCliente(this@Visita, idcliente)
         var tipoDocumento = "FC"
         val nrc : String = terminos!!.Nrc.toString()
@@ -764,6 +765,7 @@ class Visita : AppCompatActivity() {
             contenido.put("DTEPais", terminos.DTEPais)
             contenido.put("DTECorreo", terminos.DTECorreo)
             contenido.put("DTETelefono", terminos.DTETelefono)
+            contenido.put("Fecha", fechaCreado)
             val id = base.insert("pedidos", SQLiteDatabase.CONFLICT_REPLACE, contenido)
             //inserta el encabezado del pedido
             idpedido = id.toInt()

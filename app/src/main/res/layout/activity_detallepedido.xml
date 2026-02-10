@@ -32,13 +32,24 @@
                 android:contentDescription="@string/imgregresar" />
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="NUEVO PEDIDO"
+                android:layout_weight="1"
                 android:textAlignment="center"
                 android:textColor="@color/colorAccent"
                 android:textSize="18sp"
                 android:textStyle="bold"/>
+
+            <Button
+                android:id="@+id/btnAgregarComentario"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:backgroundTint="@color/SEGUNDOCOLORLOGO"
+                android:text="AGREGAR COMENTARIO"
+                android:textColor="@color/colorAccent"
+                android:textSize="10sp"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
@@ -314,15 +325,14 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/reciclerdetalle"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="300dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="32dp"
                 android:layout_marginEnd="16dp"
                 android:background="@drawable/spinner_bg"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView18"
-                app:layout_constraintBottom_toTopOf="@+id/lyFooter"/>
+                app:layout_constraintTop_toBottomOf="@+id/textView18"/>
 
             <LinearLayout
                 android:id="@+id/lyFooter"
@@ -332,7 +342,7 @@
                 android:layout_marginBottom="@dimen/margin_default_16dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
+                app:layout_constraintTop_toBottomOf="@+id/reciclerdetalle">
 
                 <LinearLayout
                     android:id="@+id/lyTotales"

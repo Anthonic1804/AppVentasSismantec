@@ -35,6 +35,8 @@ class PedidosAdapter(
         val data = lista[position]
         holder.txtPedido.text = "PED${data.Id}"
         holder.txtCliente.text = data.Nombre_cliente
+        holder.txtTipoDoc.text = data.Tipo_documento
+
         var total = data.Total
         if(data.Iva_Percibido!! > 0f){
             total = data.Total!! - data.Iva_Percibido!!
@@ -86,6 +88,7 @@ class PedidosAdapter(
         internal var txtEstado: TextView
         internal var txtFecha: TextView
         internal var txtTransmitido: TextView
+        internal var txtTipoDoc: TextView
 
         init {
             ani = Funciones()
@@ -96,6 +99,7 @@ class PedidosAdapter(
             txtEstado = itemView.findViewById(R.id.txtEnviado)
             txtFecha = itemView.findViewById(R.id.txtFecha)
             txtTransmitido = itemView.findViewById(R.id.tvTransmitido)
+            txtTipoDoc = itemView.findViewById(R.id.txtTipoDoc)
         }
     }
 

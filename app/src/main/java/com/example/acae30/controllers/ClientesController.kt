@@ -14,6 +14,7 @@ import com.example.acae30.modelos.JSONmodels.ActualizarPagareFirmadoCliente
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -32,16 +33,344 @@ class ClientesController {
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
 
+    //OBTENER CLIENTES DEL SERVIDOR
+    suspend fun obtenerClientesServidor(context: Context) {
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
+
+        try {
+            //val direccion = url!! + "clientes"
+            val id_vendedor = preferences.getInt("Idvendedor", 0)
+            val direccion = servidor + "clientes/vendedor/"+id_vendedor
+            val url = URL(direccion)
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 30000
+                    requestMethod = "GET"
+                    if (responseCode == 200) {
+                        inputStream.bufferedReader().use { data ->
+                            var talla = 0
+                            val response = StringBuffer()
+                            var inputLine = data.readLine()
+                            while (inputLine != null) {
+                                response.append(inputLine)
+                                inputLine = data.readLine()
+                            }
+                            data.close()
+
+                            val respuesta = JSONArray(response.toString())
+                            if (respuesta.length() > 0) {
+                                saveClienteDataBase(respuesta, context)
+                            } else {
+                                throw Exception("Servidor no Devolvio datos")
+                            } //caso que la respuesta venga vacia
+                        }
+                    } else {
+                        throw Exception("Error de Comunicacion con el servidor:$responseCode")
+                    }
+                } catch (e: Exception) {
+                    /// alert!!.dismisss()
+
+                }
+            } //ABRIMOS LA CONEXION
+        } catch (e: Exception) {
+            //alert!!.dismisss()
+
+        }
+    } //obtiene los clientes del servidor
+
+    //GUARDAR DATOS DE CLIENTES EN SQLITE
+    private fun saveClienteDataBase(json: JSONArray, context: Context) {
+
+        val total = json.length()
+        val talla = (50.toFloat() / total.toFloat()).toFloat()
+        var contador: Float = 0.toFloat()
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.beginTransaction() //inicio la transaccion
+
+            bd.execSQL("DELETE FROM clientes") //limpiamos los registros viejos par obtener los nuevos
+            bd.execSQL("DELETE FROM cliente_precios")
+            bd.execSQL("DELETE FROM cliente_sucursal") //LIMPIANDO TABLA SUCURSALES
+
+            for (i in 0 until json.length()) {
+                val dato = json.getJSONObject(i) //obtenemos el objecto json
+                val data = ContentValues()
+                data.put("Id", dato.getInt("id"))
+                data.put("Codigo", funciones.validate(dato.getString("codigo")))
+                data.put("Cliente", funciones.validate(dato.getString("cliente")))
+                data.put("Dui", funciones.validate(dato.getString("dui")))
+                data.put("Nit", funciones.validate(dato.getString("nit")))
+                data.put("Nrc", funciones.validate(dato.getString("nrc")))
+                data.put("Giro", funciones.validate(dato.getString("giro")))
+                data.put(
+                    "Categoria_cliente",
+                    funciones.validate(dato.getString("categoria_cliente"))
+                )
+                data.put(
+                    "Terminos_cliente",
+                    funciones.validate(dato.getString("terminos_cliente"))
+                )
+                data.put("Plazo_credito", funciones.validate(dato.getInt("plazo_credito")))
+                data.put("Limite_credito",
+                    funciones.validate(dato.getString("limite_credito").toFloat())
+                )
+                data.put("Balance", funciones.validate(dato.getString("balance").toFloat()))
+                data.put("Estado_credito", funciones.validate(dato.getString("estado_credito")))
+                data.put("Direccion", funciones.validate(dato.getString("direccion")))
+                data.put("Municipio", funciones.validate(dato.getString("municipio")))
+                data.put("Departamento", funciones.validate(dato.getString("departamento")))
+                data.put("Telefono_1", funciones.validate(dato.getString("telefono1")))
+                data.put("Telefono_2", funciones.validate(dato.getString("telefono2")))
+                data.put("Correo", funciones.validate(dato.getString("correo")))
+                data.put("Contacto", funciones.validate((dato.getString("contacto"))))
+                data.put("Id_ruta", funciones.validateJsonIsNullInt(dato, "id_ruta"))
+                data.put("Id_vendedor", funciones.validateJsonIsNullInt(dato, "id_vendedor"))
+                data.put("Vendedor", funciones.validate(dato.getString("vendedor")))
+                data.put("Status", funciones.validate(dato.getString("status")))
+                data.put("Ultima_venta", funciones.validate(dato.getString("fecha_ult_venta")))
+                data.put(
+                    "Aporte_mensual",
+                    funciones.validate(dato.getString("aporte_mensual").toFloat())
+                )
+
+                //AGREGADO EL CAMPO PARA VERIFICACION DEL PAGARE
+                val pagareFirmado = if(dato.getBoolean("pagare_Firmado_app")) 1 else 0
+                data.put("Firmar_pagare_app", pagareFirmado)
+
+                //AGREGANDO EL CAMPO PARA VERIFICACION DE PERSONA JURIDICA
+                data.put("Persona_juridica", funciones.validate(dato.getString("persona_juridica")))
+
+                //VALIDANDO EL DTEGIRO ALMACENADO EN EL SERVIDOR
+                data.put("dteGiro", funciones.validate(dato.getString("dteGiro")))
+                data.put("Ruta", funciones.validate(dato.getString("ruta")))
+
+                data.put("Ruta", funciones.validate(dato.getString("ruta")))
+                data.put("DTECodDepto", funciones.validate(dato.getString("dteCodDepto")))
+                data.put("DTECodMunicipio", funciones.validate(dato.getString("dteCodMunicipio")))
+                data.put("DTECodPais", funciones.validate(dato.getString("dteCodPais")))
+                data.put("DTEDireccion", funciones.validate(dato.getString("dteDireccion")))
+                data.put("DTEPais", funciones.validate(dato.getString("dtePais")))
+                data.put("DTETelefono", funciones.validate(dato.getString("dteTelefono")))
+                data.put("DTECorreo", funciones.validate(dato.getString("dteCorreo")))
+                data.put("Latitud_app", funciones.validate(dato.getString("latitud_app")))
+                data.put("Longitud_app", funciones.validate(dato.getString("longitud_app")))
+                data.put("Nombre_comercial", funciones.validate(dato.getString("nombre_comercial")))
+                data.put("Mayorista", funciones.validate(dato.getString("mayorista")))
+                data.put("DTECodGiro", funciones.validate(dato.getString("dteCodGiro")))
+                data.put("DTEDistrito", funciones.validate(dato.getString("dteDistrito")))
+                data.put("DTECodDistrito", funciones.validate(dato.getString("dteCodDistrito")))
+
+                bd.insert("clientes", SQLiteDatabase.CONFLICT_REPLACE, data)
+            } //recorre el json array
+            bd.setTransactionSuccessful()
+
+        } catch (e: Exception) {
+            throw Exception(e.message)
+        } finally {
+            bd.endTransaction()
+        }
+    }//guarda los datos en la bd
+
+    //FUNCION PARA OBTENER SUCURSALES DE LOS CLIENTES DESDE EL SERVIDOR
+    suspend fun obtenerClienteSucursalesServidor(context: Context){
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
+
+        try {
+            val direccion = servidor + "sucursales"
+            val url = URL(direccion)
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 30000
+                    requestMethod = "GET"
+                    if (responseCode == 200) {
+                        inputStream.bufferedReader().use { data ->
+                            var talla = 0
+                            val response = StringBuffer()
+                            var inputLine = data.readLine()
+                            while (inputLine != null) {
+                                response.append(inputLine)
+                                inputLine = data.readLine()
+                            }
+                            data.close()
+                            val respuesta = JSONArray(response.toString())
+                            if (respuesta.length() > 0) {
+                                saveSucursalesDatabase(respuesta, context) //guarda los datos en la bd
+                            }
+                        }
+                    } else {
+                        throw Exception("SERVIDOR: NO SE ENCONTRARON SUCURSALES REGISTRADAS")
+                    }
+                } catch (e: Exception) {
+                    throw Exception(e.message)
+                }
+            }//termina de obtener los datos
+        } catch (e: Exception) {
+            // alert!!.dismisss()
+            //funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
+            println("NO SE ENCONTRARON DATOS REGISTRADOS DE SUCURSALES")
+        }
+    }
+
+    //ALMACENAR SUCURSALES EN SQLITE
+    private fun saveSucursalesDatabase(json: JSONArray, context: Context) {
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        val total = json.length()
+        val talla = (50.toFloat() / total.toFloat()).toFloat()
+        var contador: Float = 0.toFloat()
+        try {
+            bd.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
+            for (i in 0 until json.length()) {
+                val dato = json.getJSONObject(i)
+                val valor = ContentValues()
+                valor.put("Id", dato.getInt("id"))
+                valor.put("Id_cliente", dato.getInt("id_cliente"))
+                valor.put("codigo_sucursal", funciones.validateJsonIsnullString(dato, "codigo_sucursal"))
+                valor.put("nombre_sucursal", funciones.validateJsonIsnullString(dato, "nombre_sucursal"))
+                valor.put("direccion_sucursal", funciones.validateJsonIsnullString(dato, "dteDireccion"))//DATO DTE
+                valor.put("municipio_sucursal", funciones.validateJsonIsnullString(dato, "municipio"))//DATO DTE
+                valor.put("depto_sucursal", funciones.validateJsonIsnullString(dato, "departamento"))//DATO DTE
+                valor.put("telefono_1", funciones.validateJsonIsnullString(dato, "dteTelefono"))//DATO DTE
+                valor.put("telefono_2", funciones.validateJsonIsnullString(dato, "telefono2"))
+                valor.put("correo_sucursal", funciones.validateJsonIsnullString(dato, "correo"))
+                valor.put("contacto_sucursal", funciones.validateJsonIsnullString(dato, "contacto"))
+
+                //ARGEGANDO DATOS PENDIENTE Y DTE DE LA SUCURSAL
+                valor.put("Id_ruta", dato.getInt("id_ruta"))
+                valor.put("Ruta", funciones.validateJsonIsnullString(dato, "ruta"))
+                valor.put("DTECodDepto", funciones.validateJsonIsnullString(dato, "dteCodDepto"))
+                valor.put("DTECodMunicipio", funciones.validateJsonIsnullString(dato, "dteCodMunicipio"))
+                valor.put("DTECodPais", funciones.validateJsonIsnullString(dato, "dteCodPais"))
+                valor.put("DTEPais", funciones.validateJsonIsnullString(dato, "dtePais"))
+                valor.put("Latitud_app", funciones.validateJsonIsnullString(dato, "latitud_app"))
+                valor.put("Longitud_app", funciones.validateJsonIsnullString(dato, "longitud_app"))
+
+                bd.insert("cliente_sucursal", SQLiteDatabase.CONFLICT_REPLACE, valor)
+            }
+            bd.setTransactionSuccessful() //TRANSACCION COMPLETA
+        } catch (e: Exception) {
+            throw  Exception(e.message)
+        } finally {
+            bd.endTransaction()
+        }
+    } //INSERTANDO DATOS EN LA TABLA SUCURSALES EN SQLITE
+
+    //FUNCION PARA OBTENER LAS CXC DESDE EL SERVIDOR
+    suspend fun obtenerCxcServidor(context: Context) {
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
+
+        try {
+            val direccion = servidor + "cuentas"
+            val url = URL(direccion)
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
+                try {
+                    connectTimeout = 30000
+                    requestMethod = "GET"
+                    if (responseCode == 200) {
+                        inputStream.bufferedReader().use { data ->
+                            val response = StringBuffer()
+                            var inputLine = data.readLine()
+                            while (inputLine != null) {
+                                response.append(inputLine)
+                                inputLine = data.readLine()
+                            }
+                            data.close()
+                            val respuesta = JSONArray(response.toString())
+                            if (respuesta.length() > 0) {
+                                saveCuentaDatabase(respuesta, context) //guarda los datos en la bd
+                            }
+                        }
+                    } else {
+                        throw Exception("Error de Comunicacion con el servidor:$responseCode")
+                    }
+                } catch (e: Exception) {
+                    throw Exception(e.message)
+                }
+            }//termina de obtener los datos
+        } catch (e: Exception) {
+            //alert!!.dismisss()
+        }
+    }
+
+    //FUNCION PARA ALMACENAR LAS CXC EN SQLITE
+    private fun saveCuentaDatabase(json: JSONArray, context: Context) {
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        val total = json.length()
+        val talla = (50.toFloat() / total.toFloat()).toFloat()
+        var contador: Float = 0.toFloat()
+        try {
+            bd.beginTransaction() //inicia la transaccion
+            bd.execSQL("DELETE FROM cuentas") //eliminamos la cuentas
+
+            val sql2 = "DELETE FROM SQLITE_SEQUENCE WHERE NAME = 'cuentas'"
+            bd.execSQL(sql2)
+
+            for (i in 0 until json.length()) {
+                val dato = json.getJSONObject(i)
+                val valor = ContentValues()
+                valor.put("Id", dato.getInt("id"))
+                valor.put("Id_cliente", dato.getInt("id_cliente"))
+                valor.put(
+                    "Codigo_cliente",
+                    funciones.validateJsonIsnullString(dato, "codigo_cliente")
+                )
+                valor.put("Documento", funciones.validateJsonIsnullString(dato, "documento"))
+                valor.put("Fecha", funciones.validateJsonIsnullString(dato, "fecha"))
+                valor.put("Valor", funciones.validateJsonIsNullFloat(dato, "valor"))
+                valor.put(
+                    "Abono_inicial",
+                    funciones.validateJsonIsNullFloat(dato, "abono_inicial")
+                )
+                valor.put(
+                    "Saldo_inicial",
+                    funciones.validateJsonIsNullFloat(dato, "saldo_inicial")
+                )
+                valor.put("Plazo", funciones.validateJsonIsNullFloat(dato, "plazo"))
+                valor.put(
+                    "Fecha_vencimiento",
+                    funciones.validateJsonIsnullString(dato, "fecha_vencimiento")
+                )
+                valor.put("Saldo_actual", funciones.validateJsonIsNullFloat(dato, "saldo_actual"))
+                valor.put(
+                    "Fecha_ult_pago",
+                    funciones.validateJsonIsnullString(dato, "fecha_ult_pago")
+                )
+                valor.put("Valor_pago", funciones.validateJsonIsNullFloat(dato, "valor_pago"))
+                valor.put("Relacionado", funciones.validateJsonIsnullString(dato, "relacionado"))
+                valor.put("Status", funciones.validateJsonIsnullString(dato, "status"))
+                valor.put(
+                    "Fecha_cancelado",
+                    funciones.validateJsonIsnullString(dato, "fecha_cancelado")
+                )
+                valor.put("dias_tardios", funciones.validateJsonIsNullInt(dato, "dias_tardios"))
+
+                bd.insert("cuentas", SQLiteDatabase.CONFLICT_REPLACE, valor)
+            } //termina el for
+            bd.setTransactionSuccessful() //transaccion exitosa
+        } catch (e: Exception) {
+            throw  Exception(e.message)
+        } finally {
+            bd.endTransaction()
+        }
+    } //inserta las cxc en la tabla
 
     //FUNCION PARA OBTENER LOS PRECIOS PERSONALIZADOS
     suspend fun obtenerPreciosPersonalizados(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
 
         /*PRIMER TRY PARA OBTENER LA CANTIDAD DE REGISTROS
         * Y LUEGO CARGARLOS POR BLOQUES
         */
-        try {
+        /*try {
             val urlCantidadRegistros = url + "clientes/precios/cantidad"
             val urlCantidad = URL(urlCantidadRegistros)
             var cantRegistros = 0
@@ -140,7 +469,79 @@ class ClientesController {
 
         }catch (e:Exception){
             println("ERROR AL OBTENER LOS PRECIOS PERSONALIZADOS -> ${e.message}")
+        }*/
+
+        try {
+
+            //OBTENIENDO LA CANTIDAD DE REGISTROS
+            val cantidadURL = URL(servidor + "clientes/precios/cantidad")
+            val cantidadRegistros = withContext(Dispatchers.IO){
+                (cantidadURL.openConnection() as HttpURLConnection).run {
+                    requestMethod = "GET"
+                    inputStream.bufferedReader().readLine().toInt()
+                }
+            }
+
+            val bloque = 1000
+            var inicio = 0
+
+            while(inicio < cantidadRegistros){
+
+                val longitud = minOf(bloque, cantidadRegistros - inicio)
+
+                val ok = descargarBloquePrecios(servidor, inicio, longitud, context)
+
+                if(ok){
+                    inicio += bloque
+
+                }else{
+                    funciones.messageAsync("Error de conexion... Reintentado...")
+                    delay(2000)
+                }
+
+            }
+
+            funciones.messageAsync("Carga completada 100%")
+
+        }catch (e:Exception){
+            println("ERROR GENERAL -> ${e.message}")
         }
+    }
+
+    //FUNCION PARA HACER LOS REINTENTOS DE OBTENER Y ALMACENAR LOS PRECIOS PERSONALIZADOS
+    private suspend fun descargarBloquePrecios(url: String, inicio: Int, longitud: Int, context: Context) : Boolean{
+
+        var ok : Boolean = false
+
+        try {
+            val urlFinal = URL(url + "clientes/precios/$inicio/$longitud")
+            withContext(Dispatchers.IO){
+                val conn = urlFinal.openConnection() as HttpURLConnection
+                conn.connectTimeout = 30000
+                conn.readTimeout = 30000
+                conn.requestMethod = "GET"
+
+                if(conn.responseCode == 200){
+                    val response = conn.inputStream.bufferedReader().readText()
+                    val json = JSONArray(response)
+
+                    if (json.length() > 0) {
+                        almacenarPrecioPersonalizados(json, context)
+                        ok = true
+                    }else{
+                        //
+                    }
+                }else{
+                    throw Exception("HTTP ${conn.responseCode}")
+                }
+
+            }
+        }catch (e:Exception){
+            println("Error bloque $inicio ------  ${e.message}")
+            ok = false
+        }
+
+        return ok
     }
 
     //FUNCION PARA LAMACENAR LOS PRECIOS PERSONALIZADOS EN SQLITE

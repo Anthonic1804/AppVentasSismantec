@@ -18,6 +18,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
@@ -72,7 +73,7 @@ class Producto_agregar : AppCompatActivity() {
     //---------
     //VARIABLES PARA CONTROLAR LA ESCALA SELECCIONADA
     //---------
-    private var cantidadEscala = 0
+    private var cantidadEscala = 0f
     private var idEscala: Int = 0
 
     //---------
@@ -116,6 +117,9 @@ class Producto_agregar : AppCompatActivity() {
 
     private var condicionMercado = ""
 
+    private var decPrecios: Int = 0
+    private var decTotales: Int = 0
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -131,6 +135,8 @@ class Producto_agregar : AppCompatActivity() {
         sinExistencias = if(preferencias!!.getString("pedidos_sin_existencia", "") == "S") 1 else 0
         modificarPrecio = preferencias!!.getBoolean("modificar_precio_app", false)
         mostrarPrecioApp = preferencias!!.getInt("precio_mostrar_app", 0)
+        decPrecios = preferencias!!.getInt("decPrecios",2)
+        decTotales = preferencias!!.getInt("decTotales",2)
 
         //-----------
         //SETEANDO LOS INTENT QUE VIENEN DESDE EL FORMULARIO ANTERIOR
@@ -471,8 +477,6 @@ class Producto_agregar : AppCompatActivity() {
             //--------
             clienteMayorista = clientesController.obtenerInformacionCliente(this@Producto_agregar, idcliente!!)!!.Mayorista.toString().trim()
 
-            println("CLIENTES ES MAYORISTA -> $clienteMayorista")
-
             //SELECCIONANDO CONDICION DE MERCADO DEL PRODUCTO
             condicionMercado = datosProducto!!.condicionMercado.toString()
 
@@ -489,7 +493,7 @@ class Producto_agregar : AppCompatActivity() {
                     spprecio.visibility = View.GONE
                     btneditarprecio.visibility = View.GONE
 
-                    tvPrecioPersonalizado.text = "${String.format("%.4f".format(precioIvaPersonalizado))}"
+                    tvPrecioPersonalizado.text = "${String.format("%.${decPrecios}f".format(precioIvaPersonalizado))}"
                 }
             }
 
@@ -497,7 +501,9 @@ class Producto_agregar : AppCompatActivity() {
 
             //TOMANDO LA CANTIDAD DE LAS ESCALA SELECCIONADA.
             //09/01/2024
-            cantidadEscala = seleccionarCantidadenEscala(idpedido, idproducto!!)
+            //cantidadEscala = seleccionarCantidadenEscala(idpedido, idproducto!!)
+            cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar,
+                idproducto!!, precio_iva, unidadActual)
 
             //HABILITAR BTN ELIMINAR
             if (idpedidodetalle!! > 0) {
@@ -573,17 +579,17 @@ class Producto_agregar : AppCompatActivity() {
             if(proviene == "editar"){
                 val producto = getPedidodetalle(idpedidodetalle!!)
                 val precioSeleccionado = producto!!.Precio_venta
-                precioss.add("${String.format("%.2f".format(precioSeleccionado))}")
+                precioss.add("${String.format("%.${decPrecios}f".format(precioSeleccionado))}")
             }
 
 
             if(unidadMedida == "UNI"){
-                precioss.add("${String.format("%.2f".format(datosProducto!!.Precio_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
+                precioss.add("${String.format("%.${decPrecios}f".format(datosProducto!!.Precio_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
             }
 
             listPrecios!!.forEach {
-                val unidad_cantidad = " (" + "${String.format("%.2f".format(it.Cantidad))}" + " ${it.Unidad} )"
-                precioss.add("${String.format("%.2f".format(it.Precio_iva))}" + " ${it.Nombre}" + unidad_cantidad
+                val unidad_cantidad = " (" + "${String.format("%.0f".format(it.Cantidad))}" + " ${it.Unidad} )"
+                precioss.add("${String.format("%.${decPrecios}f".format(it.Precio_iva))}" + " ${it.Nombre}" + unidad_cantidad
                 )
             }
 
@@ -643,9 +649,6 @@ class Producto_agregar : AppCompatActivity() {
             Totalizar(cantidad)
         }
     }
-
-
-
 
     //MODIFICACION PARA LA PAPELERIA DM
     //EDITAR CANTIDAD DE PRODUCTO SIN BORRAR
@@ -727,6 +730,7 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("EquivaleUni", equivaleUni)
             detalle.put("EquivaleFra", equivaleFra)
             detalle.put("UniEquivale", uniEquivale)
+            detalle.put("Comentario", 0)
 
 
 
@@ -973,10 +977,10 @@ class Producto_agregar : AppCompatActivity() {
             nuevoValor = cadena.toFloat()
         } else {
             listPrecios!!.forEach {
-                var valorPrecio = "${String.format("%.4f".format(it.Precio_iva) )}"
+                var valorPrecio = "${String.format("%.${decPrecios}f".format(it.Precio_iva) )}"
                 var unidad_cantidad = ""
                 if (it.Cantidad!! > 0.toFloat()) {
-                    unidad_cantidad = " (" + "${String.format("%.4f".format(it.Cantidad) )}" + ")"
+                    unidad_cantidad = " (" + "${String.format("%.2f".format(it.Cantidad) )}" + ")"
 
                 }
                 if (cadena == valorPrecio + " ${it.Nombre}" + unidad_cantidad) {
@@ -1009,7 +1013,7 @@ class Producto_agregar : AppCompatActivity() {
 
         if(!modificarPrecio){
             nuevoprecio.isEnabled = false
-            nuevoprecio!!.setText("${String.format("%.2f".format(precioAutorizado) )}")
+            nuevoprecio!!.setText("${String.format("%.${decPrecios}f".format(precioAutorizado) )}")
         }
 
         // Actualizar el total cuando cambie la cantidad
@@ -1049,95 +1053,92 @@ class Producto_agregar : AppCompatActivity() {
 
         // Acccion de click al agregar precio
         dialogo.findViewById<Button>(R.id.btnguardarnuevoprecio).setOnClickListener {
-            lifecycleScope.launch(Dispatchers.IO){
+            //VARIABLE PARA DETERMINAR SI EL PRECIO ES MODIFICADO O NO
+            precioAutorizadoUtilizado = if(!modificarPrecio) 1 else 0
 
-                //VARIABLE PARA DETERMINAR SI EL PRECIO ES MODIFICADO O NO
-                precioAutorizadoUtilizado = if(!modificarPrecio) 1 else 0
+            try {
+                val unidad = binding.spunidad.selectedItem.toString()
 
-                try {
-                    val unidad = binding.spunidad.selectedItem.toString()
+                binding.spprecio.adapter = null
 
-                    binding.spprecio.adapter = null
+                // Agregar precios a lista
 
-                    // Agregar precios a lista
+                val precioss = ArrayList<String>()
 
-                    val precioss = ArrayList<String>()
+                // Agregamos el nuevo precio a la lista
+                var valorNuevoPrecio = nuevoprecio.text.toString()
 
-                    // Agregamos el nuevo precio a la lista
-                    var valorNuevoPrecio = nuevoprecio.text.toString()
-
-                    if (valorNuevoPrecio == "" || valorNuevoPrecio == null) {
-                        precioss.add("${String.format("%.2f".format(0.toFloat()) )}" + "*")
-                        precioEditado = 0.toFloat()
-                    } else {
-                        precioss.add("${String.format("%.2f".format(valorNuevoPrecio.toFloat()) )}" + "*")
-                        precioEditado = valorNuevoPrecio.toFloat()
-                    }
-
-                    if (listPrecios!!.size > 0) {
-                        if (unidad == "UNIDAD") {
-                            precioss.add("${String.format("%.2f".format(datosProducto!!.Precio_iva) )}")
-                            listPrecios!!.forEach {
-                                if (it.Unidad == "UNI" || it.Unidad == "") {
-                                    var unidad_cantidad = ""
-                                    if (it.Cantidad!! > 0.toFloat()) {
-                                        unidad_cantidad =
-                                            " (" + "${String.format("%.2f".format(it.Cantidad) )}" + ")"
-                                    }
-                                    precioss.add(
-                                        "${
-                                            String.format(
-                                                "%.2f".format(it.Precio_iva) 
-                                            )
-                                        }" + " ${it.Nombre}" + unidad_cantidad
-                                    )
-
-                                }
-                            }
-                        }
-
-                        if (unidad == "FRACCIÓN") {
-                            listPrecios!!.forEach {
-                                if (it.Unidad == "FRA") {
-                                    var unidad_cantidad = ""
-                                    if (it.Cantidad!! > 0.toFloat()) {
-                                        unidad_cantidad =
-                                            " (" + "${String.format("%.2f".format(it.Cantidad) )}" + ")"
-                                    }
-                                    precioss.add(
-                                        "${
-                                            String.format(
-                                                "%.2f".format(it.Precio_iva) 
-                                            )
-                                        }" + " ${it.Nombre}" + unidad_cantidad
-                                    )
-                                }
-                            }
-                        }
-
-                    }
-
-                    // Consultar inventario precios
-
-                    var adapterPrecios = ArrayAdapter(
-                        contexto,
-                        android.R.layout.simple_spinner_item,
-                        precioss
-                    )
-                    adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                    binding.spprecio.adapter = adapterPrecios
-
-                    dialogo.dismiss()
-                } catch (e: Exception) {
-                    dialogo.dismiss()
-                    val alert: Snackbar = Snackbar.make(
-                        binding.lienzo,
-                        e.message.toString(),
-                        Snackbar.LENGTH_LONG
-                    )
-                    alert.view.setBackgroundColor(resources.getColor(R.color.moderado))
-                    alert.show()
+                if (valorNuevoPrecio == "" || valorNuevoPrecio == null) {
+                    precioss.add("${String.format("%.${decPrecios}f".format(0.toFloat()) )}" + "*")
+                    precioEditado = 0.toFloat()
+                } else {
+                    precioss.add("${String.format("%.${decPrecios}f".format(valorNuevoPrecio.toFloat()) )}" + "*")
+                    precioEditado = valorNuevoPrecio.toFloat()
                 }
+
+                if (listPrecios!!.size > 0) {
+                    if (unidad == "UNIDAD") {
+                        precioss.add("${String.format("%.${decPrecios}f".format(datosProducto!!.Precio_iva) )}")
+                        listPrecios!!.forEach {
+                            if (it.Unidad == "UNI" || it.Unidad == "") {
+                                var unidad_cantidad = ""
+                                if (it.Cantidad!! > 0.toFloat()) {
+                                    unidad_cantidad =
+                                        " (" + "${String.format("%.2f".format(it.Cantidad) )}" + ")"
+                                }
+                                precioss.add(
+                                    "${
+                                        String.format(
+                                            "%.${decPrecios}f".format(it.Precio_iva)
+                                        )
+                                    }" + " ${it.Nombre}" + unidad_cantidad
+                                )
+
+                            }
+                        }
+                    }
+
+                    if (unidad == "FRACCIÓN") {
+                        listPrecios!!.forEach {
+                            if (it.Unidad == "FRA") {
+                                var unidad_cantidad = ""
+                                if (it.Cantidad!! > 0.toFloat()) {
+                                    unidad_cantidad =
+                                        " (" + "${String.format("%.2f".format(it.Cantidad) )}" + ")"
+                                }
+                                precioss.add(
+                                    "${
+                                        String.format(
+                                            "%.${decPrecios}f".format(it.Precio_iva)
+                                        )
+                                    }" + " ${it.Nombre}" + unidad_cantidad
+                                )
+                            }
+                        }
+                    }
+
+                }
+
+                // Consultar inventario precios
+
+                var adapterPrecios = ArrayAdapter(
+                    contexto,
+                    android.R.layout.simple_spinner_item,
+                    precioss
+                )
+                adapterPrecios.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
+                binding.spprecio.adapter = adapterPrecios
+
+                dialogo.dismiss()
+            } catch (e: Exception) {
+                dialogo.dismiss()
+                val alert: Snackbar = Snackbar.make(
+                    binding.lienzo,
+                    e.message.toString(),
+                    Snackbar.LENGTH_LONG
+                )
+                alert.view.setBackgroundColor(resources.getColor(R.color.moderado))
+                alert.show()
             }
 
         }//boton eliminar
@@ -1331,7 +1332,7 @@ class Producto_agregar : AppCompatActivity() {
                                 cantidad += data!!.Cantidad!!
                                 var t =
                                     ((binding.txttotal.text.toString().toFloat()) + data.Total_iva!!)
-                                binding.txttotal.text = "${String.format("%.2f".format(t) )}"
+                                binding.txttotal.text = "${String.format("%.${decTotales}f".format(t) )}"
                                 updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
                             } else {
                                 AddDetallePedido(esPrecioEditado, bonificacion, precio.toFloat())
@@ -1363,7 +1364,7 @@ class Producto_agregar : AppCompatActivity() {
                                     cantidad += data!!.Cantidad!!
                                     var t =
                                         ((binding.txttotal.text.toString().toFloat()) + data.Total_iva!!)
-                                    binding.txttotal.text = "${String.format("%.2f".format(t) )}"
+                                    binding.txttotal.text = "${String.format("%.${decTotales}f".format(t) )}"
                                     updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
                                 } else {
                                     AddDetallePedido(esPrecioEditado, bonificacion, precio.toFloat())
@@ -1390,9 +1391,9 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     //SELECCIONANDO ESCALA PARA EDITAR PRODUCTO EN DETALL
-    private fun seleccionarCantidadenEscala(idPedido: Int, idProducto: Int): Int{
+    private fun seleccionarCantidadenEscala(idPedido: Int, idProducto: Int): Float{
         val db = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
-        var cantidadEscala = 0
+        var cantidadEscala = 0f
         try {
             val consulta = "SELECT IP.Cantidad FROM detalle_pedidos AS DP " +
                     "INNER JOIN inventario_precios AS IP " +
@@ -1403,9 +1404,9 @@ class Producto_agregar : AppCompatActivity() {
 
             cantidadEscala = if(cursor.count > 0){
                 cursor.moveToFirst()
-                cursor.getInt(0)
+                cursor.getFloat(0)
             }else{
-                0
+                0f
             }
             cursor.close()
         }catch (e: Exception){

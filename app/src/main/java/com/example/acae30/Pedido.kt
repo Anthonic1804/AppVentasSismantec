@@ -45,7 +45,9 @@ import com.itextpdf.text.pdf.PdfWriter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -76,12 +78,14 @@ class Pedido : AppCompatActivity() {
     private var ip = ""
     private var puerto = 0
     private var proviene: String? = ""
-    var fechaDoc = ""
+    private var fechaDoc = ""
 
     val fecha: String = LocalDate.now()
         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
 
     private val tituloText = "DETALLE DE PEDIDOS ENVIADOS"
+
+    private var alert: AlertDialogo? = null
 
     private lateinit var btnReporte: FloatingActionButton
     private lateinit var tvUpdate : TextView
@@ -91,6 +95,8 @@ class Pedido : AppCompatActivity() {
 
 
     private var pedidosController = PedidosController()
+
+    private var tipoVentaLocal: Boolean = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,6 +109,10 @@ class Pedido : AppCompatActivity() {
         ip = preferencias.getString("ip", "").toString()
         puerto = preferencias.getInt("puerto", 0)
         proviene = intent.getStringExtra("proviene")
+
+        alert = AlertDialogo(this@Pedido, this@Pedido)
+
+        tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
         btnatras = findViewById(R.id.imbtnatras)
         btnReporte = findViewById(R.id.btnReporte)
@@ -128,19 +138,7 @@ class Pedido : AppCompatActivity() {
 
         //sincronizar los datos que no se han enviado
         btnsincronizar!!.setOnClickListener {
-
-            CoroutineScope(Dispatchers.IO).launch {
-                val pedidoDTE = pedidosController.obtenerPedidosNoTransmitidos(this@Pedido)
-                var idPedidoDTE = 0
-                if(pedidoDTE != null)
-                {
-                    idPedidoDTE = pedidoDTE.Id_pedido_sistema!!
-                }
-
-                if (idPedidoDTE > 0) {
-                    obtenerPedidosDTEServidor(idPedidoDTE)
-                }
-            }
+            sincronizacionDePedidos()
         }
 
         btnatras!!.setOnClickListener {
@@ -152,12 +150,97 @@ class Pedido : AppCompatActivity() {
 
         // SOLICITAR PERMISOS DE GPS
         solicitarPermisos()
+        if(tipoVentaLocal){
 
-        // MOSTRAR MENSAJE DE GPS
-        if (proviene == "inicio") {
-            AlertaGPS(this@Pedido)
+            sincronizacionDePedidos()
+
+        }else{
+            // MOSTRAR MENSAJE DE GPS
+            if (proviene == "inicio") {
+                AlertaGPS(this@Pedido)
+            }
         }
+    }
 
+    //FUNCION PARA SINCRONIZAR LOS PEDIDOS AUTOMATICAMENTE
+    private fun sincronizacionDePedidos(){
+        if (funciones!!.isInternetAvailable(this@Pedido)){
+            alert!!.Cargando()
+            messageAsync("SINCRONIZANDO PEDIDOS")
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val pedidosNoTransmitidos : ArrayList<Pedidos> = pedidosController.obtenerPedidosNoTransmitidos(this@Pedido)
+                //var idPedidoDTE = 0
+                delay(1000)
+                if(pedidosNoTransmitidos.size > 0){
+                    for(i in 0 until pedidosNoTransmitidos.size){
+                        val item = pedidosNoTransmitidos[i]
+
+                        withContext(Dispatchers.Main){
+                            messageAsync("SINCRONIZANDO PEDIDO DEL CLIENTE: \n ${item.Nombre_cliente}")
+                        }
+
+                        delay(1000)
+
+                        obtenerPedidosDTEServidor(item.Id_pedido_sistema!!)
+
+                    }
+
+                    withContext(Dispatchers.Main){
+                        messageAsync("PEDIDOS SINCRONIZADOS CORRECTAMENTE")
+                    }
+
+                    delay(1000)
+
+                    //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
+                    if(tipoVentaLocal){
+                        pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        actualizarVistaDTE()
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.dismisss()
+                    }
+
+                }else{
+                    withContext(Dispatchers.Main){
+                        messageAsync("NO SE ENCONTRARON PEDIDOS NO SINCRONIZADOS")
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.dismisss()
+                    }
+                }
+
+                /*
+                if(pedidoDTE != null)
+                {
+                    idPedidoDTE = pedidoDTE.Id_pedido_sistema!!
+                }
+
+                if (idPedidoDTE > 0) {
+                    obtenerPedidosDTEServidor(idPedidoDTE)
+                }*/
+            }
+        }else{
+            funciones!!.mensaje(this@Pedido, "NO TIENE CONEXION A INTENET")
+        }
+    }
+
+    //MENSANJE ASINCRONO
+    private fun messageAsync(mensaje: String) {
+        if (alert != null) {
+            alert!!.changeText(mensaje)
+        }
     }
 
     override fun onStart() {
@@ -241,7 +324,8 @@ class Pedido : AppCompatActivity() {
                         "Iva," +
                         "Iva_percibido, " +
                         "pedido_dte, " +
-                        "pedido_dte_error FROM pedidos " +
+                        "pedido_dte_error," +
+                        "Tipo_documento FROM pedidos " +
                         "order by id desc"
             )
             var lista = ArrayList<Pedidos>()
@@ -272,7 +356,7 @@ class Pedido : AppCompatActivity() {
                             "",
                             "",
                             "",
-                            "",
+                            cursor.getString(17),
                             "",
                             "",
                             ""
@@ -667,13 +751,8 @@ class Pedido : AppCompatActivity() {
                                             pedido_dte_error = 1
                                         }
 
-                                        println("RESPUESTA PEDIDO_DETE: $res_pedido_dte ------- RESPUESTA PEDIDO_DTE_ERROR: $res_pedido_dte_error")
-
                                         pedidosController.actualizarEstadoTransmisionPedido(this@Pedido, Id_pedido,pedido_dte, pedido_dte_error, dteAmbiente, dteCodigoGeneracion,
                                             dteSelloRecibido, dteNumeroControl, idDocTransmitido)
-                                        runOnUiThread {
-                                            actualizarVistaDTE()
-                                        }
 
                                     } else {
                                         //runOnUiThread { Toast.makeText(this@Pedido, "NO SE ENCONTRARON PEDIDOS DE ESTE DIA", Toast.LENGTH_LONG).show() }
@@ -707,12 +786,10 @@ class Pedido : AppCompatActivity() {
         }
     }
 
-    fun actualizarVistaDTE(){
+    private fun actualizarVistaDTE(){
         try {
             val lista = GetPedido()
-            if (lista.size > 0) {
-                ShowList(lista)
-            }
+            ShowList(lista)
         } catch (e: Exception) {
             runOnUiThread {
                 val alert: Snackbar = Snackbar.make(

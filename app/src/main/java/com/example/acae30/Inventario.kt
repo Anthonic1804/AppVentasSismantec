@@ -32,6 +32,7 @@ import androidx.core.content.edit
 
 class Inventario : AppCompatActivity() {
     private var recicle: RecyclerView? = null
+    private var tvInventarioHeader: TextView? = null
     private var funciones: Funciones? = null
     private var busqueda: SearchView? = null
     private var busquedaProducto: Boolean = false
@@ -82,6 +83,7 @@ class Inventario : AppCompatActivity() {
 
         btnActualizarInventario = findViewById(R.id.btnActualizarInventario)
         btnBuscarRecargas = findViewById(R.id.btnBuscarRecargas)
+        tvInventarioHeader = findViewById(R.id.tvInventarioHeader)
 
         alerta = findViewById(R.id.lyInventarioAlerta)
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
@@ -117,6 +119,8 @@ class Inventario : AppCompatActivity() {
         scanner = findViewById(R.id.btnscanner)
 
         scanner!!.findFocus()
+
+        tvInventarioHeader!!.text = "INVENTARIO"
 
         val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(scanner!!.windowToken, 0)
@@ -470,7 +474,6 @@ class Inventario : AppCompatActivity() {
         tvUpdate.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
                 //inventarioController.obtenerHojaRecargas(this@Inventario,idHojaCarga, vista!!)
-
                 inventarioController.obtenerInventarioHojaCarga(true, numeroHojaCarga, idVendedor, this@Inventario)
             }
             updateDialog.dismiss()

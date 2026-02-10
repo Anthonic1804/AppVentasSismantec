@@ -246,7 +246,7 @@ class SolicitudRecargasController {
                         cursor.getFloat(18),
                         cursor.getFloat(13),
                         cursor.getString(2),
-                        cursor.getString(29)
+                        ""
                     )
                     lista.add(arreglo)
                 } while (cursor.moveToNext())
@@ -291,7 +291,7 @@ class SolicitudRecargasController {
                     cursor.getFloat(18),
                     cursor.getFloat(13),
                     cursor.getString(2),
-                    cursor.getString(29)
+                    ""
                 )
             }
         }catch (e:Exception){
@@ -619,7 +619,7 @@ class SolicitudRecargasController {
             } as HttpURLConnection) {
                 try {
                     connectTimeout = 10000
-                    requestMethod = "DELETE"
+                    requestMethod = "GET"
                     when(responseCode){
                         200 -> {
                             BufferedReader(InputStreamReader(inputStream) as Reader?).use {
@@ -683,7 +683,8 @@ class SolicitudRecargasController {
                         "Content-Type",
                         "application/json;charset=utf-8"
                     )
-                    requestMethod = "PUT"
+                    requestMethod = "POST"
+                    doOutput = true
                     val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
                     or.write(objecto)
                     or.flush()

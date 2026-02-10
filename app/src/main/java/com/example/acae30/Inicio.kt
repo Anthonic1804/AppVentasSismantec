@@ -29,6 +29,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -72,12 +73,19 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         super.onCreate(savedInstanceState)
         binding = ActivityInicioBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        configurarResponsiveMenu()
 
         //---------------
         // Eliminando los pedidos que han dado error
         //-----------------
         CoroutineScope(Dispatchers.IO).launch {
             pedidosController.eliminarPedidoConError(this@Inicio)
+
+            val totalFacturado = pedidosController.obtenerTotalFacturacion(this@Inicio)
+
+            withContext(Dispatchers.Main){
+                binding.includeBar.txtTotalFacturado.text = "$ ${String.format("%.2f".format(totalFacturado) )}"
+            }
 
             val productoSinValidar = hojaController.obtenerProductosSinValidar(this@Inicio)
             if(productoSinValidar > 0){
@@ -142,6 +150,10 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
 
         if(!M_Reportes){
             navigationView.menu.setGroupVisible(R.id.group_reporte, false)
+        }
+
+        if(!M_CxC){
+            navigationView.menu.setGroupVisible(R.id.group_cxc, false)
         }
 
         //FIN DE LA IMPLEAMENTACION DEL MENU
@@ -210,7 +222,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 finish()
             }
 
-            cvcuentas.setOnClickListener {
+            /*cvcuentas.setOnClickListener {
                 if(!M_CxC){
                     Toast.makeText(this@Inicio,"NO TIENE ACCESO A ESTA FUNCIÓN", Toast.LENGTH_SHORT)
                         .show()
@@ -220,7 +232,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                     startActivity(intento)
                     finish()
                 }
-            }
+            }*/
         }
     }//acciones de los botones del menu
 
@@ -463,7 +475,9 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             R.id.nav_token -> crearTokens()
             R.id.nav_carga -> solicitudCarga()
             R.id.nav_devolucion -> solicitudDevolucion()
+            R.id.nav_averias -> menuAverias()
             R.id.nav_gasto -> gastos()
+            R.id.nav_cxc -> menuCxC()
             R.id.nav_abonos -> abonos()
             R.id.nav_reporte -> reportes()
             R.id.nav_salir -> salir()
@@ -533,11 +547,37 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         finish()
     }
 
+    private fun menuAverias(){
+        val intento = Intent(this@Inicio, MenuAverias::class.java)
+        startActivity(intento)
+        finish()
+    }
+
+    private fun menuCxC(){
+        val intento = Intent(this@Inicio, Cuentas_list::class.java)
+        intento.putExtra("cuentas", true)
+        startActivity(intento)
+        finish()
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         //  super.onBackPressed()
 
         //   finish()
     }//anula el boton atras
+
+    //CONFIGURACION EL RESPONSIVE DEL MENU
+    private fun configurarResponsiveMenu(){
+        val flow = binding.includeBar.flow
+        val orientation = resources.configuration.orientation
+
+        val cantidad = when(orientation){
+            Configuration.ORIENTATION_LANDSCAPE -> 4
+            else -> 2
+        }
+
+        flow.setMaxElementsWrap(cantidad)
+    }
 
 }

@@ -38,12 +38,16 @@ class ValidarHojaAdapter(
 
         holder.codigo.text = item.Codigo
         holder.descripcion.text = item.descripcion
-        holder.existencia.text = item.Existencia.toString()
+        holder.existencia.text = item.Existencia.toString() + " UNIDADES"
 
         holder.aceptado.setOnCheckedChangeListener(null)
-        holder.aceptado.isChecked = (item.validadoHoja == 1)
+
+        holder.aceptado.isChecked = item.validadoHoja == 1
 
         holder.aceptado.setOnCheckedChangeListener { _, isChecked ->
+
+            item.validadoHoja = if(isChecked) 1 else 0
+
             onCheckChanged(item, isChecked)
         }
 

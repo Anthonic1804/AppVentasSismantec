@@ -46,6 +46,8 @@ import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.database.getFloatOrNull
+import androidx.core.database.getStringOrNull
 import androidx.core.graphics.scale
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -388,7 +390,7 @@ class Detallepedido : AppCompatActivity() {
 
                         //MOSTRAR LA VENTA DE PAGO SI ESTÁ ACTIVA
                         val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
-                        if(facturacionLocal){
+                        if(!facturacionLocal){
                             alertaPago(binding.txttotal.text.toString().toFloat())
                         }else{
                             envioAlerta()
@@ -571,6 +573,43 @@ class Detallepedido : AppCompatActivity() {
             }
             override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
+
+        binding.btnAgregarComentario.setOnClickListener {
+            agregarComentarioAlPedido()
+        }
+
+    }
+
+    //FUNCION PARA AGREGAR COMENTARIO AL PEDIDO
+    private fun agregarComentarioAlPedido(){
+        val dialog = Dialog(this@Detallepedido, R.style.Theme_Dialog)
+        dialog.setCancelable(false)
+
+        dialog.setContentView(R.layout.comentario_pedidos)
+
+        val comentario = dialog.findViewById<TextInputEditText>(R.id.txtComentarioPedido)
+        val btnAceptar = dialog.findViewById<Button>(R.id.btnAceptarComentario)
+        val btnCancelar = dialog.findViewById<Button>(R.id.btnCancelarComentario)
+
+        btnAceptar.setOnClickListener {
+            if(comentario.text.toString().isNotEmpty()){
+                CoroutineScope(Dispatchers.IO).launch {
+                    pedidosController.agregarComentarioAlPedido(this@Detallepedido, idpedido, comentario.text.toString().trim())
+                }
+
+                validarProcesoPedidos(codigo)
+                dialog.dismiss()
+            }else{
+                Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR UN COMENTARIO", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     //FUNCION PARA OBTENER LA CANTIDAD DE ITEMS Y SETEARLO EN PANTALLA
@@ -971,6 +1010,7 @@ class Detallepedido : AppCompatActivity() {
         this@Detallepedido.lifecycleScope.launch {
             try {
                 val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
+
                 if(lista.size > 0){
                     ArmarLista(lista)
                 }
@@ -988,6 +1028,7 @@ class Detallepedido : AppCompatActivity() {
                 }
 
                 if(pedido!!.Enviado == 1 && pedido.pedido_dte == 0){
+
                     binding.txtCliente.isEnabled = false
                     binding.imgbtnadd.visibility = View.GONE
                     binding.btnenviar.visibility = View.GONE
@@ -1002,13 +1043,13 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvTipoenvio.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.GONE
 
-                    if(!P_Imprimir_TK_Venta){
-                        binding.btnexportar.visibility = View.GONE //visible
-                    }else{
-                        binding.btnexportar.visibility = View.VISIBLE //visible
+                    if(pedido!!.Tipo_documento == "RC"){
+                        binding.btnInvalidar.visibility = View.VISIBLE
                     }
+
 
                 }else if(pedido.pedido_dte_error == 2){
+
                     binding.txtCliente.isEnabled = false
                     binding.imgbtnadd.visibility = View.GONE
                     binding.btnenviar.visibility = View.GONE
@@ -1023,24 +1064,21 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvTipoenvio.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.GONE
 
-                    if(!P_Imprimir_TK_Venta){
-                        binding.btnexportar.visibility = View.GONE //visible
-                    }else{
-                        binding.btnexportar.visibility = View.VISIBLE //visible
-                    }
-
                 }else if(pedido.Enviado == 0 && pedido.Cerrado == 1){
+
                     binding.txtCliente.isEnabled = false
                     binding.imgbtnadd.visibility = View.GONE
                     binding.btnenviar.visibility = View.VISIBLE
                     binding.btnguardar.visibility = View.GONE
                     binding.imbtnatras.visibility = View.VISIBLE
                     binding.btncancelar.visibility = View.GONE
-                    binding.btnexportar.visibility = View.GONE //VISIBLE
+                    //binding.btnexportar.visibility = View.GONE //VISIBLE
                     binding.spSucursal.visibility = View.GONE
                     binding.sinSucursal.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.GONE
+
                 }else if(pedido.Enviado == 1 && pedido.pedido_dte == 1){
+
                     binding.txtCliente.isEnabled = false
                     binding.imgbtnadd.visibility = View.GONE
                     binding.btnenviar.visibility = View.GONE
@@ -1055,15 +1093,19 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvTipoenvio.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.VISIBLE //visible
 
-                    if(!P_Imprimir_TK_Venta){
-                        binding.btnexportar.visibility = View.GONE //visible
-                    }else{
-                        binding.btnexportar.visibility = View.VISIBLE //visible
-                    }
-
                     idPedidoServidor = pedido.Id_pedido_sistema!!
                 }
 
+                //Que la opcion de imprimir el documento esté siempre habilitada o Deshabilitado
+                //segun condiguracion en servidor
+                if(!P_Imprimir_TK_Venta){
+                    binding.btnexportar.visibility = View.GONE //visible
+                }else{
+                    binding.btnexportar.visibility = View.VISIBLE //visible
+                }
+
+                //Deshabilitando el botom de agregar comentario
+                binding.btnAgregarComentario.visibility = View.GONE
 
                 permisosBluetooth()
 
@@ -1241,27 +1283,27 @@ class Detallepedido : AppCompatActivity() {
                                 cdetalle.getInt(0),
                                 cdetalle.getInt(1),
                                 cdetalle.getInt(2),
-                                cdetalle.getString(3),
+                                cdetalle.getStringOrNull(3) ?: "",
                                 cdetalle.getString(4),
-                                cdetalle.getFloat(5),
-                                cdetalle.getFloat(6),
-                                cdetalle.getFloat(7),
-                                cdetalle.getFloat(8),
-                                cdetalle.getFloat(9),
-                                cdetalle.getFloat(10),
-                                cdetalle.getFloat(11),
-                                cdetalle.getFloat(12),
-                                cdetalle.getFloat(13),
-                                cdetalle.getFloat(14),
-                                cdetalle.getFloat(15),
-                                cdetalle.getString(16),
+                                cdetalle.getFloatOrNull(5) ?: 0f,
+                                cdetalle.getFloatOrNull(6) ?: 0f,
+                                cdetalle.getFloatOrNull(7) ?: 0f,
+                                cdetalle.getFloatOrNull(8) ?: 0f,
+                                cdetalle.getFloatOrNull(9) ?: 0f,
+                                cdetalle.getFloatOrNull(10) ?: 0f,
+                                cdetalle.getFloatOrNull(11) ?: 0f,
+                                cdetalle.getFloatOrNull(12) ?: 0f,
+                                cdetalle.getFloatOrNull(13) ?: 0f,
+                                cdetalle.getFloatOrNull(14) ?: 0f,
+                                cdetalle.getFloatOrNull(15) ?: 0f,
+                                cdetalle.getString(16) ,
                                 cdetalle.getInt(17),
-                                cdetalle.getFloat(18),
+                                cdetalle.getFloatOrNull(18) ?: 0f,
                                 cdetalle.getString(19),
                                 cdetalle.getInt(20),
                                 cdetalle.getString(21),
-                                cdetalle.getFloat(22),
-                                cdetalle.getFloat(23),
+                                cdetalle.getFloatOrNull(22) ?: 0f,
+                                cdetalle.getFloatOrNull(23) ?: 0f,
                                 cdetalle.getString(24)
                             )
                             list.add(detalle)
@@ -1393,8 +1435,16 @@ class Detallepedido : AppCompatActivity() {
 
         var idvisita_v = 0.toInt()
         val puntoVenta = preferencias.getString("puntoVenta", "").toString()
-        val idHojaCarga = preferencias.getInt("idHojaCarga", 0)
-        val hojaCarga = preferencias.getInt("hojaCarga", 0)
+        var idHojaCarga = 0
+        var hojaCarga = 0
+        val multiplesHojaDeCarga = preferencias.getBoolean("multiplesHojaDeCarga", false)
+
+        if(!multiplesHojaDeCarga){
+            idHojaCarga = preferencias.getInt("idHojaCarga", 0)
+            hojaCarga = preferencias.getInt("hojaCarga", 0)
+        }
+
+        val idHojaCargaMaster = preferencias.getInt("idHojaCargaMaster", 0)
 
         var horaProceso = funciones.getFechaHoraProceso()
 
@@ -1466,6 +1516,9 @@ class Detallepedido : AppCompatActivity() {
         json.addProperty("DTECodPais", pedido.dteCodPais)
         json.addProperty("DTEPais", pedido.dtePais)
         //json.addProperty("DTEGiro", infoCliente!!.dteGiro)
+
+        //ENVIANDO idHojaCargaMaster AL SERVIDOR
+        json.addProperty("idHojaCargaMaster", idHojaCargaMaster)
 
         //se ordena la cabezera
         val detalle = JsonArray()
@@ -1747,6 +1800,7 @@ class Detallepedido : AppCompatActivity() {
     //FUNCION DEL FORMATO DEL TICKET
     private fun imprimirTicket(connection: Any) {
 
+
         val empresa = preferencias.getString("empresa", "").orEmpty()
         val direccion = preferencias.getString("direccion", "").orEmpty()
         val nrc = preferencias.getString("nrc", "").orEmpty()
@@ -1900,9 +1954,9 @@ class Detallepedido : AppCompatActivity() {
                 .append("[C]NIT: $nit\n")
                 .append("[C]NRC: $nrc\n")
                 .append("[C]$giroFormateada\n")
-                .append("[L]--------------------------------\n")
+                .append("[L]------------------------------\n")
                 .append("[C]DATOS DEL CLIENTE\n")
-                .append("[L]--------------------------------\n")
+                .append("[L]------------------------------\n")
                 .append("[L]NOMBRE:\n")
                 .append("[C]${infoCliente.Cliente}\n")
                 .append("[L]DOCUMENTO: \n")
@@ -1914,7 +1968,7 @@ class Detallepedido : AppCompatActivity() {
                 .append("[C]${infoPedido.Nombre_sucursal}\n")
                 .append("[L]DIRECCION: \n")
                 .append("[C]$direccionCliente\n")
-                .append("[L]--------------------------------\n")
+                .append("[L]------------------------------\n")
                 .append("[C]DOCUMENTO TRIBUTARIO ELECTRONICO\n")
                 .append("[L]--------------------------------\n")
                 .append("[L]TIPO DOCUMENTO:\n")
@@ -1943,8 +1997,6 @@ class Detallepedido : AppCompatActivity() {
                 .append("[L]FECHA: $fecha \n")
                 .append("[C]¡GRACIAS POR SU COMPRA! \n")
                 .append("[C]<b>$textoPieFormateado</b>\n")
-                .append(" \n")
-                .append(" \n")
                 .append(" \n")
 
             val textoImprmir = normalizarTexto(ticket.toString())
@@ -1991,8 +2043,6 @@ class Detallepedido : AppCompatActivity() {
                 .append("[L]FECHA: $fecha \n")
                 .append("[C]¡GRACIAS POR SU COMPRA! \n")
                 .append("[C]<b>$textoPieFormateado</b>\n")
-                .append(" \n")
-                .append(" \n")
                 .append(" \n")
 
             val textoImprmir = normalizarTexto(ticket.toString())
@@ -2081,7 +2131,7 @@ class Detallepedido : AppCompatActivity() {
 
             connection.connect()
 
-            val printer = EscPosPrinter(connection, 160, 48f, 32)
+            val printer = EscPosPrinter(connection, 160, 48f, 28)
 
 
             // ===============================
@@ -2105,20 +2155,20 @@ class Detallepedido : AppCompatActivity() {
             // Redimensionar
             val logoRedimensionado = redimensionarLogo(logoOriginal, 384)
 
-            val direccionFormateada = dividirEnLineas(direccion, 32)
-            val empresaFormateada = dividirEnLineas(empresa, 32)
-            val giroFormateada = dividirEnLineas(giro, 32)
-            val textoPieFormateado = dividirEnLineas(textoPie, 32)
-            val giroCliente = dividirEnLineas(infoCliente!!.dteGiro!!, 32)
-            val direccionCliente = dividirEnLineas(infoPedido!!.Sucursal_Direccion!!,32)
+            val direccionFormateada = dividirEnLineas(direccion, 28)
+            val empresaFormateada = dividirEnLineas(empresa, 28)
+            val giroFormateada = dividirEnLineas(giro, 28)
+            val textoPieFormateado = dividirEnLineas(textoPie, 28)
+            val giroCliente = dividirEnLineas(infoCliente!!.dteGiro!!, 28)
+            val direccionCliente = dividirEnLineas(infoPedido!!.Sucursal_Direccion!!,28)
 
             // ===============================
             // Formateando Datos Fiscales DTE
             // ===============================
 
-            val codigoGeneracion = dividirEnLineas(infoPedido.dteCodigoGeneracion!!, 32)
-            val numeroControl = dividirEnLineas(infoPedido.dteNumeroControl!!, 32)
-            val selloRecepcion = dividirEnLineas(infoPedido.dteSelloRecibido!!, 32)
+            val codigoGeneracion = dividirEnLineas(infoPedido.dteCodigoGeneracion!!, 28)
+            val numeroControl = dividirEnLineas(infoPedido.dteNumeroControl!!, 28)
+            val selloRecepcion = dividirEnLineas(infoPedido.dteSelloRecibido!!, 28)
 
             val fecha = infoPedido.Fecha_creado?.substring(0, 10).orEmpty()
             val documento = when(infoPedido.Tipo_documento){
@@ -2134,7 +2184,7 @@ class Detallepedido : AppCompatActivity() {
             val qrHacienda = dteUrlQRHacienda + "${infoPedido.dteAmbiente}&codGen=${infoPedido.dteCodigoGeneracion}&fechaEmi=$fecha"
             val qrEmpresa = dteUrlQRempresa + "${infoPedido.dteCodigoGeneracion}"
 
-            val textoVerificacion = dividirEnLineas("Verificacion con $empresa",32)
+            val textoVerificacion = dividirEnLineas("Verificacion con $empresa",28)
 
             val qr =if(dteUrlQRempresa != "0") {("[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
                     "[C] Qr Hacienda \n" +
@@ -2217,9 +2267,9 @@ class Detallepedido : AppCompatActivity() {
                     .append("[C]NIT: $nit\n")
                     .append("[C]NRC: $nrc\n")
                     .append("[C]$giroFormateada\n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append("[C]DATOS DEL CLIENTE\n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append("[L]NOMBRE:\n")
                     .append("[C]${infoCliente.Cliente}\n")
                     .append("[L]DOCUMENTO: \n")
@@ -2231,9 +2281,9 @@ class Detallepedido : AppCompatActivity() {
                     .append("[C]${infoPedido.Nombre_sucursal}\n")
                     .append("[L]DIRECCION: \n")
                     .append("[C]$direccionCliente\n")
-                    .append("[L]--------------------------------\n")
-                    .append("[C]DOCUMENTO TRIBUTARIO ELECTRONICO\n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
+                    .append("[C]DOCUMENTO ELECTRONICO\n")
+                    .append("[L]------------------------------\n")
                     .append("[L]TIPO DOCUMENTO:\n")
                     .append("[C]$documento \n")
                     .append("[L]FECHA DE EMISIÓN\n")
@@ -2245,13 +2295,13 @@ class Detallepedido : AppCompatActivity() {
                     .append("[L]SELLO DE RECEPCION\n")
                     .append("[C]$selloRecepcion \n")
                     .append("[C]TERMINOS: ${infoPedido.Terminos}\n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append(qr)
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append("[C]DETALLE DEL DOCUMENTO\n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append(detalleBuilder.toString())
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
                     .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
                     .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
@@ -2260,8 +2310,6 @@ class Detallepedido : AppCompatActivity() {
                     .append("[L]FECHA: $fecha \n")
                     .append("[C]¡GRACIAS POR SU COMPRA! \n")
                     .append("[C]<b>$textoPieFormateado</b>\n")
-                    .append(" \n")
-                    .append(" \n")
                     .append(" \n")
 
                 val textoImprmir = normalizarTexto(ticket.toString())
@@ -2279,9 +2327,9 @@ class Detallepedido : AppCompatActivity() {
                     .append("[C]NIT: $nit\n")
                     .append("[C]NRC: $nrc\n")
                     .append("[C]$giroFormateada\n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append("[C]DATOS DEL CLIENTE\n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append("[L]NOMBRE:\n")
                     .append("[C]${infoCliente.Cliente}\n")
                     .append("[L]DOCUMENTO: \n")
@@ -2295,11 +2343,11 @@ class Detallepedido : AppCompatActivity() {
                     .append("[C]$direccionCliente\n")
                     .append("[L]TIPO DOCUMENTO:\n")
                     .append("[C]$documento \n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append("[C]DETALLE DEL DOCUMENTO\n")
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append(detalleBuilder.toString())
-                    .append("[L]--------------------------------\n")
+                    .append("[L]------------------------------\n")
                     .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
                     .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
                     .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
@@ -2308,8 +2356,6 @@ class Detallepedido : AppCompatActivity() {
                     .append("[L]FECHA: $fecha \n")
                     .append("[C]¡GRACIAS POR SU COMPRA! \n")
                     .append("[C]<b>$textoPieFormateado</b>\n")
-                    .append(" \n")
-                    .append(" \n")
                     .append(" \n")
 
                 val textoImprmir = normalizarTexto(ticket.toString())

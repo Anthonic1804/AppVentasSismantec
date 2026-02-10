@@ -12,12 +12,15 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.acae30.controllers.ClientesController
 import com.google.android.material.snackbar.Snackbar
 import io.kotzilla.sdk.KotzillaSDK
 import io.kotzilla.sdk.analytics.koin.analytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
@@ -33,6 +36,9 @@ class MainActivity : AppCompatActivity() {
     private var preferencias: SharedPreferences? = null
     private var funciones: Funciones? = null
     private var reconfig = false
+
+    private var clientesController = ClientesController()
+    private var alert: AlertDialogo? = null
 
     private lateinit var puntoVenta : TextView
 
@@ -55,8 +61,94 @@ class MainActivity : AppCompatActivity() {
         val btn: Button = findViewById(R.id.btnguardar)
         btn.setOnClickListener {
             validar()
-        } //accion que se ejecuta cuando damos click a un boton
-        validateServer()
+        }
+
+        alert = AlertDialogo(this@MainActivity, this)
+
+        cargaInicial()
+    }
+
+    //FUNCION PARA VALIDAR EL SERVIODR Y CARGA DE DATOS AUTOMATIVOS
+    private fun cargaInicial(){
+        //VALIDANDO LA CARGA AUTOMATICA DE LOS CATALOGOS
+        val cargaAutomaticaCatalogos = preferencias!!.getBoolean("cargaAutomaticaCatalogos", false)
+        if(!cargaAutomaticaCatalogos){
+            validateServer()
+        }else{
+            //AQUI CARGARA LOS CATALOGOS DE CLIENTES
+
+            alert!!.Cargando()
+
+            CoroutineScope(Dispatchers.IO).launch {
+
+                delay(1000)
+
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("CARGANDO INFORMACION DE CLIENTES")
+                }
+
+                delay(1000)
+
+                try {
+                    clientesController.obtenerClientesServidor(this@MainActivity)
+                }catch (e:Exception){
+                    println("ERROR AL OBTENER LOS CLIENES -> " + e.message)
+                }
+
+                delay(1000)
+
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("CARGANDO INFORMACION DE SUCURSALES")
+                }
+
+                delay(1000)
+
+                try {
+                    clientesController.obtenerClienteSucursalesServidor(this@MainActivity)
+                }catch (e:Exception){
+                    println("ERROR AL OBTENER LAS SUCURSALES -> " + e.message)
+                }
+
+                delay(1000)
+
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("CARGANDO PRECIOS PERSONALIZADOS")
+                }
+
+                delay(1000)
+
+                try {
+                    clientesController.obtenerPreciosPersonalizados(this@MainActivity)
+                }catch (e: Exception){
+                    println("ERROR AL OBTENER LOS PRECIOS PERSONALIZADO")
+                }
+
+                delay(1000)
+
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("CARGANDO CUENTAS POR COBRAR")
+                }
+
+                delay(1000)
+
+                try {
+                    clientesController.obtenerCxcServidor(this@MainActivity)
+                }catch (e:Exception){
+                    println("ERROR AL OBTENER LAS CXC -> " + e.message)
+                }
+
+                delay(1000)
+
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("CARGA COMPLETA!!")
+                    alert!!.dismisss()
+
+                    //AL FINALIZAR VALIDARÁ EL SERVIDOR
+                    validateServer()
+                }
+
+            }
+        }
     }
 
     private fun validateServer() {
