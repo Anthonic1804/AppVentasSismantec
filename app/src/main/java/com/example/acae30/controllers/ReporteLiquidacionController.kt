@@ -46,7 +46,7 @@ class ReporteLiquidacionController {
 
         try {
             val consulta = "SELECT formaPago, SUM(Total) AS 'TOTAL' FROM pedidos " +
-                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 0 AND pedido_dte_error = 0 AND Terminos='Contado' " +
+                    "WHERE fecha = '${fecha.toString()}' AND pedido_dte_error != 2 AND Terminos='Contado' " +
                     "GROUP BY formaPago"
 
             val cursor = bd.query(consulta)
@@ -76,7 +76,7 @@ class ReporteLiquidacionController {
         var total = 0f
         try {
             val consulta = "SELECT SUM(Total) FROM pedidos " +
-                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 0 AND pedido_dte_error = 0 AND Terminos='Contado' "
+                    "WHERE fecha = '${fecha.toString()}' AND pedido_dte_error != 2 AND Terminos='Contado' "
             val cursor = bd.query(consulta)
 
             if(cursor.count > 0){
@@ -97,7 +97,7 @@ class ReporteLiquidacionController {
         var total = 0f
         try {
             val consulta = "SELECT SUM(Total) FROM pedidos " +
-                    "WHERE substr(Fecha_creado,0,11) = '${fecha.toString()}' AND pedido_dte = 0 AND pedido_dte_error = 0 AND Terminos='Credito' "
+                    "WHERE fecha = '${fecha.toString()}' AND pedido_dte_error != 2 AND Terminos='Credito' "
             val cursor = bd.query(consulta)
 
             if(cursor.count > 0){

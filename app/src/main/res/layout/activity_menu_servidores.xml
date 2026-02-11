@@ -19,8 +19,9 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_marginEnd="@dimen/margin_4dp"
             android:layout_marginStart="@dimen/margin_4dp"
             android:text="MENÚ SERVIDORES"
@@ -29,18 +30,30 @@
             android:textAlignment="center"
             android:textColor="@color/colorAccent" />
 
+        <Button
+            android:id="@+id/btnConectarServidor"
+            android:layout_width="0dp"
+            android:layout_weight=".7"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/margin_default_16dp"
+            android:backgroundTint="@color/SEGUNDOCOLORLOGO"
+            android:text="CONECTAR SERVIDOR"
+            android:textColor="@color/colorAccent"
+            android:textSize="10sp"/>
+
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/listadoClientes"
+        android:id="@+id/listadoServidores"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/spinner_bg"
         android:layout_margin="@dimen/margin_8dp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/spinner_bg"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/lyEncabezado"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintVertical_bias="0.062" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnNuevoServidor"

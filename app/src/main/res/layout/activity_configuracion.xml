@@ -172,17 +172,61 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
+                        <LinearLayout
+                            android:id="@+id/lyServidor"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="@dimen/margin_default_16dp"
+                            android:background="@drawable/spinner_bg"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/textView10">
+
+                            <Spinner
+                                android:id="@+id/spServidor"
+                                android:layout_width="match_parent"
+                                android:layout_height="55dp"/>
+
+                        </LinearLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/lyNombreServidor"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/margin_default_16dp"
+                            android:layout_marginEnd="@dimen/margin_default_16dp"
+                            android:layout_marginTop="@dimen/margin_4dp"
+                            android:layout_marginBottom="@dimen/margin_4dp"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:hint="NOMBRE SERVIDOR"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/lyServidor">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/txtNombreServidor"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="text"
+                                android:textAlignment="center"
+                                android:textSize="18sp"
+                                android:textColor="@color/colorHint"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/lyIp"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_margin="16dp"
                             app:startIconDrawable="@drawable/ic_computer"
+                            android:layout_marginStart="@dimen/margin_default_16dp"
+                            android:layout_marginEnd="@dimen/margin_default_16dp"
+                            android:layout_marginTop="@dimen/margin_4dp"
+                            android:layout_marginBottom="@dimen/margin_4dp"
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:hint="@string/server"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/textView10">
+                            app:layout_constraintTop_toBottomOf="@+id/lyNombreServidor">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/txtip"
@@ -199,8 +243,11 @@
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_margin="16dp"
                             android:hint="@string/puerto"
+                            android:layout_marginStart="@dimen/margin_default_16dp"
+                            android:layout_marginEnd="@dimen/margin_default_16dp"
+                            android:layout_marginTop="@dimen/margin_4dp"
+                            android:layout_marginBottom="@dimen/margin_4dp"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@+id/lyIp"
@@ -220,7 +267,10 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/punto_de_venta"
-                            android:layout_margin="@dimen/margin_default_16dp"
+                            android:layout_marginStart="@dimen/margin_default_16dp"
+                            android:layout_marginEnd="@dimen/margin_default_16dp"
+                            android:layout_marginTop="@dimen/margin_4dp"
+                            android:layout_marginBottom="@dimen/margin_4dp"
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             app:startIconDrawable="@drawable/ic_pventa"
                             app:layout_constraintStart_toStartOf="parent"

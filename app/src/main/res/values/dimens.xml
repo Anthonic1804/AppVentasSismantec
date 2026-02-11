@@ -28,4 +28,7 @@
     <dimen name="menuCliente">40dp</dimen>
     <dimen name="separacion">15dp</dimen>
 
+    <!-- BORDE LOGO -->
+    <dimen name="margin_logo">50dp</dimen>
+
 </resources>

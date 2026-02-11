@@ -672,6 +672,7 @@ class Tablas {
     fun conexionServidores() : String{
         return "CREATE TABLE servidores(" +
                 "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
+                "Nombre VARCHAR(50) NOT NULL," +
                 "Ip VARCHAR(50) NOT NULL," +
                 "Puerto VARCHAR(4) NOT NULL)"
     }

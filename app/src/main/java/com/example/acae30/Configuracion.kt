@@ -8,9 +8,13 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -21,6 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.dcastalia.localappupdate.DownloadApk
+import com.example.acae30.controllers.ConexionController
 import com.example.acae30.controllers.ConfigController
 import com.example.acae30.databinding.ActivityConfiguracionBinding
 import com.google.android.material.snackbar.Snackbar
@@ -52,6 +57,14 @@ class Configuracion : AppCompatActivity() {
 
     private var configController = ConfigController()
     private var funciones = Funciones()
+    private var conexionController = ConexionController()
+
+    private var servidor: String = ""
+    private var nombreServidor: String = ""
+    private var ipServidor: String = ""
+    private var puertoServidor: String = ""
+    private var puntoVenta: String = ""
+
 
     private lateinit var binding : ActivityConfiguracionBinding
 
@@ -63,12 +76,20 @@ class Configuracion : AppCompatActivity() {
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         alerta = AlertDialogo(this, this)
 
+        nombreServidor = preferencias!!.getString("nombreServidor", "").toString()
+        ipServidor = preferencias!!.getString("ip", "").toString()
+        puertoServidor = preferencias!!.getInt("puerto", 0).toString()
+        puntoVenta = preferencias!!.getString("puntoVenta", "").toString()
+
         //FUNCIONES AGRAGADAS PARA LOS CONTROLES DE VISTA DE INVENTARIO
 
         binding.swSinExistencias.isEnabled = false
 
         //OBTENIENDO LA URL DEL SERVIDOR
         getApiUrl()
+
+        //CARGANDO SERVIDORES AL SPINNER
+        cargarServidores()
 
         //ACTUALIZAR CONFIG PARA PEDIDOS SIN EXISTENCIAS
         binding.swSinExistencias.isChecked = preferencias!!.getString("pedidos_sin_existencia", "") == "S"
@@ -271,12 +292,13 @@ class Configuracion : AppCompatActivity() {
         }
 
         binding.btnActualizarServidor.setOnClickListener {
+            val nombreServidor : String = binding.txtNombreServidor.text!!.trim().toString()
             val ip : String = binding.txtip.text!!.trim().toString()
             val puerto : Int = binding.txtpuerto.text!!.trim().toString().toInt()
             val puntoVenta : String = binding.tvPuntoVenta.text!!.trim().toString()
 
             if(ip.isNotEmpty() && puerto > 0 && puntoVenta.isNotEmpty()){
-                actualizarConexionServidor(ip, puerto, puntoVenta)
+                actualizarConexionServidor(ip, puerto, puntoVenta, nombreServidor)
                 Toast.makeText(this@Configuracion, "SERVIDOR ACTUALIZADO", Toast.LENGTH_SHORT)
                     .show()
 
@@ -286,6 +308,51 @@ class Configuracion : AppCompatActivity() {
                 Toast.makeText(this@Configuracion, "FALTAN DATOS IMPORTANTES", Toast.LENGTH_SHORT)
                     .show()
             }
+        }
+
+        binding.spServidor.onItemSelectedListener = object : OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+
+
+                lifecycleScope.launch(Dispatchers.IO) {
+                    servidor = parent?.getItemAtPosition(position).toString()
+                    try {
+                        if(servidor == "-- SELECCIONE --"){
+                            withContext(Dispatchers.Main){
+                                withContext(Dispatchers.Main){
+                                    binding.txtNombreServidor.setText(nombreServidor)
+                                    binding.txtip.setText(ipServidor)
+                                    binding.txtpuerto.setText(puertoServidor)
+                                    binding.btnActualizarServidor.isEnabled = false
+                                }
+                            }
+                        }else{
+                            val servidorSeleccionado = conexionController.obtenerInformacionServidorSeleccionado(this@Configuracion, servidor)
+                            val ipServidor = servidorSeleccionado!!.ip.trim()
+                            val puertoServidor = servidorSeleccionado.puerto.trim()
+
+                            withContext(Dispatchers.Main){
+                                binding.txtNombreServidor.setText(servidor)
+                                binding.txtip.setText(ipServidor)
+                                binding.txtpuerto.setText(puertoServidor)
+                                binding.btnActualizarServidor.isEnabled = true
+                            }
+
+                        }
+                    }catch (e:Exception){
+                        println("ERROR AL TRAER LA INFORMACION DEL SERVIDOR -> " + e.message)
+                    }
+                }
+
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+
         }
 
 
@@ -305,30 +372,32 @@ class Configuracion : AppCompatActivity() {
                 txtip.isEnabled = true
                 txtpuerto.isEnabled = true
                 tvPuntoVenta.isEnabled = true
-                btnActualizarServidor.visibility = View.VISIBLE
+                //btnActualizarServidor.visibility = View.VISIBLE
             }
         }else{
             binding.apply {
                 txtip.isEnabled = false
                 txtpuerto.isEnabled = false
                 tvPuntoVenta.isEnabled = false
-                btnActualizarServidor.visibility = View.GONE
+                //btnActualizarServidor.visibility = View.GONE
             }
         }
     }
 
     //CAMBIAR DATOS DEL SERVIDOR
-    private fun actualizarConexionServidor(ip: String, puerto: Int, puntoVenta: String){
+    private fun actualizarConexionServidor(ip: String, puerto: Int, puntoVenta: String, nombreServidor: String){
         preferencias!!.edit {
             remove("puerto")
             remove("ip")
             remove("puntoVenta")
+            remove("nombreServidor")
         }
 
         preferencias!!.edit {
             putString("ip", ip)
             putInt("puerto", puerto)
             putString("puntoVenta", puntoVenta)
+            putString("nombreServidor", nombreServidor)
         }
     }
 
@@ -377,9 +446,10 @@ class Configuracion : AppCompatActivity() {
     //FUNCION PARA OBTENER LA IP DEL SERVIDOR Y EL PUERTO DE CONEXION
     private fun GetServerData() {
         binding.apply {
-            txtip.setText(preferencias!!.getString("ip", "").toString())
-            txtpuerto.setText(preferencias!!.getInt("puerto", 0).toString())
-            tvPuntoVenta.setText(preferencias!!.getString("puntoVenta", "").toString())
+            txtNombreServidor.setText(nombreServidor)
+            txtip.setText(ipServidor)
+            txtpuerto.setText(puertoServidor)
+            tvPuntoVenta.setText(puntoVenta)
         }
     } //obtiene la ip y el puerto del servidor
 
@@ -618,6 +688,22 @@ class Configuracion : AppCompatActivity() {
 
         // Cierra el proceso actual
         Runtime.getRuntime().exit(0)
+    }
+
+    //--------------------------------
+    //Funcion para obtener el listado de servidores
+    //--------------------------------
+    private fun cargarServidores(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val lista = conexionController.obtenerListadoNombreServidores(this@Configuracion)
+                val servidor = ArrayAdapter(this@Configuracion, android.R.layout.simple_spinner_item, lista)
+                servidor.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
+                binding.spServidor.adapter = servidor
+            }catch (e:Exception){
+                println("ERROR AL TRAER LA LISTA DE SERVIDORES -> " + e.message)
+            }
+        }
     }
 
 }

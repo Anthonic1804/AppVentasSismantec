@@ -7,12 +7,17 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.ClientesController
+import com.example.acae30.controllers.ConexionController
 import com.google.android.material.snackbar.Snackbar
 import io.kotzilla.sdk.KotzillaSDK
 import io.kotzilla.sdk.analytics.koin.analytics
@@ -36,9 +41,14 @@ class MainActivity : AppCompatActivity() {
     private var preferencias: SharedPreferences? = null
     private var funciones: Funciones? = null
     private var reconfig = false
+    private var listaServidor : Spinner? = null
+    private var btnGuardarServidor: Button? = null
 
     private var clientesController = ClientesController()
+    private var conexionController = ConexionController()
     private var alert: AlertDialogo? = null
+
+    private var servidor: String = ""
 
     private lateinit var puntoVenta : TextView
 
@@ -54,18 +64,69 @@ class MainActivity : AppCompatActivity() {
         puerto = findViewById(R.id.txtpuerto)
         vista = findViewById(R.id.alerta)
         puntoVenta = findViewById(R.id.tvPuntoVenta)
+        listaServidor = findViewById(R.id.spServidor)
+        btnGuardarServidor = findViewById(R.id.btnGuardarServidorConexion)
 
 
         //amarramos el widgets a las variables
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val btn: Button = findViewById(R.id.btnguardar)
-        btn.setOnClickListener {
+
+        btnGuardarServidor!!.setOnClickListener {
             validar()
         }
 
         alert = AlertDialogo(this@MainActivity, this)
 
         cargaInicial()
+        cargarServidores()
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        listaServidor!!.onItemSelectedListener = object : OnItemSelectedListener{
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+
+
+                lifecycleScope.launch(Dispatchers.IO) {
+                    servidor = parent?.getItemAtPosition(position).toString()
+                    try {
+                        if(servidor == "-- SELECCIONE --"){
+                            withContext(Dispatchers.Main){
+                                withContext(Dispatchers.Main){
+                                    ip!!.text = ""
+                                    puerto!!.text = ""
+                                    btnGuardarServidor!!.isEnabled = false
+                                }
+                            }
+                        }else{
+                            val servidorSeleccionado = conexionController.obtenerInformacionServidorSeleccionado(this@MainActivity, servidor)
+                            val ipServidor = servidorSeleccionado!!.ip.trim()
+                            val puertoServidor = servidorSeleccionado.puerto.trim()
+
+                            withContext(Dispatchers.Main){
+                                ip!!.text = ipServidor
+                                puerto!!.text = puertoServidor
+                                btnGuardarServidor!!.isEnabled = true
+                            }
+
+                        }
+                    }catch (e:Exception){
+                        println("ERROR AL TRAER LA INFORMACION DEL SERVIDOR -> " + e.message)
+                    }
+                }
+
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+
+        }
+
     }
 
     //FUNCION PARA VALIDAR EL SERVIODR Y CARGA DE DATOS AUTOMATIVOS
@@ -236,6 +297,7 @@ class MainActivity : AppCompatActivity() {
                                     editor!!.putInt("puerto", puerto.toInt())
                                     editor.putString("ip", ip)
                                     editor.putString("puntoVenta", pVenta)
+                                    editor.putString("nombreServidor", servidor)
                                     editor.commit()
                                     //se guarda la direccion del servidor y se envia al login
                                     alerta!!.dismisss()
@@ -330,5 +392,21 @@ class MainActivity : AppCompatActivity() {
         }, 2000)
 
     }//anula el boton atras
+
+    //--------------------------------
+    //Funcion para obtener el listado de servidores
+    //--------------------------------
+    private fun cargarServidores(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val lista = conexionController.obtenerListadoNombreServidores(this@MainActivity)
+                val servidor = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_item, lista)
+                servidor.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
+                listaServidor!!.adapter = servidor
+            }catch (e:Exception){
+                println("ERROR AL TRAER LA LISTA DE SERVIDORES -> " + e.message)
+            }
+        }
+    }
 
 }

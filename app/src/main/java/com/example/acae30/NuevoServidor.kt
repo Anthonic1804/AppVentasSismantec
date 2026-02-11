@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.controllers.ConexionController
 import com.example.acae30.databinding.ActivityNuevoServidorBinding
+import com.example.acae30.modelos.Servidores.ServidoresModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -19,12 +20,32 @@ class NuevoServidor : AppCompatActivity() {
     private val conexionController = ConexionController()
     private val funciones = Funciones()
     private var procesando = false
+    private var proceso : String = ""
+    private var nombreServidor : String = ""
+    private var ipServidor : String = ""
+    private var puertoServidor : String = ""
+    private var idServidor : Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityNuevoServidorBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        proceso = intent.getStringExtra("proceso").toString()
+        nombreServidor = intent.getStringExtra("nombreServidor").toString()
+        ipServidor = intent.getStringExtra("ipServidor").toString()
+        puertoServidor = intent.getStringExtra("puertoServidor").toString()
+        idServidor = intent.getIntExtra("idServidor", 0)
+
+        if (proceso.contains("editar")){
+            binding.apply {
+                btnGuardarServidor.text = "ACTUALIZAR"
+                txtip.setText(ipServidor)
+                txtpuerto.setText(puertoServidor)
+                txtNombreServidor.setText(nombreServidor)
+            }
+        }
 
 
     }
@@ -33,7 +54,12 @@ class NuevoServidor : AppCompatActivity() {
         super.onStart()
 
         binding.btnGuardarServidor.setOnClickListener {
-            mensajeConfirmacion("¿Desea Registrar el Servidor?", "REGISTRAR")
+
+            if(proceso.contains("editar")){
+                mensajeConfirmacion("¿Desea Actualizar el Servidor?", "EDITAR")
+            }else{
+                mensajeConfirmacion("¿Desea Registrar el Servidor?", "REGISTRAR")
+            }
         }
 
         binding.btnCancelarServidor.setOnClickListener {
@@ -89,6 +115,7 @@ class NuevoServidor : AppCompatActivity() {
 
         val ip = binding.txtip.text.toString().trim()
         val puerto = binding.txtpuerto.text.toString().trim()
+        val nombre = binding.txtNombreServidor.text.toString().trim()
 
         procesando = true
         binding.btnGuardarServidor.isEnabled = false
@@ -104,14 +131,22 @@ class NuevoServidor : AppCompatActivity() {
             withContext(Dispatchers.Main){
 
                 if(hayInternet){
-                    if(conexionController.validarDatosConexion(ip, puerto)){
+                    if(conexionController.validarDatosConexion(ip, puerto, nombre)){
 
                         val respuesta = conexionController.verificarConexionServidor(ip, puerto)
 
                         if(respuesta == "Conexion Exitosa"){
-                            conexionController.almacenarServidorSQLite(this@NuevoServidor, ip, puerto)
-                            Toast.makeText(this@NuevoServidor, "CONEXION EXITOSA CON EL SERVIDOR", Toast.LENGTH_SHORT)
-                                .show()
+
+                            if(proceso.contains("editar")){
+                                val obj = ServidoresModel(idServidor, nombre, ip, puerto)
+                                conexionController.actualizarServidor(this@NuevoServidor, obj)
+                                Toast.makeText(this@NuevoServidor, "SE ACTUALIZO CORRECTAMENTE EL SERVIDOR", Toast.LENGTH_SHORT)
+                                    .show()
+                            }else{
+                                conexionController.almacenarServidorSQLite(this@NuevoServidor, ip, puerto, nombre)
+                                Toast.makeText(this@NuevoServidor, "CONEXION EXITOSA CON EL SERVIDOR", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
 
                             menuServidor()
                         }else{
@@ -138,4 +173,5 @@ class NuevoServidor : AppCompatActivity() {
             }
         }
     }
+
 }

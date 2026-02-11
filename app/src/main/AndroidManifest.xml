@@ -35,6 +35,9 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".MenuServidores"
+            android:exported="false" />
+        <activity
             android:name=".NuevoServidor"
             android:exported="false" />
         <activity
@@ -146,7 +149,7 @@
         <activity android:name=".Inicio" />
         <activity android:name=".Login" />
         <activity
-            android:name=".MenuServidores"
+            android:name=".SplashScreen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
