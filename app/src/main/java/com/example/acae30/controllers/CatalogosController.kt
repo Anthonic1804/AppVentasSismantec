@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.Catalogos.DepartamentoModel
 import com.example.acae30.modelos.Catalogos.DistritoModel
 import com.example.acae30.modelos.Catalogos.MunicipioModel
@@ -15,6 +16,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class CatalogosController {
 
@@ -22,17 +25,28 @@ class CatalogosController {
     private var instancia = "CONFIG_SERVIDOR"
     private val funciones = Funciones()
 
+    private val utilidades = CrearSslNoSeguro()
+
     //FUNCION PARA OBTENER EL CATALOGO DE PAISES
     suspend fun obtenerCatalogoPais(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val direccion = servidor + "catalogos/pais"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"
@@ -139,14 +153,23 @@ class CatalogosController {
     //FUNCON PARA OBTENER EL CATALOGO DE DEPARTAMENTO
     suspend fun obtenerCatalogoDepartamento(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val direccion = servidor + "catalogos/departamento"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"
@@ -259,14 +282,23 @@ class CatalogosController {
     //FUNCION PARA OBTENER EL CATALOGO DE MUNICIPIOS
     suspend fun obtenerCatalogoMunicipio(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val direccion = servidor + "catalogos/municipio"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"
@@ -384,14 +416,23 @@ class CatalogosController {
     //FUNCION PARA OBTENER EL CATALOGO DE DISTRITOS
     suspend fun obtenerCatalogoDistrito(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val direccion = servidor + "catalogos/distrito"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"
@@ -511,14 +552,23 @@ class CatalogosController {
     //FUNCION PARA OBTENER EL CATALOGO DE GIROS
     suspend fun obtenerCatalogoGiro(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val direccion = servidor + "catalogos/giro"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"
@@ -595,14 +645,23 @@ class CatalogosController {
     //FUNCION PARA OBTENER EL CATALOGO DE RUTAS
     suspend fun obtenerCatalogoRuta(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val direccion = servidor + "catalogos/ruta"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"

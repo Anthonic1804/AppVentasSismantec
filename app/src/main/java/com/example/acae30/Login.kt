@@ -12,13 +12,16 @@ import android.os.Bundle
 import android.os.StrictMode
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.JSONmodels.Login
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
@@ -35,6 +38,8 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class Login : AppCompatActivity() {
     private var btnlogin: Button? = null
@@ -48,10 +53,15 @@ class Login : AppCompatActivity() {
     private var puerto = 0
     private var alerta: AlertDialogo? = null
 
+    private var btnConfigServidor : ImageView? = null
+
     private lateinit var tvUpdate : TextView
     private lateinit var tvCancel : TextView
     private lateinit var tvTitulo : TextView
     private lateinit var tvMensaje : TextView
+
+    private val utilidades = CrearSslNoSeguro()
+    private var  modoDesarrollo : Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,8 +76,17 @@ class Login : AppCompatActivity() {
         //limpia los datos del usuario o vendedor
         ip = preferencias!!.getString("ip", "").toString()
         puerto = preferencias!!.getInt("puerto", 0)
+        modoDesarrollo = preferencias!!.getBoolean("modoDesarrollo", false)
+
+
         txtclave = findViewById(R.id.txtclave)
         txtusuario = findViewById(R.id.txtusuario)
+
+        btnConfigServidor = findViewById(R.id.btnConfigServidor)
+
+        if(modoDesarrollo){
+            btnConfigServidor!!.visibility = View.VISIBLE
+        }
 
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
@@ -90,6 +109,23 @@ class Login : AppCompatActivity() {
             //println("El numero de identificacion: " + identidad)
             Login(identidad)
         }  //funciones!!.VendedorVerific(this)
+
+
+        btnConfigServidor!!.setOnClickListener{
+
+            preferencias!!.edit {
+                remove("puerto")
+                remove("ip")
+                remove("puntoVenta")
+                remove("nombreServidor")
+                remove("idServidorActivo")
+                remove("sslActivo")
+            }
+
+            val enlace = Intent(this@Login, MenuServidores::class.java)
+            startActivity(enlace)
+            finish()
+        }
 
     }
 
@@ -220,9 +256,20 @@ class Login : AppCompatActivity() {
             ) //se crea el modelo con los datos    que se enviaran
             val objecto =
                 Gson().toJson(credenciales) //Transformo la data clas a un objecto json para enviarlo
-            val ruta: String = "http://$ip:$puerto/login/estado"
+
+            val servidor = funciones!!.getServidor(ip, puerto.toString(), this@Login)
+            val ruta: String = servidor + "login/estado"
             val url = URL(ruta) //creacion del objecto url.
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -313,11 +360,23 @@ class Login : AppCompatActivity() {
                 clave,
                 identidad
             ) //se crea el modelo con los datos    que se enviaran
+
             val objecto =
                 Gson().toJson(credenciales) //Transformo la data clas a un objecto json para enviarlo
-            val ruta: String = "http://$ip:$puerto/login"
+
+            val servidor = funciones!!.getServidor(ip, puerto.toString(), this@Login)
+            val ruta: String = servidor + "login"
             val url = URL(ruta) //creacion del objecto url.
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(

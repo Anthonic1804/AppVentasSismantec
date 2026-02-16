@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +24,7 @@ class MenuServidores : AppCompatActivity() {
 
     private lateinit var binding : ActivityMenuServidoresBinding
     private var conexionController = ConexionController()
+    private var menu: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +33,13 @@ class MenuServidores : AppCompatActivity() {
         setContentView(binding.root)
 
         mostrarListadoServidores()
+
+        menu = intent.getStringExtra("Menu").toString()
+        if (menu.contains("CONFIG")){
+            binding.btnRegresarConfig.visibility = View.VISIBLE
+            binding.btnConectarServidor.visibility = View.GONE
+        }
+
 
     }
 
@@ -43,6 +52,10 @@ class MenuServidores : AppCompatActivity() {
 
         binding.btnConectarServidor.setOnClickListener {
             conectarServidor()
+        }
+
+        binding.btnRegresarConfig.setOnClickListener {
+            menuConfiguracion()
         }
 
     }
@@ -83,6 +96,7 @@ class MenuServidores : AppCompatActivity() {
                 enlace.putExtra("nombreServidor", i.nombre.trim())
                 enlace.putExtra("ipServidor", i.ip.trim())
                 enlace.putExtra("puertoServidor", i.puerto.trim())
+                enlace.putExtra("Menu", menu)
                 startActivity(enlace)
                 finish()
 
@@ -97,6 +111,7 @@ class MenuServidores : AppCompatActivity() {
     private fun nuevoServidor(){
         val enlace = Intent(this@MenuServidores, NuevoServidor::class.java)
         enlace.putExtra("proceso", "nuevo")
+        enlace.putExtra("Menu", menu)
         startActivity(enlace)
         finish()
     }
@@ -108,6 +123,20 @@ class MenuServidores : AppCompatActivity() {
         val enlace = Intent(this@MenuServidores, MainActivity::class.java)
         startActivity(enlace)
         finish()
+    }
+
+    //-----------------------------------
+    //Funcion para Redirigir aL Menú Configuracion
+    //-----------------------------------
+    private fun menuConfiguracion(){
+        val enlace = Intent(this@MenuServidores, Configuracion::class.java)
+        startActivity(enlace)
+        finish()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //super.onBackPressed()
     }
 
 }

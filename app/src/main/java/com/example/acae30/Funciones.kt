@@ -32,8 +32,6 @@ class Funciones {
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
 
-    private lateinit var db : AppDatabase
-
     //FUNCION PARA OBTENER UN TIMESTAMP
     fun getFechaHoraProceso(): String?{
         val dateFormat = SimpleDateFormat(
@@ -89,8 +87,52 @@ class Funciones {
     //FIN FUNCION PARA VERIFICAR LA CONEXION A INTERNET
 
     //FUNCION PARA OBTENER EL SERVIDOR
-    fun getServidor(ip: String?, puerto: String?): String {
-        return "http://${ip}:${puerto}/"
+    fun getServidor(ip: String?, puerto: String?, context: Context): String {
+
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val sslActivo = preferences.getInt("sslActivo", 0)
+
+        val puertoServidor = puerto?.toIntOrNull() ?: 0
+
+
+        val cadenaConexion : String = if(puertoServidor == 0){
+
+            if(sslActivo == 1){
+                "https://${ip.toString()}/"
+            }else{
+                "http://${ip.toString()}/"
+            }
+
+        }else{
+
+            "http://${ip}:${puerto}/"
+
+        }
+
+        return cadenaConexion
+    }
+
+    //FUNCION PARA CADENA DE CONEXION ALSERVIDOR, PARA PODER ALMACENARLO
+    //SOLO PARA CONEXIONCONTROLLER()
+    fun verificarServidor(ip: String?, puerto: String?, sslActivo: Int): String {
+
+        val puertoServidor = puerto?.toIntOrNull() ?: 0
+
+        val cadenaConexion : String = if(puertoServidor == 0){
+
+            if(sslActivo == 1){
+                "https://${ip.toString()}/"
+            }else{
+                "http://${ip.toString()}/"
+            }
+
+        }else{
+
+            "http://${ip}:${puerto}/"
+
+        }
+
+        return cadenaConexion
     }
 
     //FUNCION DE MENSAJE DE ERROR

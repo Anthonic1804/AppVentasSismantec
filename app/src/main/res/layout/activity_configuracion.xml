@@ -172,6 +172,16 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
+                        <ImageView
+                            android:id="@+id/btnConfigServidor"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_configuracion"
+                            android:layout_marginTop="@dimen/margin_8dp"
+                            android:layout_marginEnd="@dimen/margin_default_16dp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
                         <LinearLayout
                             android:id="@+id/lyServidor"
                             android:layout_width="match_parent"
@@ -185,7 +195,7 @@
                             <Spinner
                                 android:id="@+id/spServidor"
                                 android:layout_width="match_parent"
-                                android:layout_height="55dp"/>
+                                android:layout_height="55dp" />
 
                         </LinearLayout>
 
@@ -213,6 +223,21 @@
                                 android:textColor="@color/colorHint"/>
                         </com.google.android.material.textfield.TextInputLayout>
 
+                        <CheckBox
+                            android:id="@+id/cbxActivarSSL"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="ACTIVAR SSL"
+                            android:textSize="18sp"
+                            android:textColor="@color/colorHint"
+                            android:layout_marginStart="@dimen/margin_default_16dp"
+                            android:layout_marginEnd="@dimen/margin_default_16dp"
+                            android:layout_marginTop="@dimen/margin_4dp"
+                            android:enabled="false"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/lyNombreServidor"/>
+
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/lyIp"
                             android:layout_width="match_parent"
@@ -220,13 +245,12 @@
                             app:startIconDrawable="@drawable/ic_computer"
                             android:layout_marginStart="@dimen/margin_default_16dp"
                             android:layout_marginEnd="@dimen/margin_default_16dp"
-                            android:layout_marginTop="@dimen/margin_4dp"
                             android:layout_marginBottom="@dimen/margin_4dp"
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:hint="@string/server"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/lyNombreServidor">
+                            app:layout_constraintTop_toBottomOf="@+id/cbxActivarSSL">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/txtip"

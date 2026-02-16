@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.Abono
 import com.example.acae30.modelos.GastoModel
 import com.google.gson.Gson
@@ -22,28 +23,40 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class GastosController {
 
     private var funciones = Funciones()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+    private val utilidades = CrearSslNoSeguro()
 
     //FUNCION PARA EL ENVIO DEL ABONO AL SERVIDOR
     suspend fun enviarGastoAlServidor(context: Context, gasto : GastoModel) : Boolean {
         var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val abonoJson = convertirGastoAJson(context, gasto)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         try {
             val objecto =
                 Gson().toJson(abonoJson)
             println(objecto)
             val ruta: String = servidor + "movimientosvarios/registrar"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     setRequestProperty(

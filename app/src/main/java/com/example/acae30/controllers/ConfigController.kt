@@ -9,19 +9,23 @@ import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
 import androidx.core.content.edit
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.PermisosApp.PermisosApp
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class ConfigController {
 
     private var funciones = Funciones()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+    private var utilidades = CrearSslNoSeguro()
 
     //FUNCION PARA OBTERNER LA INFORMACION DE LA TABLA CONFIG SQLSERVER
     suspend fun obtenerConfigPagareObligatorio(context:Context){
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         //ELIMINANDO CONFIGURACION
         eliminarConfiguracionApp(context)
@@ -29,9 +33,18 @@ class ConfigController {
         try {
             val direccion = url + "config"
             val url2 = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url2.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 30000
                     requestMethod = "GET"

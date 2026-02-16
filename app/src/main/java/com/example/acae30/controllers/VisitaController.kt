@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.JSONmodels.VisitaJSON
 import com.example.acae30.modelos.Visitas
 import com.google.gson.Gson
@@ -16,12 +17,15 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class VisitaController {
 
     private var funciones = Funciones()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+    private val utilidades = CrearSslNoSeguro()
 
     //FUNCION PARA INICIAR UNA VISITAR DONDE EL CLIENTE
     fun registrarVisita(
@@ -42,7 +46,7 @@ class VisitaController {
     ) : Int{
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val server = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val server = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         var idvisitaApi = 0
 
         try {
@@ -65,7 +69,16 @@ class VisitaController {
             val objecto = Gson().toJson(datos)
             val ruta: String = server + "visitas/iniciar_visita"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection){
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 2000
                     setRequestProperty(

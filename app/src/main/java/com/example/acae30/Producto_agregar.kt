@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.databinding.ActivityProductoAgregarBinding
@@ -44,6 +45,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.text.DecimalFormatSymbols
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class Producto_agregar : AppCompatActivity() {
     private var idproducto: Int? = 0
@@ -119,6 +122,8 @@ class Producto_agregar : AppCompatActivity() {
 
     private var decPrecios: Int = 0
     private var decTotales: Int = 0
+
+    private val utilidades = CrearSslNoSeguro()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -582,10 +587,21 @@ class Producto_agregar : AppCompatActivity() {
                 precioss.add("${String.format("%.${decPrecios}f".format(precioSeleccionado))}")
             }
 
-
+            //-----------------------
+            //Agregado el precio asignado en la ficha del producto para las unidades
+            //-----------------------
             if(unidadMedida == "UNI"){
                 precioss.add("${String.format("%.${decPrecios}f".format(datosProducto!!.Precio_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
             }
+
+
+            //------------------------
+            //Agregando el precio asignado en la ficha del producto para las fracciones.
+            //------------------------
+            if(unidadMedida == "FRA"){
+                precioss.add("${String.format("%.${decPrecios}f".format(datosProducto!!.Precio_u_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
+            }
+
 
             listPrecios!!.forEach {
                 val unidad_cantidad = " (" + "${String.format("%.0f".format(it.Cantidad))}" + " ${it.Unidad} )"
@@ -1151,7 +1167,7 @@ class Producto_agregar : AppCompatActivity() {
     private fun verificarPrecioAutorizado(id_empleado:Int, cod_producto:String){
 
         preferencias = this@Producto_agregar.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferencias!!.getString("ip", ""), preferencias!!.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferencias!!.getString("ip", ""), preferencias!!.getInt("puerto", 0).toString(), this@Producto_agregar)
 
         try {
             val datos = ActualizarPrecioPersonalizadoJSON(
@@ -1162,7 +1178,16 @@ class Producto_agregar : AppCompatActivity() {
                 Gson().toJson(datos)
             val ruta: String = servidor + "token/search"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -1212,7 +1237,7 @@ class Producto_agregar : AppCompatActivity() {
     private fun confirmarToken(id_empleado:Int, cod_producto:String){
 
         preferencias = this@Producto_agregar.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferencias!!.getString("ip", ""), preferencias!!.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferencias!!.getString("ip", ""), preferencias!!.getInt("puerto", 0).toString(), this@Producto_agregar)
 
         try {
             val datos = ActualizarPrecioPersonalizadoJSON(
@@ -1223,7 +1248,16 @@ class Producto_agregar : AppCompatActivity() {
                 Gson().toJson(datos)
             val ruta: String = servidor + "token/update"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -1251,7 +1285,7 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     //MENSAJE DE ERROR
-    fun mensajeError(){
+    private fun mensajeError(){
 
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
@@ -1277,7 +1311,7 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     //MENSAJE DE ERROR
-    fun mensajeErrorProcesar(){
+    private fun mensajeErrorProcesar(){
 
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)

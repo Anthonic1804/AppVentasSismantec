@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.listas.VentasTempAdapter
 import com.example.acae30.modelos.JSONmodels.BusquedaPedidoJSON
 import com.example.acae30.modelos.VentasTemp
@@ -38,6 +39,8 @@ import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class HistoricoPedidos : AppCompatActivity() {
 
@@ -67,6 +70,8 @@ class HistoricoPedidos : AppCompatActivity() {
     private lateinit var imgBuscarCliente : ImageButton
 
     private var ventasSucursal : Int = 0
+
+    private val utilidades = CrearSslNoSeguro()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -271,7 +276,16 @@ class HistoricoPedidos : AppCompatActivity() {
                 Gson().toJson(datos)
             val ruta: String = url!! + "pedido/search"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -410,8 +424,8 @@ class HistoricoPedidos : AppCompatActivity() {
     private fun getApiUrl() {
         val ip = preferencias!!.getString("ip", "")
         val puerto = preferencias!!.getInt("puerto", 0)
-        if (ip!!.isNotEmpty() && puerto > 0) {
-            url = "http://$ip:$puerto/"
+        if (ip!!.isNotEmpty()) {
+            url = funciones!!.getServidor(ip, puerto.toString(), this@HistoricoPedidos)
         }
     }
 

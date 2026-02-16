@@ -70,7 +70,7 @@ class carga_datos : AppCompatActivity() {
 
         alert = AlertDialogo(this@carga_datos, this)
 
-        url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), this@carga_datos)
 
         idVendedor = preferences.getInt("Idvendedor", 0)
 

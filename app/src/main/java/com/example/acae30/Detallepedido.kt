@@ -58,6 +58,7 @@ import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnection
 import com.dantsu.escposprinter.connection.usb.UsbConnection
 import com.dantsu.escposprinter.textparser.PrinterTextParserImg
 import com.example.acae30.R
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
@@ -93,6 +94,8 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Timer
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 import kotlin.concurrent.schedule
 import com.example.acae30.R as R1
 
@@ -177,6 +180,8 @@ class Detallepedido : AppCompatActivity() {
     //-----------
     private var cantidadItemsPedido : Int = 0
     private var limiteItemPedido : Int = 0
+
+    private val utilidades = CrearSslNoSeguro()
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -1329,7 +1334,16 @@ class Detallepedido : AppCompatActivity() {
             println("JSON ENVIADO -> " + objecto )
 
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     setRequestProperty(
                         "Content-Type",

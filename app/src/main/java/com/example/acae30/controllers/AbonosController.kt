@@ -10,6 +10,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
 import com.example.acae30.AbonosCxc
 import com.example.acae30.Funciones
 import com.example.acae30.R
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.Abono
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -25,12 +26,16 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class AbonosController {
 
     private var funciones = Funciones()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+
+    private val utilidades = CrearSslNoSeguro()
 
     //FUNCION PARA INSERTAR LOS ABONOS EN SQLITE
     fun insertarAbonoCxc(context: Context, abono: Abono, tipo: String, idAbonoServer: Int) : Boolean{
@@ -118,15 +123,24 @@ class AbonosController {
         var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val abonoJson = convertirAbonoAJson(context, abono)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         try {
             val objecto =
                 Gson().toJson(abonoJson)
             val ruta: String = servidor + "abonos"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     setRequestProperty(
@@ -273,15 +287,24 @@ class AbonosController {
         var anulado = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val abonoJson = convertirIdAbonoServerAJson(idAbonoServer)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         try {
             val objecto =
                 Gson().toJson(abonoJson)
             val ruta: String = servidor + "abonos/anularAbono"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     setRequestProperty(

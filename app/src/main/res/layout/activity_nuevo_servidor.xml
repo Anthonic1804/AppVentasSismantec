@@ -52,7 +52,10 @@
                 android:id="@+id/lyNombreServidor"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_4dp"
+                android:layout_marginBottom="@dimen/margin_4dp"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:hint="NOMBRE SERVIDOR"
                 app:layout_constraintStart_toStartOf="parent"
@@ -69,17 +72,35 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <CheckBox
+                android:id="@+id/cbxActivarSSL"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ACTIVAR SSL"
+                android:textSize="18sp"
+                android:textColor="@color/colorHint"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_4dp"
+                android:layout_marginBottom="@dimen/margin_4dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/lyNombreServidor"/>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/lyIp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_4dp"
+                android:layout_marginBottom="@dimen/margin_4dp"
                 app:startIconDrawable="@drawable/ic_computer"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:hint="@string/server"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/lyNombreServidor">
+                app:layout_constraintTop_toBottomOf="@+id/cbxActivarSSL">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/txtip"
@@ -95,7 +116,10 @@
                 android:id="@+id/lyPuerto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_4dp"
+                android:layout_marginBottom="@dimen/margin_4dp"
                 app:startIconDrawable="@drawable/ic_network"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:hint="@string/puerto"
@@ -132,7 +156,7 @@
                     android:layout_marginTop="@dimen/margin_8dp"
                     android:layout_marginStart="@dimen/margin_8dp"
                     android:layout_marginEnd="@dimen/margin_8dp"
-                    android:layout_marginBottom="@dimen/margin_default_16dp"
+                    android:layout_marginBottom="@dimen/margin_8dp"
                     android:background="@drawable/border_btnenviar"
                     android:text="Guardar"
                     android:textColor="#FFFFFF"
@@ -147,7 +171,7 @@
                     android:layout_marginTop="@dimen/margin_8dp"
                     android:layout_marginStart="@dimen/margin_8dp"
                     android:layout_marginEnd="@dimen/margin_8dp"
-                    android:layout_marginBottom="@dimen/margin_default_16dp"
+                    android:layout_marginBottom="@dimen/margin_8dp"
                     android:background="@drawable/btn_eliminarpedido"
                     android:text="Cancelar"
                     android:textColor="#FFFFFF"
@@ -156,12 +180,20 @@
 
             </LinearLayout>
 
-            <ProgressBar
-                android:id="@+id/progressBar"
-                android:layout_width="match_parent"
+            <Button
+                android:id="@+id/btnEliminarServidor"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:layout_marginBottom="@dimen/margin_default_16dp"
                 android:visibility="gone"
-                android:layout_margin="@dimen/margin_8dp"
+                android:background="@drawable/btn_eliminarpedido"
+                android:text="ELIMINAR SERVIDOR"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/lyAccionesServidor"
@@ -169,5 +201,15 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_margin="@dimen/margin_default_16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cardView2"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

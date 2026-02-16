@@ -34,9 +34,12 @@ import java.time.LocalDate
 import androidx.core.content.edit
 import androidx.room.util.recursiveFetchArrayMap
 import com.example.acae30.Inicio
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.UnidadMedidaModelo
 import com.google.gson.JsonArray
 import org.json.JSONObject
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class InventarioController {
 
@@ -44,6 +47,7 @@ class InventarioController {
     private var hojaController = HojaCargaController()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+    private var utilidades = CrearSslNoSeguro()
 
     //FUNCION PARA OBTENER INFORMACION DEL PRODUCTO POR ID
     fun obtenerInformacionProductoPorId(context: Context ,idInventario: Int, facExpo: Boolean): Inventario?{
@@ -307,7 +311,7 @@ class InventarioController {
 
         var hojaRegistrada: Int = 0
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         val multiplesHojaDeCarga = preferences.getBoolean("multiplesHojaDeCarga", false)
 
         //OBTENIENDO FECHA
@@ -330,9 +334,18 @@ class InventarioController {
             }
 
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -565,9 +578,9 @@ class InventarioController {
 
                             //DESCARGA DE INVENTARIO PARA HOJAS DE CARGA CON FRACCIONES Y UNIDADES DE MEDIDA
                             when(cursor.getString(2)){
-                                "UNI" -> descargarUnidades(context, cursor.getInt(0), cursor.getInt(1))
-                                "FRA" -> descargarFracciones(context, cursor.getInt(0), cursor.getInt(1))
-                                else -> descargarUnidadesMedida(context,cursor.getInt(0), cursor.getInt(1), cursor.getString(2))
+                                "UNI" -> descargarUnidades(context, cursor.getInt(0), cursor.getFloat(1))
+                                "FRA" -> descargarFracciones(context, cursor.getInt(0), cursor.getFloat(1))
+                                else -> descargarUnidadesMedida(context,cursor.getInt(0), cursor.getFloat(1), cursor.getString(2))
                             }
                         }catch (e:Exception){
                             println("ERROR: NO SE ACTUALIZARON LAS EXITENCIAS EN INVENTARIO -> ${e.message}")
@@ -581,7 +594,7 @@ class InventarioController {
     }
 
     //FUNCION PARA DESCARGAR UNIDADES
-    private fun descargarUnidades(context: Context, idProducto: Int, cantidad: Int){
+    private fun descargarUnidades(context: Context, idProducto: Int, cantidad: Float){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             bd.execSQL("UPDATE Inventario SET Existencia = (Existencia - $cantidad) WHERE Id=$idProducto")
@@ -591,26 +604,26 @@ class InventarioController {
     }
 
     //FUNCION PARA DESCARGAR FRACCIONES
-    private fun descargarFracciones(context: Context, idProducto: Int, cantidad: Int){
+    private fun descargarFracciones(context: Context, idProducto: Int, cantidad: Float){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try{
             val sql = "SELECT Existencia, Existencia_u, Fraccion FROM inventario WHERE id = $idProducto"
             val cursor = bd.query(sql)
 
-            var existenciaActual : Int = 0
-            var existenciaUActual : Int = 0
+            var existenciaActual : Float = 0f
+            var existenciaUActual : Float = 0f
             var fraccionamiento : Int = 0
-            var totalFraccionesActuales : Int = 0
+            var totalFraccionesActuales : Float = 0f
 
 
-            var existenciaFinal : Int = 0
-            var existenciaUFinal : Int = 0
-            var totalFraccionesFinal : Int = 0
+            var existenciaFinal : Float = 0f
+            var existenciaUFinal : Float = 0f
+            var totalFraccionesFinal : Float = 0f
 
             if(cursor.count > 0){
                 cursor.moveToFirst()
-                existenciaActual = cursor.getInt(0)
-                existenciaUActual = cursor.getInt(1)
+                existenciaActual = cursor.getFloat(0)
+                existenciaUActual = cursor.getFloat(1)
                 fraccionamiento = cursor.getInt(2)
             }
             cursor.close()
@@ -631,7 +644,7 @@ class InventarioController {
     }
 
     //FUNCION PARA VALIDAR DESCARGA DE UNIDADES DE MEDIDA
-    private fun descargarUnidadesMedida(context: Context, idProducto: Int, cantidad: Int, unidadMedida: String){
+    private fun descargarUnidadesMedida(context: Context, idProducto: Int, cantidad: Float, unidadMedida: String){
 
         val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
@@ -639,11 +652,11 @@ class InventarioController {
             val sql = "SELECT Equivale, Unidades FROM inventario_unidades WHERE id_inventario = $idProducto AND Nombre_unidad = '$unidadMedida'"
             val cursor = bd.query(sql)
 
-            var cantidadDescargar: Int = 0
+            var cantidadDescargar: Float = 0f
 
             if(cursor.count > 0){
                 cursor.moveToFirst()
-                cantidadDescargar = cantidad * cursor.getInt(0)
+                cantidadDescargar = cantidad * cursor.getFloat(0)
 
                 when(cursor.getString(1)){
                     "UNI" -> descargarUnidades(context, idProducto, cantidadDescargar)
@@ -815,7 +828,7 @@ class InventarioController {
     suspend fun actualizarInventarioHojaCarga(id: Int,  numero: Int, id_vendedor: Int, context: Context, view:View) {
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         val fecha = funciones.obtenerFecha()
 
         try {
@@ -828,9 +841,18 @@ class InventarioController {
 
             val ruta: String = servidor + "inventario/hojacarga"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -938,16 +960,25 @@ class InventarioController {
     //FUNCION PARA OBTENER LAS ESCALAS DE PRECIOS
     suspend fun obtenerEscalasPrecios(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         // TABLA INVENTARIO PRECIOS
         try {
             val direccionprecioscantidad = servidor + "inventario/precios/cantidad"
             val urlprecioscantidad = URL(direccionprecioscantidad)
             var cantidadPreciosRegistros = 0.toInt()
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 urlprecioscantidad.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 30000
                     requestMethod = "GET"
@@ -1009,6 +1040,12 @@ class InventarioController {
                 with(withContext(Dispatchers.IO) {
                     url.openConnection()
                 } as HttpURLConnection) {
+
+                    if(this is HttpsURLConnection){
+                        sslSocketFactory = sslContext.socketFactory
+                        hostnameVerifier = HostnameVerifier{_, _ -> true}
+                    }
+
                     try {
                         connectTimeout = 30000
                         requestMethod = "GET"
@@ -1082,16 +1119,23 @@ class InventarioController {
     //FUNCION PARA OBTENER DEL SERVIDOR LAS UNIDADES DE MEDIDA
     suspend fun obtenerUnidadesMedidaServidor(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""),
-                preferences.getInt("puerto", 0).toString())
+        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try{
             val servidor = url + "Inventario/unidades"
             val conexionServidor = URL(servidor)
 
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO){
                 conexionServidor.openConnection()
             } as HttpURLConnection){
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
 
                     connectTimeout = 10000

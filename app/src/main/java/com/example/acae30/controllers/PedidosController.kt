@@ -27,6 +27,9 @@ import java.nio.charset.StandardCharsets
 import androidx.core.content.edit
 import androidx.core.database.getFloatOrNull
 import androidx.core.database.getStringOrNull
+import com.example.acae30.Utilidades.CrearSslNoSeguro
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class PedidosController {
 
@@ -34,7 +37,7 @@ class PedidosController {
     var inventarioController = InventarioController()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
-
+    private var utilidades = CrearSslNoSeguro()
 
     //FUNCION PARA ACTUALIZAR EL TIPO DE ENVIO SELECCIONADO
     fun updateTipoPedido(tipoPedido:Int, idpedido:Int, context: Context){
@@ -410,7 +413,7 @@ class PedidosController {
     private suspend fun obtenerDocumentosTransmitidosInvalidados(idPedidoServidor:Int, context:Context, idPedido: Int) {
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val datos = PedidoDTE(
@@ -420,9 +423,18 @@ class PedidosController {
                 Gson().toJson(datos)
             val ruta: String = servidor + "pedido/invalidarDTE"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     setRequestProperty(

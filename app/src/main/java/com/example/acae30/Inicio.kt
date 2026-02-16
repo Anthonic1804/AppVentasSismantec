@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.HojaCargaController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.databinding.ActivityInicioBinding
@@ -38,6 +39,8 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 @Suppress("DEPRECATION")
 class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -68,6 +71,8 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var M_Reportes: Boolean = false
     private var M_CxC: Boolean = false
     private var M_Abonos: Boolean = false
+
+    private val utilidades = CrearSslNoSeguro()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -282,9 +287,21 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
 
             val objecto =
                 Gson().toJson(credenciales) //Transformo la data clas a un objecto json para enviarlo
-            val ruta: String = "http://$ip:$puerto/login/comprobar"
+
+            val servidor = funciones!!.getServidor(ip, puerto.toString(), this@Inicio)
+            val ruta: String = servidor + "login/comprobar"
+
             val url = URL(ruta) //creacion del objecto url.
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 5000
                     setRequestProperty(
@@ -396,9 +413,21 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
 
             val objecto =
                 Gson().toJson(credenciales) //Transformo la data clas a un objecto json para enviarlo
-            val ruta: String = "http://$ip:$puerto/login/logout"
+
+            val servidor = funciones!!.getServidor(ip, puerto.toString(), this@Inicio)
+            val ruta: String = servidor + "login/logout"
+
             val url = URL(ruta) //creacion del objecto url.
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 5000
                     setRequestProperty(

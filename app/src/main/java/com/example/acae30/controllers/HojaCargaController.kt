@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.InventarioHojaValidar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,12 +19,15 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.LocalDate
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class HojaCargaController {
 
     private var funciones = Funciones()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+    private var utilidades = CrearSslNoSeguro()
 
     //-----------------------------------------
     //NUEVAS FUNCIONES DE RECARGAS PARA HOJA DE CARGA
@@ -255,13 +259,20 @@ class HojaCargaController {
 
         var aceptada: Boolean = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString(), context)
         val ruta = servidor + "Inventario/validarHojaCarga/${numeroHoja.toString()}/${idVendedor.toString()}"
         val url = URL(ruta)
+
+        val sslContext = utilidades.crearSslInseguro()
 
         with(withContext(Dispatchers.IO){
             url.openConnection()
         } as HttpURLConnection){
+
+            if(this is HttpsURLConnection){
+                sslSocketFactory = sslContext.socketFactory
+                hostnameVerifier = HostnameVerifier{_, _ -> true}
+            }
 
             try {
                 connectTimeout = 10000

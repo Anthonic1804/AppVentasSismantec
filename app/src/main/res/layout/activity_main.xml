@@ -66,6 +66,21 @@
 
             </LinearLayout>
 
+            <CheckBox
+                android:id="@+id/cbxActivarSSL"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ACTIVAR SSL"
+                android:textSize="18sp"
+                android:textColor="@color/colorHint"
+                android:layout_marginStart="@dimen/margin_default_16dp"
+                android:layout_marginEnd="@dimen/margin_default_16dp"
+                android:layout_marginTop="@dimen/margin_4dp"
+                android:enabled="false"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/lyServidor"/>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/lyIp"
                 android:layout_width="match_parent"
@@ -80,7 +95,7 @@
                 android:enabled="false"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/lyServidor">
+                app:layout_constraintTop_toBottomOf="@+id/cbxActivarSSL">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/txtip"
@@ -90,7 +105,6 @@
                     android:textSize="18sp"
                     android:textColor="@color/colorHint"/>
             </com.google.android.material.textfield.TextInputLayout>
-
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/lyPuerto"

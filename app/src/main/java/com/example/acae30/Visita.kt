@@ -38,6 +38,9 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.sql.SQLXML
 import androidx.core.content.edit
+import com.example.acae30.Utilidades.CrearSslNoSeguro
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 
 class Visita : AppCompatActivity() {
@@ -76,6 +79,8 @@ class Visita : AppCompatActivity() {
     private val Comentarios: String = ""
 
     private var clienteMoroso = 0
+
+    private val utilidades = CrearSslNoSeguro()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -543,9 +548,20 @@ class Visita : AppCompatActivity() {
             val strinjson = data.toString()
             val ip = preferencias.getString("ip", "")
             val puerto = preferencias.getInt("puerto", 0)
-            val direccion = "http://$ip:$puerto/visitas/registrar_visita"
+
+            val servidor = funciones.getServidor(ip, puerto.toString(), this@Visita)
+
+            val direccion = servidor + "visitas/registrar_visita"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 connectTimeout = 5000
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json;charset=utf-8")
@@ -685,9 +701,21 @@ class Visita : AppCompatActivity() {
             val strinjson = data.toString()
             val ip = preferencias.getString("ip", "")
             val puerto = preferencias.getInt("puerto", 0)
-            val direccion = "http://$ip:$puerto/visitas/fin_visita"
+
+            val servidor = funciones.getServidor(ip, puerto.toString(), this@Visita)
+
+            val direccion = servidor + "visitas/fin_visita"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 connectTimeout = 5000
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json;charset=utf-8")

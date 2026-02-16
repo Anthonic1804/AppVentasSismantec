@@ -11,11 +11,13 @@ import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.ConexionController
 import com.google.android.material.snackbar.Snackbar
@@ -31,6 +33,8 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class MainActivity : AppCompatActivity() {
     private var ip: TextView? = null
@@ -44,6 +48,8 @@ class MainActivity : AppCompatActivity() {
     private var listaServidor : Spinner? = null
     private var btnGuardarServidor: Button? = null
 
+    private var cbxActivarSSL : CheckBox? = null
+
     private var clientesController = ClientesController()
     private var conexionController = ConexionController()
     private var alert: AlertDialogo? = null
@@ -51,6 +57,11 @@ class MainActivity : AppCompatActivity() {
     private var servidor: String = ""
 
     private lateinit var puntoVenta : TextView
+
+    private val utilidades = CrearSslNoSeguro()
+
+    private var idServidorActivo: Int = 0
+    private var sslActivo: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +77,7 @@ class MainActivity : AppCompatActivity() {
         puntoVenta = findViewById(R.id.tvPuntoVenta)
         listaServidor = findViewById(R.id.spServidor)
         btnGuardarServidor = findViewById(R.id.btnGuardarServidorConexion)
+        cbxActivarSSL = findViewById(R.id.cbxActivarSSL)
 
 
         //amarramos el widgets a las variables
@@ -108,11 +120,15 @@ class MainActivity : AppCompatActivity() {
                             val servidorSeleccionado = conexionController.obtenerInformacionServidorSeleccionado(this@MainActivity, servidor)
                             val ipServidor = servidorSeleccionado!!.ip.trim()
                             val puertoServidor = servidorSeleccionado.puerto.trim()
+                            idServidorActivo = servidorSeleccionado.id
+                            sslActivo = servidorSeleccionado.ssl
 
                             withContext(Dispatchers.Main){
                                 ip!!.text = ipServidor
                                 puerto!!.text = puertoServidor
                                 btnGuardarServidor!!.isEnabled = true
+
+                                cbxActivarSSL!!.isChecked = sslActivo == 1
                             }
 
                         }
@@ -213,7 +229,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun validateServer() {
-        if (preferencias!!.contains("puerto") && preferencias!!.contains("ip")) {
+        if (preferencias!!.contains("ip")) {
             if (reconfig) {
                 ip!!.text = preferencias!!.getString("ip", "")
                 puerto!!.text = preferencias!!.getInt("puerto", 0).toString()
@@ -244,15 +260,16 @@ class MainActivity : AppCompatActivity() {
     } //valida que ya se tenga la conexion al servidor guardada
 
     fun validar() {
-        if (ip!!.text.isNotEmpty() && puerto!!.text.isNotEmpty() && puntoVenta.text.isNotEmpty()) {
+        if (ip!!.text.isNotEmpty() && puntoVenta.text.isNotEmpty()) {
             alerta!!.Cargando()
             val v = vista
             CoroutineScope(Dispatchers.IO).launch {
+
                 val ip = ip!!.text.toString()
                 val p = puerto!!.text.toString()
                 val pVenta = puntoVenta.text.toString()
                 if (funciones!!.isInternetAvailable(this@MainActivity)) {
-                    ComproBarConexion(ip, p, pVenta)
+                    verificarConexion(ip, p, pVenta)
                 } else {
                     funciones!!.mostrarAlerta("ENCIENDE EL WIFI PARA CONTINUAR", this@MainActivity, vista!!)
                     alerta!!.dismisss()
@@ -269,12 +286,22 @@ class MainActivity : AppCompatActivity() {
     } //funcion que valida que haya internet,revisa si se han llenado las cajas y llama la peticio
 
 
-    fun ComproBarConexion(ip: String, puerto: String, pVenta: String) {
+    private fun verificarConexion(ip: String, puerto: String, pVenta: String) {
         try {
-            val ruta: String = "http://$ip:$puerto/conexion" //ruta de la api
+            val servidor = funciones!!.getServidor(ip, puerto, this@MainActivity)
+            val ruta: String = servidor + "conexion" //ruta de la api
             val url = URL(ruta)
             val ctx = this.vista
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 30000
                     requestMethod = "GET"  // optional default is GET
@@ -298,6 +325,8 @@ class MainActivity : AppCompatActivity() {
                                     editor.putString("ip", ip)
                                     editor.putString("puntoVenta", pVenta)
                                     editor.putString("nombreServidor", servidor)
+                                    editor.putInt("idServidorActivo", idServidorActivo)
+                                    editor.putInt("sslActivo", sslActivo)
                                     editor.commit()
                                     //se guarda la direccion del servidor y se envia al login
                                     alerta!!.dismisss()

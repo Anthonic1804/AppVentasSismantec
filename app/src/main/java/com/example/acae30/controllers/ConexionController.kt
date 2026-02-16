@@ -14,9 +14,9 @@ class ConexionController {
     //----------------------------------------
     //Función para validar los datos de conexion con el servidor
     //----------------------------------------
-    fun validarDatosConexion(ip: String, puerto: String, nombre: String) : Boolean{
+    fun validarDatosConexion(ip: String, nombre: String) : Boolean{
         var validos = true
-        if(ip.isEmpty() or puerto.isEmpty() or nombre.isEmpty()){
+        if(ip.isEmpty() or nombre.isEmpty()){
             validos = false
         }
         return validos
@@ -25,8 +25,9 @@ class ConexionController {
     //--------------------------------------------
     //Funcón para conectar con el servidor
     //--------------------------------------------
-    suspend fun verificarConexionServidor(ip: String, puerto: String) : String{
-        val servidor = funciones.getServidor(ip, puerto)
+    suspend fun verificarConexionServidor(ip: String, puerto: String, sslActivo: Int) : String{
+        val servidor = funciones.verificarServidor(ip, puerto, sslActivo)
+
         val api = RetrofitCliente.obtenerApi(servidor)
 
         var respuestaServidor: String = ""
@@ -49,8 +50,16 @@ class ConexionController {
     //--------------------------------------------
     //Función para Almacenar el Servidor en SQlite
     //--------------------------------------------
-    fun almacenarServidorSQLite(context: Context, ip: String, puerto: String, nombre: String) : Boolean{
+    fun almacenarServidorSQLite(context: Context, obj: ServidoresModel) : Boolean{
         var servidorRegistrado = false
+
+        val puerto = obj.puerto
+
+        val puertoServidor = if(puerto.isBlank()){
+            0
+        }else{
+            puerto.trim()
+        }
 
         val db = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
@@ -58,9 +67,10 @@ class ConexionController {
 
             val data = ContentValues()
 
-            data.put("nombre", nombre.trim().toString())
-            data.put("ip", ip.trim().toString())
-            data.put("puerto", puerto.trim().toString())
+            data.put("nombre", obj.nombre)
+            data.put("ip", obj.ip)
+            data.put("puerto", puertoServidor.toString())
+            data.put("ssl", obj.ssl)
 
             db.insert("servidores", SQLiteDatabase.CONFLICT_REPLACE, data)
 
@@ -88,7 +98,7 @@ class ConexionController {
         val listaServidores = ArrayList<ServidoresModel>()
 
         try {
-            val consulta = "SELECT Id, Nombre, Ip, Puerto FROM servidores"
+            val consulta = "SELECT Id, Nombre, Ip, Puerto, Ssl FROM servidores"
             val cursor = base.query(consulta)
 
             cursor.use {
@@ -99,7 +109,8 @@ class ConexionController {
                             cursor.getInt(0),
                             cursor.getString(1),
                             cursor.getString(2),
-                            cursor.getString(3)
+                            cursor.getString(3),
+                            cursor.getInt(4)
                         )
                         listaServidores.add(i)
                     }while (cursor.moveToNext())
@@ -120,7 +131,7 @@ class ConexionController {
         var actualizado : Boolean = false
 
         try {
-            val consulta = "UPDATE servidores SET Nombre = '${obj.nombre}', Ip = '${obj.ip}', Puerto = '${obj.puerto}' WHERE Id = ${obj.id}"
+            val consulta = "UPDATE servidores SET Nombre = '${obj.nombre}', Ip = '${obj.ip}', Puerto = '${obj.puerto}', Ssl = ${obj.ssl} WHERE Id = ${obj.id}"
             base.execSQL(consulta)
 
             actualizado  = true
@@ -166,7 +177,7 @@ class ConexionController {
         var servidor : ServidoresModel? = null
 
         try {
-            val consulta = "SELECT Id, Nombre, Ip, Puerto FROM servidores WHERE nombre = '${nombre.trim()}'"
+            val consulta = "SELECT Id, Nombre, Ip, Puerto, Ssl FROM servidores WHERE nombre = '${nombre.trim()}'"
             val cursor = base.query(consulta)
             cursor.use {
                 if(cursor.count > 0){
@@ -175,7 +186,8 @@ class ConexionController {
                         cursor.getInt(0),
                         cursor.getString(1),
                         cursor.getString(2),
-                        cursor.getString(3)
+                        cursor.getString(3),
+                        cursor.getInt(4)
                     )
                 }
             }
@@ -183,6 +195,30 @@ class ConexionController {
             println("ERROR AL OBTENER EL SERVIDOR -> " + e.message)
         }
         return servidor
+    }
+
+    //-----------------------------------------
+    //Funcion para eliminar un servidor
+    //-----------------------------------------
+    fun eliminarServidor(context: Context, idServidor: Int) : Boolean{
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        var eliminado : Boolean = false
+
+        try {
+            val consulta = "DELETE FROM servidores WHERE Id = $idServidor"
+            base.execSQL(consulta)
+
+            eliminado = true
+
+        }catch (e:Exception){
+            println("ERROR AL ELIMINAR EL SERVIDOR -> " + e.message)
+
+            eliminado = false
+
+        }
+
+        return eliminado
+
     }
 
 }

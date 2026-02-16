@@ -22,6 +22,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.listas.PedidosAdapter
 import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
@@ -63,6 +64,8 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class Pedido : AppCompatActivity() {
 
@@ -97,6 +100,8 @@ class Pedido : AppCompatActivity() {
     private var pedidosController = PedidosController()
 
     private var tipoVentaLocal: Boolean = false
+
+    private val utilidades = CrearSslNoSeguro()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -443,9 +448,20 @@ class Pedido : AppCompatActivity() {
             )
             val objecto =
                 Gson().toJson(datos)
-            val ruta: String = "http://$ip:$puerto/pedido/reporte"
+
+            val servidor = funciones!!.getServidor(ip, puerto.toString(), this@Pedido)
+            val ruta: String = servidor + "pedido/reporte"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -706,9 +722,21 @@ class Pedido : AppCompatActivity() {
             )
             val objecto =
                 Gson().toJson(datos)
-            val ruta: String = "http://$ip:$puerto/pedido/dte"
+
+            val servidor = funciones!!.getServidor(ip, puerto.toString(), this@Pedido)
+
+            val ruta: String = servidor + "pedido/dte"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(

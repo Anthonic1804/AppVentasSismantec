@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.InformacionSucursal
 import com.example.acae30.modelos.SucursalModel
@@ -21,12 +22,15 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class SucursalesController {
 
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
     private var funciones = Funciones()
+    private val utilidades = CrearSslNoSeguro()
 
     //FUNCION PARA OBTENER LAS SUCURSALES POR CLIENTE.
     fun obtenerSucursalesporIdCliente(context: Context, idCliente:Int): ArrayList<String> {
@@ -129,15 +133,24 @@ class SucursalesController {
         var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val sucursalJson = convertirSucursalToJson(context, sucursal)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         try {
             val objecto =
                 Gson().toJson(sucursalJson)
             val ruta: String = servidor + "sucursales/registrar"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     setRequestProperty(

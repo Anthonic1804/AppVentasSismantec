@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.Inventario
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDTO
@@ -26,12 +27,15 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class SolicitudRecargasController {
 
     private var funciones = Funciones()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
+    private val utilidades = CrearSslNoSeguro()
 
     suspend fun obtenerInventarioServidor(context: Context, alert : AlertDialogo) {
 
@@ -39,16 +43,24 @@ class SolicitudRecargasController {
 
         limpiarInventariosolicitud(context)
 
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val direccioncantidad = servidor + "inventario/cantidad"
             val urlcantidad = URL(direccioncantidad)
             var cantidadRegistros = 0
 
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 urlcantidad.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"
@@ -96,6 +108,12 @@ class SolicitudRecargasController {
                 with(withContext(Dispatchers.IO) {
                     url.openConnection()
                 } as HttpURLConnection) {
+
+                    if(this is HttpsURLConnection){
+                        sslSocketFactory = sslContext.socketFactory
+                        hostnameVerifier = HostnameVerifier{_, _ -> true}
+                    }
+
                     try {
                         connectTimeout = 10000
                         requestMethod = "GET"
@@ -419,7 +437,7 @@ class SolicitudRecargasController {
         preferences  = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         val solicitudJson = convertirSolicitudJSON(context, idSolicitud)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString(), context)
 
         try {
             val objecto =
@@ -430,9 +448,17 @@ class SolicitudRecargasController {
             val ruta: String = servidor + "Solicitudes/registrar_solicitud"
             val url = URL(ruta)
 
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     setRequestProperty(
@@ -528,15 +554,23 @@ class SolicitudRecargasController {
     suspend fun validarSolicitudProcesadaEnServidor(context: Context, idSolicitudServidor: Int) : Boolean{
         var procesada : Boolean = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString(), context)
 
         try {
             val ruta : String = servidor + "Solicitudes/verificar_solicitud/" + idSolicitudServidor.toString()
             val url = URL(ruta)
 
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO){
                 url.openConnection()
             } as HttpURLConnection){
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"
@@ -608,15 +642,23 @@ class SolicitudRecargasController {
     suspend fun eliminarProductoEnSolicitudServidor(context: Context, idSolicitudServidor: Int, codigoProducto: String) : Boolean{
         var eliminado : Boolean = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString(), context)
 
         try {
             val ruta: String = servidor + "Solicitudes/eliminar_producto_solicitud/" + idSolicitudServidor.toString()  +"/" +  codigoProducto.toString()
             val url = URL(ruta)
 
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     requestMethod = "GET"
@@ -664,7 +706,7 @@ class SolicitudRecargasController {
     suspend fun actualizarProductoEnSolicitudServidor(context: Context, item: SolicitudCargaDetalle) : Boolean{
         var actualizado : Boolean = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString().toString(), context)
         val detalleJson = convertirDetalleSolicitudJSON(context, item)
 
         try {
@@ -674,9 +716,17 @@ class SolicitudRecargasController {
             val ruta: String = servidor + "Solicitudes/actualizar_producto_solicitud"
             val url = URL(ruta)
 
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     setRequestProperty(

@@ -8,32 +8,45 @@ import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class EmpleadosController {
 
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
-
     private val funciones = Funciones()
+    private val utilidades = CrearSslNoSeguro()
+
 
     //OBTENIENDO LOS EMPLEADOS DEL SERVIDOR
     suspend fun obtenerEmpleados(context: Context, view: View) {
         val alert = AlertDialogo(context as Activity, context)
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         //IMPORTANDO DATOS DE TABLA EMPLEADOS
         try {
-            val direccion = url + "empleados"
+            val direccion = servidor + "empleados"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 30000
                     requestMethod = "GET"

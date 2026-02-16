@@ -11,11 +11,6 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.Spinner
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +20,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.dcastalia.localappupdate.DownloadApk
+import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.database.LimpiarBD
 import com.example.acae30.controllers.ConexionController
 import com.example.acae30.controllers.ConfigController
 import com.example.acae30.databinding.ActivityConfiguracionBinding
@@ -39,12 +36,12 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 
 class Configuracion : AppCompatActivity() {
 
-
-    private var url: String? = null
     private var versionAppServer : String? = null
     private var urlAppServer : String? = null
     private lateinit var tvUpdate : TextView
@@ -65,6 +62,13 @@ class Configuracion : AppCompatActivity() {
     private var puertoServidor: String = ""
     private var puntoVenta: String = ""
 
+    private var utilidades = CrearSslNoSeguro()
+
+    private var idServidorActivo: Int = 0
+    private var sslActivo: Int = 0
+
+    private var limpiarBD = LimpiarBD()
+
 
     private lateinit var binding : ActivityConfiguracionBinding
 
@@ -81,12 +85,12 @@ class Configuracion : AppCompatActivity() {
         puertoServidor = preferencias!!.getInt("puerto", 0).toString()
         puntoVenta = preferencias!!.getString("puntoVenta", "").toString()
 
+        idServidorActivo = preferencias!!.getInt("idServidorActivo", 0)
+        sslActivo = preferencias!!.getInt("sslActivo", 0)
+
         //FUNCIONES AGRAGADAS PARA LOS CONTROLES DE VISTA DE INVENTARIO
 
         binding.swSinExistencias.isEnabled = false
-
-        //OBTENIENDO LA URL DEL SERVIDOR
-        getApiUrl()
 
         //CARGANDO SERVIDORES AL SPINNER
         cargarServidores()
@@ -188,19 +192,14 @@ class Configuracion : AppCompatActivity() {
         }
 
         binding.btnBuscarUpdate.setOnClickListener {
-            //getVersionUpdate()
-            if (url != null) {
-                if (funciones.isInternetAvailable(this)) {
+            if (funciones.isInternetAvailable(this)) {
 
-                    CoroutineScope(Dispatchers.IO).launch {
-                        getAppVersion()
-                    }//COURUTINA CARGAR DATOS DE ACTUALIZACION
+                CoroutineScope(Dispatchers.IO).launch {
+                    obtenerNuevaVersionApp()
+                }//COURUTINA CARGAR DATOS DE ACTUALIZACION
 
-                } else {
-                    ShowAlert("ERROR: NO TIENES CONEXION A INTERNET")
-                }
             } else {
-                ShowAlert("ERROR: NO SE ENCONTRO LA CONFIGURACION DEL SERVIDOR")
+                ShowAlert("ERROR: NO TIENES CONEXION A INTERNET")
             }
         }
 
@@ -228,7 +227,9 @@ class Configuracion : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        GetServerData()
+
+        obtenerInformacionServidor()
+
         binding.imgbtnatras.setOnClickListener {
             regresarMenuPrincipal()
         }//boton atras
@@ -238,7 +239,7 @@ class Configuracion : AppCompatActivity() {
             alerta!!.Cargando()
 
             CoroutineScope(Dispatchers.IO).launch {
-                ValidateConnection(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), contexto)
+                reconectarServidor(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), contexto)
             }
 
         }//guarda los datos del servidor
@@ -297,7 +298,7 @@ class Configuracion : AppCompatActivity() {
             val puerto : Int = binding.txtpuerto.text!!.trim().toString().toInt()
             val puntoVenta : String = binding.tvPuntoVenta.text!!.trim().toString()
 
-            if(ip.isNotEmpty() && puerto > 0 && puntoVenta.isNotEmpty()){
+            if(ip.isNotEmpty() && puntoVenta.isNotEmpty()){
                 actualizarConexionServidor(ip, puerto, puntoVenta, nombreServidor)
                 Toast.makeText(this@Configuracion, "SERVIDOR ACTUALIZADO", Toast.LENGTH_SHORT)
                     .show()
@@ -335,12 +336,16 @@ class Configuracion : AppCompatActivity() {
                             val servidorSeleccionado = conexionController.obtenerInformacionServidorSeleccionado(this@Configuracion, servidor)
                             val ipServidor = servidorSeleccionado!!.ip.trim()
                             val puertoServidor = servidorSeleccionado.puerto.trim()
+                            idServidorActivo = servidorSeleccionado.id
+                            sslActivo = servidorSeleccionado.ssl
 
                             withContext(Dispatchers.Main){
                                 binding.txtNombreServidor.setText(servidor)
                                 binding.txtip.setText(ipServidor)
                                 binding.txtpuerto.setText(puertoServidor)
                                 binding.btnActualizarServidor.isEnabled = true
+
+                                binding.cbxActivarSSL.isChecked = sslActivo == 1
                             }
 
                         }
@@ -353,6 +358,10 @@ class Configuracion : AppCompatActivity() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
+        }
+
+        binding.btnConfigServidor.setOnClickListener{
+            menuServidores()
         }
 
 
@@ -386,11 +395,14 @@ class Configuracion : AppCompatActivity() {
 
     //CAMBIAR DATOS DEL SERVIDOR
     private fun actualizarConexionServidor(ip: String, puerto: Int, puntoVenta: String, nombreServidor: String){
+
         preferencias!!.edit {
             remove("puerto")
             remove("ip")
             remove("puntoVenta")
             remove("nombreServidor")
+            remove("idServidorActivo")
+            remove("sslActivo")
         }
 
         preferencias!!.edit {
@@ -398,6 +410,8 @@ class Configuracion : AppCompatActivity() {
             putInt("puerto", puerto)
             putString("puntoVenta", puntoVenta)
             putString("nombreServidor", nombreServidor)
+            putInt("idServidorActivo", idServidorActivo)
+            putInt("sslActivo", sslActivo)
         }
     }
 
@@ -444,7 +458,7 @@ class Configuracion : AppCompatActivity() {
     }
 
     //FUNCION PARA OBTENER LA IP DEL SERVIDOR Y EL PUERTO DE CONEXION
-    private fun GetServerData() {
+    private fun obtenerInformacionServidor() {
         binding.apply {
             txtNombreServidor.setText(nombreServidor)
             txtip.setText(ipServidor)
@@ -453,75 +467,81 @@ class Configuracion : AppCompatActivity() {
         }
     } //obtiene la ip y el puerto del servidor
 
-    private fun ValidateConnection(ip: String, puerto: String, context: Context) {
-        if (ip.length > 0 && puerto.length > 0) {
-            if (funciones.isInternetAvailable(this)) {
-                try {
-                    val ruta: String = "http://$ip:$puerto/conexion"
-                    val url = URL(ruta)
-                    with(url.openConnection() as HttpURLConnection) {
-                        connectTimeout = 30000
-                        requestMethod = "GET"
-                        if (responseCode == 200) {
-                            inputStream.bufferedReader().use {
-                                val response = StringBuffer()
-                                var inputline = it.readLine()
-                                while (inputline != null) {
-                                    response.append(inputline)
-                                    inputline = it.readLine()
-                                }
-                                it.close() //cerramos el buffer
-                                val respuesta = JSONArray(response.toString())
-                                if (respuesta.length() > 0) {
-                                    val res = respuesta.getJSONObject(0) //obtenemos los datos
+    private fun reconectarServidor(ip: String, puerto: String, context: Context) {
+        if (funciones.isInternetAvailable(this)) {
+            try {
+                val servidor = funciones.getServidor(ip, puerto, this@Configuracion)
+                val ruta: String = servidor + "conexion"
+                val url = URL(ruta)
+
+                val sslContext = utilidades.crearSslInseguro()
+
+                with(url.openConnection() as HttpURLConnection) {
 
 
-                                    if (res.getInt("error") > 0) {
-                                        preferencias!!.edit(commit = true) {
-                                            this!!.putInt("puerto", puerto.toInt())
-                                            putString("ip", ip)
-                                        }
-
-                                        alerta!!.dismisss()
-                                        val alert: Snackbar = Snackbar.make(binding.vistaalerta, res.getString("response"), Snackbar.LENGTH_LONG)
-                                        alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.btnVerde))
-                                        alert.show()
-
-                                    } else {
-                                        throw  Exception(res.getString("response"))
-                                    } //valida que la respuesta sea  la correcta
-                                } else {
-                                    throw  Exception("Se Conecto con el Servidor, No hubo Respuesta")
-                                }//valida que se haya obtenido datos del JSON
-                            } //obtenmos los datos que nos envia el servidor
-                        } else {
-                            throw  Exception("Error de Comunicacion, Codigo:$responseCode")
-                        } //valida que el codigo de respuesta del servidor sea ok 200
+                    if(this is HttpsURLConnection){
+                        sslSocketFactory = sslContext.socketFactory
+                        hostnameVerifier = HostnameVerifier{_, _ -> true}
                     }
-                } catch (e: Exception) {
-                    alerta!!.dismisss()
-                    val alert: Snackbar =
-                        Snackbar.make(binding.vistaalerta, e.message.toString(), Snackbar.LENGTH_LONG)
-                    alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
-                    alert.show()
-                } //valida se si presenta algun error de conexion u otro
-            } else {
+
+                    connectTimeout = 30000
+                    requestMethod = "GET"
+                    if (responseCode == 200) {
+                        inputStream.bufferedReader().use {
+                            val response = StringBuffer()
+                            var inputline = it.readLine()
+                            while (inputline != null) {
+                                response.append(inputline)
+                                inputline = it.readLine()
+                            }
+                            it.close() //cerramos el buffer
+                            val respuesta = JSONArray(response.toString())
+                            if (respuesta.length() > 0) {
+                                val res = respuesta.getJSONObject(0) //obtenemos los datos
+
+
+                                if (res.getInt("error") > 0) {
+                                    preferencias!!.edit(commit = true) {
+                                        this!!.putInt("puerto", puerto.toInt())
+                                        putString("ip", ip)
+                                    }
+
+                                    alerta!!.dismisss()
+                                    val alert: Snackbar = Snackbar.make(binding.vistaalerta, res.getString("response"), Snackbar.LENGTH_LONG)
+                                    alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.btnVerde))
+                                    alert.show()
+
+                                } else {
+                                    throw  Exception(res.getString("response"))
+                                } //valida que la respuesta sea  la correcta
+                            } else {
+                                throw  Exception("Se Conecto con el Servidor, No hubo Respuesta")
+                            }//valida que se haya obtenido datos del JSON
+                        } //obtenmos los datos que nos envia el servidor
+                    } else {
+                        throw  Exception("Error de Comunicacion, Codigo:$responseCode")
+                    } //valida que el codigo de respuesta del servidor sea ok 200
+                }
+            } catch (e: Exception) {
+
+                println("ERROR 1 -> " + e.message)
+
                 alerta!!.dismisss()
-                val alert: Snackbar = Snackbar.make(
-                    binding.vistaalerta,
-                    "Enciende los Datos o el Wifi",
-                    Snackbar.LENGTH_LONG
-                )
+                val alert: Snackbar =
+                    Snackbar.make(binding.vistaalerta, e.message.toString(), Snackbar.LENGTH_LONG)
                 alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
                 alert.show()
-            } //valida que este encendido los datos o el wifi
+            } //valida se si presenta algun error de conexion u otro
         } else {
             alerta!!.dismisss()
-            val alert: Snackbar =
-                Snackbar.make(binding.vistaalerta, "Debes llenar los campos", Snackbar.LENGTH_LONG)
+            val alert: Snackbar = Snackbar.make(
+                binding.vistaalerta,
+                "Enciende los Datos o el Wifi",
+                Snackbar.LENGTH_LONG
+            )
             alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
             alert.show()
-        } //valida los campos no sean vacios
+        } //valida que este encendido los datos o el wifi
     }//valida que haya comunicacion con el servidor
 
 
@@ -532,13 +552,23 @@ class Configuracion : AppCompatActivity() {
     }//anula el boton atras
 
     //FUNCION PARA VERIFICAR LA VERSION DE LA APP INSTALADA
-    private suspend fun getAppVersion() {
+    private suspend fun obtenerNuevaVersionApp() {
         try {
-            val direccion = url!! + "updateapp"
+            val servidor = funciones.getServidor(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), this@Configuracion)
+            val direccion = servidor + "updateapp"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     runOnUiThread {
                         alerta!!.Cargando()
@@ -602,17 +632,9 @@ class Configuracion : AppCompatActivity() {
         alert.show()
     }
 
-    //FUNCION PARA OBTERNER LA URL DEL SERVER
-    private fun getApiUrl() {
-        val ip = preferencias!!.getString("ip", "")
-        val puerto = preferencias!!.getInt("puerto", 0)
-        if (ip!!.length > 0 && puerto > 0) {
-            url = "http://$ip:$puerto/"
-        }
-    } //obtiene la url de la api
 
     //FUNCION PARA CREAR EL DIALOG DE ACTUALIZAR APP
-    fun mensajeUpdate(versionServer: String, urlServer: String){
+    private fun mensajeUpdate(versionServer: String, urlServer: String){
 
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
@@ -626,7 +648,21 @@ class Configuracion : AppCompatActivity() {
             //updateDialog.dismiss()
             //Toast.makeText(applicationContext, "FUNCION EN DESARROLLO", Toast.LENGTH_SHORT).show()
             updateDialog.dismiss()
-            Descargar(urlServer, "UpdateApp_$versionServer")
+            descargarVersionApp(urlServer, "UpdateApp_$versionServer")
+
+            //----------------------------------
+            //Condicion para reiniciar BD
+            //----------------------------------
+            /*if(BuildConfig.VERSION_CODE < versionAppServer!!.toInt()){
+
+                lifecycleScope.launch(Dispatchers.IO) {
+
+                    limpiarBD.limpiarBdAlActualizar(this@Configuracion)
+                    withContext(Dispatchers.Main){
+                        descargarVersionApp(urlServer, "UpdateApp_$versionServer")
+                    }
+                }
+            }*/
         }
 
         tvCancel.setOnClickListener {
@@ -655,7 +691,7 @@ class Configuracion : AppCompatActivity() {
     }
 
     //FUNCION PARA DESCARGAR Y EJECUTAR LA INSTALACION DE LA ACTUALIZACION
-    fun Descargar(url: String, filename: String){
+    private fun descargarVersionApp(url: String, filename: String){
         val downloadApk = DownloadApk(this@Configuracion)
         downloadApk.startDownloadingApk(url, filename);
     }
@@ -704,6 +740,16 @@ class Configuracion : AppCompatActivity() {
                 println("ERROR AL TRAER LA LISTA DE SERVIDORES -> " + e.message)
             }
         }
+    }
+
+    //-------------------------------------
+    //Funcion para redireccionar al menu Servidores
+    //-------------------------------------
+    private fun menuServidores(){
+        val enlace = Intent(this@Configuracion, MenuServidores::class.java)
+        enlace.putExtra("Menu", "CONFIG")
+        startActivity(enlace)
+        finish()
     }
 
 }

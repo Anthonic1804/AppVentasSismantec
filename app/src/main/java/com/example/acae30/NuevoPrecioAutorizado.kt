@@ -17,6 +17,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.Empleados
 import com.example.acae30.modelos.JSONmodels.PrecioPersonalizadoJSON
 import com.google.gson.Gson
@@ -31,6 +32,8 @@ import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class NuevoPrecioAutorizado : AppCompatActivity() {
 
@@ -57,6 +60,8 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
     private var funciones = Funciones()
+
+    private val utilidades = CrearSslNoSeguro()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -152,8 +157,8 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
     private fun getApiUrl() {
         val ip = preferencias!!.getString("ip", "")
         val puerto = preferencias!!.getInt("puerto", 0)
-        if (ip!!.length > 0 && puerto > 0) {
-            url = "http://$ip:$puerto/"
+        if (ip!!.isNotEmpty()) {
+            url = funciones.getServidor(ip, puerto.toString(), this@NuevoPrecioAutorizado)
         }
     }
 
@@ -280,7 +285,16 @@ class NuevoPrecioAutorizado : AppCompatActivity() {
                 Gson().toJson(datos)
             val ruta: String = url!! + "token"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(

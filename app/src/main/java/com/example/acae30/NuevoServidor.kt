@@ -1,6 +1,8 @@
 package com.example.acae30
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -25,6 +27,11 @@ class NuevoServidor : AppCompatActivity() {
     private var ipServidor : String = ""
     private var puertoServidor : String = ""
     private var idServidor : Int = 0
+    private var menu : String = ""
+    private var sslActivo : Int = 0
+
+    private var preferencias: SharedPreferences? = null
+    private val instancia = "CONFIG_SERVIDOR"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +44,9 @@ class NuevoServidor : AppCompatActivity() {
         ipServidor = intent.getStringExtra("ipServidor").toString()
         puertoServidor = intent.getStringExtra("puertoServidor").toString()
         idServidor = intent.getIntExtra("idServidor", 0)
+        menu = intent.getStringExtra("Menu").toString()
+
+        preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         if (proceso.contains("editar")){
             binding.apply {
@@ -44,6 +54,7 @@ class NuevoServidor : AppCompatActivity() {
                 txtip.setText(ipServidor)
                 txtpuerto.setText(puertoServidor)
                 txtNombreServidor.setText(nombreServidor)
+                btnEliminarServidor.visibility = View.VISIBLE
             }
         }
 
@@ -66,6 +77,14 @@ class NuevoServidor : AppCompatActivity() {
             mensajeConfirmacion("¿Desea Cancelar el Proceso?", "CANCELAR")
         }
 
+        binding.cbxActivarSSL.setOnCheckedChangeListener { _, isChecked ->
+            sslActivo = if(isChecked) 1 else 0
+        }
+
+        binding.btnEliminarServidor.setOnClickListener {
+            mensajeConfirmacion("¿Desea Eliminar el Servidor?", "ELIMINAR")
+        }
+
     }
 
     //-----------------------------------
@@ -73,6 +92,7 @@ class NuevoServidor : AppCompatActivity() {
     //-----------------------------------
     private fun menuServidor(){
         val enlace = Intent(this@NuevoServidor, MenuServidores::class.java)
+        enlace.putExtra("Menu", menu)
         startActivity(enlace)
         finish()
     }
@@ -89,6 +109,28 @@ class NuevoServidor : AppCompatActivity() {
                     "CANCELAR" -> {
                         view.dismiss()
                         menuServidor()
+                    }
+                    "ELIMINAR" -> {
+
+                        lifecycleScope.launch(Dispatchers.IO) {
+
+                            val idServidorActivo : Int = preferencias!!.getInt("idServidorActivo", 0)
+
+                            if(idServidorActivo == idServidor){
+                                withContext(Dispatchers.Main){
+                                    Toast.makeText(this@NuevoServidor, "NO SE PUEDE ELIMINAR EL SERVIDOR QUE ESTÁ ACTIVO ACTUALMENTE", Toast.LENGTH_SHORT)
+                                        .show()
+                                }
+                            }else{
+                                conexionController.eliminarServidor(this@NuevoServidor, idServidor)
+
+                                withContext(Dispatchers.Main){
+                                    view.dismiss()
+                                    menuServidor()
+                                }
+
+                            }
+                        }
                     }
                     else -> {
                         verificarConexionServidor()
@@ -131,19 +173,20 @@ class NuevoServidor : AppCompatActivity() {
             withContext(Dispatchers.Main){
 
                 if(hayInternet){
-                    if(conexionController.validarDatosConexion(ip, puerto, nombre)){
+                    if(conexionController.validarDatosConexion(ip, nombre)){
 
-                        val respuesta = conexionController.verificarConexionServidor(ip, puerto)
+                        val respuesta = conexionController.verificarConexionServidor(ip, puerto, sslActivo)
 
                         if(respuesta == "Conexion Exitosa"){
 
+                            val obj = ServidoresModel(idServidor, nombre, ip, puerto, sslActivo)
+
                             if(proceso.contains("editar")){
-                                val obj = ServidoresModel(idServidor, nombre, ip, puerto)
                                 conexionController.actualizarServidor(this@NuevoServidor, obj)
                                 Toast.makeText(this@NuevoServidor, "SE ACTUALIZO CORRECTAMENTE EL SERVIDOR", Toast.LENGTH_SHORT)
                                     .show()
                             }else{
-                                conexionController.almacenarServidorSQLite(this@NuevoServidor, ip, puerto, nombre)
+                                conexionController.almacenarServidorSQLite(this@NuevoServidor, obj)
                                 Toast.makeText(this@NuevoServidor, "CONEXION EXITOSA CON EL SERVIDOR", Toast.LENGTH_SHORT)
                                     .show()
                             }
@@ -172,6 +215,11 @@ class NuevoServidor : AppCompatActivity() {
 
             }
         }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //super.onBackPressed()
     }
 
 }

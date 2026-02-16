@@ -2,6 +2,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/blanco_suave"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -129,6 +130,8 @@
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:background="@color/blanco_suave"
+                        android:minHeight="@dimen/width_card_100dp"
                         android:padding="@dimen/margin_default_16dp">
 
                         <TextView
@@ -139,7 +142,7 @@
                             android:textAlignment="center"
                             android:textStyle="bold"
                             android:textSize="20dp"
-                            android:textColor="@color/colorPrimary"
+                            android:textColor="@color/gris_cart"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent"/>
@@ -151,7 +154,7 @@
                             android:text="$ 1555.00"
                             android:textAlignment="center"
                             android:textSize="30dp"
-                            android:textColor="@color/colorRojo"
+                            android:textColor="@color/colorPrimary"
                             android:textStyle="bold"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -161,35 +164,49 @@
 
                 </androidx.cardview.widget.CardView>
 
-                <LinearLayout
+                <androidx.cardview.widget.CardView
                     android:id="@+id/footer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="60dp"
                     android:layout_margin="@dimen/margin_default_16dp"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal"
+                    app:cardCornerRadius="@dimen/borderRadius"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent">
 
-                    <TextView
-                        android:id="@+id/textView6"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:id="@+id/lyFooter"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="ACTUALIZACIÓN INVENTARIO"
-                        android:textSize="16sp"
-                        android:textColor="@color/colorPrimaryDark"/>
+                        android:orientation="vertical"
+                        android:minHeight="60dp"
+                        android:background="@color/blanco_suave"
+                        android:gravity="center_vertical">
 
-                    <TextView
-                        android:id="@+id/lblupdate"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="5dp"
-                        android:text="00-00-0000"
-                        android:textSize="16sp"
-                        android:textColor="@color/colorPrimary"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                        <TextView
+                            android:id="@+id/textView6"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="center"
+                            android:text="ACTUALIZACIÓN INVENTARIO"
+                            android:textSize="16sp"
+                            android:textColor="@color/colorPrimaryDark"/>
+
+                        <TextView
+                            android:id="@+id/lblupdate"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:textAlignment="center"
+                            android:text="00-00-0000"
+                            android:textSize="16sp"
+                            android:textColor="@color/colorPrimary"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+
+                </androidx.cardview.widget.CardView>
 
                 <!-- Card 1 -->
                 <androidx.cardview.widget.CardView
@@ -209,7 +226,7 @@
                             android:id="@+id/ic_inventario"
                             android:layout_width="64dp"
                             android:layout_height="64dp"
-                            android:src="@drawable/ic_newinventario"
+                            android:src="@drawable/ic_inventario_3"
                             android:layout_marginStart="@dimen/margin_8dp"
                             android:layout_marginTop="@dimen/margin_default_16dp"
                             app:layout_constraintStart_toStartOf="parent"
@@ -221,7 +238,7 @@
                             android:layout_marginTop="@dimen/margin_default_16dp"
                             android:text="INVENTARIO"
                             android:textAlignment="center"
-                            android:textColor="@color/colorAccent"
+                            android:textColor="@color/colorPrimary"
                             android:textStyle="bold"
                             android:textSize="20dp"
                             app:layout_constraintStart_toStartOf="parent"
@@ -252,7 +269,7 @@
                             android:layout_height="64dp"
                             android:layout_marginStart="@dimen/margin_8dp"
                             android:layout_marginTop="@dimen/margin_default_16dp"
-                            android:src="@drawable/id_newpedido"
+                            android:src="@drawable/ic_pedido_3"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
@@ -262,7 +279,7 @@
                             android:layout_marginTop="@dimen/margin_default_16dp"
                             android:text="PEDIDOS"
                             android:textAlignment="center"
-                            android:textColor="@color/colorAccent"
+                            android:textColor="@color/colorPrimary"
                             android:textSize="20dp"
                             android:textStyle="bold"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -292,7 +309,7 @@
                             android:id="@+id/ic_clientes"
                             android:layout_width="64dp"
                             android:layout_height="64dp"
-                            android:src="@drawable/ic_newcliente"
+                            android:src="@drawable/ic_clientes_3"
                             android:layout_marginStart="@dimen/margin_8dp"
                             android:layout_marginTop="@dimen/margin_default_16dp"
                             app:layout_constraintStart_toStartOf="parent"
@@ -304,7 +321,7 @@
                             android:layout_marginTop="@dimen/margin_default_16dp"
                             android:text="CLIENTES"
                             android:textAlignment="center"
-                            android:textColor="@color/colorAccent"
+                            android:textColor="@color/colorPrimary"
                             android:textStyle="bold"
                             android:textSize="20dp"
                             app:layout_constraintStart_toStartOf="parent"
@@ -334,7 +351,7 @@
                             android:id="@+id/ic_server"
                             android:layout_width="64dp"
                             android:layout_height="64dp"
-                            android:src="@drawable/ic_newserver"
+                            android:src="@drawable/ic_server_3"
                             android:layout_marginStart="@dimen/margin_8dp"
                             android:layout_marginTop="@dimen/margin_default_16dp"
                             app:layout_constraintStart_toStartOf="parent"
@@ -346,7 +363,7 @@
                             android:layout_marginTop="@dimen/margin_default_16dp"
                             android:text="CARGAR"
                             android:textAlignment="center"
-                            android:textColor="@color/colorAccent"
+                            android:textColor="@color/colorPrimary"
                             android:textStyle="bold"
                             android:textSize="20dp"
                             app:layout_constraintStart_toStartOf="parent"
@@ -359,7 +376,7 @@
                             android:layout_marginTop="40dp"
                             android:text="DATOS"
                             android:textAlignment="center"
-                            android:textColor="@color/colorAccent"
+                            android:textColor="@color/colorPrimary"
                             android:textStyle="bold"
                             android:textSize="20dp"
                             app:layout_constraintStart_toStartOf="parent"

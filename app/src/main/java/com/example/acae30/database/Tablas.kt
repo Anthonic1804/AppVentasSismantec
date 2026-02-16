@@ -674,7 +674,8 @@ class Tablas {
                 "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Nombre VARCHAR(50) NOT NULL," +
                 "Ip VARCHAR(50) NOT NULL," +
-                "Puerto VARCHAR(4) NOT NULL)"
+                "Puerto VARCHAR(4) NULL," +
+                "Ssl INT NOT NULL DEFAULT 0)"
     }
 
 //    //TRIGGER PARA LA INSERCION DE DATOS EN TABLA FTS4 VIRTUAL INVENTARIO

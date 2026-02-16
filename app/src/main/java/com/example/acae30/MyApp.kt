@@ -20,11 +20,11 @@ class MyApp : Application() {
         super.onCreate()
 
         if(modoDesarrollo){
-            startKoin {
+            /*startKoin {
                 androidContext(this@MyApp)
 
                 analytics() //Kotzilla Analytics
-            }
+            }*/
         }
 
     }

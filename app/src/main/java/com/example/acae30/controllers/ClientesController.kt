@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import com.example.acae30.Detallepedido
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.Visita
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.JSONmodels.ActualizarPagareFirmadoCliente
@@ -25,6 +26,8 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
 
 class ClientesController {
 
@@ -33,19 +36,30 @@ class ClientesController {
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
 
+    private var utilidades = CrearSslNoSeguro()
+
     //OBTENER CLIENTES DEL SERVIDOR
     suspend fun obtenerClientesServidor(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString(), context)
 
         try {
             //val direccion = url!! + "clientes"
             val id_vendedor = preferences.getInt("Idvendedor", 0)
             val direccion = servidor + "clientes/vendedor/"+id_vendedor
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 30000
                     requestMethod = "GET"
@@ -177,14 +191,23 @@ class ClientesController {
     //FUNCION PARA OBTENER SUCURSALES DE LOS CLIENTES DESDE EL SERVIDOR
     suspend fun obtenerClienteSucursalesServidor(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString(), context)
 
         try {
             val direccion = servidor + "sucursales"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 30000
                     requestMethod = "GET"
@@ -263,14 +286,23 @@ class ClientesController {
     //FUNCION PARA OBTENER LAS CXC DESDE EL SERVIDOR
     suspend fun obtenerCxcServidor(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString(), context)
 
         try {
             val direccion = servidor + "cuentas"
             val url = URL(direccion)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 30000
                     requestMethod = "GET"
@@ -365,7 +397,7 @@ class ClientesController {
     //FUNCION PARA OBTENER LOS PRECIOS PERSONALIZADOS
     suspend fun obtenerPreciosPersonalizados(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString(), context)
 
         /*PRIMER TRY PARA OBTENER LA CANTIDAD DE REGISTROS
         * Y LUEGO CARGARLOS POR BLOQUES
@@ -475,8 +507,17 @@ class ClientesController {
 
             //OBTENIENDO LA CANTIDAD DE REGISTROS
             val cantidadURL = URL(servidor + "clientes/precios/cantidad")
+
+            val sslContext = utilidades.crearSslInseguro()
+
             val cantidadRegistros = withContext(Dispatchers.IO){
                 (cantidadURL.openConnection() as HttpURLConnection).run {
+
+                    if(this is HttpsURLConnection){
+                        sslSocketFactory = sslContext.socketFactory
+                        hostnameVerifier = HostnameVerifier{_, _ -> true}
+                    }
+
                     requestMethod = "GET"
                     inputStream.bufferedReader().readLine().toInt()
                 }
@@ -515,8 +556,17 @@ class ClientesController {
 
         try {
             val urlFinal = URL(url + "clientes/precios/$inicio/$longitud")
+
+            val sslContext = utilidades.crearSslInseguro()
+
             withContext(Dispatchers.IO){
                 val conn = urlFinal.openConnection() as HttpURLConnection
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 conn.connectTimeout = 30000
                 conn.readTimeout = 30000
                 conn.requestMethod = "GET"
@@ -792,7 +842,7 @@ class ClientesController {
     fun actualizarPagareFirmadoSqlServer(context: Context, idCliente: Int, vista: View){
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
         try {
             val datos = ActualizarPagareFirmadoCliente(
@@ -802,7 +852,16 @@ class ClientesController {
                 Gson().toJson(datos)
             val ruta: String = url + "clientes/actualizarPagare"
             val url2 = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(url2.openConnection() as HttpURLConnection) {
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 20000
                     setRequestProperty(
@@ -958,15 +1017,25 @@ class ClientesController {
         var envio = false
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val clienteJson = convertirClienteToJson(context, cliente)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString())
+        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
         try {
             val objecto =
                 Gson().toJson(clienteJson)
             val ruta: String = servidor + "clientes/registrar"
             val url = URL(ruta)
+
+            val sslContext = utilidades.crearSslInseguro()
+
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
+
+
+                if(this is HttpsURLConnection){
+                    sslSocketFactory = sslContext.socketFactory
+                    hostnameVerifier = HostnameVerifier{_, _ -> true}
+                }
+
                 try {
                     connectTimeout = 10000
                     setRequestProperty(
