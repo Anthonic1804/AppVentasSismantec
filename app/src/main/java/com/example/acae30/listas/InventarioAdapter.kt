@@ -67,8 +67,8 @@ class InventarioAdapter(
         vista.titulo.text = lista[i].Codigo
         vista.descripcion.text = lista[i].descripcion
         vista.precio.text = "$" + String.format("%.${decPrecios}f", lista[i].Precio_iva)
-        vista.existencia.text = lista[i].Existencia.toString() + " Unidades"
-        vista.fraccion.text = lista[i].Fraccion.toString() + " Piezas por Uni."
+        vista.existencia.text = "${String.format("%.2f", lista[i].Existencia)}" + " " + if(lista[i].Unidad_medida.isNullOrBlank()) "UNIDAD" else lista[i].Unidad_medida
+        vista.fraccion.text = "${String.format("%.2f", lista[i].Existencia_u)}" + " " + lista[i].Nombre_fraccion
 
         if(vistaInventario == 1){
             //CARGANDO LA IMAGEN EL EL MARCO
@@ -81,7 +81,7 @@ class InventarioAdapter(
                 .error(R.drawable.no_photography)
                 .into(vista.imagen)
         }else{
-            val imgDrawable = R.drawable.ic_newinventario
+            val imgDrawable = R.drawable.ic_inventario_3
             vista.imagen.setImageResource(imgDrawable)
         }
         contador++

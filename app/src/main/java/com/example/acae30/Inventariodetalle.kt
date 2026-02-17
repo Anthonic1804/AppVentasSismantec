@@ -114,8 +114,8 @@ class Inventariodetalle : AppCompatActivity() {
                     txtcodigo.text = producto!!.Codigo
                     txtdescripcion.text = producto.descripcion
                     txtprecio.text = "$" + String.format("%.4f", producto.Precio_iva)
-                    txtexistencia.text = producto.Existencia!!.toInt().toString() + " UNI"
-                    txtexistenciaFracciones.text = producto.Existencia_u!!.toString() + " FRA"
+                    txtexistencia.text =  "${String.format("%.2f", producto.Existencia)} " + " " + if(producto.Unidad_medida.isNullOrBlank()) "UNI" else producto.Unidad_medida  //producto.Existencia!!.toInt().toString() + " UNI"
+                    txtexistenciaFracciones.text = "${String.format("%.2f", producto.Existencia_u)} " + " " + if(producto.Nombre_fraccion.isNullOrBlank()) "FRA" else producto.Nombre_fraccion
                 }
             } catch (e: Exception) {
                 runOnUiThread {

@@ -207,6 +207,7 @@
                             android:layout_marginEnd="@dimen/margin_default_16dp"
                             android:layout_marginTop="@dimen/margin_4dp"
                             android:layout_marginBottom="@dimen/margin_4dp"
+                            android:enabled="false"
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:hint="NOMBRE SERVIDOR"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -257,8 +258,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:inputType="text"
-                                android:textSize="18sp"
-                                android:textColor="@color/colorHint"/>
+                                android:textColor="@color/colorHint"
+                                android:textSize="18sp" />
                         </com.google.android.material.textfield.TextInputLayout>
 
 

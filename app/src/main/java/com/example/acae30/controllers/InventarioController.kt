@@ -69,7 +69,7 @@ class InventarioController {
                             cursor.getString(5),
                             cursor.getFloat(6),
                             cursor.getString(7),
-                            cursor.getInt(12),
+                            cursor.getFloat(12),
                             cursor.getFloat(8),
                             cursor.getFloat(9),
                             cursor.getFloat(17),
@@ -91,7 +91,7 @@ class InventarioController {
                             cursor.getString(5),
                             cursor.getFloat(6),
                             cursor.getString(7),
-                            cursor.getInt(12),
+                            cursor.getFloat(12),
                             cursor.getFloat(8),
                             cursor.getFloat(9),
                             cursor.getFloat(17),
@@ -220,7 +220,7 @@ class InventarioController {
                             cursor.getString(5),
                             cursor.getFloat(6),
                             cursor.getString(7),
-                            cursor.getInt(12),
+                            cursor.getFloat(12),
                             cursor.getFloat(8),
                             cursor.getFloat(9),
                             cursor.getFloat(17),
@@ -597,7 +597,7 @@ class InventarioController {
     private fun descargarUnidades(context: Context, idProducto: Int, cantidad: Float){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            bd.execSQL("UPDATE Inventario SET Existencia = (Existencia - $cantidad) WHERE Id=$idProducto")
+            bd.execSQL("UPDATE Inventario SET Existencia = (Existencia - ${cantidad}) WHERE Id=$idProducto")
         }catch (e: Exception){
             println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA DEL PRODUCTO -> " + e.message)
         }
@@ -636,7 +636,7 @@ class InventarioController {
             existenciaFinal = totalFraccionesFinal / fraccionamiento   // cuántas unidades completas quedan
             existenciaUFinal = totalFraccionesFinal % fraccionamiento  // fracciones restantes
 
-            bd.execSQL("UPDATE inventario SET Existencia = $existenciaFinal, Existencia_u = $existenciaUFinal WHERE Id = $idProducto")
+            bd.execSQL("UPDATE inventario SET Existencia = ${existenciaFinal.toInt()}, Existencia_u = ${existenciaUFinal.toInt()} WHERE Id = $idProducto")
 
         }catch (e: Exception){
             println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA EN FRACCION DEL PRODUCTO -> " + e.message)

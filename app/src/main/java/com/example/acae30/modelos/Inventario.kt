@@ -8,7 +8,7 @@ data class Inventario (
     var Unidad_medida:String, // 5
     var Fraccion:Float?, // 6
     var Nombre_fraccion:String?, // 7
-    var Existencia:Int?, // 12
+    var Existencia:Float?, // 12
     var Costo:Float?, // 8
     var costo_iva:Float?, // 9
     var Precio_iva:Float?, // 17
