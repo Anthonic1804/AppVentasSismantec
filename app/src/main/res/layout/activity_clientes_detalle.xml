@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/vista"
+    android:background="@color/blanco_suave"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Inventariodetalle">
@@ -13,9 +14,7 @@
         android:layout_width="0dp"
         android:layout_height="55dp"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="5dp"
-        android:background="@color/colorPrimary"
+        android:background="@color/colorPrincipalOscuro"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -23,648 +22,484 @@
         <ImageButton
             android:id="@+id/imgatras"
             android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:backgroundTint="@color/colorPrimary"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/regresar"
+            android:backgroundTint="@color/colorPrincipalOscuro"
             app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
-
-        <TextView
-            android:id="@+id/textView5"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/detalle_de_cliente"
-            android:textAlignment="center"
-            android:textColor="@color/colorAccent"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
-
-
     </LinearLayout>
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="200dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lyTitulo">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="200dp">
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cvClienteHeader"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="100dp"
-                android:layout_margin="@dimen/margin_default_16dp"
-                app:cardCornerRadius="@dimen/corner_radious_card_15dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="125dp">
-
-                    <ImageView
-                        android:id="@+id/imgCliente"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:layout_marginStart="32dp"
-                        android:layout_marginTop="16dp"
-                        android:contentDescription="@string/clienteinfo"
-                        android:src="@drawable/cliente_info"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"/>
-
-                    <TextView
-                        android:id="@+id/txtcodigo"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/codigo"
-                        android:textColor="@color/moderado"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="@dimen/margin_default_16dp"
-                        android:layout_marginStart="@dimen/margin_default_16dp"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/imgCliente"/>
-
-                    <TextView
-                        android:id="@+id/txtnombre"
-                        android:layout_width="240dp"
-                        android:layout_height="wrap_content"
-                        android:text="@string/nombre"
-                        android:textColor="@color/moderado"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:layout_marginStart="@dimen/margin_default_16dp"
-                        app:layout_constraintTop_toBottomOf="@id/txtcodigo"
-                        app:layout_constraintStart_toEndOf="@id/imgCliente"/>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cvAcciones"
-                android:layout_width="350dp"
-                android:layout_height="wrap_content"
-                android:elevation="@dimen/margin_default_16dp"
-                app:cardElevation="@dimen/margin_4dp"
-                android:layout_marginTop="-30dp"
-                app:cardCornerRadius="@dimen/corner_radious_card_15dp"
-                app:layout_constraintTop_toBottomOf="@id/cvClienteHeader"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:layout_gravity="center_horizontal"
-                    android:gravity="center_horizontal">
-
-
-                    <ImageView
-                        android:id="@+id/btnPagare"
-                        android:layout_width="@dimen/menuCliente"
-                        android:layout_height="@dimen/menuCliente"
-                        android:layout_margin="@dimen/separacion"
-                        android:contentDescription="@string/clienteinfo"
-                        android:src="@drawable/cheque"/>
-
-                    <ImageView
-                        android:id="@+id/btnSucursales"
-                        android:layout_width="@dimen/menuCliente"
-                        android:layout_height="@dimen/menuCliente"
-                        android:layout_margin="@dimen/separacion"
-                        android:contentDescription="@string/clienteinfo"
-                        android:src="@drawable/tienda"/>
-
-                    <ImageView
-                        android:id="@+id/btnVerMapa"
-                        android:layout_width="@dimen/menuCliente"
-                        android:layout_height="@dimen/menuCliente"
-                        android:layout_margin="@dimen/separacion"
-                        android:contentDescription="@string/clienteinfo"
-                        android:src="@drawable/mapa"/>
-
-                    <ImageView
-                        android:id="@+id/btnEditar"
-                        android:layout_width="@dimen/menuCliente"
-                        android:layout_height="@dimen/menuCliente"
-                        android:layout_margin="@dimen/separacion"
-                        android:contentDescription="@string/clienteinfo"
-                        android:src="@drawable/editar_cliente"/>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardPersonal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
-                app:cardCornerRadius="10dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/cvAcciones"
-                app:layout_constraintBottom_toBottomOf="parent">
-
-                <LinearLayout
-                    android:id="@+id/lyDataCliente"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:layout_marginTop="@dimen/margin_default_card_4dp"
-                    android:padding="8dp">
-
-                    <TextView
-                        android:id="@+id/generales_tv"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="DATOS GENERALES"
-                        android:textColor="@color/moderado"
-                        android:layout_marginBottom="@dimen/margin_default_16dp"
-                        android:textSize="20sp"
-                        android:textStyle="bold"/>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="@dimen/margin_default_card_4dp">
-
-                        <ImageView
-                            android:id="@+id/phone"
-                            android:layout_width="40dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0.25"
-                            app:srcCompat="@drawable/ic_baseline_phone_24" />
-
-                        <TextView
-                            android:id="@+id/txtteluno"
-                            android:layout_width="100dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/telefono1"
-                            android:textColor="@color/colorPrimaryDark"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/txtteldos"
-                            android:layout_width="100dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/telefono2"
-                            android:textColor="@color/colorPrimaryDark"
-                            android:textSize="16sp"
-                            android:textStyle="bold"/>
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginTop="@dimen/margin_default_card_4dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginBottom="@dimen/margin_default_card_4dp">
-
-                            <ImageView
-                                android:id="@+id/location"
-                                android:layout_width="40dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="0.25"
-                                app:srcCompat="@drawable/ic_baseline_location_on_24" />
-
-                            <TextView
-                                android:id="@+id/txtdepa"
-                                android:layout_width="100dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="@string/depto"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-
-                            <TextView
-                                android:id="@+id/txtmunic"
-                                android:layout_width="100dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="@string/municipio"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:layout_marginStart="50dp"
-                            android:layout_marginTop="@dimen/margin_default_card_4dp">
-                            <TextView
-                                android:id="@+id/txtdirec"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/direcci_n"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-                        </LinearLayout>
-
-                        <androidx.constraintlayout.widget.ConstraintLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_marginTop="@dimen/margin_default_16dp"
-                            android:layout_marginBottom="@dimen/margin_default_16dp">
-
-
-                            <TextView
-                                android:id="@+id/textView28"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/datos_crediticios"
-                                android:textColor="@color/moderado"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.496"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
-
-                            <TextView
-                                android:id="@+id/personaJuridica"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textColor="@color/moderado"
-                                android:textSize="15sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.497"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/textView28"
-                                tools:text="PRUEBA" />
-
-                            <TextView
-                                android:id="@+id/tvDui"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginStart="10dp"
-                                android:text="@string/d_u_i"
-                                android:textAlignment="center"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.046"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/personaJuridica" />
-
-                            <TextView
-                                android:id="@+id/txtDui"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginEnd="16dp"
-                                android:text="@string/dui"
-                                android:textAlignment="viewStart"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.513"
-                                app:layout_constraintTop_toBottomOf="@+id/personaJuridica" />
-
-                            <TextView
-                                android:id="@+id/scaPrecio"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginStart="10dp"
-                                android:text="@string/n_i_t"
-                                android:textAlignment="center"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.046"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/tvDui" />
-
-                            <TextView
-                                android:id="@+id/txtnit"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginEnd="16dp"
-                                android:text="@string/nit"
-                                android:textAlignment="viewStart"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.513"
-                                app:layout_constraintTop_toBottomOf="@+id/txtDui" />
-
-                            <TextView
-                                android:id="@+id/scaPrecio2"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:layout_marginTop="15dp"
-                                android:text="@string/n_r_c"
-                                android:textAlignment="center"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.048"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/scaPrecio" />
-
-                            <TextView
-                                android:id="@+id/txtnrc"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginEnd="16dp"
-                                android:text="@string/nrc"
-                                android:textAlignment="viewStart"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.498"
-                                app:layout_constraintTop_toBottomOf="@+id/txtnit" />
-
-                            <TextView
-                                android:id="@+id/scaPrecio3"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:layout_marginTop="15dp"
-                                android:text="@string/estado_crediticio"
-                                android:textAlignment="center"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.072"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/scaPrecio2" />
-
-                            <TextView
-                                android:id="@+id/txtestadocredito"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginEnd="16dp"
-                                android:text="@string/activo"
-                                android:textAlignment="viewStart"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.198"
-                                app:layout_constraintTop_toBottomOf="@+id/txtnrc" />
-
-                            <TextView
-                                android:id="@+id/scaPrecio4"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:text="@string/balance"
-                                android:textAlignment="center"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.083"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/scaPrecio3" />
-
-                            <TextView
-                                android:id="@+id/txtbalance"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginEnd="16dp"
-                                android:text="@string/balance2"
-                                android:textAlignment="viewStart"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.519"
-                                app:layout_constraintTop_toBottomOf="@+id/txtestadocredito" />
-
-                            <TextView
-                                android:id="@+id/txtlimite"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginEnd="16dp"
-                                android:text="@string/limite"
-                                android:textAlignment="viewStart"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.223"
-                                app:layout_constraintTop_toBottomOf="@+id/txtbalance" />
-
-                            <TextView
-                                android:id="@+id/scaPrecio5"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:text="@string/limite_de_credito"
-                                android:textAlignment="center"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.109"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/scaPrecio4" />
-
-                            <TextView
-                                android:id="@+id/txtplazo"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:layout_marginEnd="16dp"
-                                android:text="@string/plazo"
-                                android:textAlignment="viewStart"
-                                android:textColor="@color/colorPrimaryDark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.227"
-                                app:layout_constraintTop_toBottomOf="@+id/txtlimite" />
-
-                            <TextView
-                                android:id="@+id/scaPrecio6"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:text="@string/plazo_de_credito"
-                                android:textAlignment="center"
-                                android:textColor="@color/colordark"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintHorizontal_bias="0.109"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/scaPrecio5" />
-
-
-                        </androidx.constraintlayout.widget.ConstraintLayout>
-
-                    </LinearLayout>
-                </LinearLayout>
-
-
-            </androidx.cardview.widget.CardView>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </ScrollView>
- <!--
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/LyBack"
+        android:id="@+id/lyBack"
         android:layout_width="match_parent"
         android:layout_height="110dp"
         android:background="@drawable/border_description"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/lyTitulo">
 
-
         <ImageView
-            android:id="@+id/imgDescripProduct"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.092"
+            android:id="@+id/imgCliente"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:contentDescription="@string/informacioncliente"
+            android:layout_marginStart="@dimen/margin_default_32dp"
+            android:src="@drawable/informacion_cliente_3"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.3"
-            app:srcCompat="@drawable/ic_person80dp" />
-
-        <TextView
-            android:id="@+id/txtnombre"
-            android:layout_width="240dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/nombre"
-            android:textColor="@color/colorAccent"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.41"
-            app:layout_constraintStart_toEndOf="@+id/imgDescripProduct"
-            app:layout_constraintTop_toBottomOf="@+id/txtcodigo" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/txtcodigo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             android:text="@string/codigo"
-            android:textColor="@color/colorAccent"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.109"
-            app:layout_constraintStart_toEndOf="@+id/imgDescripProduct"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:textColor="@color/blanco_suave"
+            android:textSize="14sp"
+            android:textStyle="normal"
+            android:layout_marginTop="@dimen/margin_default_16dp"
+            android:layout_marginStart="@dimen/margin_default_16dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/imgCliente"/>
+
+        <TextView
+            android:id="@+id/txtnombre"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:text="@string/nombre"
+            android:textColor="@color/blanco_suave"
+            android:textSize="18sp"
+            android:textStyle="normal"
+            android:layout_marginStart="@dimen/margin_default_16dp"
+            app:layout_constraintTop_toBottomOf="@id/txtcodigo"
+            app:layout_constraintStart_toEndOf="@id/imgCliente"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <ScrollView
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvAcciones"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="-25dp"
-        android:elevation="5dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin_default_16dp"
+        android:layout_marginEnd="@dimen/margin_default_16dp"
+        android:elevation="@dimen/margin_default_16dp"
+        app:cardElevation="@dimen/margin_8dp"
+        android:layout_marginTop="-30dp"
+        app:cardCornerRadius="@dimen/corner_radious_card_15dp"
+        app:layout_constraintTop_toBottomOf="@id/lyBack"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/LyBack">
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_horizontal"
+            android:background="@drawable/cv_pedido">
 
 
-            <LinearLayout
-                android:id="@+id/llPagare"
+            <ImageView
+                android:id="@+id/btnPagare"
+                android:layout_width="@dimen/menuCliente"
+                android:layout_height="@dimen/menuCliente"
+                android:layout_margin="@dimen/separacion"
+                android:contentDescription="@string/clienteinfo"
+                android:src="@drawable/firmar_pagare_3"/>
+
+            <ImageView
+                android:id="@+id/btnSucursales"
+                android:layout_width="@dimen/menuCliente"
+                android:layout_height="@dimen/menuCliente"
+                android:layout_margin="@dimen/separacion"
+                android:contentDescription="@string/clienteinfo"
+                android:src="@drawable/sucursales_3"/>
+
+            <ImageView
+                android:id="@+id/btnVerMapa"
+                android:layout_width="@dimen/menuCliente"
+                android:layout_height="@dimen/menuCliente"
+                android:layout_margin="@dimen/separacion"
+                android:contentDescription="@string/clienteinfo"
+                android:src="@drawable/gps_3"/>
+
+            <ImageView
+                android:id="@+id/btnEditar"
+                android:layout_width="@dimen/menuCliente"
+                android:layout_height="@dimen/menuCliente"
+                android:layout_margin="@dimen/separacion"
+                android:contentDescription="@string/clienteinfo"
+                android:src="@drawable/person_edit_3"/>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardPersonal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/margin_default_16dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="@dimen/margin_8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cvAcciones">
+
+        <LinearLayout
+            android:id="@+id/lyDataCliente"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@drawable/cv_pedido">
+
+            <TextView
+                android:id="@+id/generales_tv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_default_16dp"
-                android:padding="10dp"
-                android:gravity="center"
+                android:text="DATOS GENERALES"
+                android:textAlignment="center"
+                android:textColor="@color/colorPrincipalOscuro"
+                android:layout_marginTop="@dimen/margin_default_16dp"
+                android:layout_marginBottom="@dimen/margin_8dp"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/margin_default_card_4dp">
+
+                <ImageView
+                    android:id="@+id/phone"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.25"
+                    app:srcCompat="@drawable/ic_baseline_phone_24" />
+
+                <TextView
+                    android:id="@+id/txtteluno"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/telefono1"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textSize="16sp"
+                    android:textStyle="normal" />
+
+                <TextView
+                    android:id="@+id/txtteldos"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/telefono2"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textSize="16sp"
+                    android:textStyle="normal"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/cardCrediticios">
+                android:layout_marginTop="@dimen/margin_default_card_4dp">
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="@dimen/margin_default_card_4dp">
 
-                <Button
-                    android:id="@+id/btnPagare"
+                    <ImageView
+                        android:id="@+id/location"
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.25"
+                        app:srcCompat="@drawable/ic_baseline_location_on_24" />
+
+                    <TextView
+                        android:id="@+id/txtdepa"
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/depto"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"/>
+
+                    <TextView
+                        android:id="@+id/txtmunic"
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/municipio"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"/>
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/ver_pagar"
-                    android:background="@drawable/border_btnactualizar"
-                    android:textColor="@color/colorAccent"
-                    android:textSize="18sp"
-                    android:textStyle="bold"/>
+                    android:orientation="vertical"
+                    android:layout_marginStart="50dp"
+                    android:layout_marginTop="@dimen/margin_default_card_4dp">
+                    <TextView
+                        android:id="@+id/txtdirec"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/direcci_n"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"/>
+                </LinearLayout>
 
-                <Button
-                    android:id="@+id/btnSucursales"
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/margin_4dp"
-                    android:text="VER SUCURSALES"
-                    android:background="@drawable/border_btnenviar"
-                    android:textColor="@color/colorAccent"
-                    android:textSize="18sp"
-                    android:textStyle="bold"/>
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="@dimen/margin_default_16dp"
+                    android:layout_marginBottom="@dimen/margin_default_16dp">
 
-                <Button
-                    android:id="@+id/btnVerMapa"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/margin_4dp"
-                    android:text="VISUALIZAR EN MAPA"
-                    android:background="@drawable/border_btnactualizar"
-                    android:textColor="@color/colorAccent"
-                    android:textSize="18sp"
-                    android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/textView28"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/datos_crediticios"
+                        android:textColor="@color/colorPrincipalOscuro"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.496"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/personaJuridica"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/colorPrincipalOscuro"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.497"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/textView28"
+                        tools:text="PRUEBA" />
+
+                    <TextView
+                        android:id="@+id/tvDui"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/d_u_i"
+                        android:textAlignment="center"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.046"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/personaJuridica" />
+
+                    <TextView
+                        android:id="@+id/txtDui"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginEnd="16dp"
+                        android:text="@string/dui"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/personaJuridica" />
+
+                    <TextView
+                        android:id="@+id/scaPrecio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/n_i_t"
+                        android:textAlignment="center"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.046"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvDui" />
+
+                    <TextView
+                        android:id="@+id/txtnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginEnd="16dp"
+                        android:text="@string/nit"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtDui" />
+
+                    <TextView
+                        android:id="@+id/scaPrecio2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="15dp"
+                        android:text="@string/n_r_c"
+                        android:textAlignment="center"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.048"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/scaPrecio" />
+
+                    <TextView
+                        android:id="@+id/txtnrc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginEnd="16dp"
+                        android:text="@string/nrc"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtnit" />
+
+                    <TextView
+                        android:id="@+id/scaPrecio3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="15dp"
+                        android:text="@string/estado_crediticio"
+                        android:textAlignment="center"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.072"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/scaPrecio2" />
+
+                    <TextView
+                        android:id="@+id/txtestadocredito"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginEnd="16dp"
+                        android:text="@string/activo"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtnrc" />
+
+                    <TextView
+                        android:id="@+id/scaPrecio4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:text="@string/balance"
+                        android:textAlignment="center"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.083"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/scaPrecio3" />
+
+                    <TextView
+                        android:id="@+id/txtbalance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginEnd="16dp"
+                        android:text="@string/balance2"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtestadocredito" />
+
+                    <TextView
+                        android:id="@+id/txtlimite"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginEnd="16dp"
+                        android:text="@string/limite"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtbalance" />
+
+                    <TextView
+                        android:id="@+id/scaPrecio5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:text="@string/limite_de_credito"
+                        android:textAlignment="center"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.109"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/scaPrecio4" />
+
+                    <TextView
+                        android:id="@+id/txtplazo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginEnd="16dp"
+                        android:text="@string/plazo"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/txtlimite" />
+
+                    <TextView
+                        android:id="@+id/scaPrecio6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:text="@string/plazo_de_credito"
+                        android:textAlignment="center"
+                        android:textColor="@color/colordark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.109"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/scaPrecio5" />
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </LinearLayout>
         </LinearLayout>
-    </ScrollView>
--->
-
+    </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

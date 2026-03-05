@@ -447,59 +447,61 @@ class carga_datos : AppCompatActivity() {
     }
 
     private fun cargarInventarioDesdeHoja(numero: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+
+        lifecycleScope.launch {
             var hojaRegistrada: Int = 0
 
-            delay(1000)
+            withContext(Dispatchers.IO){
 
-            withContext(Dispatchers.Main){
-                alert!!.changeText("CARGANDO INVENTARIO...")
+                delay(1000)
+
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("CARGANDO INVENTARIO...")
+                }
+
+                try {
+                    //OBTENIENDO INVENTARIO DESDE HOJA DE CARGA
+                    hojaRegistrada = inventarioController.obtenerInventarioHojaCarga(false, numero.toInt(), idVendedor, this@carga_datos)
+                }catch (e:Exception){
+                    println("ERROR AL CARGAR LA HOJA DE INVENTARIO " + e.message)
+                }
+
+                delay(1000)
+
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("OBTENIENDO ESCALAS DE PRECIOS")
+                }
+
+                delay(1000)
+
+                try {
+                    //OBTENIENDO ESCALAS DE PRECIOS
+                    inventarioController.obtenerEscalasPrecios(this@carga_datos)
+                }catch (e:Exception){
+                    println("ERROR AL CARGAR LAS ESCALAS DE PRECIOS " + e.message)
+                }
+
+                delay(1000)
+
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("CARGANDO UNIDADES DE MEDIDA")
+                }
+
+                delay(1000)
+
+                try{
+                    inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
+                }catch (e:Exception){
+                    println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
+                }
+
+
+                delay(1000)
             }
 
-            try {
-                //OBTENIENDO INVENTARIO DESDE HOJA DE CARGA
-                hojaRegistrada = inventarioController.obtenerInventarioHojaCarga(false, numero.toInt(), idVendedor, this@carga_datos)
-            }catch (e:Exception){
-                println("ERROR AL CARGAR LA HOJA DE INVENTARIO " + e.message)
-            }
-
-            delay(1000)
-
-            withContext(Dispatchers.Main){
-                alert!!.changeText("OBTENIENDO ESCALAS DE PRECIOS")
-            }
-
-            delay(1000)
-
-            try {
-                //OBTENIENDO ESCALAS DE PRECIOS
-                inventarioController.obtenerEscalasPrecios(this@carga_datos)
-            }catch (e:Exception){
-                println("ERROR AL CARGAR LAS ESCALAS DE PRECIOS " + e.message)
-            }
-
-            delay(1000)
-
-            withContext(Dispatchers.Main){
-                alert!!.changeText("CARGANDO UNIDADES DE MEDIDA")
-            }
-
-            delay(1000)
-
-            try{
-                inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
-            }catch (e:Exception){
-                println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
-            }
-
-
-            delay(1000)
-
-            withContext(Dispatchers.Main){
-                mensajeInventarioHoja("INVENTARIO REGISTRADO CORRECTAMENTE", hojaRegistrada)
-            }
-
+            mensajeInventarioHoja("INVENTARIO REGISTRADO CORRECTAMENTE", hojaRegistrada)
         }
+
 
     }
 

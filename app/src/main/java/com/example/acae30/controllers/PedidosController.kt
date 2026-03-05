@@ -451,9 +451,11 @@ class PedidosController {
                                 Toast.makeText(context, "DOCUMENTO INVALIDADO CORRECTAMENTE", Toast.LENGTH_SHORT)
                                     .show()
                             }
-                            CoroutineScope(Dispatchers.IO).launch {
+                            /*CoroutineScope(Dispatchers.IO).launch {
                                 actualizarInventarioAlInvalidar(context, idPedido)
-                            }
+                            }*/
+
+                            actualizarInventarioAlInvalidar(context, idPedido)
                         }
                         else -> {
                             withContext(Dispatchers.Main){

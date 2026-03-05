@@ -182,4 +182,5 @@
     <string name="abonos_cxc">ABONOS CxC</string>
     <string name="logo_server">logo_server</string>
     <string name="datos_de_conexi_n">DATOS DE CONEXIÓN</string>
+    <string name="informacioncliente">InformacionCliente</string>
 </resources>

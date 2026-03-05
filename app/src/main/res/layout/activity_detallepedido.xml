@@ -539,6 +539,7 @@
                     android:layout_marginStart="@dimen/margin_default_16dp"
                     android:layout_marginEnd="@dimen/margin_default_16dp"
                     android:layout_marginTop="@dimen/margin_8dp"
+                    android:layout_marginBottom="@dimen/margin_default_16dp"
                     android:text="INVALIDAR PEDIDO"
                     android:textColor="@color/colorAccent"
                     android:textStyle="bold"/>

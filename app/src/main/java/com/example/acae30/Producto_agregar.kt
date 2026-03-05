@@ -707,7 +707,7 @@ class Producto_agregar : AppCompatActivity() {
         //CONFIGURA LA DESCRIPCION DEL PRODUCTO DE ACUERDO A LA UNIDAD SELECCIONADA
         val nombreProducto = binding.txtdescripcion.text.toString()
         val descripcion = when(binding.spunidad.selectedItem.toString()){
-            "UNIDAD" -> nombreProducto
+            "UNIDAD" -> if(datosProducto!!.Unidad_medida.isBlank()) nombreProducto else datosProducto!!.Unidad_medida + " " + nombreProducto
             "FRACCION" -> datosProducto!!.Nombre_fraccion + ' ' + nombreProducto
             else -> binding.spunidad.selectedItem.toString().trim() + ' ' + nombreProducto
         }

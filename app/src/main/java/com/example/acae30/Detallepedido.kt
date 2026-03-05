@@ -11,28 +11,12 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
-import android.graphics.Typeface
-import android.graphics.pdf.PdfDocument
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Bundle
-import android.os.CancellationSignal
-import android.os.ParcelFileDescriptor
-import android.print.PageRange
-import android.print.PrintAttributes
-import android.print.PrintDocumentAdapter
-import android.print.PrintDocumentInfo
 import android.print.PrintManager
 import android.text.Editable
-import android.text.Layout
-import android.text.StaticLayout
-import android.text.TextPaint
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
@@ -51,7 +35,6 @@ import androidx.core.database.getStringOrNull
 import androidx.core.graphics.scale
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.dantsu.escposprinter.EscPosCharsetEncoding
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
@@ -65,6 +48,7 @@ import com.example.acae30.controllers.PedidosController
 import com.example.acae30.controllers.VisitaController
 import com.example.acae30.databinding.ActivityDetallepedidoBinding
 import com.example.acae30.listas.PedidoDetalleAdapter
+import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.InformacionSucursal
 import com.example.acae30.modelos.JSONmodels.CabezeraPedidoSend
@@ -74,9 +58,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.WriterException
-import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -84,7 +65,6 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.io.Reader
@@ -141,7 +121,7 @@ class Detallepedido : AppCompatActivity() {
     private var envioSelec : String = ""
     private var documentoSelec : String = ""
     private var sucursalName: String = ""
-    private var categoriaCliente: String = ""
+    //private var categoriaCliente: String = ""
 
     private var funciones = Funciones()
     private var pedidosController = PedidosController()
@@ -165,7 +145,7 @@ class Detallepedido : AppCompatActivity() {
     private var idPedidoServidor = 0
 
     //private lateinit var infoSucursal : InformacionSucursal
-    //private lateinit var infoCliente : Cliente
+    private var infoCliente : Cliente? = null
 
     val fecha: String = LocalDate.now()
         .format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
@@ -211,7 +191,7 @@ class Detallepedido : AppCompatActivity() {
         visita_enviada = false
 
         //OBTENIENDO LA CATEGORIA DEL CLIENTE
-        categoriaCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)?.Categoria_cliente.toString()
+        infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
 
         total = pedidosController.obtenerInformacionPedido(idpedido,this@Detallepedido)?.Total!!
         actualizarTotales()
@@ -684,7 +664,7 @@ class Detallepedido : AppCompatActivity() {
         if(total > 0){
             when(tipoDocumento) {
                 "CF","RE" -> {
-                    if(categoriaCliente == "Gran contribuyente"){
+                    if(infoCliente!!.Categoria_cliente.toString() == "Gran contribuyente"){
                         if((total/1.13f) > 100f){
                             binding.txtSumas.text = "${String.format("%.2f".format((total/1.13)))}"
                             binding.txtIva.text = "${String.format("%.2f".format(((total/1.13)*0.13)))}"
@@ -883,7 +863,7 @@ class Detallepedido : AppCompatActivity() {
     //09/10/2023
     private fun updatePedidoSucursal(idCliente:Int, nombreSucursal: String, idpedidos: Int){
         val db = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        var sucursal = nombreSucursal.replace("'", "''", false)
+        val sucursal = nombreSucursal.replace("'", "''", false)
         try {
             val sql = "SELECT Id, id_cliente, codigo_sucursal, nombre_sucursal, direccion_sucursal, " +
                     "municipio_sucursal, depto_sucursal, telefono_1, correo_sucursal, " +
@@ -1048,7 +1028,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvTipoenvio.visibility = View.VISIBLE
                     binding.btnInvalidar.visibility = View.GONE
 
-                    if(pedido!!.Tipo_documento == "RC"){
+                    if(pedido.Tipo_documento == "RC"){
                         binding.btnInvalidar.visibility = View.VISIBLE
                     }
 
@@ -1693,7 +1673,7 @@ class Detallepedido : AppCompatActivity() {
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL PAGO DEL CLIENTE", Toast.LENGTH_SHORT)
                     .show()
             }else */
-            if(codigo == "00037" && numeroOrden.isEmpty()){
+            if((infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937") && numeroOrden.isEmpty()){
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL NUMERO DE ORDEN", Toast.LENGTH_SHORT)
                     .show()
             }
@@ -1825,7 +1805,7 @@ class Detallepedido : AppCompatActivity() {
         val textoPie = "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL"
 
         val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-        val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
+        //val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
 
         val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
 
@@ -1911,7 +1891,7 @@ class Detallepedido : AppCompatActivity() {
         // ===============================
         listaDetalle.forEach { item ->
             val descripcionPartes = if(item.Bonificado!! > 0){
-                if(infoCliente.Nrc == "193-7" || infoCliente.Nrc == "1937"){
+                if(infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937"){
                     dividirDescripcion(
                         (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion + " - BONIFICADOS: " + item.Bonificado) ?: ""
                     )
@@ -1921,7 +1901,7 @@ class Detallepedido : AppCompatActivity() {
                     )
                 }
             }else{
-                if(infoCliente.Nrc == "193-7" || infoCliente.Nrc == "1937"){
+                if(infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937"){
                     dividirDescripcion(
                         (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion) ?: ""
                     )
@@ -1972,10 +1952,10 @@ class Detallepedido : AppCompatActivity() {
                 .append("[C]DATOS DEL CLIENTE\n")
                 .append("[L]------------------------------\n")
                 .append("[L]NOMBRE:\n")
-                .append("[C]${infoCliente.Cliente}\n")
+                .append("[C]${infoCliente!!.Cliente}\n")
                 .append("[L]DOCUMENTO: \n")
-                .append("[C]${infoCliente.Nit} / ${infoCliente.Dui} \n")
-                .append("[L]N.R.C: ${infoCliente.Nrc} \n")
+                .append("[C]${infoCliente!!.Nit} / ${infoCliente!!.Dui} \n")
+                .append("[L]N.R.C: ${infoCliente!!.Nrc} \n")
                 .append("[L]ACTIVIDAD ECONOMICA: \n")
                 .append("[C]$giroCliente \n")
                 .append("[L]NOMBRE SUCURSAL: \n")
@@ -2032,10 +2012,10 @@ class Detallepedido : AppCompatActivity() {
                 .append("[C]DATOS DEL CLIENTE\n")
                 .append("[L]--------------------------------\n")
                 .append("[L]NOMBRE:\n")
-                .append("[C]${infoCliente.Cliente}\n")
+                .append("[C]${infoCliente!!.Cliente}\n")
                 .append("[L]DOCUMENTO: \n")
-                .append("[C]${infoCliente.Nit} / ${infoCliente.Dui} \n")
-                .append("[L]N.R.C: ${infoCliente.Nrc} \n")
+                .append("[C]${infoCliente!!.Nit} / ${infoCliente!!.Dui} \n")
+                .append("[L]N.R.C: ${infoCliente!!.Nrc} \n")
                 .append("[L]ACTIVIDAD ECONOMICA: \n")
                 .append("[C]$giroCliente \n")
                 .append("[L]NOMBRE SUCURSAL: \n")
@@ -2130,7 +2110,7 @@ class Detallepedido : AppCompatActivity() {
         val textoPie = "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL"
 
         val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-        val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
+        //val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
 
         val printManager = getSystemService(Context.PRINT_SERVICE) as PrintManager
         val impresorIntegrado = preferencias.getString("impresorIntegrado", "sinNombre")
@@ -2224,7 +2204,7 @@ class Detallepedido : AppCompatActivity() {
             // ===============================
             listaDetalle.forEach { item ->
                 val descripcionPartes = if(item.Bonificado!! > 0){
-                    if(infoCliente.Nrc == "193-7" || infoCliente.Nrc == "1937"){
+                    if(infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937"){
                         dividirDescripcion(
                             (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion + " - BONIFICADOS: " + item.Bonificado) ?: ""
                         )
@@ -2234,7 +2214,7 @@ class Detallepedido : AppCompatActivity() {
                         )
                     }
                 }else{
-                    if(infoCliente.Nrc == "193-7" || infoCliente.Nrc == "1937"){
+                    if(infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937"){
                         dividirDescripcion(
                             (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion) ?: ""
                         )
@@ -2285,10 +2265,10 @@ class Detallepedido : AppCompatActivity() {
                     .append("[C]DATOS DEL CLIENTE\n")
                     .append("[L]------------------------------\n")
                     .append("[L]NOMBRE:\n")
-                    .append("[C]${infoCliente.Cliente}\n")
+                    .append("[C]${infoCliente!!.Cliente}\n")
                     .append("[L]DOCUMENTO: \n")
-                    .append("[C]${infoCliente.Nit} / ${infoCliente.Dui} \n")
-                    .append("[L]N.R.C: ${infoCliente.Nrc} \n")
+                    .append("[C]${infoCliente!!.Nit} / ${infoCliente!!.Dui} \n")
+                    .append("[L]N.R.C: ${infoCliente!!.Nrc} \n")
                     .append("[L]ACTIVIDAD ECONOMICA: \n")
                     .append("[C]$giroCliente \n")
                     .append("[L]NOMBRE SUCURSAL: \n")
@@ -2345,10 +2325,10 @@ class Detallepedido : AppCompatActivity() {
                     .append("[C]DATOS DEL CLIENTE\n")
                     .append("[L]------------------------------\n")
                     .append("[L]NOMBRE:\n")
-                    .append("[C]${infoCliente.Cliente}\n")
+                    .append("[C]${infoCliente!!.Cliente}\n")
                     .append("[L]DOCUMENTO: \n")
-                    .append("[C]${infoCliente.Nit} / ${infoCliente.Dui} \n")
-                    .append("[L]N.R.C: ${infoCliente.Nrc} \n")
+                    .append("[C]${infoCliente!!.Nit} / ${infoCliente!!.Dui} \n")
+                    .append("[L]N.R.C: ${infoCliente!!.Nrc} \n")
                     .append("[L]ACTIVIDAD ECONOMICA: \n")
                     .append("[C]$giroCliente \n")
                     .append("[L]NOMBRE SUCURSAL: \n")
@@ -2383,7 +2363,7 @@ class Detallepedido : AppCompatActivity() {
 
     }
 
-
+    //Funcion para Normalizar Texo, eliminar tildes, caracteres especiales, etc.
     private fun normalizarTexto(texto: String): String {
         val original = "ÁÀÂÄáàâäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖóòôöÚÙÛÜúùûüÑñÇç"
         val reemplazo = "AAAAaaaaEEEEeeeeIIIIiiiiOOOOooooUUUUuuuuNnCc"
@@ -2397,8 +2377,6 @@ class Detallepedido : AppCompatActivity() {
         resultado = resultado.replace(Regex("[^\\x00-\\x7F]"), "")
         return resultado
     }
-
-
 
     override fun onDestroy() {
         super.onDestroy()

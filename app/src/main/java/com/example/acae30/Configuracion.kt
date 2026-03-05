@@ -67,7 +67,7 @@ class Configuracion : AppCompatActivity() {
     private var idServidorActivo: Int = 0
     private var sslActivo: Int = 0
 
-    private var limpiarBD = LimpiarBD()
+    //private var limpiarBD = LimpiarBD()
 
 
     private lateinit var binding : ActivityConfiguracionBinding

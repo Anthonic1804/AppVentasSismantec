@@ -610,33 +610,36 @@ class InventarioController {
             val sql = "SELECT Existencia, Existencia_u, Fraccion FROM inventario WHERE id = $idProducto"
             val cursor = bd.query(sql)
 
-            var existenciaActual : Float = 0f
-            var existenciaUActual : Float = 0f
-            var fraccionamiento : Int = 0
-            var totalFraccionesActuales : Float = 0f
+            cursor.use {
+
+                var existenciaActual : Float = 0f
+                var existenciaUActual : Float = 0f
+                var fraccionamiento : Int = 0
+                var totalFraccionesActuales : Float = 0f
 
 
-            var existenciaFinal : Float = 0f
-            var existenciaUFinal : Float = 0f
-            var totalFraccionesFinal : Float = 0f
+                var existenciaFinal : Float = 0f
+                var existenciaUFinal : Float = 0f
+                var totalFraccionesFinal : Float = 0f
 
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                existenciaActual = cursor.getFloat(0)
-                existenciaUActual = cursor.getFloat(1)
-                fraccionamiento = cursor.getInt(2)
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    existenciaActual = cursor.getFloat(0)
+                    existenciaUActual = cursor.getFloat(1)
+                    fraccionamiento = cursor.getInt(2)
+                }
+
+                //CALCULANDO EL TOTAL DE FACCIONES ACTUAL EN INVENTARIO
+                totalFraccionesActuales = (existenciaActual * fraccionamiento) + existenciaUActual
+
+                totalFraccionesFinal = totalFraccionesActuales - cantidad
+
+                existenciaFinal = totalFraccionesFinal / fraccionamiento   // cuántas unidades completas quedan
+                existenciaUFinal = totalFraccionesFinal % fraccionamiento  // fracciones restantes
+
+                bd.execSQL("UPDATE inventario SET Existencia = ${existenciaFinal.toInt()}, Existencia_u = ${existenciaUFinal.toInt()} WHERE Id = $idProducto")
+
             }
-            cursor.close()
-
-            //CALCULANDO EL TOTAL DE FACCIONES ACTUAL EN INVENTARIO
-            totalFraccionesActuales = (existenciaActual * fraccionamiento) + existenciaUActual
-
-            totalFraccionesFinal = totalFraccionesActuales - cantidad
-
-            existenciaFinal = totalFraccionesFinal / fraccionamiento   // cuántas unidades completas quedan
-            existenciaUFinal = totalFraccionesFinal % fraccionamiento  // fracciones restantes
-
-            bd.execSQL("UPDATE inventario SET Existencia = ${existenciaFinal.toInt()}, Existencia_u = ${existenciaUFinal.toInt()} WHERE Id = $idProducto")
 
         }catch (e: Exception){
             println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA EN FRACCION DEL PRODUCTO -> " + e.message)
@@ -652,19 +655,19 @@ class InventarioController {
             val sql = "SELECT Equivale, Unidades FROM inventario_unidades WHERE id_inventario = $idProducto AND Nombre_unidad = '$unidadMedida'"
             val cursor = bd.query(sql)
 
-            var cantidadDescargar: Float = 0f
+            cursor.use {
+                var cantidadDescargar: Float = 0f
 
-            if(cursor.count > 0){
-                cursor.moveToFirst()
-                cantidadDescargar = cantidad * cursor.getFloat(0)
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    cantidadDescargar = cantidad * cursor.getFloat(0)
 
-                when(cursor.getString(1)){
-                    "UNI" -> descargarUnidades(context, idProducto, cantidadDescargar)
-                    "FRA" -> descargarFracciones(context, idProducto, cantidadDescargar)
+                    when(cursor.getString(1)){
+                        "UNI" -> descargarUnidades(context, idProducto, cantidadDescargar)
+                        "FRA" -> descargarFracciones(context, idProducto, cantidadDescargar)
+                    }
                 }
             }
-            cursor.close()
-
         }catch (e: Exception){
             println("ERROR NO SE PUEDE ACTUALIZAR LA EXISTENCIA DEL PRODUCTO POR UNIDAD DE MEDIDA -> " + e.message)
         }
@@ -1301,6 +1304,21 @@ class InventarioController {
             println("Error: no se obtuvo la unidad de medida -> " + e.message)
         }
         return unidad
+    }
+
+
+    //---------------------------------------
+    //Funciones para reintegrar el inventario
+    //---------------------------------------
+    fun reintegrarInventarioInvalidar(idPedido: Int, context: Context){
+
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        try {
+
+        }catch (e:Exception){
+            println()
+        }
+
     }
 
 
