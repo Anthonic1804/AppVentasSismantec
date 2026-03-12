@@ -102,7 +102,10 @@ class ConfigController {
                                         cargaAutomaticaCatalogos = dato.optBoolean("cargaAutomaticaCatalogos", false),
                                         decPrecios = dato.optInt("decPrecios", 2),
                                         decTotales = dato.optInt("decTotales", 2),
-                                        multiplesHojaDeCarga = dato.optBoolean("multiplesHojaDeCarga", false)
+                                        multiplesHojaDeCarga = dato.optBoolean("multiplesHojaDeCarga", false),
+                                        idBodega = dato.optInt("id_bodega_inventario"),
+                                        codBodega = dato.optString("cod_bodega_inventario"),
+                                        bodega = dato.optString("bodega_inventario")
                                     )
 
                                     confirmarPagareObligatorio(item, context)
@@ -194,6 +197,11 @@ class ConfigController {
             //Uso de Multiples hojas de car
             putBoolean("multiplesHojaDeCarga", obj.multiplesHojaDeCarga)
 
+            //Uso de Bodega
+            putInt("idBodega", obj.idBodega!!)
+            putString("codBodega", obj.codBodega)
+            putString("bodega", obj.bodega)
+
         }
     }
 
@@ -253,6 +261,11 @@ class ConfigController {
 
             //Uso de multiples hojas de carga
             remove("multiplesHojaDeCarga")
+
+            //Uso de bodegas
+            remove("idBodega")
+            remove("codBodega")
+            remove("bodega")
         }
     }
 }

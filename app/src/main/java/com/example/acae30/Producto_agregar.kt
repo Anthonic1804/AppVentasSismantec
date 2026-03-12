@@ -21,6 +21,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import androidx.core.database.getIntOrNull
+import androidx.core.database.getStringOrNull
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
@@ -355,6 +358,10 @@ class Producto_agregar : AppCompatActivity() {
 
             }
             override fun afterTextChanged(cantidad: Editable) {
+                if(cantidad.toString() == "."){
+                    binding.txtcantidad.setText("0.")
+                    binding.txtcantidad.setSelection(binding.txtcantidad.text.length)
+                }
                 validarCantidad(cantidad.toString())
             }
         })
@@ -631,10 +638,25 @@ class Producto_agregar : AppCompatActivity() {
         }
     }
 
+    //---------------------------------------
+    //Funcion utilitaria para utilizar '.' al inicio de la cantidad
+    //12-03-2026
+    //---------------------------------------
+    private fun String.toSafeDecimal(): Float {
+
+        var value = this.trim()
+
+        if (value.startsWith(".")) {
+            value = "0$value"
+        }
+
+        return value.toFloat()
+    }
+
     //FUNCION PARA VALIDAD CANTIDAD PARA ESCARRSA
     private fun validarCantidad(cantidadIngresada: String){
         if(cantidadIngresada.isNotEmpty()){
-            cantidad = cantidadIngresada.toFloat()
+            cantidad = cantidadIngresada.toSafeDecimal()
             var cantidadVerificar = cantidad
             if(equivaleUni > 0f){
                 cantidadVerificar = cantidad.toFloat() * equivaleUni
@@ -718,6 +740,34 @@ class Producto_agregar : AppCompatActivity() {
             vPrecio_iva = precioIvaPersonalizado
         }
 
+        //TIPO PRODUCTO
+        val tipoProducto = when(datosProducto!!.Tipo){
+            "Producto" -> {
+                "PRD"
+            }
+            else -> {
+                "SVC"
+            }
+        }
+
+        //TIPO FISCAL
+        val tipoFiscal = when(datosProducto!!.TipoFiscal){
+            "Gravado" -> {
+                "G"
+            }
+            "Exento" -> {
+                "E"
+            }
+            else -> {
+                "NS"
+            }
+        }
+
+        //BODEGA
+        val idBodega = preferencias!!.getInt("idBodega", 0)
+        val codBodega = preferencias!!.getString("codBodega", null)
+        val bodega = preferencias!!.getString("bodega", null)
+
         try {
             base.beginTransaction()
             val detalle = ContentValues()
@@ -747,7 +797,22 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("EquivaleFra", equivaleFra)
             detalle.put("UniEquivale", uniEquivale)
             detalle.put("Comentario", 0)
-
+            detalle.put("Tipo", tipoProducto)
+            detalle.put("IdMarca", datosProducto!!.IdMarca)
+            detalle.put("IdSku", datosProducto!!.IdSku)
+            detalle.put("IdLinea", datosProducto!!.IdLinea)
+            detalle.put("IdSubLinea", datosProducto!!.IdSubLinea)
+            detalle.put("IdRubro", datosProducto!!.IdRubro)
+            detalle.put("IdProductor", datosProducto!!.IdProductor)
+            detalle.put("IdProveedor", datosProducto!!.IdProveedor)
+            detalle.put("Metodo_gestion", datosProducto!!.MetodoGestion)
+            detalle.put("Tipo_fiscal", tipoFiscal)
+            detalle.putNull("IdLote")
+            detalle.putNull("Lote")
+            detalle.putNull("FechaVencimiento")
+            detalle.put("IdBodega", idBodega)
+            detalle.put("CodBodega", codBodega)
+            detalle.put("Bodega", bodega)
 
 
             val idpedidodetalle = base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
@@ -827,7 +892,23 @@ class Producto_agregar : AppCompatActivity() {
                     cursor.getString(21),
                     cursor.getFloat(22),
                     cursor.getFloat(23),
-                    cursor.getString(24)
+                    cursor.getString(24),
+                    cursor.getString(25),
+                    cursor.getIntOrNull(26),
+                    cursor.getIntOrNull(27),
+                    cursor.getIntOrNull(28),
+                    cursor.getIntOrNull(29),
+                    cursor.getIntOrNull(30),
+                    cursor.getIntOrNull(31),
+                    cursor.getIntOrNull(32),
+                    cursor.getString(33),
+                    cursor.getString(34),
+                    cursor.getIntOrNull(35),
+                    cursor.getStringOrNull(36),
+                    cursor.getStringOrNull(37),
+                    cursor.getIntOrNull(38),
+                    cursor.getStringOrNull(39),
+                    cursor.getStringOrNull(40)
                 )
             }
             cursor.close()

@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.AgregarHeaders
+import com.example.acae30.Utilidades.ConsumirEndpoint
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.Catalogos.DepartamentoModel
 import com.example.acae30.modelos.Catalogos.DistritoModel
@@ -21,58 +23,80 @@ import javax.net.ssl.HttpsURLConnection
 
 class CatalogosController {
 
-    private lateinit var preferences: SharedPreferences
-    private var instancia = "CONFIG_SERVIDOR"
+    //private lateinit var preferences: SharedPreferences
+    //private var instancia = "CONFIG_SERVIDOR"
     private val funciones = Funciones()
+    //private val agregarHeaders = AgregarHeaders()
+    //private val utilidades = CrearSslNoSeguro()
 
-    private val utilidades = CrearSslNoSeguro()
+    private val consumirEndpoint = ConsumirEndpoint()
 
     //FUNCION PARA OBTENER EL CATALOGO DE PAISES
-    suspend fun obtenerCatalogoPais(context: Context) {
+    /*suspend fun obtenerCatalogoPais(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
+        val servidor = funciones.getServidor(
+                preferences.getString("ip", ""),
+                preferences.getInt("puerto", 0).toString(),
+                context
+        )
 
         try {
             val direccion = servidor + "catalogos/pais"
             val url = URL(direccion)
 
             val sslContext = utilidades.crearSslInseguro()
+            val token = preferences.getString("token", "")
 
             with(withContext(Dispatchers.IO) {
                 url.openConnection()
             } as HttpURLConnection) {
 
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier{_, _ -> true}
-                }
-
                 try {
-                    connectTimeout = 10000
+
                     requestMethod = "GET"
-                    if (responseCode == 200) {
-                        inputStream.bufferedReader().use { data ->
-                            val response = StringBuffer()
-                            var inputLine = data.readLine()
-                            while (inputLine != null) {
-                                response.append(inputLine)
-                                inputLine = data.readLine()
-                            }
-                            data.close()
-                            val respuesta = JSONArray(response.toString())
-                            if (respuesta.length() > 0) {
-                                insertarCatalogoPais(context, respuesta)
+
+                    //NUEVA FUNCION CENTRALIZADA
+                    agregarHeaders.agregarHeaders(this, token, sslContext)
+
+                    connectTimeout = 10000
+
+                    when(responseCode){
+                        200 -> {
+                            inputStream.bufferedReader().use {
+
+                                val response = inputStream.bufferedReader().readText()
+                                val respuesta = JSONArray(response.toString())
+
+                                if (respuesta.length() > 0) {
+                                    insertarCatalogoPais(context, respuesta)
+                                }
                             }
                         }
-                    } else {
-                        println("SERVIDOR: NO SE ENCONTRO EL CATALOGO DE PAISES")
+                        401 -> {
+                            println("TOKEN INVALIDO O EXPIRADO")
+                        }
+                        else -> {
+                            println("SERVIDOR: NO SE ENCONTRO EL CATALOGO DE PAISES")
+                        }
                     }
+
                 } catch (e: Exception) {
                     println("ERROR: NO SE OBTUVO RESPUESTA DEL SERVIDOR " + e.message)
                 }
             }
         } catch (e: Exception) {
             println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR " + e.message)
+        }
+    }*/
+    suspend fun obtenerCatalogoPais(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "catalogos/pais")
+
+        if(response != null){
+            val respuesta = JSONArray(response)
+
+            if(respuesta.length() > 0){
+                insertarCatalogoPais(context, respuesta)
+            }
         }
     }
 
@@ -151,7 +175,7 @@ class CatalogosController {
 
 
     //FUNCON PARA OBTENER EL CATALOGO DE DEPARTAMENTO
-    suspend fun obtenerCatalogoDepartamento(context: Context) {
+    /*suspend fun obtenerCatalogoDepartamento(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
@@ -196,6 +220,16 @@ class CatalogosController {
             }
         } catch (e: Exception) {
             println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR " + e.message)
+        }
+    }*/
+    suspend fun obtenerCatalogoDepartamento(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "catalogos/departamento")
+        if(response != null){
+            val respuesta = JSONArray(response)
+
+            if (respuesta.length() > 0) {
+                insertarCatalogoDepartamento(context, respuesta)
+            }
         }
     }
 
@@ -280,7 +314,7 @@ class CatalogosController {
 
 
     //FUNCION PARA OBTENER EL CATALOGO DE MUNICIPIOS
-    suspend fun obtenerCatalogoMunicipio(context: Context) {
+    /*suspend fun obtenerCatalogoMunicipio(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
@@ -325,6 +359,17 @@ class CatalogosController {
             }
         } catch (e: Exception) {
             println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR " + e.message)
+        }
+    }*/
+    suspend fun obtenerCatalogoMunicipio(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "catalogos/municipio")
+
+        if(response != null){
+            val respuesta = JSONArray(response)
+
+            if (respuesta.length() > 0) {
+                insertarCatalogoMuncipios(context, respuesta)
+            }
         }
     }
 
@@ -414,7 +459,7 @@ class CatalogosController {
 
 
     //FUNCION PARA OBTENER EL CATALOGO DE DISTRITOS
-    suspend fun obtenerCatalogoDistrito(context: Context) {
+    /*suspend fun obtenerCatalogoDistrito(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
@@ -459,6 +504,17 @@ class CatalogosController {
             }
         } catch (e: Exception) {
             println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR " + e.message)
+        }
+    }*/
+    suspend fun obtenerCatalogoDistrito(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "catalogos/distrito")
+
+        if(response != null){
+            val respuesta = JSONArray(response)
+
+            if (respuesta.length() > 0) {
+                insertarCatalogoDistritos(context, respuesta)
+            }
         }
     }
 
@@ -550,7 +606,7 @@ class CatalogosController {
 
 
     //FUNCION PARA OBTENER EL CATALOGO DE GIROS
-    suspend fun obtenerCatalogoGiro(context: Context) {
+    /*suspend fun obtenerCatalogoGiro(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
@@ -595,6 +651,17 @@ class CatalogosController {
             }
         } catch (e: Exception) {
             println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR " + e.message)
+        }
+    }*/
+    suspend fun obtenerCatalogoGiro(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "catalogos/giro")
+
+        if(response != null){
+            val respuesta = JSONArray(response)
+
+            if (respuesta.length() > 0) {
+                insertarCatalogoGiros(context, respuesta)
+            }
         }
     }
 
@@ -643,7 +710,7 @@ class CatalogosController {
 
 
     //FUNCION PARA OBTENER EL CATALOGO DE RUTAS
-    suspend fun obtenerCatalogoRuta(context: Context) {
+    /*suspend fun obtenerCatalogoRuta(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
@@ -688,6 +755,17 @@ class CatalogosController {
             }
         } catch (e: Exception) {
             println("ERROR: NO SE LOGRO CONECTAR CON EL SERVIDOR " + e.message)
+        }
+    }*/
+    suspend fun obtenerCatalogoRuta(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "catalogos/ruta")
+
+        if(response != null){
+            val respuesta = JSONArray(response)
+
+            if (respuesta.length() > 0) {
+                insertarCatalogoRutas(context, respuesta)
+            }
         }
     }
 

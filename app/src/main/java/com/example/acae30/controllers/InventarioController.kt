@@ -80,7 +80,16 @@ class InventarioController {
                             cursor.getFloat(18),
                             cursor.getFloat(13),
                             cursor.getString(2),
-                            cursor.getString(29)
+                            cursor.getString(29),
+                            cursor.getInt(30),
+                            cursor.getInt(32),
+                            cursor.getInt(34),
+                            cursor.getInt(36),
+                            cursor.getInt(38),
+                            cursor.getInt(40),
+                            cursor.getInt(42),
+                            cursor.getString(44),
+                            cursor.getString(45)
                         )
                     }else{
                         datos = Inventario(
@@ -102,7 +111,16 @@ class InventarioController {
                             cursor.getFloat(18),
                             cursor.getFloat(13),
                             cursor.getString(2),
-                            cursor.getString(29)
+                            cursor.getString(29),
+                            cursor.getInt(30),
+                            cursor.getInt(32),
+                            cursor.getInt(34),
+                            cursor.getInt(36),
+                            cursor.getInt(38),
+                            cursor.getInt(40),
+                            cursor.getInt(42),
+                            cursor.getString(44),
+                            cursor.getString(45)
                         )
                     }
                 }
@@ -231,7 +249,16 @@ class InventarioController {
                             cursor.getFloat(18),
                             cursor.getFloat(13),
                             cursor.getString(2),
-                            cursor.getString(29)
+                            cursor.getString(29),
+                            cursor.getInt(30),
+                            cursor.getInt(32),
+                            cursor.getInt(34),
+                            cursor.getInt(36),
+                            cursor.getInt(38),
+                            cursor.getInt(40),
+                            cursor.getInt(42),
+                            cursor.getString(44),
+                            cursor.getString(45)
                         )
                         lista.add(arreglo)
                     } while (cursor.moveToNext())
@@ -426,9 +453,7 @@ class InventarioController {
                             }
                         }
                         404 -> {
-                            withContext(Dispatchers.Main){
-                                funciones.mensaje(context, "ERROR: NO SE ENCONTRO LA HOJA DE CARGA")
-                            }
+                            println("ERROR: NO SE ENCONTRO LA HOJA DE CARGA")
                             hojaRegistrada = 0
                         }
                         else -> {
@@ -437,16 +462,12 @@ class InventarioController {
                         }
                     }
                 } catch (e: Exception) {
-                    withContext(Dispatchers.Main){
-                        funciones.mensaje(context, "ERROR -> " + e.message)
-                    }
+                    println("ERROR: " + e.message)
                     hojaRegistrada = 0
                 }
             }
         } catch (e: Exception) {
-            withContext(Dispatchers.Main){
-                funciones.mensaje(context, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
-            }
+            println("ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
             hojaRegistrada = 0
         }
         return hojaRegistrada
@@ -528,6 +549,22 @@ class InventarioController {
                         data.put("fecha_inventario", LocalDate.now().toString())
                         data.put("validadoHoja", productoValidado)
                         data.put("condicion_mercado", "NORMAL")
+                        data.put("id_marca", funciones.validateJsonIsNullInt(dato, "id_marca"))
+                        data.put("marca", funciones.validateJsonIsnullString(dato, "marca"))
+                        data.put("id_sku", funciones.validateJsonIsNullInt(dato, "id_sku"))
+                        data.put("sku", funciones.validateJsonIsnullString(dato, "sku"))
+                        data.put("id_rubro", funciones.validateJsonIsNullInt(dato, "id_rubro"))
+                        data.put("rubro", funciones.validateJsonIsnullString(dato, "rubro"))
+                        data.put("id_linea", funciones.validateJsonIsNullInt(dato, "id_linea"))
+                        data.put("linea", funciones.validateJsonIsnullString(dato, "linea"))
+                        data.put("id_sublinea", funciones.validateJsonIsNullInt(dato, "id_sublinea"))
+                        data.put("sublinea", funciones.validateJsonIsnullString(dato, "sublinea"))
+                        data.put("id_productor", funciones.validateJsonIsNullInt(dato, "id_productor"))
+                        data.put("productor", funciones.validateJsonIsnullString(dato, "productor"))
+                        data.put("id_proveedor", funciones.validateJsonIsNullInt(dato, "id_proveedor"))
+                        data.put("proveedor", funciones.validateJsonIsnullString(dato, "proveedor"))
+                        data.put("metodo_gestion", funciones.validateJsonIsnullString(dato, "metodo_gestion"))
+                        data.put("tipo_fiscal", funciones.validateJsonIsnullString(dato, "tipo_fiscal"))
 
                         idRutaHojaCarga = funciones.validateJsonIsNullInt(dato, "idRuta")
                         rutaHojaCarga = funciones.validateJsonIsnullString(dato, "ruta")
@@ -1310,7 +1347,7 @@ class InventarioController {
     //---------------------------------------
     //Funciones para reintegrar el inventario
     //---------------------------------------
-    fun reintegrarInventarioInvalidar(idPedido: Int, context: Context){
+    /*fun reintegrarInventarioInvalidar(idPedido: Int, context: Context){
 
         val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         try {
@@ -1319,7 +1356,7 @@ class InventarioController {
             println()
         }
 
-    }
+    }*/
 
 
 }

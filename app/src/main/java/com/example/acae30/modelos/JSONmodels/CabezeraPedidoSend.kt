@@ -47,5 +47,8 @@ data class CabezeraPedidoSend (
     var dteCorreo : String?,
     var dteTelefono : String?,
 
+    //Id_pedido_app para evitar duplicidad
+    var id_pedido_app: String?,
+
     var detalle:ArrayList<DetallePedido>?
 )

@@ -107,7 +107,7 @@ class Inventario : AppCompatActivity() {
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
         sinExistencias = if(preferences.getString("pedidos_sin_existencia", "") == "S") 1 else 0
-        println("PRODUCTOS SIN EXISTENCIAS -> " + sinExistencias)
+        //println("PRODUCTOS SIN EXISTENCIAS -> " + sinExistencias)
         vistaInventario = preferences.getInt("vistaInventario", 0)
 
         vista = findViewById(R.id.vistaalerta)

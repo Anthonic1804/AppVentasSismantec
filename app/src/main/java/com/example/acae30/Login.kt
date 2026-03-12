@@ -22,6 +22,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
 import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.Utilidades.GenerarIdPorDispositivo
 import com.example.acae30.modelos.JSONmodels.Login
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
@@ -62,6 +63,8 @@ class Login : AppCompatActivity() {
 
     private val utilidades = CrearSslNoSeguro()
     private var  modoDesarrollo : Boolean = false
+
+    private var idAndroid = GenerarIdPorDispositivo()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,8 +109,10 @@ class Login : AppCompatActivity() {
         btnlogin!!.setOnClickListener {
             var identidad = ""
             identidad = Build.DEVICE + " " + Build.MODEL + " " + Build.HARDWARE + " " + Build.USER
+
+            val idDispositivo = idAndroid.generarIdPorDispositivo(this@Login)
             //println("El numero de identificacion: " + identidad)
-            Login(identidad)
+            Login(identidad, idDispositivo)
         }  //funciones!!.VendedorVerific(this)
 
 
@@ -136,7 +141,7 @@ class Login : AppCompatActivity() {
 
     @OptIn(DelicateCoroutinesApi::class)
     @SuppressLint("NotConstructor")
-    private fun Login(identidad: String) {
+    private fun Login(identidad: String, idAndroid: String) {
         var usuario: String = txtusuario!!.text.toString()
         var clave = txtclave!!.text.toString()
         var contexto = this
@@ -147,11 +152,11 @@ class Login : AppCompatActivity() {
                         runOnUiThread {
                             alerta!!.Cargando() //muestra la alerta
                         } //se ejecuta en el hilo principal de la app
-                        var respuesta_val = ValidarCredenciales(usuario, clave, identidad)
+                        var respuesta_val = ValidarCredenciales(usuario, clave, identidad, idAndroid)
 
                         if (respuesta_val == "Valido") {
                             // Correcto y enviar datos para registrar
-                            IniciarSesion(usuario, clave, identidad)
+                            IniciarSesion(usuario, clave, identidad, idAndroid)
                         } else if (respuesta_val == "Invalido") {
                             runOnUiThread {
                                 alerta!!.dismisss()
@@ -163,7 +168,7 @@ class Login : AppCompatActivity() {
                             // Correcto y sugerir cerrar sesion en otros dispositivos para iniciar en el actual
                             runOnUiThread {
                                 alerta!!.dismisss()
-                                AlertaCerrar(usuario, clave, identidad)
+                                AlertaCerrar(usuario, clave, identidad, idAndroid)
                             }
                         } else if (respuesta_val == "Max sesiones") {
                             // No se puede iniciar sesion porque ya se ha superado el maximo de conexiones permitidas
@@ -246,13 +251,14 @@ class Login : AppCompatActivity() {
 
     }
 
-    private fun ValidarCredenciales(usuario: String, clave: String, identidad: String): String {
+    private fun ValidarCredenciales(usuario: String, clave: String, identidad: String, idAndroid: String): String {
         var respuestaVal = ""
         try {
             val credenciales = Login(
                 usuario.uppercase(),
                 clave,
-                identidad
+                identidad,
+                idAndroid
             ) //se crea el modelo con los datos    que se enviaran
             val objecto =
                 Gson().toJson(credenciales) //Transformo la data clas a un objecto json para enviarlo
@@ -307,7 +313,7 @@ class Login : AppCompatActivity() {
                                                 "Invalido" // Usuario y contraseña no validos
                                             "Se ha llegado al maximo de sesiones activas" -> respuestaVal =
                                                 "Max sesiones" // Validar si sobrepasa el numero de sesiones
-                                           "Dispositivo no autorizado" -> respuestaVal = "noAutorizado"
+                                            "Dispositivo no autorizado" -> respuestaVal = "noAutorizado"
                                         }
 
                                         println(response)
@@ -353,12 +359,13 @@ class Login : AppCompatActivity() {
         return respuestaVal
     }//conecta con la api y valida las credenciales del usuario
 
-    private fun IniciarSesion(usuario: String, clave: String, identidad: String) {
+    private fun IniciarSesion(usuario: String, clave: String, identidad: String, idAndroid: String) {
         try {
             val credenciales = Login(
                 usuario.uppercase(),
                 clave,
-                identidad
+                identidad,
+                idAndroid
             ) //se crea el modelo con los datos    que se enviaran
 
             val objecto =
@@ -409,17 +416,28 @@ class Login : AppCompatActivity() {
                                         val estado: String = res.getString("estado")
                                         val generaToken : Int = res.getInt("generaToken")
                                         val cargarClientePorRuta : String = res.getString("todos_clientes_App")
+                                        val token : String = res.getString("token")
 
                                         if (coderror > 0) {
-                                            val editor = preferencias!!.edit()
-                                            editor.putInt("Idvendedor", coderror)
-                                            editor.putString("Vendedor", nombreEmpleado.uppercase()) //MODIFICACION OBTENIENDO EL NOMBRE DEL EMPLEADO
-                                            editor.putString("Usuario", usuario.uppercase())
-                                            editor.putString("Identidad", identidad)
-                                            editor.putInt("generaToken", generaToken)//VALIDACION TIPO ADMINISTRADOR
-                                            editor.putBoolean("sesion", true)
-                                            editor.putString("cargarClientesPorRuta", cargarClientePorRuta) // VALIDACION PARA CARGAR CLIENTES POR RUTA EN APP
-                                            editor.apply()
+                                            preferencias!!.edit {
+                                                putInt("Idvendedor", coderror)
+                                                putString(
+                                                    "Vendedor",
+                                                    nombreEmpleado.uppercase()
+                                                ) //MODIFICACION OBTENIENDO EL NOMBRE DEL EMPLEADO
+                                                putString("Usuario", usuario.uppercase())
+                                                putString("Identidad", identidad)
+                                                putInt(
+                                                    "generaToken",
+                                                    generaToken
+                                                )//VALIDACION TIPO ADMINISTRADOR
+                                                putBoolean("sesion", true)
+                                                putString(
+                                                    "cargarClientesPorRuta",
+                                                    cargarClientePorRuta
+                                                ) // VALIDACION PARA CARGAR CLIENTES POR RUTA EN APP
+                                                putString("token", token)
+                                            }
 
                                             val inte = Intent(this@Login, Inicio::class.java)
                                             startActivity(inte)
@@ -502,13 +520,13 @@ class Login : AppCompatActivity() {
 
     } //muestra la alerta para eliminar
 
-    private fun AlertaCerrar(usuario: String, clave: String, identidad: String) {
+    private fun AlertaCerrar(usuario: String, clave: String, identidad: String, idAndroid: String) {
         val dialogo = Dialog(this)
         dialogo.setContentView(R.layout.alert_cerrar_sesion_dispositivos)
         dialogo.findViewById<Button>(R.id.btncerrar).setOnClickListener {
             try {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    IniciarSesion(usuario, clave, identidad)
+                    IniciarSesion(usuario, clave, identidad, idAndroid)
                 }
             } catch (e: java.lang.Exception) {
                 println("Error cerrar: " + e.message)

@@ -19,5 +19,14 @@ data class Inventario (
     var Bonificado: Float?, // 18
     var Existencia_u:Float, // 13
     var codigo_de_barra: String, // 2
-    var condicionMercado : String //29
+    var condicionMercado : String, //29
+    var IdMarca: Int?, //30
+    var IdSku: Int?,//32
+    var IdRubro: Int?,//34
+    var IdLinea: Int?,//36
+    var IdSubLinea: Int?,//38
+    var IdProductor: Int?,//40
+    var IdProveedor: Int?,//42
+    var MetodoGestion: String?,//44
+    var TipoFiscal: String?//45
 )

@@ -31,6 +31,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.database.getFloatOrNull
+import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import androidx.core.graphics.scale
 import androidx.lifecycle.lifecycleScope
@@ -1255,6 +1256,7 @@ class Detallepedido : AppCompatActivity() {
                     pedido.getString(53),
                     pedido.getString(54),
                     pedido.getString(55),
+                    pedido.getString(57),
                     null
                 )
 
@@ -1289,7 +1291,23 @@ class Detallepedido : AppCompatActivity() {
                                 cdetalle.getString(21),
                                 cdetalle.getFloatOrNull(22) ?: 0f,
                                 cdetalle.getFloatOrNull(23) ?: 0f,
-                                cdetalle.getString(24)
+                                cdetalle.getString(24),
+                                cdetalle.getString(25),
+                                cdetalle.getIntOrNull(26),
+                                cdetalle.getIntOrNull(27),
+                                cdetalle.getIntOrNull(28),
+                                cdetalle.getIntOrNull(29),
+                                cdetalle.getIntOrNull(30),
+                                cdetalle.getIntOrNull(31),
+                                cdetalle.getIntOrNull(32),
+                                cdetalle.getString(33),
+                                cdetalle.getString(34),
+                                cdetalle.getIntOrNull(35),
+                                cdetalle.getStringOrNull(36),
+                                cdetalle.getStringOrNull(37),
+                                cdetalle.getIntOrNull(38),
+                                cdetalle.getStringOrNull(39),
+                                cdetalle.getStringOrNull(40)
                             )
                             list.add(detalle)
                         } while (cdetalle.moveToNext())
@@ -1309,9 +1327,10 @@ class Detallepedido : AppCompatActivity() {
         var enviado = false
         try {
             val objecto = convertToJson(pedido, idpedido) //convertimos a json el objecto pedido
-            val ruta: String = "http://$ip:$puerto/pedido" //ruta para enviar el pedido
+            val servidor = funciones.getServidor(ip, puerto.toString(), this@Detallepedido)
+            val ruta: String = servidor + "pedido" //ruta para enviar el pedido
 
-            println("JSON ENVIADO -> " + objecto )
+            //println("JSON ENVIADO -> " + objecto )
 
             val url = URL(ruta)
 
@@ -1438,7 +1457,7 @@ class Detallepedido : AppCompatActivity() {
             hojaCarga = preferencias.getInt("hojaCarga", 0)
         }
 
-        val idHojaCargaMaster = preferencias.getInt("idHojaCargaMaster", 0)
+        //val idHojaCargaMaster = preferencias.getInt("idHojaCargaMaster", 0)
 
         var horaProceso = funciones.getFechaHoraProceso()
 
@@ -1511,8 +1530,7 @@ class Detallepedido : AppCompatActivity() {
         json.addProperty("DTEPais", pedido.dtePais)
         //json.addProperty("DTEGiro", infoCliente!!.dteGiro)
 
-        //ENVIANDO idHojaCargaMaster AL SERVIDOR
-        json.addProperty("idHojaCargaMaster", idHojaCargaMaster)
+        json.addProperty("id_pedido_app", pedido.id_pedido_app)
 
         //se ordena la cabezera
         val detalle = JsonArray()
@@ -1545,6 +1563,31 @@ class Detallepedido : AppCompatActivity() {
             d.addProperty("EquivaleFra", data.EquivaleFra)
             d.addProperty("UniEquivale", data.UniEquivale)
             d.addProperty("FechaCreado", pedido.fechaCreado) /*ENVIANDO LA MISMA FECHA DEL PEDIDO DESDE EL CEL*/
+
+            //------------------------------------
+            //Nuevos Campos Agregados
+            //------------------------------------
+            d.addProperty("tipo", data.Tipo)
+            d.addProperty("id_marca", data.IdMarca)
+            d.addProperty("id_sku", data.IdSku)
+            d.addProperty("id_linea", data.IdLinea)
+            d.addProperty("id_sublinea", data.IdSubLinea)
+            d.addProperty("id_rubro", data.IdRubro)
+            d.addProperty("id_productor", data.IdProductor)
+            d.addProperty("id_proveedor", data.IdProveedor)
+            d.addProperty("id_ruta", pedido.idRuta)
+            d.addProperty("id_vendedor", pedido.Idvendedor)
+            d.addProperty("metodo_gestion", data.MetodoGestion)
+            d.addProperty("tipo_fiscal", data.TipoFiscal)
+            d.addProperty("departamento", infoCliente!!.Departamento)
+            d.addProperty("idLote", data.IdLote)
+            d.addProperty("lote", data.Lote)
+            d.addProperty("fecha_vencimiento", data.FechaVencimiento)
+            d.addProperty("id_bodega", data.IdBodega)
+            d.addProperty("cod_bodega", data.CodBodega)
+            d.addProperty("bodega", data.Bodega)
+
+
             detalle.add(d)
         }
         json.add("detalle", detalle)

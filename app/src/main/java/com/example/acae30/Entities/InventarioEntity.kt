@@ -37,5 +37,21 @@ data class InventarioEntity(
     val precio_viñeta_iva: Float,
     val fecha_inventario: String,
     val validadoHoja: Int,
-    val condicion_mercado: String
+    val condicion_mercado: String,
+    val id_marca: Int?,
+    val marca: String?,
+    val id_sku: Int?,
+    val Sku: String?,
+    val id_rubro: Int?,
+    val rubro: String?,
+    val id_linea: Int?,
+    val linea: String?,
+    val id_sublinea: Int?,
+    val sublinea: String?,
+    val id_productor: Int?,
+    val productor: String?,
+    val id_proveedor: Int?,
+    val proveedor: String?,
+    val metodo_gestion: String?,
+    val tipo_fiscal: String?
 )

@@ -453,6 +453,10 @@ class carga_datos : AppCompatActivity() {
 
             withContext(Dispatchers.IO){
 
+                withContext(Dispatchers.Main){
+                    alert!!.Cargando()
+                }
+
                 delay(1000)
 
                 withContext(Dispatchers.Main){
@@ -466,42 +470,55 @@ class carga_datos : AppCompatActivity() {
                     println("ERROR AL CARGAR LA HOJA DE INVENTARIO " + e.message)
                 }
 
-                delay(1000)
+                if(hojaRegistrada == 1){
+                    delay(1000)
 
-                withContext(Dispatchers.Main){
-                    alert!!.changeText("OBTENIENDO ESCALAS DE PRECIOS")
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("OBTENIENDO ESCALAS DE PRECIOS")
+                    }
+
+                    delay(1000)
+
+                    try {
+                        //OBTENIENDO ESCALAS DE PRECIOS
+                        inventarioController.obtenerEscalasPrecios(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL CARGAR LAS ESCALAS DE PRECIOS " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO UNIDADES DE MEDIDA")
+                    }
+
+                    delay(1000)
+
+                    try{
+                        inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
+                    }catch (e:Exception){
+                        println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
+                    }
+
+                    delay(1000)
+
+                    if(hojaRegistrada == 1){
+                        withContext(Dispatchers.Main){
+                            alert!!.dismisss()
+                            mensajeInventarioHoja("INVENTARIO REGISTRADO CORRECTAMENTE", hojaRegistrada)
+                        }
+                    }
+
+                }else{
+                    withContext(Dispatchers.Main){
+                        alert!!.dismisss()
+                        mensajeInventarioHoja("NO SE ENCONTRO LA HOJA DE CARGA", hojaRegistrada)
+                    }
                 }
 
-                delay(1000)
-
-                try {
-                    //OBTENIENDO ESCALAS DE PRECIOS
-                    inventarioController.obtenerEscalasPrecios(this@carga_datos)
-                }catch (e:Exception){
-                    println("ERROR AL CARGAR LAS ESCALAS DE PRECIOS " + e.message)
-                }
-
-                delay(1000)
-
-                withContext(Dispatchers.Main){
-                    alert!!.changeText("CARGANDO UNIDADES DE MEDIDA")
-                }
-
-                delay(1000)
-
-                try{
-                    inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
-                }catch (e:Exception){
-                    println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
-                }
-
-
-                delay(1000)
             }
 
-            mensajeInventarioHoja("INVENTARIO REGISTRADO CORRECTAMENTE", hojaRegistrada)
         }
-
 
     }
 
@@ -645,7 +662,23 @@ class carga_datos : AppCompatActivity() {
                             precio_viñeta_iva = it.precio_viñeta_iva ?: 0f,
                             fecha_inventario = LocalDate.now().toString(),
                             validadoHoja = 1,
-                            condicion_mercado = it.condicion_mercado ?: "NORMAL"
+                            condicion_mercado = it.condicion_mercado ?: "NORMAL",
+                            id_marca = it.id_marca,
+                            marca = it.marca,
+                            id_sku = it.id_sku,
+                            Sku = it.Sku,
+                            id_rubro = it.id_rubro,
+                            rubro = it.rubro,
+                            id_linea = it.id_linea,
+                            linea = it.linea,
+                            id_sublinea = it.id_sublinea,
+                            sublinea = it.sublinea,
+                            id_productor = it.id_productor,
+                            productor = it.productor,
+                            id_proveedor = it.id_proveedor,
+                            proveedor = it.proveedor,
+                            metodo_gestion = it.metodo_gestion,
+                            tipo_fiscal = it.tipo_fiscal
                         )
                     }
 

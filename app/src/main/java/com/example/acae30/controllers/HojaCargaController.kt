@@ -145,6 +145,22 @@ class HojaCargaController {
             data.put("fecha_inventario", LocalDate.now().toString())
             data.put("validadoHoja", 1)
             data.put("condicion_mercado", "NORMAL")
+            data.put("id_marca", funciones.validateJsonIsNullInt(dato, "id_marca"))
+            data.put("marca", funciones.validateJsonIsnullString(dato, "marca"))
+            data.put("id_sku", funciones.validateJsonIsNullInt(dato, "id_sku"))
+            data.put("sku", funciones.validateJsonIsnullString(dato, "sku"))
+            data.put("id_rubro", funciones.validateJsonIsNullInt(dato, "id_rubro"))
+            data.put("rubro", funciones.validateJsonIsnullString(dato, "rubro"))
+            data.put("id_linea", funciones.validateJsonIsNullInt(dato, "id_linea"))
+            data.put("linea", funciones.validateJsonIsnullString(dato, "linea"))
+            data.put("id_sublinea", funciones.validateJsonIsNullInt(dato, "id_sublinea"))
+            data.put("sublinea", funciones.validateJsonIsnullString(dato, "sublinea"))
+            data.put("id_productor", funciones.validateJsonIsNullInt(dato, "id_productor"))
+            data.put("productor", funciones.validateJsonIsnullString(dato, "productor"))
+            data.put("id_proveedor", funciones.validateJsonIsNullInt(dato, "id_proveedor"))
+            data.put("proveedor", funciones.validateJsonIsnullString(dato, "proveedor"))
+            data.put("metodo_gestion", funciones.validateJsonIsnullString(dato, "metodo_gestion"))
+            data.put("tipo_fiscal", funciones.validateJsonIsnullString(dato, "tipo_fiscal"))
 
             bd.insert("inventario", SQLiteDatabase.CONFLICT_REPLACE, data)
         }catch (e:Exception){
@@ -164,7 +180,7 @@ class HojaCargaController {
         val cantidad = funciones.validateJsonIsNullFloat(dato, "existencia")
 
         try {
-            db.execSQL("INSERT INTO hoja_carga_detalle(Id_hojaCarga, Id_inventario, Codigo_inventario, Cantidad) VALUES($idHojaCarga, $idProducto, $codigoInventario, $cantidad)")
+            db.execSQL("INSERT INTO hoja_carga_detalle(Id_hojaCarga, Id_inventario, Codigo_inventario, Cantidad) VALUES($idHojaCarga, $idProducto, '$codigoInventario', $cantidad)")
         }catch (e:Exception){
             println("ERROR AL INSERTAR EL PRODUCTO EN HOJA DETALLE -> " + e.message)
         }

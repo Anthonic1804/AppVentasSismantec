@@ -26,6 +26,7 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import androidx.core.content.edit
 import androidx.core.database.getFloatOrNull
+import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import javax.net.ssl.HostnameVerifier
@@ -274,7 +275,23 @@ class PedidosController {
                             cdetalle.getString(21),
                             cdetalle.getFloatOrNull(22) ?: 0f,
                             cdetalle.getFloatOrNull(23) ?: 0f,
-                            cdetalle.getString(24)
+                            cdetalle.getString(24),
+                            cdetalle.getString(25),
+                            cdetalle.getIntOrNull(26),
+                            cdetalle.getIntOrNull(27),
+                            cdetalle.getIntOrNull(28),
+                            cdetalle.getIntOrNull(29),
+                            cdetalle.getIntOrNull(30),
+                            cdetalle.getIntOrNull(31),
+                            cdetalle.getIntOrNull(32),
+                            cdetalle.getString(33),
+                            cdetalle.getString(34),
+                            cdetalle.getIntOrNull(35),
+                            cdetalle.getStringOrNull(36),
+                            cdetalle.getStringOrNull(37),
+                            cdetalle.getIntOrNull(38),
+                            cdetalle.getStringOrNull(39),
+                            cdetalle.getStringOrNull(40)
                         )
                         lista.add(detalle)
                     } while (cdetalle.moveToNext())

@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets
 import java.sql.SQLXML
 import androidx.core.content.edit
 import com.example.acae30.Utilidades.CrearSslNoSeguro
+import java.util.UUID
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 
@@ -772,6 +773,9 @@ class Visita : AppCompatActivity() {
         if(nrc.length > 2 && nrc.isNotBlank()){
             tipoDocumento = "CF"
         }
+
+        val id_pedido_app = UUID.randomUUID().toString()
+
         try {
             base.beginTransaction()
             val contenido = ContentValues()
@@ -794,6 +798,7 @@ class Visita : AppCompatActivity() {
             contenido.put("DTECorreo", terminos.DTECorreo)
             contenido.put("DTETelefono", terminos.DTETelefono)
             contenido.put("Fecha", fechaCreado)
+            contenido.put("Id_pedido_app", id_pedido_app)
             val id = base.insert("pedidos", SQLiteDatabase.CONFLICT_REPLACE, contenido)
             //inserta el encabezado del pedido
             idpedido = id.toInt()

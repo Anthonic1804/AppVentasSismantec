@@ -264,7 +264,16 @@ class SolicitudRecargasController {
                         cursor.getFloat(18),
                         cursor.getFloat(13),
                         cursor.getString(2),
-                        ""
+                        "",
+                        cursor.getInt(30),
+                        cursor.getInt(32),
+                        cursor.getInt(34),
+                        cursor.getInt(36),
+                        cursor.getInt(38),
+                        cursor.getInt(40),
+                        cursor.getInt(42),
+                        cursor.getString(44),
+                        cursor.getString(45)
                     )
                     lista.add(arreglo)
                 } while (cursor.moveToNext())
@@ -309,7 +318,16 @@ class SolicitudRecargasController {
                     cursor.getFloat(18),
                     cursor.getFloat(13),
                     cursor.getString(2),
-                    ""
+                    "",
+                    cursor.getInt(30),
+                    cursor.getInt(32),
+                    cursor.getInt(34),
+                    cursor.getInt(36),
+                    cursor.getInt(38),
+                    cursor.getInt(40),
+                    cursor.getInt(42),
+                    cursor.getString(44),
+                    cursor.getString(45)
                 )
             }
         }catch (e:Exception){

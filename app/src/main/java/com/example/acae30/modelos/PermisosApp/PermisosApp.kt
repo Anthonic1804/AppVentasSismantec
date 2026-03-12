@@ -59,5 +59,10 @@ data class PermisosApp(
     var decTotales : Int,
 
     //Usar multiples hojas de carga
-    var multiplesHojaDeCarga: Boolean
+    var multiplesHojaDeCarga: Boolean,
+
+    //Uso de bodega de ventas
+    var idBodega: Int?,
+    var codBodega: String?,
+    var bodega: String?
 )

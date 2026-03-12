@@ -207,7 +207,23 @@ class Tablas {
                 "precio_viñeta_iva REAL NOT NULL," +
                 "fecha_inventario TEXT NOT NULL," +
                 "validadoHoja INTEGER NOT NULL DEFAULT 0," +
-                "condicion_mercado TEXT NOT NULL)"
+                "condicion_mercado TEXT NOT NULL," +
+                "id_marca INTEGER NULL," +
+                "marca TEXT NULL," +
+                "id_sku INTEGER NULL," +
+                "sku TEXT NULL," +
+                "id_rubro INTEGER NULL," +
+                "rubro TEXT NULL," +
+                "id_linea INTEGER NULL," +
+                "linea TEXT NULL," +
+                "id_sublinea INTEGER NULL," +
+                "sublinea TEXT NULL," +
+                "id_productor INTEGER NULL," +
+                "productor TEXT NULL," +
+                "id_proveedor INTEGER NULL," +
+                "proveedor TEXT NULL," +
+                "metodo_gestion TEXT NULL," +
+                "tipo_fiscal TEXT NOT NULL)"
 
     } //tabla inventario
 
@@ -424,7 +440,8 @@ class Tablas {
                 "DTEPais VARCHAR(50) NOT NULL DEFAULT ''," +
                 "DTECorreo VARCHAR(100) NOT NULL DEFAULT ''," +
                 "DTETelefono VARCHAR(25) NOT NULL DEFAULT ''," +
-                "Fecha VARCHAR(25) NOT NULL DEFAULT ''" +
+                "Fecha VARCHAR(25) NOT NULL DEFAULT ''," +
+                "Id_pedido_app VARCHAR(100) NULL" +
                 ");"
     }
 
@@ -445,13 +462,32 @@ class Tablas {
                 "Bonificado Integer not null DEFAULT 0," +
                 "Descuento Numeric(18,2)not null default 0," +
                 "Precio_editado VARCHAR(10) DEFAULT '' NOT NULL," +
-                "Id_talla INTEGER NOT NULL DEFAULT 0," +
+                "Id_talla INTEGER NULL," +
                 "Id_Inventario_Precios INTEGER NOT NULL DEFAULT 0," +
                 "Codigo_de_barra VARCHAR(50) NOT NULL DEFAULT ''," +
                 "EquivaleUni NUMERIC(18,2) NOT NULL DEFAULT 0," +
                 "EquivaleFra NUMERIC(18,2) NOT NULL DEFAULT 0," +
                 "UniEquivale VARCHAR(5) NULL, " +
                 "Comentario INTEGER NOT NULL DEFAULT 0, " +
+                "Tipo VARCHAR(25) NOT NULL," +
+                "IdMarca INTEGER NULL," +
+                "IdSku INTEGER NULL," +
+                "IdLinea INTEGER NULL," +
+                "IdSubLinea INTEGER NULL," +
+                "IdRubro INTEGER NULL," +
+                "IdProductor INTEGER NULL," +
+                "IdProveedor INTEGER NULL," +
+                "IdRuta INTEGER NULL," +
+                "IdVendedor INTEGER NULL," +
+                "Metodo_gestion VARCHAR(25) NOT NULL," +
+                "Tipo_fiscal VARCHAR(3) NOT NULL," +
+                "Departamento VARCHAR(25) NULL," +
+                "IdLote INTEGER NULL," +
+                "Lote VARCHAR(25) NULL," +
+                "FechaVencimiento VARCHAR(25) NULL," +
+                "IdBodega INTEGER NULL," +
+                "CodBodega VARCHAR(25) NULL," +
+                "Bodega VARCHAR(25) NULL," +
                 "FOREIGN KEY(Id_pedido) REFERENCES pedidos(Id_pedido)" +
                 ")"
     } //tabla detalle pedidos
@@ -482,7 +518,23 @@ class Tablas {
                     "detalle_pedidos.Codigo_de_barra, " +
                     "detalle_pedidos.EquivaleUni, " +
                     "detalle_pedidos.EquivaleFra, " +
-                    "detalle_pedidos.UniEquivale " +
+                    "detalle_pedidos.UniEquivale," +
+                    "detalle_pedidos.Tipo," +
+                    "detalle_pedidos.IdMarca," +
+                    "detalle_pedidos.IdSku," +
+                    "detalle_pedidos.IdLinea," +
+                    "detalle_pedidos.IdSubLinea," +
+                    "detalle_pedidos.IdRubro," +
+                    "detalle_pedidos.IdProductor," +
+                    "detalle_pedidos.IdProveedor," +
+                    "detalle_pedidos.Metodo_gestion," +
+                    "detalle_pedidos.Tipo_fiscal," +
+                    "detalle_pedidos.IdLote," +
+                    "detalle_pedidos.Lote," +
+                    "detalle_pedidos.FechaVencimiento," +
+                    "detalle_pedidos.IdBodega," +
+                    "detalle_pedidos.CodBodega," +
+                    "detalle_pedidos.Bodega " +
                 "FROM detalle_pedidos " +
                 "LEFT JOIN inventario " +
                 "ON inventario.Id = detalle_pedidos.Id_producto;"
