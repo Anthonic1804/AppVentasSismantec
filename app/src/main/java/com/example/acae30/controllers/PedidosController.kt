@@ -312,7 +312,7 @@ class PedidosController {
         val consulta = if(local){
             "SELECT * FROM pedidos where Enviado=1 AND pedido_dte=1"
         }else{
-            "SELECT * FROM pedidos where Enviado=1 AND Fecha != '$fechanow'"
+            "SELECT * FROM pedidos where Fecha != '$fechanow'"
         }
 
         try {
@@ -639,6 +639,10 @@ class PedidosController {
             detalle.put("EquivaleFra", 0f)
             detalle.put("UniEquivale", "")
             detalle.put("Comentario", 1)
+            detalle.put("Tipo", "PRD")
+            detalle.put("Metodo_gestion", "NINGUNO")
+            detalle.put("Tipo_fiscal", "G")
+            detalle.put("Departamento", "")
 
             base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
 

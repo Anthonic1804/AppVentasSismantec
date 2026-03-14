@@ -215,6 +215,20 @@ class Pedido : AppCompatActivity() {
                     }
 
                 }else{
+
+                    //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
+                    if(tipoVentaLocal){
+                        pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        actualizarVistaDTE()
+                    }
+
+                    delay(1000)
+
                     withContext(Dispatchers.Main){
                         messageAsync("NO SE ENCONTRARON PEDIDOS NO SINCRONIZADOS")
                     }

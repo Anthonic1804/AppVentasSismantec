@@ -265,15 +265,15 @@ class SolicitudRecargasController {
                         cursor.getFloat(13),
                         cursor.getString(2),
                         "",
-                        cursor.getInt(30),
-                        cursor.getInt(32),
-                        cursor.getInt(34),
-                        cursor.getInt(36),
-                        cursor.getInt(38),
-                        cursor.getInt(40),
-                        cursor.getInt(42),
-                        cursor.getString(44),
-                        cursor.getString(45)
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        "",
+                        ""
                     )
                     lista.add(arreglo)
                 } while (cursor.moveToNext())
@@ -281,7 +281,7 @@ class SolicitudRecargasController {
             }
             cursor.close()
         }catch (e:Exception){
-            println("ERROR AL REALIZAR LA BUSQUEDA EN INVENTARIO -> ${e.message}")
+            println("ERROR AL REALIZAR LA BUSQUEDA EN INVENTARIO 2 -> ${e.message}")
         }
         return lista
     }
@@ -319,15 +319,15 @@ class SolicitudRecargasController {
                     cursor.getFloat(13),
                     cursor.getString(2),
                     "",
-                    cursor.getInt(30),
-                    cursor.getInt(32),
-                    cursor.getInt(34),
-                    cursor.getInt(36),
-                    cursor.getInt(38),
-                    cursor.getInt(40),
-                    cursor.getInt(42),
-                    cursor.getString(44),
-                    cursor.getString(45)
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    "",
+                    ""
                 )
             }
         }catch (e:Exception){

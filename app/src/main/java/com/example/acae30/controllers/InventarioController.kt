@@ -266,7 +266,7 @@ class InventarioController {
                 }
             }
         }catch (e:Exception){
-            println("ERROR AL REALIZAR LA BUSQUEDA EN INVENTARIO -> ${e.message}")
+            println("ERROR AL REALIZAR LA BUSQUEDA EN INVENTARIO 1 -> ${e.message}")
         }
         return lista
     }
