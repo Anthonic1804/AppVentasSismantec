@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.dcastalia.localappupdate.DownloadApk
+import com.example.acae30.Utilidades.AgregarHeaders
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.database.LimpiarBD
 import com.example.acae30.controllers.ConexionController
@@ -55,6 +56,7 @@ class Configuracion : AppCompatActivity() {
     private var configController = ConfigController()
     private var funciones = Funciones()
     private var conexionController = ConexionController()
+    private val agregarHeaders = AgregarHeaders()
 
     private var servidor: String = ""
     private var nombreServidor: String = ""
@@ -564,10 +566,8 @@ class Configuracion : AppCompatActivity() {
                 url.openConnection()
             } as HttpURLConnection) {
 
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier{_, _ -> true}
-                }
+                val token = preferencias!!.getString("token", "")
+                agregarHeaders.agregarHeaders(this, token, sslContext)
 
                 try {
                     runOnUiThread {

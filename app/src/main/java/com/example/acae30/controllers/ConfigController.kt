@@ -9,6 +9,7 @@ import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
 import androidx.core.content.edit
+import com.example.acae30.Utilidades.ConsumirEndpoint
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.PermisosApp.PermisosApp
 import javax.net.ssl.HostnameVerifier
@@ -21,8 +22,10 @@ class ConfigController {
     private var instancia = "CONFIG_SERVIDOR"
     private var utilidades = CrearSslNoSeguro()
 
+    private val consumirEndPoint = ConsumirEndpoint()
+
     //FUNCION PARA OBTERNER LA INFORMACION DE LA TABLA CONFIG SQLSERVER
-    suspend fun obtenerConfigPagareObligatorio(context:Context){
+    /*suspend fun obtenerConfigPagareObligatorio(context:Context){
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
@@ -124,6 +127,73 @@ class ConfigController {
         } catch (e: Exception) {
             println("ERROR PRIMER TRY CATCH -> ${e.message}")
         }
+    }*/
+    suspend fun obtenerConfigPagareObligatorio(context: Context){
+
+        val response = consumirEndPoint.consumirEndpoint(context, "config")
+        if(response != null){
+
+            val respuesta = JSONArray(response)
+
+            if(respuesta.length() > 0){
+
+                //ELIMINANDO CONFIGURACION
+                eliminarConfiguracionApp(context)
+
+                for (i in 0 until respuesta.length()){
+                    val dato = respuesta.getJSONObject(i)
+
+                    val item = PermisosApp(
+
+                        pagareObligarotio = dato.getBoolean("pagare_obligatorio_app"),
+                        modificarPrecio = dato.getBoolean("modificar_precio_app"),
+                        pedidoSinExistencia = dato.getString("pedidos_sin_existencia"),
+                        networkProvider = dato.getBoolean("networkProvider_app"),
+                        usarHojaCarga = dato.getBoolean("hoja_carga_inventario_app"),
+                        mostrarPrecioApp = dato.getInt("precio_mostrar_app"),
+                        mHistorio = dato.getBoolean("m_Historico"),
+                        mHojaCarga = dato.getBoolean("m_HojaCarga"),
+                        mGastos = dato.getBoolean("m_Gastos"),
+                        mReportes = dato.getBoolean("m_Reportes"),
+                        mCxC = dato.getBoolean("m_CxC"),
+                        mAbonos = dato.getBoolean("m_Abonos"),
+                        pMantto_Clientes = dato.getBoolean("p_Mantto_Clientes"),
+                        pImprimirTKVenta = dato.getBoolean("p_Imprimir_TK_Venta"),
+                        solicitudCargaSinExistencia = dato.getBoolean("solicitud_Carga_SinExistencia"),
+                        validarHojaCarga = dato.optBoolean("validacionHojaCarga", false),
+                        docFactura = dato.getBoolean("doc_Factura"),
+                        docCreFiscal = dato.getBoolean("doc_CreFiscal"),
+                        docRecibo = dato.getBoolean("doc_Recibo"),
+                        docRemision = dato.getBoolean("doc_Remision"),
+                        docFacExportacion = dato.getBoolean("doc_FacExportacion"),
+                        empresa = dato.getString("empresa"),
+                        direccion = dato.getString("direccion"),
+                        nrc = dato.getString("nrc"),
+                        nit = dato.getString("nit"),
+                        giro = dato.getString("giro"),
+                        dteUrlQRHacienda = dato.optString("dteUrlQR_Hacienda", "0"),
+                        dteUrlQRempresa = dato.optString("dteUrlQR_empresa", "0"),
+                        numItemFactura = dato.optInt("numItemFactura", 100),
+                        numItemCreFiscal = dato.optInt("numItemCreFiscal",100),
+                        numItemRecibo = dato.optInt("numItemRecibo", 100),
+                        numItemRemision = dato.optInt("numItemRemision", 100),
+                        tipoVentaLocal = dato.optBoolean("tipoVentaLocal", false),
+                        modoDesarrollo = dato.optBoolean("modoDesarrollo", false),
+                        cargaAutomaticaCatalogos = dato.optBoolean("cargaAutomaticaCatalogos", false),
+                        decPrecios = dato.optInt("decPrecios", 2),
+                        decTotales = dato.optInt("decTotales", 2),
+                        multiplesHojaDeCarga = dato.optBoolean("multiplesHojaDeCarga", false),
+                        idBodega = dato.optInt("id_bodega_inventario"),
+                        codBodega = dato.optString("cod_bodega_inventario"),
+                        bodega = dato.optString("bodega_inventario")
+                    )
+
+                    confirmarPagareObligatorio(item, context)
+                }
+            }
+
+        }
+
     }
 
     //FUNCION PARA SETEAR LA FORMA DEL PAGARE EN SHAREDPREFERENCES

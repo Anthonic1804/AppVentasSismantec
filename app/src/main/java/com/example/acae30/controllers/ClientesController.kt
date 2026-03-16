@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import com.example.acae30.Detallepedido
 import com.example.acae30.Funciones
+import com.example.acae30.Utilidades.AgregarHeaders
+import com.example.acae30.Utilidades.ConsumirEndpoint
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.Visita
 import com.example.acae30.modelos.Cliente
@@ -37,6 +39,8 @@ class ClientesController {
     private var instancia = "CONFIG_SERVIDOR"
 
     private var utilidades = CrearSslNoSeguro()
+    private var consumirEndpoint = ConsumirEndpoint()
+    private val agregarHeaders = AgregarHeaders()
 
     //OBTENER CLIENTES DEL SERVIDOR
     suspend fun obtenerClientesServidor(context: Context) {
@@ -55,10 +59,8 @@ class ClientesController {
                 url.openConnection()
             } as HttpURLConnection) {
 
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier{_, _ -> true}
-                }
+                val token = preferences.getString("token", "")
+                agregarHeaders.agregarHeaders(this, token, sslContext)
 
                 try {
                     connectTimeout = 30000
@@ -93,7 +95,7 @@ class ClientesController {
             //alert!!.dismisss()
 
         }
-    } //obtiene los clientes del servidor
+    }
 
     //GUARDAR DATOS DE CLIENTES EN SQLITE
     private fun saveClienteDataBase(json: JSONArray, context: Context) {
@@ -189,7 +191,7 @@ class ClientesController {
     }//guarda los datos en la bd
 
     //FUNCION PARA OBTENER SUCURSALES DE LOS CLIENTES DESDE EL SERVIDOR
-    suspend fun obtenerClienteSucursalesServidor(context: Context){
+    /*suspend fun obtenerClienteSucursalesServidor(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString(), context)
 
@@ -238,6 +240,17 @@ class ClientesController {
             //funciones.mostrarAlerta("ERROR -> ${e.message}", this@carga_datos, binding.vistaalerta)
             println("NO SE ENCONTRARON DATOS REGISTRADOS DE SUCURSALES")
         }
+    }*/
+    suspend fun obtenerClienteSucursalesServidor(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "sucursales")
+
+        if(response != null){
+            val respuesta = JSONArray(response)
+
+            if(respuesta.length() > 0){
+                saveSucursalesDatabase(respuesta, context)
+            }
+        }
     }
 
     //ALMACENAR SUCURSALES EN SQLITE
@@ -284,7 +297,7 @@ class ClientesController {
     } //INSERTANDO DATOS EN LA TABLA SUCURSALES EN SQLITE
 
     //FUNCION PARA OBTENER LAS CXC DESDE EL SERVIDOR
-    suspend fun obtenerCxcServidor(context: Context) {
+    /*suspend fun obtenerCxcServidor(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString(), context)
 
@@ -329,6 +342,15 @@ class ClientesController {
             }//termina de obtener los datos
         } catch (e: Exception) {
             //alert!!.dismisss()
+        }
+    }*/
+    suspend fun obtenerCxcServidor(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "cuentas")
+        if(response != null){
+            val respuesta = JSONArray(response)
+            if(respuesta.length() > 0){
+                saveCuentaDatabase(respuesta, context)
+            }
         }
     }
 
@@ -513,10 +535,8 @@ class ClientesController {
             val cantidadRegistros = withContext(Dispatchers.IO){
                 (cantidadURL.openConnection() as HttpURLConnection).run {
 
-                    if(this is HttpsURLConnection){
-                        sslSocketFactory = sslContext.socketFactory
-                        hostnameVerifier = HostnameVerifier{_, _ -> true}
-                    }
+                    val token = preferences.getString("token", "")
+                    agregarHeaders.agregarHeaders(this, token, sslContext)
 
                     requestMethod = "GET"
                     inputStream.bufferedReader().readLine().toInt()
@@ -562,10 +582,8 @@ class ClientesController {
             withContext(Dispatchers.IO){
                 val conn = urlFinal.openConnection() as HttpURLConnection
 
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier{_, _ -> true}
-                }
+                val token = preferences.getString("token", "")
+                agregarHeaders.agregarHeaders(conn, token, sslContext)
 
                 conn.connectTimeout = 30000
                 conn.readTimeout = 30000

@@ -51,7 +51,7 @@ class ConsumirEndpoint {
 
                 agregarHeaders.agregarHeaders(this, token, sslContext)
 
-                connectTimeout = 10000
+                connectTimeout = 30000
 
                 when(responseCode){
 

@@ -1,6 +1,9 @@
 package com.example.acae30.Retrofit
 
+import android.content.Context
 import com.example.acae30.Interface.AppVentasApi
+import com.example.acae30.Utilidades.AuthInterceptor
+import com.example.acae30.Utilidades.TokenManager
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -30,7 +33,9 @@ object RetrofitCliente {
 
     private var retrofit: Retrofit? = null
 
-    fun obtenerApi(baseUrl: String): AppVentasApi {
+    fun obtenerApi(baseUrl: String, context: Context): AppVentasApi {
+
+        val tokenManager = TokenManager(context)
 
         if (retrofit == null || retrofit?.baseUrl().toString() != baseUrl) {
 
@@ -51,6 +56,7 @@ object RetrofitCliente {
                     trustAllCerts[0] as X509TrustManager
                 )
                 .hostnameVerifier { _, _ -> true }
+                .addInterceptor(AuthInterceptor(tokenManager))
                 .build()
 
             retrofit = Retrofit.Builder()

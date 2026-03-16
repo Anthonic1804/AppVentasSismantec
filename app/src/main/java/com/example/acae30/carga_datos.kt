@@ -53,6 +53,8 @@ class carga_datos : AppCompatActivity() {
     private var rutaClientes : String = "T"
     private var validarHoja: Boolean = false
 
+    private var M_CxC: Boolean = false
+
 
     private lateinit var inventarioDao: InventarioDao
 
@@ -76,6 +78,7 @@ class carga_datos : AppCompatActivity() {
 
         rutaClientes = preferences.getString("cargarClientesPorRuta", "T").toString()
         validarHoja = preferences.getBoolean("validarHojaCarga", false)
+        M_CxC = preferences.getBoolean("M_CxC", false)
 
     }
 
@@ -375,19 +378,21 @@ class carga_datos : AppCompatActivity() {
 
             delay(1000)
 
-            withContext(Dispatchers.Main){
-                alert!!.changeText("CARGANDO CUENTAS POR COBRAR")
+            if(M_CxC){
+                withContext(Dispatchers.Main){
+                    alert!!.changeText("CARGANDO CUENTAS POR COBRAR")
+                }
+
+                delay(1000)
+
+                try {
+                    clientesController.obtenerCxcServidor(this@carga_datos)
+                }catch (e:Exception){
+                    println("ERROR AL OBTENER LAS CXC -> " + e.message)
+                }
+
+                delay(1000)
             }
-
-            delay(1000)
-
-            try {
-                clientesController.obtenerCxcServidor(this@carga_datos)
-            }catch (e:Exception){
-                println("ERROR AL OBTENER LAS CXC -> " + e.message)
-            }
-
-            delay(1000)
 
             withContext(Dispatchers.Main){
                 alert!!.changeText("INFORMACION DE CLIENTES CARGADA CORRECTAMENTE")
@@ -611,7 +616,7 @@ class carga_datos : AppCompatActivity() {
    private suspend fun getInventario() = withContext(Dispatchers.IO) {
         val baseUrl = url
         inventarioDao = db.inventarioDao()
-        val api = RetrofitCliente.obtenerApi(baseUrl)
+        val api = RetrofitCliente.obtenerApi(baseUrl, this@carga_datos)
 
         val limite = 1000
         var offset = 0
@@ -712,7 +717,7 @@ class carga_datos : AppCompatActivity() {
 
         inventarioDao = db.inventarioDao()
 
-        val api = RetrofitCliente.obtenerApi(baseUrl)
+        val api = RetrofitCliente.obtenerApi(baseUrl, this@carga_datos)
 
         val limite = 1000
         var offset = 0

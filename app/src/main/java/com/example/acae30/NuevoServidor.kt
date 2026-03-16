@@ -175,7 +175,7 @@ class NuevoServidor : AppCompatActivity() {
                 if(hayInternet){
                     if(conexionController.validarDatosConexion(ip, nombre)){
 
-                        val respuesta = conexionController.verificarConexionServidor(ip, puerto, sslActivo)
+                        val respuesta = conexionController.verificarConexionServidor(ip, puerto, sslActivo, this@NuevoServidor)
 
                         if(respuesta == "Conexion Exitosa"){
 

@@ -25,10 +25,10 @@ class ConexionController {
     //--------------------------------------------
     //Funcón para conectar con el servidor
     //--------------------------------------------
-    suspend fun verificarConexionServidor(ip: String, puerto: String, sslActivo: Int) : String{
+    suspend fun verificarConexionServidor(ip: String, puerto: String, sslActivo: Int, context: Context) : String{
         val servidor = funciones.verificarServidor(ip, puerto, sslActivo)
 
-        val api = RetrofitCliente.obtenerApi(servidor)
+        val api = RetrofitCliente.obtenerApi(servidor, context)
 
         var respuestaServidor: String = ""
 

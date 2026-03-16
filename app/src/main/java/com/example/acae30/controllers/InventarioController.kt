@@ -34,6 +34,7 @@ import java.time.LocalDate
 import androidx.core.content.edit
 import androidx.room.util.recursiveFetchArrayMap
 import com.example.acae30.Inicio
+import com.example.acae30.Utilidades.AgregarHeaders
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.modelos.UnidadMedidaModelo
 import com.google.gson.JsonArray
@@ -48,6 +49,7 @@ class InventarioController {
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
     private var utilidades = CrearSslNoSeguro()
+    private val agregarHeaders = AgregarHeaders()
 
     //FUNCION PARA OBTENER INFORMACION DEL PRODUCTO POR ID
     fun obtenerInformacionProductoPorId(context: Context ,idInventario: Int, facExpo: Boolean): Inventario?{
@@ -347,6 +349,8 @@ class InventarioController {
         try {
             val datos = HojaCargaJSON(0, numeroHoja, id_vendedor, fecha!!)
             val objecto = Gson().toJson(datos)
+
+            //println("OBJETO DE HOJA DE CARGA: -> " + objecto)
 
             //val ruta: String = servidor + "inventario/hojacarga"
 
@@ -1014,10 +1018,8 @@ class InventarioController {
                 urlprecioscantidad.openConnection()
             } as HttpURLConnection) {
 
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier{_, _ -> true}
-                }
+                val token = preferences.getString("token", "")
+                agregarHeaders.agregarHeaders(this, token, sslContext)
 
                 try {
                     connectTimeout = 30000
@@ -1081,10 +1083,8 @@ class InventarioController {
                     url.openConnection()
                 } as HttpURLConnection) {
 
-                    if(this is HttpsURLConnection){
-                        sslSocketFactory = sslContext.socketFactory
-                        hostnameVerifier = HostnameVerifier{_, _ -> true}
-                    }
+                    val token = preferences.getString("token", "")
+                    agregarHeaders.agregarHeaders(this, token, sslContext)
 
                     try {
                         connectTimeout = 30000
@@ -1171,10 +1171,8 @@ class InventarioController {
                 conexionServidor.openConnection()
             } as HttpURLConnection){
 
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier{_, _ -> true}
-                }
+                val token = preferences.getString("token", "")
+                agregarHeaders.agregarHeaders(this, token, sslContext)
 
                 try {
 

@@ -310,7 +310,7 @@ class PedidosController {
 
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         val consulta = if(local){
-            "SELECT * FROM pedidos where Enviado=1 AND pedido_dte=1"
+            "SELECT * FROM pedidos where (Enviado=1 AND pedido_dte=1) OR Fecha != '$fechanow'"
         }else{
             "SELECT * FROM pedidos where Fecha != '$fechanow'"
         }

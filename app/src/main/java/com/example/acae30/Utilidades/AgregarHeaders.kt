@@ -16,7 +16,7 @@ class AgregarHeaders {
 
     fun agregarHeaders(conexion: HttpURLConnection, token: String?, sslContext: SSLContext){
 
-        conexion.setRequestProperty("Content-Type", "application/json")
+        conexion.setRequestProperty("Content-Type", "application/json;charset=utf-8")
 
         if(!token.isNullOrEmpty()){
             conexion.setRequestProperty("Authorization", "Bearer $token")

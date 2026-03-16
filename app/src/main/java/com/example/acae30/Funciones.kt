@@ -269,6 +269,7 @@ class Funciones {
             db.execSQL("DELETE FROM inventario_precios")
             db.execSQL("DELETE FROM pedidos")
             db.execSQL("DELETE FROM detalle_pedidos")
+            db.execSQL("DELETE FROM cuentas")
         }catch (e:Exception){
             throw Exception("ERROR AL ELIMINAR LA INFORMACION AL CERRAR SESSION -> " + e.message)
         }
