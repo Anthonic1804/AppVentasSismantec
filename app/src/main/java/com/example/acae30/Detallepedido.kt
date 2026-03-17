@@ -27,6 +27,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -163,6 +164,7 @@ class Detallepedido : AppCompatActivity() {
     private var limiteItemPedido : Int = 0
 
     private val utilidades = CrearSslNoSeguro()
+    private var isProcessing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -355,11 +357,21 @@ class Detallepedido : AppCompatActivity() {
         }
         //muestra el listado de los productos
         binding.btncancelar.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
             AlertaEliminar()
         }
 
         //EVENTRO CLIC DEL BOTON ENVIAR
         binding.btnenviar.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
             if(cantidadItemsPedido <= limiteItemPedido){
                 if(codigo == "01"){
                     nombre = binding.txtCliente.text.toString()
@@ -411,6 +423,11 @@ class Detallepedido : AppCompatActivity() {
 
         //EVENTO CLIC DEL BOTON GUARDAR.
         binding.btnguardar.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
             if(cantidadItemsPedido <= limiteItemPedido){
                 if (ConfirmarDetallePedido() > 0) {
                     guardandoPedido = true
@@ -431,7 +448,12 @@ class Detallepedido : AppCompatActivity() {
 
         //BOTON DE INVALIDAR PEDIDO
         binding.btnInvalidar.setOnClickListener {
-            pedidosController.mensajeInvalidarDTE(this@Detallepedido, "¿Desea Invalidar este Pedido?", idPedidoServidor, idpedido)
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
+            mensajeInvalidarDTE(this@Detallepedido, "¿Desea Invalidar este Pedido?", idPedidoServidor, idpedido)
         }
 
         //IMPLEMENTANDO LOGICA DE SUCURSAL SELECCIONADA EN SPINNER
@@ -561,6 +583,11 @@ class Detallepedido : AppCompatActivity() {
         }
 
         binding.btnAgregarComentario.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
             agregarComentarioAlPedido()
         }
 
@@ -579,12 +606,17 @@ class Detallepedido : AppCompatActivity() {
 
         btnAceptar.setOnClickListener {
             if(comentario.text.toString().isNotEmpty()){
+
                 CoroutineScope(Dispatchers.IO).launch {
                     pedidosController.agregarComentarioAlPedido(this@Detallepedido, idpedido, comentario.text.toString().trim())
                 }
 
                 validarProcesoPedidos(codigo)
+
+                habilitarOpciones()
+
                 dialog.dismiss()
+
             }else{
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR UN COMENTARIO", Toast.LENGTH_SHORT)
                     .show()
@@ -592,6 +624,9 @@ class Detallepedido : AppCompatActivity() {
         }
 
         btnCancelar.setOnClickListener {
+
+            habilitarOpciones()
+
             dialog.dismiss()
         }
 
@@ -776,6 +811,7 @@ class Detallepedido : AppCompatActivity() {
     private fun envioAlerta(){
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
+        var procesando = false
 
         updateDialog.setContentView(R.layout.dialog_cancelar)
         tvUpdate = updateDialog.findViewById(R.id.tvUpdate)
@@ -788,16 +824,77 @@ class Detallepedido : AppCompatActivity() {
         tvUpdate.text = "ACEPTAR"
 
         tvUpdate.setOnClickListener {
+
+            if (procesando) return@setOnClickListener
+
+            procesando = true
+
+            tvUpdate.isEnabled = false
+            tvCancel.isEnabled = false
+
             updateDialog.dismiss()
             verificarConexionEnvio()
+
         }
 
         tvCancel.setOnClickListener {
             enviandoPedido = false
             updateDialog.dismiss()
+
+            habilitarOpciones()
+
         }
 
         updateDialog.show()
+    }
+
+    //FUNCION DE MENSAJE DE ADVERTENCIA
+    private fun mensajeInvalidarDTE(context: Context, mensaje: String, idPedidoServidor : Int, idPedido: Int){
+        val dialog = AlertDialog.Builder(context)
+            .setTitle("INVALIDAR DTE")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    pedidosController.obtenerDocumentosTransmitidosInvalidados(idPedidoServidor, context, idPedido)
+                }
+
+                habilitarOpciones()
+
+                view.dismiss()
+            }
+            .setNegativeButton("CANCELAR"){ view, _ ->
+
+                habilitarOpciones()
+
+                view.dismiss()
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun habilitarOpciones(){
+        isProcessing = false
+        binding.apply {
+            btnenviar.isEnabled = true
+            btncancelar.isEnabled = true
+            btnguardar.isEnabled = true
+            reciclerdetalle.isEnabled = true
+            btnAgregarComentario.isEnabled = true
+        }
+    }
+
+    private fun deshabilitarOpciones(){
+        isProcessing = true
+        binding.apply {
+            btnenviar.isEnabled = false
+            btncancelar.isEnabled = false
+            btnguardar.isEnabled = false
+            reciclerdetalle.isEnabled = false
+            btnAgregarComentario.isEnabled = false
+        }
     }
 
     private fun verificarConexionEnvio() {
@@ -1156,10 +1253,26 @@ class Detallepedido : AppCompatActivity() {
     }//anula el boton atras
 
     private fun AlertaEliminar() {
+
+        var procesando = false
+
         val dialogo = Dialog(this)
+        dialogo.setCancelable(false)
         dialogo.show()
         dialogo.setContentView(R1.layout.alert_eliminar)
-        dialogo.findViewById<Button>(R1.id.btneliminar).setOnClickListener {
+
+        val btnAceptarEliminar = dialogo.findViewById<Button>(R1.id.btneliminar)
+        val btnCancelarEliminar = dialogo.findViewById<Button>(R1.id.btncancelar)
+
+        btnAceptarEliminar.setOnClickListener {
+
+            if(procesando) return@setOnClickListener
+
+            procesando = true
+
+            btnAceptarEliminar.isEnabled = false
+            btnAceptarEliminar.isEnabled = false
+
                 try {
                     EliminarPedido(idpedido)
 
@@ -1171,8 +1284,14 @@ class Detallepedido : AppCompatActivity() {
                     intento.putExtra("idapi", idapi)
                     startActivity(intento)
                     finish()
+
+                    habilitarOpciones()
+
                     dialogo.dismiss()
                 } catch (e: Exception) {
+
+                    habilitarOpciones()
+
                     dialogo.dismiss()
                     val alert: Snackbar = Snackbar.make(
                         binding.lienzo,
@@ -1183,7 +1302,10 @@ class Detallepedido : AppCompatActivity() {
                     alert.show()
                 }
         }//boton eliminar
-        dialogo.findViewById<Button>(R1.id.btncancelar).setOnClickListener {
+        btnCancelarEliminar.setOnClickListener {
+
+            habilitarOpciones()
+
             dialogo.dismiss()
         }//boton eliminar
     } //muestra la alerta para eliminar
@@ -1598,6 +1720,9 @@ class Detallepedido : AppCompatActivity() {
 
     //FUNCION PARA MOSTRAR VENTANA DE PAGO
     private fun alertaPago(total: Float){
+
+        var procesando = false
+
         val dialogo = Dialog(this@Detallepedido)
         dialogo.show()
         dialogo.setContentView(R1.layout.vista_cobro)
@@ -1617,6 +1742,8 @@ class Detallepedido : AppCompatActivity() {
         val lyPagoCheque = dialogo.findViewById<LinearLayout>(R1.id.lyContenedorCheque)
         val lyPagoTarjeta = dialogo.findViewById<LinearLayout>(R1.id.lyContenedorTarjeta)
         val lyPagoDeposito = dialogo.findViewById<LinearLayout>(R1.id.lyContenedorDeposito)
+        val btnAceptarPago = dialogo.findViewById<Button>(R1.id.btnaceptar)
+        val btnCancelarPago = dialogo.findViewById<Button>(R1.id.btncancelar)
 
         var formaPagoSeleccionada : String = ""
 
@@ -1710,7 +1837,15 @@ class Detallepedido : AppCompatActivity() {
         })
 
         //PROCESO DEL BOTON ACEPTAR
-        dialogo.findViewById<Button>(R1.id.btnaceptar).setOnClickListener {
+        btnAceptarPago.setOnClickListener {
+
+            if(procesando) return@setOnClickListener
+
+            procesando = true
+
+            btnAceptarPago.isEnabled = false
+            btnCancelarPago.isEnabled = false
+
             numeroOrden = dialogo.findViewById<TextInputEditText>(R1.id.txtNumeroOrden).text.toString()
             /*if(terminosPedidos == "Contado" && etPago.text.toString().isEmpty()){
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL PAGO DEL CLIENTE", Toast.LENGTH_SHORT)
@@ -1795,8 +1930,10 @@ class Detallepedido : AppCompatActivity() {
         }
 
         //PROCESO DEL BOTON CANCELAR
-        dialogo.findViewById<Button>(R1.id.btncancelar).setOnClickListener {
+        btnCancelarPago.setOnClickListener {
             dialogo.dismiss()
+
+            habilitarOpciones()
         }
 
     }

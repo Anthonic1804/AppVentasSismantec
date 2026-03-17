@@ -427,7 +427,7 @@ class PedidosController {
     }
 
     //FUNCION PARA OBTENER SI EL DOCUMENTO TRANSMITDO ESTA INVALIDADO
-    private suspend fun obtenerDocumentosTransmitidosInvalidados(idPedidoServidor:Int, context:Context, idPedido: Int) {
+    suspend fun obtenerDocumentosTransmitidosInvalidados(idPedidoServidor:Int, context:Context, idPedido: Int) {
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
@@ -491,26 +491,6 @@ class PedidosController {
                 funciones.mensaje(context, "PROBLEMAS DE CONEXION CON EL SERVIDOR \n INTENTE MAS TARDE")
             }
         }
-    }
-
-    //FUNCION DE MENSAJE DE ADVERTENCIA
-    fun mensajeInvalidarDTE(context: Context, mensaje: String, idPedidoServidor : Int, idPedido: Int){
-        val dialog = AlertDialog.Builder(context)
-            .setTitle("INVALIDAR DTE")
-            .setMessage(mensaje)
-            .setPositiveButton("ACEPTAR") { view, _ ->
-                CoroutineScope(Dispatchers.IO).launch {
-                    obtenerDocumentosTransmitidosInvalidados(idPedidoServidor, context, idPedido)
-                }
-            }
-            .setNegativeButton("CANCELAR"){ view, _ ->
-                view.dismiss()
-            }
-            .setCancelable(false)
-            .setIcon(R.drawable.ic_information)
-            .create()
-
-        dialog.show()
     }
 
     //FUCION PARA RETORNAR INVENTARIO AL INVALIDAR PEDIDO

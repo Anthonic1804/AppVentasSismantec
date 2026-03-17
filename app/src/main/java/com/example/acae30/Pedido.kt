@@ -103,6 +103,9 @@ class Pedido : AppCompatActivity() {
 
     private val utilidades = CrearSslNoSeguro()
 
+    //Variable de control de accion
+    private var isProcessing = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -169,7 +172,117 @@ class Pedido : AppCompatActivity() {
 
     //FUNCION PARA SINCRONIZAR LOS PEDIDOS AUTOMATICAMENTE
     private fun sincronizacionDePedidos(){
-        if (funciones!!.isInternetAvailable(this@Pedido)){
+
+        //Si ya esta activa sale de la funcion
+        if(isProcessing) return
+
+        //Si no esta activa, deshabilitamos los controller
+        isProcessing = true
+        btnsincronizar!!.isEnabled = false
+        btnatras!!.isEnabled = false
+        btnReporte.isEnabled = false
+
+        lifecycleScope.launch(Dispatchers.IO) {
+
+            val hayInternet = funciones!!.isInternetAvailable(this@Pedido)
+            if(hayInternet){
+
+                runOnUiThread {
+                    alert!!.Cargando()
+                    messageAsync("SINCRONIZANDO PEDIDOS")
+                }
+
+                val pedidosNoTransmitidos : ArrayList<Pedidos> = pedidosController.obtenerPedidosNoTransmitidos(this@Pedido)
+                //var idPedidoDTE = 0
+                delay(1000)
+                if(pedidosNoTransmitidos.size > 0){
+                    for(i in 0 until pedidosNoTransmitidos.size){
+                        val item = pedidosNoTransmitidos[i]
+
+                        runOnUiThread {
+                            messageAsync("SINCRONIZANDO PEDIDO DEL CLIENTE: \n ${item.Nombre_cliente}")
+                        }
+
+                        delay(1000)
+
+                        obtenerPedidosDTEServidor(item.Id_pedido_sistema!!)
+
+                    }
+
+                    runOnUiThread {
+                        messageAsync("PEDIDOS SINCRONIZADOS CORRECTAMENTE")
+                    }
+
+                    delay(1000)
+
+                    //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
+                    if(tipoVentaLocal){
+                        pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
+                    }
+
+                    delay(1000)
+
+                    runOnUiThread {
+                        actualizarVistaDTE()
+                    }
+
+                    delay(1000)
+
+                    runOnUiThread {
+                        alert!!.dismisss()
+
+                        isProcessing = false
+                        btnsincronizar!!.isEnabled = true
+                        btnatras!!.isEnabled = true
+                        btnReporte.isEnabled = true
+                    }
+
+                }else{
+
+                    //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
+                    if(tipoVentaLocal){
+                        pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
+                    }
+
+                    delay(1000)
+
+                    runOnUiThread {
+                        actualizarVistaDTE()
+                    }
+
+                    delay(1000)
+
+                    runOnUiThread {
+                        messageAsync("NO SE ENCONTRARON PEDIDOS NO SINCRONIZADOS")
+                    }
+
+                    delay(1000)
+
+                    runOnUiThread {
+                        alert!!.dismisss()
+
+                        isProcessing = false
+                        btnsincronizar!!.isEnabled = true
+                        btnatras!!.isEnabled = true
+                        btnReporte.isEnabled = true
+                    }
+                }
+            }else{
+                runOnUiThread {
+                    funciones!!.mensaje(this@Pedido, "NO TIENE CONEXION A INTENET")
+
+                    isProcessing = false
+                    btnsincronizar!!.isEnabled = true
+                    btnatras!!.isEnabled = true
+                    btnReporte.isEnabled = true
+
+                }
+            }
+
+        }
+
+
+        /*if (funciones!!.isInternetAvailable(this@Pedido)){
             alert!!.Cargando()
             messageAsync("SINCRONIZANDO PEDIDOS")
 
@@ -252,7 +365,7 @@ class Pedido : AppCompatActivity() {
             }
         }else{
             funciones!!.mensaje(this@Pedido, "NO TIENE CONEXION A INTENET")
-        }
+        }*/
     }
 
     //MENSANJE ASINCRONO

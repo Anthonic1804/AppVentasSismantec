@@ -71,6 +71,8 @@ class Configuracion : AppCompatActivity() {
 
     //private var limpiarBD = LimpiarBD()
 
+    private var isProcessing = false
+
 
     private lateinit var binding : ActivityConfiguracionBinding
 
@@ -194,6 +196,11 @@ class Configuracion : AppCompatActivity() {
         }
 
         binding.btnBuscarUpdate.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpcion()
+
             if (funciones.isInternetAvailable(this)) {
 
                 CoroutineScope(Dispatchers.IO).launch {
@@ -201,6 +208,7 @@ class Configuracion : AppCompatActivity() {
                 }//COURUTINA CARGAR DATOS DE ACTUALIZACION
 
             } else {
+                habilitarOpcion()
                 ShowAlert("ERROR: NO TIENES CONEXION A INTERNET")
             }
         }
@@ -237,6 +245,11 @@ class Configuracion : AppCompatActivity() {
         }//boton atras
 
         binding.btnReconectar.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpcion()
+
             val contexto = this
             alerta!!.Cargando()
 
@@ -247,6 +260,11 @@ class Configuracion : AppCompatActivity() {
         }//guarda los datos del servidor
 
         binding.btnCargarConfig.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpcion()
+
             if (funciones.isInternetAvailable(this@Configuracion)) {
                 alerta!!.Cargando()
                 CoroutineScope(Dispatchers.IO).launch {
@@ -273,6 +291,9 @@ class Configuracion : AppCompatActivity() {
                     delay(1500)
 
                     withContext(Dispatchers.Main){
+
+                        habilitarOpcion()
+
                         alerta!!.dismisss()
 
                         //AGREGAR CONDICION PARA CERRAR LA APP SI MODO DESARROLLO ESTÁ ACTIVO
@@ -367,6 +388,29 @@ class Configuracion : AppCompatActivity() {
         }
 
 
+    }
+
+    //FUNCIONES PARA HABILITAR Y DESHABILITAR OPCION
+    private fun deshabilitarOpcion(){
+        isProcessing = true
+
+        binding.apply {
+            btnActualizarServidor.isEnabled = false
+            btnReconectar.isEnabled = false
+            btnBuscarUpdate.isEnabled = false
+            btnImpresor.isEnabled = false
+        }
+    }
+
+    private fun habilitarOpcion(){
+        isProcessing = false
+
+        binding.apply {
+            btnActualizarServidor.isEnabled = true
+            btnReconectar.isEnabled = true
+            btnBuscarUpdate.isEnabled = true
+            btnImpresor.isEnabled = true
+        }
     }
 
     private fun regresarMenuPrincipal() {
@@ -469,7 +513,7 @@ class Configuracion : AppCompatActivity() {
         }
     } //obtiene la ip y el puerto del servidor
 
-    private fun reconectarServidor(ip: String, puerto: String, context: Context) {
+    private suspend fun reconectarServidor(ip: String, puerto: String, context: Context) {
         if (funciones.isInternetAvailable(this)) {
             try {
                 val servidor = funciones.getServidor(ip, puerto, this@Configuracion)
@@ -504,45 +548,74 @@ class Configuracion : AppCompatActivity() {
 
                                 if (res.getInt("error") > 0) {
                                     preferencias!!.edit(commit = true) {
-                                        this!!.putInt("puerto", puerto.toInt())
+                                        this.putInt("puerto", puerto.toInt())
                                         putString("ip", ip)
                                     }
 
-                                    alerta!!.dismisss()
-                                    val alert: Snackbar = Snackbar.make(binding.vistaalerta, res.getString("response"), Snackbar.LENGTH_LONG)
-                                    alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.btnVerde))
-                                    alert.show()
+                                    withContext(Dispatchers.Main){
+
+                                        habilitarOpcion()
+
+                                        alerta!!.dismisss()
+                                        val alert: Snackbar = Snackbar.make(binding.vistaalerta, res.getString("response"), Snackbar.LENGTH_LONG)
+                                        alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.btnVerde))
+                                        alert.show()
+
+                                    }
+
 
                                 } else {
+                                    withContext(Dispatchers.Main){
+                                        habilitarOpcion()
+                                    }
                                     throw  Exception(res.getString("response"))
                                 } //valida que la respuesta sea  la correcta
                             } else {
+                                withContext(Dispatchers.Main){
+                                    habilitarOpcion()
+                                }
                                 throw  Exception("Se Conecto con el Servidor, No hubo Respuesta")
                             }//valida que se haya obtenido datos del JSON
                         } //obtenmos los datos que nos envia el servidor
                     } else {
+                        withContext(Dispatchers.Main){
+                            habilitarOpcion()
+                        }
                         throw  Exception("Error de Comunicacion, Codigo:$responseCode")
                     } //valida que el codigo de respuesta del servidor sea ok 200
                 }
             } catch (e: Exception) {
 
+
+
                 println("ERROR 1 -> " + e.message)
 
-                alerta!!.dismisss()
-                val alert: Snackbar =
-                    Snackbar.make(binding.vistaalerta, e.message.toString(), Snackbar.LENGTH_LONG)
-                alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
-                alert.show()
+                withContext(Dispatchers.Main){
+                    habilitarOpcion()
+
+                    alerta!!.dismisss()
+                    val alert: Snackbar =
+                        Snackbar.make(binding.vistaalerta, e.message.toString(), Snackbar.LENGTH_LONG)
+                    alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
+                    alert.show()
+                }
+
+
             } //valida se si presenta algun error de conexion u otro
         } else {
-            alerta!!.dismisss()
-            val alert: Snackbar = Snackbar.make(
-                binding.vistaalerta,
-                "Enciende los Datos o el Wifi",
-                Snackbar.LENGTH_LONG
-            )
-            alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
-            alert.show()
+
+            withContext(Dispatchers.Main){
+                habilitarOpcion()
+
+                alerta!!.dismisss()
+                val alert: Snackbar = Snackbar.make(
+                    binding.vistaalerta,
+                    "Enciende los Datos o el Wifi",
+                    Snackbar.LENGTH_LONG
+                )
+                alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
+                alert.show()
+            }
         } //valida que este encendido los datos o el wifi
     }//valida que haya comunicacion con el servidor
 
@@ -597,9 +670,11 @@ class Configuracion : AppCompatActivity() {
 
                                     runOnUiThread {
                                         if(versionActual >= versionAppServer!!.toFloat()){
+                                            habilitarOpcion()
                                             alerta!!.dismisss()
                                             Toast.makeText(applicationContext, "NO ES NECESARIO ACTUALIZAR", Toast.LENGTH_SHORT).show()
                                         }else{
+                                            habilitarOpcion()
                                             alerta!!.dismisss()
                                             mensajeUpdate(versionAppServer.toString(), urlAppServer.toString())
                                         }
@@ -607,15 +682,18 @@ class Configuracion : AppCompatActivity() {
 
                                 } //termina el for
                             } else {
+                                habilitarOpcion()
                                 alerta!!.dismisss()
                                 ShowAlert("NO SE ENCONTRARON DATOS DE ACTUALIZACIOIN")
                             } //caso que la respuesta venga vacia
                         }
                     } else {
+                        habilitarOpcion()
                         alerta!!.dismisss()
                         throw Exception("SERVIDOR: NO SE ENCONTRARON DATOS DE ACTUALIZACION")
                     }
                 } catch (e: Exception) {
+                    habilitarOpcion()
                     alerta!!.dismisss()
                     throw Exception(e.message)
                 }

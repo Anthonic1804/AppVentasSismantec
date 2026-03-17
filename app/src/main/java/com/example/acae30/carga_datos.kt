@@ -58,7 +58,12 @@ class carga_datos : AppCompatActivity() {
 
     private lateinit var inventarioDao: InventarioDao
 
+    //----------------------------------
+    //Instancia de la bd para Room
+    //----------------------------------
     private lateinit var db : AppDatabase
+
+    private var isProcessing: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -66,6 +71,9 @@ class carga_datos : AppCompatActivity() {
         binding = ActivityCargaDatosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        //--------------------------------
+        //Inicializando la instancia de la bd
+        //--------------------------------
         db = AppDatabase.getInstance(this@carga_datos)
 
         preferences = this@carga_datos.getSharedPreferences(instancia, Context.MODE_PRIVATE)
@@ -92,6 +100,11 @@ class carga_datos : AppCompatActivity() {
         }
 
         binding.cvClientes.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
             if (funciones.isInternetAvailable(this@carga_datos)) {
                 when(rutaClientes){
                     "R" -> {
@@ -106,6 +119,11 @@ class carga_datos : AppCompatActivity() {
         }
 
         binding.cvInventario.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
             val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
             if (funciones.isInternetAvailable(this@carga_datos)) {
                 alert!!.Cargando()
@@ -184,6 +202,9 @@ class carga_datos : AppCompatActivity() {
                         delay(1500)
 
                         withContext(Dispatchers.Main){
+
+                            habilitarOpciones()
+
                             alert!!.dismisss()
                         }
 
@@ -193,6 +214,7 @@ class carga_datos : AppCompatActivity() {
                     * Si está Activa solamente cargar el inventario de dicha hoja
                     * */
                     ingresarHojaCarga()
+
                     alert!!.dismisss()
                 }
 
@@ -202,6 +224,11 @@ class carga_datos : AppCompatActivity() {
         }
 
         binding.cvCatalogos.setOnClickListener {
+
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
             if (funciones.isInternetAvailable(this@carga_datos)) {
                 alert!!.Cargando()
                 CoroutineScope(Dispatchers.IO).launch {
@@ -294,6 +321,9 @@ class carga_datos : AppCompatActivity() {
                     delay(1500)
 
                     withContext(Dispatchers.Main){
+
+                        habilitarOpciones()
+
                         alert!!.dismisss()
                     }
                 }
@@ -304,6 +334,10 @@ class carga_datos : AppCompatActivity() {
 
         binding.cvEliminarPedidos.setOnClickListener {
 
+            if(isProcessing) return@setOnClickListener
+
+            deshabilitarOpciones()
+
             /*Toast.makeText(this@carga_datos, "FUNCION EN VERIFICACION", Toast.LENGTH_SHORT)
                 .show()*/
 
@@ -312,20 +346,48 @@ class carga_datos : AppCompatActivity() {
                     val eliminados = pedidosController.eliminarPedidosAntiguos(this@carga_datos, false)
                     if (eliminados){
                         withContext(Dispatchers.Main){
+                            habilitarOpciones()
                             funciones.mostrarMensaje("PEDIDOS ELIMINADOS", this@carga_datos, binding.vistaalerta)
                         }
                     }else{
                         withContext(Dispatchers.Main){
+                            habilitarOpciones()
                             funciones.mostrarAlerta("NO SE ENCONTRARON PEDIDOS", this@carga_datos, binding.vistaalerta)
                         }
                     }
                 }
 
             } catch (e: Exception) {
+                habilitarOpciones()
                 funciones.mostrarAlerta("ERROR AL ELIMINAR LOS PEDIDOS -> ${e.message}", this@carga_datos, binding.vistaalerta)
             }
 
         }
+    }
+
+    //FUNCIONES PARA HABILITAR Y DESHABILITAR LAS OPCIONES
+    private fun deshabilitarOpciones(){
+        isProcessing = true
+
+        binding.apply {
+            cvClientes.isEnabled = false
+            cvCatalogos.isEnabled = false
+            cvInventario.isEnabled = false
+            cvEliminarPedidos.isEnabled = false
+        }
+    }
+
+    private fun habilitarOpciones(){
+
+        isProcessing = false
+
+        binding.apply {
+            cvClientes.isEnabled = true
+            cvCatalogos.isEnabled = true
+            cvInventario.isEnabled = true
+            cvEliminarPedidos.isEnabled = true
+        }
+
     }
 
     //FUNCIONES PARA CARGA DE CLIENTES
@@ -402,6 +464,9 @@ class carga_datos : AppCompatActivity() {
             delay(1500)
 
             withContext(Dispatchers.Main){
+
+                habilitarOpciones()
+
                 alert!!.dismisss()
             }
 
@@ -410,6 +475,9 @@ class carga_datos : AppCompatActivity() {
 
     //FUNCION PARA MOSTRAR EL DIALOG DE INGRESO DE HOJA DE CARGA
     private fun ingresarHojaCarga() {
+
+        var procesando = false
+
         val hojaCargaDialog = Dialog(this, R.style.Theme_Dialog)
         hojaCargaDialog.setCancelable(false)
 
@@ -420,6 +488,13 @@ class carga_datos : AppCompatActivity() {
 
         btnAceptar.setOnClickListener {
 
+            if(procesando) return@setOnClickListener
+
+            procesando = true
+
+            btnAceptar.isEnabled = false
+            btnCancelar.isEnabled = false
+
             //val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
             val numero = hojaCargaDialog.findViewById<TextInputEditText>(R.id.tietNumeroCarga).text.toString()
 
@@ -427,10 +502,14 @@ class carga_datos : AppCompatActivity() {
 
             if (numero.isEmpty() || numero.toInt() == 0) {
 
+                habilitarOpciones()
+
                 hojaCargaDialog.dismiss()
                 funciones.mensaje(this@carga_datos, "INGRESE UN NUMERO DE HOJA DE CARGA")
 
             }else if(hojaYaRegistrada){
+
+                habilitarOpciones()
 
                 hojaCargaDialog.dismiss()
                 funciones.mensaje(this@carga_datos, "LA HOJA DE CARGA YA SE ENCUENTRA CARGADA")
@@ -439,11 +518,16 @@ class carga_datos : AppCompatActivity() {
 
                 cargarInventarioDesdeHoja(numero)
 
+                habilitarOpciones()
+
                 hojaCargaDialog.dismiss()
             }
         }
 
         btnCancelar.setOnClickListener {
+
+            habilitarOpciones()
+
             hojaCargaDialog.dismiss()
         }
 
@@ -536,6 +620,9 @@ class carga_datos : AppCompatActivity() {
 
     //FUNCION PARA MOSTRAR EL DIALOG DE CARGA DE CLIENTES POR RUTA
     private fun cargarClientesRuta() {
+
+        var procesando = false
+
         val clientesRuta = Dialog(this, R.style.Theme_Dialog)
         clientesRuta.setCancelable(false)
 
@@ -595,16 +682,30 @@ class carga_datos : AppCompatActivity() {
         }
 
         btnAceptar.setOnClickListener {
+
+            if(procesando) return@setOnClickListener
+
+            procesando = true
+
+            btnAceptar.isEnabled = false
+            btnCancelar.isEnabled = false
+
             if(rutaSeleccionada == "-- SELECCIONE --") {
                 Toast.makeText(this, "DEBE DE SELECCIONAR UNA RUTA", Toast.LENGTH_SHORT)
                     .show()
             }else{
+
+                habilitarOpciones()
+
                 clientesRuta.dismiss()
                 cargaClientes()
             }
         }
 
         btnCancelar.setOnClickListener {
+
+            habilitarOpciones()
+
             clientesRuta.dismiss()
         }
 
