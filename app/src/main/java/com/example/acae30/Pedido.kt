@@ -106,6 +106,9 @@ class Pedido : AppCompatActivity() {
     //Variable de control de accion
     private var isProcessing = false
 
+    private var inventarioTiempoReal: Boolean = false
+    private var eliminarPedidosAutomaticos: Boolean = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -120,6 +123,8 @@ class Pedido : AppCompatActivity() {
 
         alert = AlertDialogo(this@Pedido, this@Pedido)
 
+        inventarioTiempoReal= preferencias.getBoolean("inventarioTiempoReal", false)
+        eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
         tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
         btnatras = findViewById(R.id.imbtnatras)
@@ -167,6 +172,10 @@ class Pedido : AppCompatActivity() {
             if (proviene == "inicio") {
                 AlertaGPS(this@Pedido)
             }
+        }
+
+        if(inventarioTiempoReal){
+            funciones!!.limpiarHojaCarga(this@Pedido)
         }
     }
 
@@ -216,7 +225,7 @@ class Pedido : AppCompatActivity() {
                     delay(1000)
 
                     //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
-                    if(tipoVentaLocal){
+                    if(tipoVentaLocal && eliminarPedidosAutomaticos){
                         pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
                     }
 
@@ -240,7 +249,7 @@ class Pedido : AppCompatActivity() {
                 }else{
 
                     //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
-                    if(tipoVentaLocal){
+                    if(tipoVentaLocal && eliminarPedidosAutomaticos){
                         pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
                     }
 

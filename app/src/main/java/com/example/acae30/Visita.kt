@@ -16,7 +16,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
+import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.CuentasController
 import com.example.acae30.controllers.VisitaController
@@ -36,9 +38,6 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import java.sql.SQLXML
-import androidx.core.content.edit
-import com.example.acae30.Utilidades.CrearSslNoSeguro
 import java.util.UUID
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
@@ -168,6 +167,7 @@ class Visita : AppCompatActivity() {
             if (idvisitaGLOBAL!! < 1) {
                 val intento = Intent(this, Clientes::class.java)
                 startActivity(intento)
+                finish()
             }
         }
 

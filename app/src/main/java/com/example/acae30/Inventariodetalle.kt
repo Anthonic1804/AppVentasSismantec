@@ -30,6 +30,9 @@ class Inventariodetalle : AppCompatActivity() {
     private var unidadMedida = "UNI"
 
     private var inventarioController = InventarioController()
+    private var funciones = Funciones()
+
+    private var inventarioTiempoReal : Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +41,8 @@ class Inventariodetalle : AppCompatActivity() {
 
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         idinventario = preferences.getInt("idProducto", 0)
+
+        inventarioTiempoReal = preferences.getBoolean("inventarioTiempoReal", false)
 
         binding.imageView7.setOnClickListener {
             AlertaPrecio(this@Inventariodetalle)  //muestra la alerta
@@ -61,9 +66,22 @@ class Inventariodetalle : AppCompatActivity() {
                 remove("idProducto")
             }
 
-            val intento = Intent(this, com.example.acae30.Inventario::class.java)
-            startActivity(intento)
-            finish()
+            if(inventarioTiempoReal){
+
+                lifecycleScope.launch {
+                    funciones.limpiarHojaCarga(this@Inventariodetalle)
+                }
+
+                val intento = Intent(this, InventarioTiempoReal::class.java)
+                startActivity(intento)
+                finish()
+            }else{
+                val intento = Intent(this, com.example.acae30.Inventario::class.java)
+                startActivity(intento)
+                finish()
+            }
+
+
         }//BOTON ATRAS
 
         binding.spunidad.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {

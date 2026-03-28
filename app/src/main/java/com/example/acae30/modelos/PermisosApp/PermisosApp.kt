@@ -64,5 +64,9 @@ data class PermisosApp(
     //Uso de bodega de ventas
     var idBodega: Int?,
     var codBodega: String?,
-    var bodega: String?
+    var bodega: String?,
+
+    //Inventario en tiempo real
+    var inventarioTiempoReal : Boolean,
+    var eliminarPedidosAutomaticos: Boolean
 )

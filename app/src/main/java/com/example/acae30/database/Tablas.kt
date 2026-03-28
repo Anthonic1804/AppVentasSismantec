@@ -266,10 +266,21 @@ class Tablas {
         return "CREATE TABLE inventario_unidades(" +
                 "Id INTEGER NOT NULL," +
                 "Id_inventario INTEGER NOT NULL," +
-                "Nombre_unidad VARCHAR(25) NOT NULL," +
-                "Equivale NUMERIC(18,2) NOT NULL," +
-                "Unidades VARCHAR(25) NOT NULL)"
+                "Nombre_unidad TEXT NOT NULL," +
+                "Equivale REAL NOT NULL," +
+                "Unidades TEXT NOT NULL)"
     } //tabla inventario unidades
+
+    fun inventarioLotes(): String{
+        return "CREATE TABLE inventario_lotes(" +
+                "id INTEGER NOT NULL," +
+                "idProducto INTEGER NOT NUL," +
+                "codigoProducto TEXT NOT NULL," +
+                "lote TEXT NOT NULL," +
+                "fechaVencimiento TEXT NOT NULL," +
+                "unidades REAL NOT NULL," +
+                "fracciones REAL NOT NULL)"
+    }
 
     //CREANDO LA TABLA VIRTUAL INVENTARIO
     fun virtualInventario(): String {

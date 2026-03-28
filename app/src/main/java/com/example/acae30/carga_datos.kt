@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -54,9 +55,10 @@ class carga_datos : AppCompatActivity() {
     private var validarHoja: Boolean = false
 
     private var M_CxC: Boolean = false
+    private var inventarioTiempoReal : Boolean = false
 
 
-    private lateinit var inventarioDao: InventarioDao
+    //private lateinit var inventarioDao: InventarioDao
 
     //----------------------------------
     //Instancia de la bd para Room
@@ -70,6 +72,7 @@ class carga_datos : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityCargaDatosBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        configurarResponsiveMenu()
 
         //--------------------------------
         //Inicializando la instancia de la bd
@@ -87,6 +90,11 @@ class carga_datos : AppCompatActivity() {
         rutaClientes = preferences.getString("cargarClientesPorRuta", "T").toString()
         validarHoja = preferences.getBoolean("validarHojaCarga", false)
         M_CxC = preferences.getBoolean("M_CxC", false)
+        inventarioTiempoReal = preferences.getBoolean("inventarioTiempoReal", false)
+
+
+        var multiplesHojaDeCarga = preferences.getBoolean("multiplesHojaDeCarga", false)
+        println("MULTIPLES HOJAS ACTIVAS -> " + multiplesHojaDeCarga)
 
     }
 
@@ -124,103 +132,123 @@ class carga_datos : AppCompatActivity() {
 
             deshabilitarOpciones()
 
-            val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
-            if (funciones.isInternetAvailable(this@carga_datos)) {
-                alert!!.Cargando()
+            if(inventarioTiempoReal){
+                funciones.mensaje(this@carga_datos, "ESTÁ TRABAJANDO CON INVENTARIO EN TIEMPO REAL")
+            }else{
+                val hojaCarga = preferences.getBoolean("Hoja_carga_inventario_app", false)
+                if (funciones.isInternetAvailable(this@carga_datos)) {
+                    alert!!.Cargando()
 
-                if(!hojaCarga){
-                    /*
-                    * Si la Hoja de Carga está desactivada en SQL Server
-                    * Carga el inventario Completo
-                    * */
-                    CoroutineScope(Dispatchers.IO).launch {
+                    if(!hojaCarga){
+                        /*
+                        * Si la Hoja de Carga está desactivada en SQL Server
+                        * Carga el inventario Completo
+                        * */
+                        CoroutineScope(Dispatchers.IO).launch {
 
-                        delay(1000)
+                            delay(1000)
 
-                        withContext(Dispatchers.Main){
-                            alert!!.changeText("CARGANDO INFORMACION DE INVENTARIO")
+                            withContext(Dispatchers.Main){
+                                alert!!.changeText("CARGANDO INFORMACION DE INVENTARIO")
+                            }
+
+                            delay(1000)
+
+                            try {
+                                val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
+                                bd.execSQL("DELETE FROM Inventario")
+                                bd.execSQL("DELETE FROM Inventario_precios")
+                                bd.execSQL("DELETE FROM Inventario_unidades")
+
+                                inventarioController.obtenerInventarioGeneral(this@carga_datos, alert!!)
+
+                            }catch (e:Exception){
+                                println("ERROR AL CARGAR LA INFORMACION DE INVENTARIO " + e.message)
+                            }
+
+                            delay(1000)
+
+                            withContext(Dispatchers.Main){
+                                alert!!.changeText("CARGANDO ESCALAS DE PRECIOS")
+                            }
+
+                            delay(1000)
+
+                            try {
+                                //inventarioController.obtenerEscalasPrecios(this@carga_datos)
+                                inventarioController.obtenerInventarioPrecios(this@carga_datos, alert!!)
+                            }catch (e:Exception){
+                                println("ERROR AL CARGAR LAS ESCALAS DE INVENTARIO " + e.message)
+                            }
+
+                            delay(1000)
+
+                            withContext(Dispatchers.Main){
+                                alert!!.changeText("CARGANDO UNIDADES DE MEDIDA")
+                            }
+
+                            delay(1000)
+
+                            try{
+                                //inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
+                                inventarioController.obtenerInventarioUnidades(this@carga_datos, alert!!)
+                            }catch (e:Exception){
+                                println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
+                            }
+
+                            delay(1000)
+
+                            withContext(Dispatchers.Main){
+                                alert!!.changeText("CARGANDO INVENTARIO LOTES")
+                            }
+
+                            delay(1000)
+
+                            try {
+                                inventarioController.obtenerInventarioLotes(this@carga_datos, alert!!)
+                            }catch (e:Exception){
+                                println("ERROR AL OBTENER LOS LOTES DEL INVENTARIO -> ${e.message}")
+                            }
+
+                            delay(1000)
+
+                            withContext(Dispatchers.Main){
+                                alert!!.changeText("INVENTARIO CARGADO CORRECTAMENTE")
+                            }
+
+                            delay(1000)
+
+                            try {
+                                inventarioController.obtenerFechaInventario(this@carga_datos)
+                            }catch (e:Exception){
+                                println("ERROR AL CARGAR LA FECHA DE INVENTARIO " + e.message)
+                            }
+
+                            //FIN DA LA CARGA DE DATOS
+                            delay(1500)
+
+                            withContext(Dispatchers.Main){
+
+                                habilitarOpciones()
+
+                                alert!!.dismisss()
+                            }
+
                         }
+                    }else{
+                        /*
+                        * Si está Activa solamente cargar el inventario de dicha hoja
+                        * */
+                        ingresarHojaCarga()
 
-                        delay(1000)
-
-                        try {
-                            val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
-                            bd.execSQL("DELETE FROM Inventario")
-                            bd.execSQL("DELETE FROM Inventario_precios")
-                            bd.execSQL("DELETE FROM Inventario_unidades")
-
-                            getInventario()
-
-                        }catch (e:Exception){
-                            println("ERROR AL CARGAR LA INFORMACION DE INVENTARIO " + e.message)
-                        }
-
-                        delay(1000)
-
-                        withContext(Dispatchers.Main){
-                            alert!!.changeText("CARGANDO ESCALAS DE PRECIOS")
-                        }
-
-                        delay(1000)
-
-                        try {
-                            //inventarioController.obtenerEscalasPrecios(this@carga_datos)
-                            obtenerEscalasPrecios()
-                        }catch (e:Exception){
-                            println("ERROR AL CARGAR LAS ESCALAS DE INVENTARIO " + e.message)
-                        }
-
-                        delay(1000)
-
-                        withContext(Dispatchers.Main){
-                            alert!!.changeText("CARGANDO UNIDADES DE MEDIDA")
-                        }
-
-                        delay(1000)
-
-                        try{
-                            inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
-                        }catch (e:Exception){
-                            println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
-                        }
-
-                        delay(1000)
-
-                        withContext(Dispatchers.Main){
-                            alert!!.changeText("INVENTARIO CARGADO CORRECTAMENTE")
-                        }
-
-                        delay(1000)
-
-                        try {
-                            inventarioController.obtenerFechaInventario(this@carga_datos)
-                        }catch (e:Exception){
-                            println("ERROR AL CARGAR LA FECHA DE INVENTARIO " + e.message)
-                        }
-
-                        //FIN DA LA CARGA DE DATOS
-                        delay(1500)
-
-                        withContext(Dispatchers.Main){
-
-                            habilitarOpciones()
-
-                            alert!!.dismisss()
-                        }
-
+                        alert!!.dismisss()
                     }
-                }else{
-                    /*
-                    * Si está Activa solamente cargar el inventario de dicha hoja
-                    * */
-                    ingresarHojaCarga()
 
-                    alert!!.dismisss()
+                } else {
+                    funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
                 }
-
-            } else {
-                funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
             }
+
         }
 
         binding.cvCatalogos.setOnClickListener {
@@ -229,21 +257,20 @@ class carga_datos : AppCompatActivity() {
 
             deshabilitarOpciones()
 
-            if (funciones.isInternetAvailable(this@carga_datos)) {
-                alert!!.Cargando()
-                CoroutineScope(Dispatchers.IO).launch {
+            lifecycleScope.launch {
+                if (funciones.isInternetAvailable(this@carga_datos)) {
 
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CATALOGO PRINCIPALES")
+                    runOnUiThread {
+                        alert!!.Cargando()
                     }
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CATALOGO PAISES")
-                    }
+                    runOnUiThread { alert!!.changeText("CARGANDO CATALOGO PRINCIPALES") }
+
+                    delay(1000)
+
+                    runOnUiThread { alert!!.changeText("CARGANDO CATALOGO PAISES") }
 
                     try {
                         catalagosController.obtenerCatalogoPais(this@carga_datos)
@@ -253,9 +280,7 @@ class carga_datos : AppCompatActivity() {
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CATALOGO DEPARTAMENTOS")
-                    }
+                    runOnUiThread { alert!!.changeText("CARGANDO CATALOGO DEPARTAMENTOS") }
 
                     try {
                         catalagosController.obtenerCatalogoDepartamento(this@carga_datos)
@@ -265,9 +290,7 @@ class carga_datos : AppCompatActivity() {
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CATALOGO MUNICIPIOS")
-                    }
+                    runOnUiThread { alert!!.changeText("CARGANDO CATALOGO MUNICIPIOS") }
 
                     try {
                         catalagosController.obtenerCatalogoMunicipio(this@carga_datos)
@@ -277,9 +300,7 @@ class carga_datos : AppCompatActivity() {
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CATALOGO DISTRITOS")
-                    }
+                    runOnUiThread { alert!!.changeText("CARGANDO CATALOGO DISTRITOS") }
 
                     try {
                         catalagosController.obtenerCatalogoDistrito(this@carga_datos)
@@ -289,9 +310,7 @@ class carga_datos : AppCompatActivity() {
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CATALOGO ACTIVIDADES ECONOMICAS")
-                    }
+                    runOnUiThread { alert!!.changeText("CARGANDO CATALOGO ACTIVIDADES ECONOMICAS") }
 
                     try {
                         catalagosController.obtenerCatalogoGiro(this@carga_datos)
@@ -301,9 +320,7 @@ class carga_datos : AppCompatActivity() {
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CARGANDO CATALOGO RUTAS")
-                    }
+                    runOnUiThread { alert!!.changeText("CARGANDO CATALOGO RUTAS") }
 
                     try {
                         catalagosController.obtenerCatalogoRuta(this@carga_datos)
@@ -313,22 +330,19 @@ class carga_datos : AppCompatActivity() {
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
-                        alert!!.changeText("CATALOGOS CARGADOS EXITOSAMENTE")
-                    }
+                    runOnUiThread { alert!!.changeText("CATALOGOS CARGADOS EXITOSAMENTE") }
 
                     //FIN DA LA CARGA DE DATOS
                     delay(1500)
 
-                    withContext(Dispatchers.Main){
-
+                    runOnUiThread {
                         habilitarOpciones()
 
                         alert!!.dismisss()
                     }
+                } else {
+                    runOnUiThread { funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta) }
                 }
-            } else {
-                funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
             }
         }
 
@@ -570,7 +584,7 @@ class carga_datos : AppCompatActivity() {
 
                     try {
                         //OBTENIENDO ESCALAS DE PRECIOS
-                        inventarioController.obtenerEscalasPrecios(this@carga_datos)
+                        inventarioController.obtenerInventarioPrecios(this@carga_datos, alert!!)
                     }catch (e:Exception){
                         println("ERROR AL CARGAR LAS ESCALAS DE PRECIOS " + e.message)
                     }
@@ -584,9 +598,23 @@ class carga_datos : AppCompatActivity() {
                     delay(1000)
 
                     try{
-                        inventarioController.obtenerUnidadesMedidaServidor(this@carga_datos)
+                        inventarioController.obtenerInventarioUnidades(this@carga_datos, alert!!)
                     }catch (e:Exception){
                         println("ERROR AL OBTENER LAS UNIDADES DE MEDIDA -> " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO INVENTARIO LOTES")
+                    }
+
+                    delay(1000)
+
+                    try{
+                        inventarioController.obtenerInventarioLotes(this@carga_datos, alert!!)
+                    }catch (e:Exception){
+                        println("ERROR AL OBTENER INVENTARIO LOTES -> " + e.message)
                     }
 
                     delay(1000)
@@ -713,172 +741,7 @@ class carga_datos : AppCompatActivity() {
 
     }
 
-    //FUNCION PARA LA LECTURA DEL ENDPOINT DE INVENTARIO
-   private suspend fun getInventario() = withContext(Dispatchers.IO) {
-        val baseUrl = url
-        inventarioDao = db.inventarioDao()
-        val api = RetrofitCliente.obtenerApi(baseUrl, this@carga_datos)
 
-        val limite = 1000
-        var offset = 0
-        var hayMas = true
-        var totalInsertados = 0
-
-        try {
-
-            val totalRegistros = try {
-                api.obtenerTotalRegistrosInventario()
-            }catch (e: Exception){
-                println("No se pudo obtener el total de inventario -> ${e.message}")
-                null
-            }
-
-            while (hayMas) {
-                val respuesta = api.obtenerInventario(offset, limite)
-
-                if (respuesta.isNotEmpty()) {
-                    val entidades = respuesta.map {
-                        InventarioEntity(
-                            id = it.id,
-                            codigo = it.codigo ?: "",
-                            codigo_de_barra = it.codigo_de_barra ?: " ",
-                            tipo = it.tipo ?: "",
-                            descripcion = it.descripcion ?: "",
-                            unidad_medida = it.unidad_medida ?: " ",
-                            fraccion = it.fraccion ?: 0f,
-                            nombre_fraccion = it.nombre_fraccion ?: " ",
-                            costo = it.costo ?: 0f,
-                            costo_iva = it.costo_iva ?: 0f,
-                            ult_costo = it.ult_costo ?: 0f,
-                            ult_costo_iva = it.ult_costo_iva ?: 0f,
-                            existencia = it.existencia ?: 0f,
-                            existencia_u = it.existencia_u ?: 0f,
-                            precio = it.precio ?: 0f,
-                            precio_u = it.precio_u ?: 0f,
-                            precio_u_iva = it.precio_u_iva ?: 0f,
-                            precio_iva = it.precio_iva ?: 0f,
-                            bonificado = it.bonificado ?: 0f,
-                            lote = it.lote ?: " ",
-                            fecha_vencimiento = it.fecha_vencimiento ?: " ",
-                            precio2 = it.precio2 ?: 0f,
-                            precio2_iva = it.precio2_iva ?: 0f,
-                            precio_u2 = it.precio_u2 ?: 0f,
-                            precio_u2_iva = it.precio_u2_iva ?: 0f,
-                            precio_viñeta = it.precio_viñeta ?: 0f,
-                            precio_viñeta_iva = it.precio_viñeta_iva ?: 0f,
-                            fecha_inventario = LocalDate.now().toString(),
-                            validadoHoja = 1,
-                            condicion_mercado = it.condicion_mercado ?: "NORMAL",
-                            id_marca = it.id_marca,
-                            marca = it.marca,
-                            id_sku = it.id_sku,
-                            Sku = it.Sku,
-                            id_rubro = it.id_rubro,
-                            rubro = it.rubro,
-                            id_linea = it.id_linea,
-                            linea = it.linea,
-                            id_sublinea = it.id_sublinea,
-                            sublinea = it.sublinea,
-                            id_productor = it.id_productor,
-                            productor = it.productor,
-                            id_proveedor = it.id_proveedor,
-                            proveedor = it.proveedor,
-                            metodo_gestion = it.metodo_gestion,
-                            tipo_fiscal = it.tipo_fiscal
-                        )
-                    }
-
-                    inventarioDao.insertarTodos(entidades)
-                    totalInsertados += entidades.size
-
-                    //Calculando el porcentaje
-                    if(totalRegistros != null && totalRegistros > 0){
-                        val progreso = (totalInsertados * 100) / totalRegistros
-
-                        withContext(Dispatchers.Main){
-                            messageAsync("Cargando Inventario: ${progreso} %")
-                        }
-                    }
-
-                    offset += limite
-
-                } else {
-                    hayMas = false
-                }
-            }
-
-
-        } catch (e: Exception) {
-            println("Error general: ${e.message}")
-        }
-   }
-
-    private suspend fun obtenerEscalasPrecios() = withContext(Dispatchers.IO){
-        val baseUrl = url
-
-        inventarioDao = db.inventarioDao()
-
-        val api = RetrofitCliente.obtenerApi(baseUrl, this@carga_datos)
-
-        val limite = 1000
-        var offset = 0
-        var hayMas = true
-        var totalInsertados = 0
-
-        try {
-            val totalEscalas = try {
-                api.obtenerTotalRegistrosPrecios()
-            }catch (e: Exception){
-                println("No se pudo obtener el total de Escalas -> ${e.message}")
-                null
-            }
-
-            while(hayMas){
-                val respuesta = api.obtenerEscalasPrecios(offset, limite)
-
-                //println(respuesta)
-
-                if (respuesta.isNotEmpty()) {
-                    val entidades = respuesta.map {
-                        InventarioPreciosEntity(
-                            id = it.id,
-                            id_inventario = it.id_inventario ?: 0,
-                            codigo_producto = it.codigo_producto ?: " ",
-                            nombre = it.nombre ?: "",
-                            terminos = it.terminos ?: "",
-                            plazo = it.plazo ?: 0f,
-                            unidad = it.unidad ?: " ",
-                            cantidad = it.cantidad ?: 0f,
-                            porcentaje = it.porcentaje ?: 0f,
-                            precio = it.precio ?: 0f,
-                            precio_iva = it.precio_iva ?: 0f,
-                            id_inventario_unidad = it.id_inventario_unidad ?: 0
-                        )
-                    }
-
-                    inventarioDao.insertarEscalas(entidades)
-                    totalInsertados += entidades.size
-
-                    //Calculando el porcentaje
-                    if(totalEscalas != null && totalEscalas > 0){
-                        val progreso = (totalInsertados * 100) / totalEscalas
-
-                        withContext(Dispatchers.Main){
-                            messageAsync("Cargando Escalas: ${progreso} %")
-                        }
-                    }
-
-                    offset += limite
-
-                } else {
-                    hayMas = false
-                }
-            }
-        }catch (e:Exception){
-            println("Error de Escalas General: ${e.message}")
-        }
-
-    }
 
     private fun messageAsync(mensaje: String) {
         if (alert != null) {
@@ -913,6 +776,19 @@ class carga_datos : AppCompatActivity() {
             .create()
 
         dialog.show()
+    }
+
+    //CONFIGURACION EL RESPONSIVE DEL MENU
+    private fun configurarResponsiveMenu(){
+        val flow = binding.flow
+        val orientation = resources.configuration.orientation
+
+        val cantidad = when(orientation){
+            Configuration.ORIENTATION_LANDSCAPE -> 4
+            else -> 2
+        }
+
+        flow.setMaxElementsWrap(cantidad)
     }
 
 }

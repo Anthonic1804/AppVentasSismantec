@@ -72,6 +72,8 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
     private var M_CxC: Boolean = false
     private var M_Abonos: Boolean = false
 
+    private var inventarioReal: Boolean = false
+
     private val utilidades = CrearSslNoSeguro()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,8 +114,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         M_Reportes = preferencias!!.getBoolean("M_Reportes", false)
         M_CxC = preferencias!!.getBoolean("M_CxC", false)
         M_Abonos = preferencias!!.getBoolean("M_Abonos", false)
+        inventarioReal = preferencias!!.getBoolean("inventarioTiempoReal", false)
 
-        fechaInventario = preferencias!!.getString("fechaInventario", "NULL").toString()
+
+        fechaInventario = if(inventarioReal){
+            "INVENTARIO EN TIEMPO REAL"
+        }else{preferencias!!.getString("fechaInventario", "NULL").toString()}
         binding.includeBar.lblupdate.text = fechaInventario
 
 
@@ -129,39 +135,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         drawerLayout.addDrawerListener(toogle)
         supportActionBar?.hide()
 
-        val navigationView: NavigationView = findViewById(R.id.nav_view)
-        navigationView.setNavigationItemSelectedListener(this)
-
-        //OCULTANDO EL MENU TOKEN
-        if(generaToken == 0){
-            navigationView.menu.setGroupVisible(R.id.group_admin, false)
-        }
-
-        if(!M_Historio){
-            navigationView.menu.setGroupVisible(R.id.group_historico, false)
-        }
-
-        if(!M_HojaCarga){
-            navigationView.menu.setGroupVisible(R.id.group_carga, false)
-        }
-
-        if(!M_Gastos){
-            navigationView.menu.setGroupVisible(R.id.group_gasto, false)
-        }
-
-        if(!M_Abonos){
-            navigationView.menu.setGroupVisible(R.id.group_abonos, false)
-        }
-
-        if(!M_Reportes){
-            navigationView.menu.setGroupVisible(R.id.group_reporte, false)
-        }
-
-        if(!M_CxC){
-            navigationView.menu.setGroupVisible(R.id.group_cxc, false)
-        }
-
-        //FIN DE LA IMPLEAMENTACION DEL MENU
+        activarMenus()
 
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
@@ -194,6 +168,41 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         funciones!!.VendedorVerific(this) //valida que haya sesion
     }
 
+    //Funcion para Activar menus
+    private fun activarMenus(){
+
+        val navigationView: NavigationView = findViewById(R.id.nav_view)
+        navigationView.setNavigationItemSelectedListener(this)
+
+        if(generaToken == 0){
+            navigationView.menu.setGroupVisible(R.id.group_admin, false)
+        }
+
+        if(!M_Historio){
+            navigationView.menu.setGroupVisible(R.id.group_historico, false)
+        }
+
+        if(!M_HojaCarga){
+            navigationView.menu.setGroupVisible(R.id.group_carga, false)
+        }
+
+        if(!M_Gastos){
+            navigationView.menu.setGroupVisible(R.id.group_gasto, false)
+        }
+
+        if(!M_Abonos){
+            navigationView.menu.setGroupVisible(R.id.group_abonos, false)
+        }
+
+        if(!M_Reportes){
+            navigationView.menu.setGroupVisible(R.id.group_reporte, false)
+        }
+
+        if(!M_CxC){
+            navigationView.menu.setGroupVisible(R.id.group_cxc, false)
+        }
+    }
+
     private fun menu() {
         with(binding.includeBar){
             cvData.setOnClickListener {
@@ -215,9 +224,15 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             }
 
             cvinventario.setOnClickListener {
-                val intento = Intent(this@Inicio, Inventario::class.java)
-                startActivity(intento)
-                finish()
+                if(inventarioReal){
+                    val intento = Intent(this@Inicio, InventarioTiempoReal::class.java)
+                    startActivity(intento)
+                    finish()
+                }else{
+                    val intento = Intent(this@Inicio, Inventario::class.java)
+                    startActivity(intento)
+                    finish()
+                }
             }
 
             cvpedido.setOnClickListener {

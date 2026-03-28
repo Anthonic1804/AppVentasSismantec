@@ -185,7 +185,9 @@ class ConfigController {
                         multiplesHojaDeCarga = dato.optBoolean("multiplesHojaDeCarga", false),
                         idBodega = dato.optInt("id_bodega_inventario"),
                         codBodega = dato.optString("cod_bodega_inventario"),
-                        bodega = dato.optString("bodega_inventario")
+                        bodega = dato.optString("bodega_inventario"),
+                        inventarioTiempoReal = dato.optBoolean("inventario_tiempo_real", false),
+                        eliminarPedidosAutomaticos = dato.optBoolean("eliminar_pedidos_automatico", false)
                     )
 
                     confirmarPagareObligatorio(item, context)
@@ -272,6 +274,10 @@ class ConfigController {
             putString("codBodega", obj.codBodega)
             putString("bodega", obj.bodega)
 
+            //Inventario tiempoReal
+            putBoolean("inventarioTiempoReal", obj.inventarioTiempoReal)
+            putBoolean("eliminarPedidosAutomaticos", obj.eliminarPedidosAutomaticos)
+
         }
     }
 
@@ -336,6 +342,10 @@ class ConfigController {
             remove("idBodega")
             remove("codBodega")
             remove("bodega")
+
+            //inventario tiempo real
+            remove("inventarioTiempoReal")
+            remove("eliminarPedidosAutomaticos")
         }
     }
 }

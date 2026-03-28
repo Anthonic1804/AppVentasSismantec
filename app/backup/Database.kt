@@ -3,11 +3,6 @@ package com.example.acae30.database
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.acae30.Migration.MIGRATION_1_2
 
 class Database(val context: Context) : SQLiteOpenHelper(
     context,

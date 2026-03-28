@@ -166,6 +166,8 @@ class Detallepedido : AppCompatActivity() {
     private val utilidades = CrearSslNoSeguro()
     private var isProcessing = false
 
+    private var inventarioTiempoReal: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -190,6 +192,7 @@ class Detallepedido : AppCompatActivity() {
         puerto = preferencias.getInt("puerto", 0)
         clienteMosoro = preferencias.getInt("clienteMoroso", 0)
         P_Imprimir_TK_Venta = preferencias.getBoolean("P_Imprimir_TK_Venta", false)
+        inventarioTiempoReal = preferencias.getBoolean("inventarioTiempoReal", false)
 
         visita_enviada = false
 
@@ -338,18 +341,33 @@ class Detallepedido : AppCompatActivity() {
 
         binding.imgbtnadd.setOnClickListener {
             if (cantidadItemsPedido < limiteItemPedido) {
-                val intento = Intent(this, Inventario::class.java)
-                intento.putExtra("idcliente", idcliente)
-                intento.putExtra("nombrecliente", binding.txtCliente.text.toString())
-                intento.putExtra("busqueda", true)
-                intento.putExtra("idpedido", idpedido)
-                intento.putExtra("visitaid", idvisita)
-                intento.putExtra("codigo", codigo)
-                intento.putExtra("idapi", idapi)
-                intento.putExtra("sucursalPosition", getSucursalPosition)
-                intento.putExtra("facturaExportacion", FacturaExportacion)
-                startActivity(intento)
-                finish()
+                if(inventarioTiempoReal){
+                    val intento = Intent(this, InventarioTiempoReal::class.java)
+                    intento.putExtra("idcliente", idcliente)
+                    intento.putExtra("nombrecliente", binding.txtCliente.text.toString())
+                    intento.putExtra("busqueda", true)
+                    intento.putExtra("idpedido", idpedido)
+                    intento.putExtra("visitaid", idvisita)
+                    intento.putExtra("codigo", codigo)
+                    intento.putExtra("idapi", idapi)
+                    intento.putExtra("sucursalPosition", getSucursalPosition)
+                    intento.putExtra("facturaExportacion", FacturaExportacion)
+                    startActivity(intento)
+                    finish()
+                }else{
+                    val intento = Intent(this, Inventario::class.java)
+                    intento.putExtra("idcliente", idcliente)
+                    intento.putExtra("nombrecliente", binding.txtCliente.text.toString())
+                    intento.putExtra("busqueda", true)
+                    intento.putExtra("idpedido", idpedido)
+                    intento.putExtra("visitaid", idvisita)
+                    intento.putExtra("codigo", codigo)
+                    intento.putExtra("idapi", idapi)
+                    intento.putExtra("sucursalPosition", getSucursalPosition)
+                    intento.putExtra("facturaExportacion", FacturaExportacion)
+                    startActivity(intento)
+                    finish()
+                }
             }else{
                 Toast.makeText(this@Detallepedido, "YA NO PUEDE AGREGAR MAS PRODUCTOS AL PEDIDO",
                     Toast.LENGTH_SHORT).show()

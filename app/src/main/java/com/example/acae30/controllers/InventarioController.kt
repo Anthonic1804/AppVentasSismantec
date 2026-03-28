@@ -32,12 +32,22 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import androidx.core.content.edit
+import androidx.room.util.query
 import androidx.room.util.recursiveFetchArrayMap
+import com.example.acae30.AlertDialogo
+import com.example.acae30.DAO.InventarioDao
+import com.example.acae30.Entities.InventarioEntity
+import com.example.acae30.Entities.InventarioLotesEntity
+import com.example.acae30.Entities.InventarioPreciosEntity
+import com.example.acae30.Entities.InventarioUnidadesEntity
 import com.example.acae30.Inicio
+import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.AgregarHeaders
 import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.database.AppDatabase
 import com.example.acae30.modelos.UnidadMedidaModelo
 import com.google.gson.JsonArray
+import org.jetbrains.annotations.Async.Execute
 import org.json.JSONObject
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
@@ -50,6 +60,18 @@ class InventarioController {
     private var instancia = "CONFIG_SERVIDOR"
     private var utilidades = CrearSslNoSeguro()
     private val agregarHeaders = AgregarHeaders()
+
+    private lateinit var base : AppDatabase
+    private lateinit var servidor : String
+    private lateinit var inventarioDao : InventarioDao
+    private val BLOQUE : Int = 300
+
+    private fun iniciarlizarVariables(context: Context){
+        base = AppDatabase.getInstance(context)
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
+
+    }
 
     //FUNCION PARA OBTENER INFORMACION DEL PRODUCTO POR ID
     fun obtenerInformacionProductoPorId(context: Context ,idInventario: Int, facExpo: Boolean): Inventario?{
@@ -726,10 +748,8 @@ class InventarioController {
         try {
 
             //VERIFICANDO SI MULTIPLES HOJAS ESTÁ ACTIVO
-            if(!multiplesHojasDeCarga){
-                //LIMPIANDO INVENTARIO PARA UNICA HOJA DE CARGA
-                limpiandoTablasInventario(context)
-            }else{
+            if(multiplesHojasDeCarga){
+
                 //LIMPIANDO INVENTARIO PARA MULTIPLES HOJAS DE CARGA
                 val consultaTblHojaCarga = "SELECT * FROM hoja_carga WHERE Fecha != '$fecha' LIMIT 1"
                 val cursor = bd.query(consultaTblHojaCarga)
@@ -738,6 +758,10 @@ class InventarioController {
                         limpiandoTablasInventario(context)
                     }
                 }
+
+            }else{
+                //LIMPIANDO INVENTARIO PARA UNICA HOJA DE CARGA
+                limpiandoTablasInventario(context)
             }
         }catch (e: Exception){
             throw Exception("ERROR LA ELIMINAR EL INVENTARIO -> " + e.message)
@@ -747,6 +771,9 @@ class InventarioController {
     private fun limpiandoTablasInventario(context: Context){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         bd.execSQL("DELETE FROM Inventario")
+        bd.execSQL("DELETE FROM inventario_precios")
+        bd.execSQL("DELETE FROM inventario_unidades")
+        bd.execSQL("DELETE FROM inventario_lotes")
         bd.execSQL("DELETE FROM hoja_carga")
         bd.execSQL("DELETE FROM hoja_carga_detalle")
         bd.execSQL("DELETE FROM hoja_detalle_recargas")
@@ -1157,7 +1184,7 @@ class InventarioController {
     }
 
     //FUNCION PARA OBTENER DEL SERVIDOR LAS UNIDADES DE MEDIDA
-    suspend fun obtenerUnidadesMedidaServidor(context: Context){
+    /*suspend fun obtenerUnidadesMedidaServidor(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val url = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
 
@@ -1204,10 +1231,10 @@ class InventarioController {
         }catch (e:Exception){
             println("ERROR: LOGRO CONECTAR CON EL SERVIDOR -> " + e.message)
         }
-    }
+    }*/
 
     //FUNCION PARA REGISTRAR LAS UNIDADES DE MEDIDA EN SQLITE
-    private fun registrarUnidadesMedidaSQLite(json: JSONArray, context: Context) {
+    /*private fun registrarUnidadesMedidaSQLite(json: JSONArray, context: Context) {
 
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
@@ -1236,7 +1263,7 @@ class InventarioController {
             bd.endTransaction()
         }
 
-    }
+    }*/
 
     //FUNCION PARA OBTENER EL LISTADO DE UNIDADES DE MEDIDA
     fun listadoUnidadesMedidaProductoById(context: Context, idProducto: Int, hojaCargaActiva: Boolean) : ArrayList<String>{
@@ -1341,6 +1368,344 @@ class InventarioController {
         return unidad
     }
 
+    //-------------------------------------------
+    //Funcion para obtener el Inventario General
+    //-------------------------------------------
+    suspend fun obtenerInventarioGeneral(context: Context, dialogo: AlertDialogo) {
+
+        withContext(Dispatchers.Main){
+            iniciarlizarVariables(context)
+        }
+
+        withContext(Dispatchers.IO) {
+
+            val baseUrl = servidor
+            inventarioDao = base.inventarioDao()
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+            try {
+
+                val totalRegistros = try {
+                    api.obtenerTotalRegistrosInventario()
+                }catch (e: Exception){
+                    println("No se pudo obtener el total de inventario -> ${e.message}")
+                    null
+                }
+
+                while (hayMas) {
+                    val respuesta = api.obtenerInventario(lastId, limite)
+
+                    //println("INVENTARIO -> " + respuesta)
+
+                    if (respuesta.isNotEmpty() && respuesta.last().id != 0) {
+                        val entidades = respuesta.map {
+                            InventarioEntity(
+                                id = it.id,
+                                codigo = it.codigo ?: "",
+                                codigo_de_barra = it.codigo_de_barra ?: " ",
+                                tipo = it.tipo ?: "",
+                                descripcion = it.descripcion ?: "",
+                                unidad_medida = it.unidad_medida ?: " ",
+                                fraccion = it.fraccion ?: 0f,
+                                nombre_fraccion = it.nombre_fraccion ?: " ",
+                                costo = it.costo ?: 0f,
+                                costo_iva = it.costo_iva ?: 0f,
+                                ult_costo = it.ult_costo ?: 0f,
+                                ult_costo_iva = it.ult_costo_iva ?: 0f,
+                                existencia = it.existencia ?: 0f,
+                                existencia_u = it.existencia_u ?: 0f,
+                                precio = it.precio ?: 0f,
+                                precio_u = it.precio_u ?: 0f,
+                                precio_u_iva = it.precio_u_iva ?: 0f,
+                                precio_iva = it.precio_iva ?: 0f,
+                                bonificado = it.bonificado ?: 0f,
+                                lote = it.lote ?: " ",
+                                fecha_vencimiento = it.fecha_vencimiento ?: " ",
+                                precio2 = it.precio2 ?: 0f,
+                                precio2_iva = it.precio2_iva ?: 0f,
+                                precio_u2 = it.precio_u2 ?: 0f,
+                                precio_u2_iva = it.precio_u2_iva ?: 0f,
+                                precio_viñeta = it.precio_viñeta ?: 0f,
+                                precio_viñeta_iva = it.precio_viñeta_iva ?: 0f,
+                                fecha_inventario = LocalDate.now().toString(),
+                                validadoHoja = 1,
+                                condicion_mercado = it.condicion_mercado ?: "NORMAL",
+                                id_marca = it.id_marca,
+                                marca = it.marca,
+                                id_sku = it.id_sku,
+                                Sku = it.Sku,
+                                id_rubro = it.id_rubro,
+                                rubro = it.rubro,
+                                id_linea = it.id_linea,
+                                linea = it.linea,
+                                id_sublinea = it.id_sublinea,
+                                sublinea = it.sublinea,
+                                id_productor = it.id_productor,
+                                productor = it.productor,
+                                id_proveedor = it.id_proveedor,
+                                proveedor = it.proveedor,
+                                metodo_gestion = it.metodo_gestion,
+                                tipo_fiscal = it.tipo_fiscal
+                            )
+                        }
+
+                        inventarioDao.insertarTodos(entidades)
+                        totalInsertados += entidades.size
+
+                        //Calculando el porcentaje
+                        if(totalRegistros != null && totalRegistros > 0){
+                            val progreso = (totalInsertados * 100) / totalRegistros
+
+                            withContext(Dispatchers.Main){
+                                dialogo.changeText("Cargando Inventario: $progreso %")
+                            }
+                        }
+
+                        //lastId += limite
+                        lastId = respuesta.last().id
+
+                    } else {
+                        hayMas = false
+                    }
+                }
+
+
+            } catch (e: Exception) {
+                println("Error general: ${e.message}")
+            }
+        }
+    }
+
+    //-------------------------------------------
+    //Funcion para obtener Inventario Precios
+    //-------------------------------------------
+    suspend fun obtenerInventarioPrecios(context: Context, dialogo: AlertDialogo) {
+
+        withContext(Dispatchers.Main){
+            iniciarlizarVariables(context)
+        }
+
+        withContext(Dispatchers.IO){
+
+            val baseUrl = servidor
+
+            inventarioDao = base.inventarioDao()
+
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+            try {
+                val totalEscalas = try {
+                    api.obtenerTotalRegistrosPrecios()
+                }catch (e: Exception){
+                    println("No se pudo obtener el total de Escalas -> ${e.message}")
+                    null
+                }
+
+                while(hayMas){
+                    val respuesta = api.obtenerEscalasPrecios(lastId, limite)
+
+                    //println(respuesta)
+
+                    if (respuesta.isNotEmpty() && respuesta.last().id != 0) {
+
+                        println("INVENTAIRO PRECIOS -> " + respuesta)
+
+                        val entidades = respuesta.map {
+                            InventarioPreciosEntity(
+                                id = it.id,
+                                id_inventario = it.id_inventario ?: 0,
+                                codigo_producto = it.codigo_producto ?: " ",
+                                nombre = it.nombre ?: "",
+                                terminos = it.terminos ?: "",
+                                plazo = it.plazo ?: 0f,
+                                unidad = it.unidad ?: " ",
+                                cantidad = it.cantidad ?: 0f,
+                                porcentaje = it.porcentaje ?: 0f,
+                                precio = it.precio ?: 0f,
+                                precio_iva = it.precio_iva ?: 0f,
+                                id_inventario_unidad = it.id_inventario_unidad ?: 0
+                            )
+                        }
+
+                        inventarioDao.insertarEscalas(entidades)
+                        totalInsertados += entidades.size
+
+                        //Calculando el porcentaje
+                        if(totalEscalas != null && totalEscalas > 0){
+                            val progreso = (totalInsertados * 100) / totalEscalas
+
+                            withContext(Dispatchers.Main){
+                                dialogo.changeText("Cargando Escalas: $progreso %")
+                            }
+                        }
+
+                        lastId = respuesta.last().id
+
+                    } else {
+                        hayMas = false
+                    }
+                }
+            }catch (e:Exception){
+                println("Error de Escalas General: ${e.message}")
+            }
+
+        }
+    }
+
+    //------------------------------------------
+    //Funcion para cargar Lotes
+    //------------------------------------------
+    suspend fun obtenerInventarioLotes(context: Context, dialogo: AlertDialogo){
+
+        withContext(Dispatchers.Main){
+            iniciarlizarVariables(context)
+        }
+
+        withContext(Dispatchers.IO){
+            val baseUrl: String = servidor
+            inventarioDao = base.inventarioDao()
+
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+            try {
+
+                val totalRegistros = try {
+                    api.obtenerTotalRegistroLotes()
+                }catch (e:Exception){
+                    println("no se puedo obtener el total de registros de lotes -> ${e.message}")
+                    null
+                }
+
+                while (hayMas){
+
+                    val respuesta = api.obtenerLotesInventario(lastId, limite)
+
+                    println("INVENTARIO LOTES -> " + respuesta)
+
+                    if(respuesta.isNotEmpty() && respuesta.last().id != 0){
+                        val entidades = respuesta.map {
+                            InventarioLotesEntity(
+                                id = it.id,
+                                idProducto = it.idProducto,
+                                codigoProducto = it.codigoProducto ?: "",
+                                lote = it.lote ?: "",
+                                fechaVencimiento = it.fechaVencimiento ?: "",
+                                unidades = it.unidades ?: 0f,
+                                fracciones = it.fracciones ?: 0f
+                            )
+                        }
+
+                        inventarioDao.insertarLotes(entidades)
+                        totalInsertados += entidades.size
+
+                        //Calculando porcentaje
+                        if(totalRegistros != null && totalRegistros > 0){
+                            val progreso = (totalInsertados * 100) / totalRegistros
+
+                            withContext(Dispatchers.Main){
+                                dialogo.changeText("Cargando Inventario Lotes: $progreso %")
+                            }
+                        }
+
+                        lastId = respuesta.last().id
+                    }else{
+                        hayMas = false
+                    }
+                }
+            }catch (e:Exception){
+                println("ERROR AL OBTENER INVENTARIO LOTES GENERAL: ${e.message}")
+            }
+
+
+        }
+
+    }
+
+    //---------------------------------------------
+    //Funcion para cargar las unidades de medida
+    //---------------------------------------------
+    suspend fun obtenerInventarioUnidades( context: Context, dialogo: AlertDialogo){
+
+        withContext(Dispatchers.Main){
+            iniciarlizarVariables(context)
+        }
+
+        withContext(Dispatchers.IO){
+            val baseUrl = servidor
+
+            inventarioDao = base.inventarioDao()
+
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+            try {
+                val totalUnidades = try{
+                    api.obtenerTotalRegistroUnidades()
+                }catch (e:Exception){
+                    println("ERROR: No se pudo obtener el total de registro de Unidades: ${e.message}")
+                    null
+                }
+
+                while (hayMas){
+
+                    val respuesta = api.obtenerUnidadesInventario(lastId, limite)
+
+                    println("INVENTARIO UNIDADES -> " + respuesta)
+
+                    if(respuesta.isNotEmpty() && respuesta.last().Id != 0){
+                        val entidades = respuesta.map {
+                            InventarioUnidadesEntity(
+                                Id = it.Id,
+                                Id_inventario = it.Id_inventario,
+                                Nombre_unidad = it.Nombre_unidad ?: "",
+                                Equivale = it.Equivale ?: 0f,
+                                Unidades = it.Unidades ?: ""
+                            )
+                        }
+
+                        inventarioDao.insertarUnidades(entidades)
+                        totalInsertados += entidades.size
+
+                        //Calculado el porcentaje
+                        if(totalUnidades != null && totalUnidades > 0){
+                            val progreso = (totalInsertados * 100) / totalUnidades
+
+                            withContext(Dispatchers.Main){
+                                dialogo.changeText("Cargando Inventario Unidades: $progreso %")
+                            }
+                        }
+
+                        lastId = respuesta.last().Id
+                    }else{
+                        hayMas = false
+                    }
+
+                }
+            }catch (e:Exception){
+                println("ERROR GENERAL DE INVENTARIO UNIDADES -> ${e.message}")
+            }
+
+        }
+    }
 
     //---------------------------------------
     //Funciones para reintegrar el inventario

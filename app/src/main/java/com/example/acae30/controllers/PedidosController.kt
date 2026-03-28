@@ -29,6 +29,7 @@ import androidx.core.database.getFloatOrNull
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import com.example.acae30.Utilidades.CrearSslNoSeguro
+import java.util.UUID
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 
@@ -39,6 +40,7 @@ class PedidosController {
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
     private var utilidades = CrearSslNoSeguro()
+    private val clientesController = ClientesController()
 
     //FUNCION PARA ACTUALIZAR EL TIPO DE ENVIO SELECCIONADO
     fun updateTipoPedido(tipoPedido:Int, idpedido:Int, context: Context){
@@ -654,5 +656,132 @@ class PedidosController {
         }
 
         return totalObtenido
+    }
+
+    //----------------------------------------
+    //Función para verificar si el producto ya existe en el pedido
+    //----------------------------------------
+    fun obtenerProductoEnDetalle(context: Context, idPedido: Int, idProducto: Int, unidadActual: String) : DetallePedido?{
+
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
+
+        var detalleProducto : DetallePedido? = null
+
+        try{
+            val consulta = "SELECT * FROM detalle_pedidos where Id_pedido=$idPedido and Id_producto=$idProducto and Unidad = '$unidadActual'"
+            val cdetalle = base.query(consulta)
+            cdetalle.use {
+                if(cdetalle.count > 0){
+                    cdetalle.moveToFirst()
+                    detalleProducto = DetallePedido(
+                        cdetalle.getInt(0),
+                        cdetalle.getInt(1),
+                        cdetalle.getInt(2),
+                        cdetalle.getStringOrNull(3) ?: "",
+                        cdetalle.getString(4),
+                        cdetalle.getFloatOrNull(5) ?: 0f,
+                        cdetalle.getFloatOrNull(6) ?: 0f,
+                        cdetalle.getFloatOrNull(7) ?: 0f,
+                        cdetalle.getFloatOrNull(8) ?: 0f,
+                        cdetalle.getFloatOrNull(9) ?: 0f,
+                        cdetalle.getFloatOrNull(10) ?: 0f,
+                        cdetalle.getFloatOrNull(11) ?: 0f,
+                        cdetalle.getFloatOrNull(12) ?: 0f,
+                        cdetalle.getFloatOrNull(13) ?: 0f,
+                        cdetalle.getFloatOrNull(14) ?: 0f,
+                        cdetalle.getFloatOrNull(15) ?: 0f,
+                        cdetalle.getString(16) ,
+                        cdetalle.getInt(17),
+                        cdetalle.getFloatOrNull(18) ?: 0f,
+                        cdetalle.getString(19),
+                        cdetalle.getInt(20),
+                        cdetalle.getString(21),
+                        cdetalle.getFloatOrNull(22) ?: 0f,
+                        cdetalle.getFloatOrNull(23) ?: 0f,
+                        cdetalle.getString(24),
+                        cdetalle.getString(25),
+                        cdetalle.getIntOrNull(26),
+                        cdetalle.getIntOrNull(27),
+                        cdetalle.getIntOrNull(28),
+                        cdetalle.getIntOrNull(29),
+                        cdetalle.getIntOrNull(30),
+                        cdetalle.getIntOrNull(31),
+                        cdetalle.getIntOrNull(32),
+                        cdetalle.getString(33),
+                        cdetalle.getString(34),
+                        cdetalle.getIntOrNull(35),
+                        cdetalle.getStringOrNull(36),
+                        cdetalle.getStringOrNull(37),
+                        cdetalle.getIntOrNull(38),
+                        cdetalle.getStringOrNull(39),
+                        cdetalle.getStringOrNull(40)
+                    )
+                }
+            }
+        }catch (e:Exception){
+            println("ERROR AL VERIFICAR EL PRODUCTO EN EL DETALLE -> ${e.message}")
+        }
+        return detalleProducto
+    }
+
+    //=========================================
+    //Funcion de Crear Nuevo Pedido
+    //Local o Ruta
+    //17032026
+    //=========================================
+
+    fun crearNuevoPedido(context: Context, idCliente: Int, idVisitaGlobal: Int? = 0) : Int{
+
+        val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        val fecha = funciones.getFechaHoraProceso()
+        val fechaCreado = funciones.obtenerFecha()
+        val cliente = clientesController.obtenerInformacionCliente(context, idCliente)
+
+        var idPedido = 0
+
+        var tipoDocumento = "FC"
+        val nrc : String = cliente!!.Nrc.toString()
+        if(nrc.length > 2 && nrc.isNotBlank()){
+            tipoDocumento = "CF"
+        }
+
+        val idPedidoApp = UUID.randomUUID().toString()
+
+        try {
+
+            base.beginTransaction()
+            val contenido = ContentValues()
+            contenido.put("Id_cliente", idCliente)
+            contenido.put("Nombre_cliente", cliente.Cliente)
+            contenido.put("Total", 0.toFloat())
+            contenido.put("Descuento", 0.toFloat())
+            contenido.put("Enviado", false)
+            contenido.put("Idvisita", idVisitaGlobal)
+            contenido.put("Fecha_creado", fecha)
+            contenido.put("Terminos", cliente.Terminos_cliente)
+            contenido.put("Id_ruta", cliente.Id_ruta)
+            contenido.put("Ruta", cliente.Ruta)
+            contenido.put("Tipo_documento", tipoDocumento)
+            contenido.put("DTEDireccion", cliente.DTEDireccion)
+            contenido.put("DTECodDepto", cliente.DTECodDepto)
+            contenido.put("DTECodMunicipio", cliente.DTECodMunicipio)
+            contenido.put("DTECodPais", cliente.DTECodPais)
+            contenido.put("DTEPais", cliente.DTEPais)
+            contenido.put("DTECorreo", cliente.DTECorreo)
+            contenido.put("DTETelefono", cliente.DTETelefono)
+            contenido.put("Fecha", fechaCreado)
+            contenido.put("Id_pedido_app", idPedidoApp)
+
+            val id = base.insert("pedidos", SQLiteDatabase.CONFLICT_REPLACE, contenido)
+
+            idPedido = id.toInt()
+            base.setTransactionSuccessful()
+
+        } catch (e: Exception) {
+            println("ERROR AL REGISTRAR EL PEDIDO -> " + e.message)
+        } finally {
+            base.endTransaction()
+        }
+        return idPedido
     }
 }

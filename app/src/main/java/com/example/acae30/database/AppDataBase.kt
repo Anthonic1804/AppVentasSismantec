@@ -8,9 +8,14 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.acae30.DAO.InventarioDao
 import com.example.acae30.Entities.InventarioEntity
+import com.example.acae30.Entities.InventarioLotesEntity
 import com.example.acae30.Entities.InventarioPreciosEntity
+import com.example.acae30.Entities.InventarioUnidadesEntity
 
-@Database(entities = [InventarioEntity::class, InventarioPreciosEntity::class], version = 1, exportSchema = false)
+@Database(entities = [InventarioEntity::class,
+    InventarioPreciosEntity::class,
+    InventarioLotesEntity::class,
+    InventarioUnidadesEntity::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun inventarioDao(): InventarioDao
     companion object{
@@ -39,7 +44,7 @@ abstract class AppDatabase : RoomDatabase() {
                         db.execSQL(tbl.cliente())
                         db.execSQL(tbl.clienteSucursal())
                         db.execSQL(tbl.clientePrecios())
-                        db.execSQL(tbl.inventarioUnidades())
+                        //db.execSQL(tbl.inventarioUnidades())
                         db.execSQL(tbl.hojaCarga())
                         db.execSQL(tbl.hojaCargaDetalle())
                         db.execSQL(tbl.hojaDetalleRecargas())

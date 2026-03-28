@@ -267,8 +267,7 @@ class Funciones {
             db.execSQL("DELETE FROM cliente_sucursal")
             db.execSQL("DELETE FROM cliente_precios")
             db.execSQL("DELETE FROM inventario_precios")
-            db.execSQL("DELETE FROM pedidos")
-            db.execSQL("DELETE FROM detalle_pedidos")
+            db.execSQL("DELETE FROM inventario_lotes")
             db.execSQL("DELETE FROM cuentas")
         }catch (e:Exception){
             throw Exception("ERROR AL ELIMINAR LA INFORMACION AL CERRAR SESSION -> " + e.message)
@@ -287,6 +286,7 @@ class Funciones {
             db.execSQL("DELETE FROM Inventario")
             db.execSQL("DELETE FROM inventario_precios")
             db.execSQL("DELETE FROM inventario_unidades")
+            db.execSQL("DELETE FROM inventario_lotes")
             db.execSQL("DELETE FROM hoja_carga")
             db.execSQL("DELETE FROM hoja_carga_detalle")
         }catch (e:Exception){

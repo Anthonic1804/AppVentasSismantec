@@ -28,6 +28,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
+import com.example.acae30.controllers.PedidosController
 import com.example.acae30.databinding.ActivityProductoAgregarBinding
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
@@ -98,6 +99,7 @@ class Producto_agregar : AppCompatActivity() {
     private var clientesController = ClientesController()
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
+    private val pedidosController = PedidosController()
 
     //---------
     //VARIABLES PARA EL USO DE CONTROLES
@@ -128,6 +130,8 @@ class Producto_agregar : AppCompatActivity() {
 
     private val utilidades = CrearSslNoSeguro()
 
+    private var inventarioTiempoReal : Boolean = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -145,6 +149,7 @@ class Producto_agregar : AppCompatActivity() {
         mostrarPrecioApp = preferencias!!.getInt("precio_mostrar_app", 0)
         decPrecios = preferencias!!.getInt("decPrecios",2)
         decTotales = preferencias!!.getInt("decTotales",2)
+        inventarioTiempoReal = preferencias!!.getBoolean("inventarioTiempoReal", false)
 
         //-----------
         //SETEANDO LOS INTENT QUE VIENEN DESDE EL FORMULARIO ANTERIOR
@@ -217,17 +222,31 @@ class Producto_agregar : AppCompatActivity() {
                 provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
 
             }else{
-                val intento = Intent(this@Producto_agregar, Inventario::class.java)
-                intento.putExtra("idcliente", idcliente)
-                intento.putExtra("nombrecliente", nombrecliente)
-                intento.putExtra("busqueda", true)
-                intento.putExtra("idpedido", idpedido)
-                intento.putExtra("visitaid", idvisita)
-                intento.putExtra("codigo", codigo)
-                intento.putExtra("idapi", idapi)
-                intento.putExtra("sucursalPosition", getSucursalPosition)
-                intento.putExtra("facturaExportacion", false)
-                startActivity(intento)
+                if(inventarioTiempoReal){
+                    val intento = Intent(this@Producto_agregar, InventarioTiempoReal::class.java)
+                    intento.putExtra("idcliente", idcliente)
+                    intento.putExtra("nombrecliente", nombrecliente)
+                    intento.putExtra("busqueda", true)
+                    intento.putExtra("idpedido", idpedido)
+                    intento.putExtra("visitaid", idvisita)
+                    intento.putExtra("codigo", codigo)
+                    intento.putExtra("idapi", idapi)
+                    intento.putExtra("sucursalPosition", getSucursalPosition)
+                    intento.putExtra("facturaExportacion", false)
+                    startActivity(intento)
+                }else{
+                    val intento = Intent(this@Producto_agregar, Inventario::class.java)
+                    intento.putExtra("idcliente", idcliente)
+                    intento.putExtra("nombrecliente", nombrecliente)
+                    intento.putExtra("busqueda", true)
+                    intento.putExtra("idpedido", idpedido)
+                    intento.putExtra("visitaid", idvisita)
+                    intento.putExtra("codigo", codigo)
+                    intento.putExtra("idapi", idapi)
+                    intento.putExtra("sucursalPosition", getSucursalPosition)
+                    intento.putExtra("facturaExportacion", false)
+                    startActivity(intento)
+                }
             }
 
         } // boton que lleva atras en el activity
@@ -258,24 +277,6 @@ class Producto_agregar : AppCompatActivity() {
                 funciones.mostrarAlerta("ERROR AL ELIMINAR EL PRODUCTO", this@Producto_agregar, binding.lienzo)
             }
         }
-
-//        binding.txtcantidad.filters = arrayOf<InputFilter>(object : InputFilter {
-//            var decimalFormatSymbols: DecimalFormatSymbols = DecimalFormatSymbols()
-//            override fun filter(
-//                source: CharSequence,
-//                start: Int,
-//                end: Int,
-//                dest: Spanned,
-//                dstart: Int,
-//                dend: Int
-//            ): CharSequence {
-//                val indexPoint: Int =
-//                    dest.toString().indexOf(decimalFormatSymbols.decimalSeparator)
-//                if (indexPoint == -1) return source
-//                val decimals = dend - (indexPoint + 1)
-//                return if (decimals < 4) source else ""
-//            }
-//        })
 
         binding.spunidad.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -655,36 +656,46 @@ class Producto_agregar : AppCompatActivity() {
 
     //FUNCION PARA VALIDAD CANTIDAD PARA ESCARRSA
     private fun validarCantidad(cantidadIngresada: String){
-        if(cantidadIngresada.isNotEmpty()){
-            cantidad = cantidadIngresada.toSafeDecimal()
-            var cantidadVerificar = cantidad
-            if(equivaleUni > 0f){
-                cantidadVerificar = cantidad.toFloat() * equivaleUni
-            }
+        lifecycleScope.launch {
+            if(cantidadIngresada.isNotEmpty()){
+                cantidad = cantidadIngresada.toSafeDecimal()
+                var cantidadVerificar = cantidad
+                if(equivaleUni > 0f){
+                    cantidadVerificar = cantidad.toFloat() * equivaleUni
+                }
 
-            if(equivaleFra > 0f){
-                cantidadVerificar = cantidad.toFloat() * equivaleFra
-            }
+                if(equivaleFra > 0f){
+                    cantidadVerificar = cantidad.toFloat() * equivaleFra
+                }
 
-            if((cantidadVerificar > existenciaProducto || cantidadVerificar == 0f)  && sinExistencias == 0){
-                binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
-                binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
-                binding.btnagregar.isEnabled = false
-            }else if(cantidadVerificar < cantidadEscala && clienteMayorista == "N"){ //VALIDADO EL PRECIO SELECCIONADO EN LAS ESCALAS.
-                binding.txtcantidad.error = "La cantidad no es válida para el precio seleccionado"
-                binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
-                binding.btnagregar.isEnabled = false
+                if((cantidadVerificar > existenciaProducto || cantidadVerificar == 0f)  && sinExistencias == 0){
+                    runOnUiThread {
+                        binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
+                        binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
+                        binding.btnagregar.isEnabled = false
+                    }
+                }else if(cantidadVerificar < cantidadEscala && clienteMayorista == "N"){ //VALIDADO EL PRECIO SELECCIONADO EN LAS ESCALAS.
+                    runOnUiThread {
+                        binding.txtcantidad.error = "La cantidad no es válida para el precio seleccionado"
+                        binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
+                        binding.btnagregar.isEnabled = false
+                    }
+                }else{
+                    runOnUiThread {
+                        binding.btnagregar.isEnabled = true
+                        Totalizar(cantidad)
+                        binding.btnagregar.setBackgroundResource(R.drawable.border_btnenviar)
+                    }
+                }
+
             }else{
-                binding.btnagregar.isEnabled = true
-                Totalizar(cantidad)
-                binding.btnagregar.setBackgroundResource(R.drawable.border_btnenviar) 
+                runOnUiThread {
+                    binding.txtcantidad.error = "Campo no puede quedar vacio"
+                    binding.btnagregar.isEnabled = false
+                    cantidad = 0.toFloat()
+                    Totalizar(cantidad)
+                }
             }
-
-        }else{
-            binding.txtcantidad.error = "Campo no puede quedar vacio"
-            binding.btnagregar.isEnabled = false
-            cantidad = 0.toFloat()
-            Totalizar(cantidad)
         }
     }
 
