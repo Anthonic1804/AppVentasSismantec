@@ -27,19 +27,14 @@
             android:layout_height="wrap_content"
             android:padding="5dp">
 
-            <de.hdodenhof.circleimageview.CircleImageView
+            <ImageView
                 android:id="@+id/imgPencil"
                 android:layout_width="85dp"
                 android:layout_height="85dp"
-                android:layout_centerInParent="true"
-                android:layout_marginTop="36dp"
-                android:src="@drawable/ic_baseline_create_24"
-                app:civ_border_color="@color/cart"
-                app:civ_border_width="2dp"
-                app:civ_circle_background_color="@color/cart"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:ignore="MissingConstraints"
-                tools:layout_editor_absoluteX="0dp" />
+                android:src="@drawable/ic_pedido_3"
+                android:contentDescription="@string/Inventario"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
             <TextView
                 android:id="@+id/textView8"

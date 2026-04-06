@@ -226,7 +226,7 @@ class HistoricoPedidos : AppCompatActivity() {
         if (url != null) {
             if (funciones!!.isInternetAvailable(this)) {
                 alert!!.Cargando() //MUESTRA EL MENSAJE DE CARGA
-                GlobalScope.launch(Dispatchers.IO) {
+                lifecycleScope.launch{
                     obtenerPedidos(
                         idCliente,
                         edtDesde.text.toString(),

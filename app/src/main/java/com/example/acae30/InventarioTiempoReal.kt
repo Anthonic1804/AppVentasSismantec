@@ -77,7 +77,22 @@ class InventarioTiempoReal : AppCompatActivity() {
         super.onStart()
 
         binding.btnatras.setOnClickListener {
-            regresarInicio()
+            if(busquedaProducto){
+                val intento = Intent(this, Detallepedido::class.java)
+                intento.putExtra("idcliente", idcliente)
+                intento.putExtra("nombrecliente", nombrecliente)
+                intento.putExtra("idpedido", idpedido)
+                intento.putExtra("visitaid", idvisita)
+                intento.putExtra("codigo", codigo)
+                intento.putExtra("idapi", idapi)
+                intento.putExtra("from", "visita")
+                intento.putExtra("sucursalPosition", getSucursalPosition)
+                intento.putExtra("facturaExportacion", FacturaExportacion)
+                startActivity(intento)
+                finish()
+            }else{
+                regresarInicio()
+            }
         }
 
         binding.txtBusquedaProducto.addTextChangedListener(object : TextWatcher {

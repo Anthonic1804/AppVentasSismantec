@@ -10,11 +10,14 @@ import com.example.acae30.modelos.JSONmodels.HojaCargaJSON
 import com.example.acae30.modelos.Login.LoginModel
 import com.example.acae30.modelos.Login.RespuestaLogin
 import com.example.acae30.modelos.RespuestaConexion
+import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import java.time.LocalDate
+import java.util.Date
 
 interface AppVentasApi {
 
@@ -85,6 +88,15 @@ interface AppVentasApi {
         @Path("offset") offset: Int,
         @Path("limit") limit: Int
     ) : List<InventarioLotesEntity>
+
+    //----------------------------------------------------------
+    //Reporte de Ventas por Producto
+    //----------------------------------------------------------
+    @GET("ventasPorProducto/{idVendedor}/{fecha}")
+    suspend fun obtenerUnidadesVendidasPorProducto(
+        @Path("idVendedor") idVendedor : Int,
+        @Path("fecha") fecha : LocalDate
+    ) : List<UnidadesVendidasPorProducto>
 
 
     //----------------------------------------------------------

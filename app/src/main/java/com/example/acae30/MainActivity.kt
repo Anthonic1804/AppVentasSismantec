@@ -21,16 +21,12 @@ import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.ConexionController
 import com.google.android.material.snackbar.Snackbar
-import io.kotzilla.sdk.KotzillaSDK
-import io.kotzilla.sdk.analytics.koin.analytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.GlobalContext.startKoin
 import java.net.HttpURLConnection
 import java.net.URL
 import javax.net.ssl.HostnameVerifier

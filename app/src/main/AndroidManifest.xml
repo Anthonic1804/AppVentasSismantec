@@ -35,6 +35,9 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ReportePorProducto"
+            android:exported="false" />
+        <activity
             android:name=".InventarioTiempoReal"
             android:exported="false" />
         <activity

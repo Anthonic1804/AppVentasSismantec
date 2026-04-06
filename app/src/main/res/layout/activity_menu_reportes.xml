@@ -40,47 +40,107 @@
             android:textColor="@color/colorAccent" />
     </LinearLayout>
 
+    <!-- Card 1 -->
     <androidx.cardview.widget.CardView
-        android:layout_width="175dp"
-        android:layout_height="250dp"
-        app:cardElevation="@dimen/margin_8dp"
-        app:cardCornerRadius="@dimen/corner_radious_card_15dp"
-        android:layout_margin="@dimen/margin_default_16dp"
-        app:layout_constraintTop_toBottomOf="@id/lyEncabezado"
-        app:layout_constraintStart_toStartOf="parent">
+        android:id="@+id/cvReporteLiquidacion"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="5dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/cvReporteLiquidacion"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@drawable/cv_pedido">
 
             <ImageView
-                android:id="@+id/imgLiquidacion"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@drawable/report"
-                android:layout_margin="@dimen/margin_default_16dp"
+                android:id="@+id/ic_inventario"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_catalogo_3"
+                android:layout_marginStart="@dimen/margin_8dp"
+                android:layout_marginTop="@dimen/margin_default_16dp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toTopOf="@+id/tvLiquidacion"/>
+                app:layout_constraintTop_toTopOf="parent"/>
 
             <TextView
-                android:id="@+id/tvLiquidacion"
+                android:id="@+id/tvCatalgos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/margin_8dp"
+                android:layout_marginTop="@dimen/margin_default_16dp"
                 android:text="REPORTE DE LIQUIDACIÓN DIARIA"
-                android:textSize="16sp"
-                android:textStyle="bold"
                 android:textAlignment="center"
+                android:textColor="@color/colorPrimary"
+                android:textStyle="bold"
+                android:textSize="16dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/imgLiquidacion"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+                app:layout_constraintTop_toBottomOf="@+id/ic_inventario"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.cardview.widget.CardView>
+
+    <!-- Card 2 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvReportePorProducto"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="5dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/cv_pedido">
+
+            <ImageView
+                android:id="@+id/ic_pedidos"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginStart="@dimen/margin_8dp"
+                android:layout_marginTop="@dimen/margin_default_16dp"
+                android:src="@drawable/ic_catalogo_3"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvClientes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_default_16dp"
+                android:text="REPORTE DE VENTAS POR PRODUCTO"
+                android:textAlignment="center"
+                android:textColor="@color/colorPrimary"
+                android:textSize="16dp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/ic_pedidos" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Flow -->
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/flow"
+        android:layout_width="0dp"
+        android:layout_height="250dp"
+        android:layout_marginStart="@dimen/margin_default_16dp"
+        android:layout_marginEnd="@dimen/margin_default_16dp"
+        android:layout_marginBottom="@dimen/margin_default_16dp"
+        app:constraint_referenced_ids="cvReporteLiquidacion,cvReportePorProducto"
+        app:flow_horizontalGap="16dp"
+        app:flow_horizontalStyle="spread"
+        app:flow_maxElementsWrap="2"
+        app:flow_verticalGap="24dp"
+        app:flow_verticalStyle="spread_inside"
+        app:flow_wrapMode="chain"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lyEncabezado"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

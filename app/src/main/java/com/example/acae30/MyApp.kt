@@ -3,9 +3,6 @@ package com.example.acae30
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
-import io.kotzilla.sdk.analytics.koin.analytics
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.GlobalContext.startKoin
 
 class MyApp : Application() {
 

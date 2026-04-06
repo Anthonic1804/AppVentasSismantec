@@ -47,14 +47,14 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:layout_marginTop="1dp"
-                        android:src="@drawable/ic_money"
-                        app:civ_border_color="@color/cart"
-                        app:civ_border_width="2dp"
-                        app:civ_circle_background_color="@color/cart" />
+                    <ImageView
+                        android:id="@+id/imgPencil"
+                        android:layout_width="85dp"
+                        android:layout_height="85dp"
+                        android:src="@drawable/ic_pedido_3"
+                        android:contentDescription="@string/Inventario"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"/>
                 </LinearLayout>
 
 

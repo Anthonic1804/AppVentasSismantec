@@ -415,6 +415,7 @@ class Detallepedido : AppCompatActivity() {
                         verificarConexionEnvio()
                     }
                 } else {
+                    habilitarOpciones()
                     funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
                 }
                 /*if(clienteMosoro == 1 && terminosPedidos != "Contado"){
@@ -434,6 +435,7 @@ class Detallepedido : AppCompatActivity() {
                     }
                 }*/
             }else{
+                habilitarOpciones()
                 Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido",
                     Toast.LENGTH_SHORT).show()
             }
@@ -1591,6 +1593,7 @@ class Detallepedido : AppCompatActivity() {
         var idHojaCarga = 0
         var hojaCarga = 0
         val multiplesHojaDeCarga = preferencias.getBoolean("multiplesHojaDeCarga", false)
+        val ventaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
         if(!multiplesHojaDeCarga){
             idHojaCarga = preferencias.getInt("idHojaCarga", 0)
@@ -1617,6 +1620,18 @@ class Detallepedido : AppCompatActivity() {
             throw Exception(e.message)
         }
 
+        val terminosPedidoEnviar = if(ventaLocal){
+            "Contado"
+        }else{
+            pedido.Terminos
+        }
+
+        val formaPagoEnviar = if(ventaLocal){
+            "Efectivo"
+        }else{
+            pedido.formaPago
+        }
+
         val json = JsonObject()
         json.addProperty("Idcliente", pedido.Idcliente)
         json.addProperty("Cliente", pedido.Cliente)
@@ -1632,7 +1647,7 @@ class Detallepedido : AppCompatActivity() {
         json.addProperty("Tipo_documento_app", pedido.TipoDocumento)
         json.addProperty("Idvendedor", pedido.Idvendedor)
         json.addProperty("Vendedor", pedido.Vendedor)
-        json.addProperty("Terminos", pedido.Terminos)
+        json.addProperty("Terminos", terminosPedidoEnviar)
         json.addProperty("fechaCreado", pedido.fechaCreado) /*ENVIANDO LA FECHA DESDE EL DISPOSITIVO MOVIL*/
         json.addProperty("HoraProceso", horaProceso)/*ENVIANDO EL TIMESTAMP DE CREACION DEL PEDIDO*/
         json.addProperty("Idapp", idvisita_v)
@@ -1642,7 +1657,7 @@ class Detallepedido : AppCompatActivity() {
         json.addProperty("punto_venta",puntoVenta)
 
         //ENVIANDO FORMAS DE PAGO
-        json.addProperty("Forma_pago", pedido.formaPago)
+        json.addProperty("Forma_pago", formaPagoEnviar)
         json.addProperty("numero_orden",pedido.numeroOrden!!.toBigDecimal())
         json.addProperty("Efectivo_pago", pedido.pagoEfectivo)
         json.addProperty("Tarjeta_pago", pedido.pagoTarjeta)
@@ -1959,7 +1974,7 @@ class Detallepedido : AppCompatActivity() {
 
 
 
-//FUNCION PARA DETERMINAR LA CONEXION DE LA IMPRESORA
+    //FUNCION PARA DETERMINAR LA CONEXION DE LA IMPRESORA
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun imprimirRecibo() {
         try {

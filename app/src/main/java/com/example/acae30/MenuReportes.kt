@@ -30,6 +30,16 @@ class MenuReportes : AppCompatActivity() {
         binding.btnAtras.setOnClickListener {
             inicio()
         }
+
+        binding.cvReportePorProducto.setOnClickListener {
+            reporteVentasProducto()
+        }
+    }
+
+    private fun reporteVentasProducto(){
+        val enlace = Intent(this@MenuReportes, ReportePorProducto::class.java)
+        startActivity(enlace)
+        finish()
     }
 
     private fun reporteLiquidacion(){
