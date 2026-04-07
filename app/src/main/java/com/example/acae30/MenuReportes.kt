@@ -53,4 +53,11 @@ class MenuReportes : AppCompatActivity() {
         startActivity(intento)
         finish()
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
+    }
 }

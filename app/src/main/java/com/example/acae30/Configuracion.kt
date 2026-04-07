@@ -73,6 +73,9 @@ class Configuracion : AppCompatActivity() {
 
     private var isProcessing = false
 
+    private var listaNumeroCaja = mutableListOf<Int>()
+    private var numeroCaja = 0
+
 
     private lateinit var binding : ActivityConfiguracionBinding
 
@@ -92,12 +95,16 @@ class Configuracion : AppCompatActivity() {
         idServidorActivo = preferencias!!.getInt("idServidorActivo", 0)
         sslActivo = preferencias!!.getInt("sslActivo", 0)
 
+        numeroCaja = preferencias!!.getInt("numeroCaja", 0)
+
         //FUNCIONES AGRAGADAS PARA LOS CONTROLES DE VISTA DE INVENTARIO
 
         binding.swSinExistencias.isEnabled = false
 
         //CARGANDO SERVIDORES AL SPINNER
         cargarServidores()
+
+        cargarNumeroCaja()
 
         //ACTUALIZAR CONFIG PARA PEDIDOS SIN EXISTENCIAS
         binding.swSinExistencias.isChecked = preferencias!!.getString("pedidos_sin_existencia", "") == "S"
@@ -383,10 +390,57 @@ class Configuracion : AppCompatActivity() {
 
         }
 
+        binding.spNumeroCaja.onItemSelectedListener = object : OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+
+                lifecycleScope.launch {
+                    numeroCaja = parent?.getItemAtPosition(position) as Int
+
+                    preferencias!!.edit {
+                        remove("numeroCaja")
+                    }
+
+                    preferencias!!.edit{
+                        putInt("numeroCaja", numeroCaja)
+                    }
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+
+        }
+
         binding.btnConfigServidor.setOnClickListener{
             menuServidores()
         }
 
+
+    }
+
+    private fun cargarNumeroCaja(){
+
+        listaNumeroCaja = (0..10).toMutableList()
+
+        val adapterCaja = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            listaNumeroCaja
+        )
+
+        adapterCaja.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        binding.spNumeroCaja.adapter = adapterCaja
+
+        // Seleccionar valor si existe
+        if (numeroCaja in listaNumeroCaja) {
+            val posicion = listaNumeroCaja.indexOf(numeroCaja)
+            binding.spNumeroCaja.setSelection(posicion)
+        }
 
     }
 

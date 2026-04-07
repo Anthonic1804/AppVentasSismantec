@@ -36,13 +36,15 @@ import java.util.TimeZone
 class ReportePorProducto : AppCompatActivity() {
 
     private val reporte = ReporteVentaUnidadesController()
+    private val funciones = Funciones()
     private lateinit var binding : ActivityReportePorProductoBinding
 
     lateinit var lista : List<UnidadesVendidasPorProducto>
     private lateinit var preferencias: SharedPreferences
-
-    private var idvendedor = 0
+    private var numeroCaja = 0
     private val instancia = "CONFIG_SERVIDOR"
+    private var fechaReporte : String = ""
+    private var procesando : Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +52,7 @@ class ReportePorProducto : AppCompatActivity() {
         setContentView(binding.root)
 
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        idvendedor = preferencias.getInt("Idvendedor", 0)
+        numeroCaja = preferencias.getInt("numeroCaja", 0)
 
         permisosBluetooth()
 
@@ -60,16 +62,31 @@ class ReportePorProducto : AppCompatActivity() {
         super.onStart()
 
         binding.etFechaReporte.setOnClickListener {
+
+            if(procesando) return@setOnClickListener
+
+            procesando = true
+
+            deshabilitarControles()
+
             val builder = MaterialDatePicker.Builder.datePicker()
             val picker = builder.build()
 
             picker.addOnPositiveButtonClickListener {
+
                 val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
                     timeZone = TimeZone.getTimeZone("UTC")
                 }.format(it)
                 binding.etFechaReporte.setText(dateStr)
+
+                habilitarControles()
             }
 
+            picker.addOnNegativeButtonClickListener {
+                habilitarControles()
+            }
+
+            picker.isCancelable = false
             picker.show(supportFragmentManager, picker.toString())
         }
 
@@ -83,6 +100,7 @@ class ReportePorProducto : AppCompatActivity() {
             override fun afterTextChanged(s: Editable) {
                 val formato = DateTimeFormatter.ofPattern("yyyy-MM-dd")
                 val fecha = LocalDate.parse(s.toString(), formato)
+                fechaReporte = s.toString()
                 obtenerUnidadesVendidasPorProducto(fecha)
             }
         })
@@ -91,15 +109,45 @@ class ReportePorProducto : AppCompatActivity() {
             mensaje()
         }
 
-        binding.btnImprimir.setOnClickListener { imprimirRecibo() }
+        binding.btnImprimir.setOnClickListener {
+            if(lista.isNotEmpty()){
+                imprimirRecibo()
+            }else{
+                funciones.mensaje(this@ReportePorProducto, "No se Encontraron Registros")
+            }
+        }
 
+    }
+
+    private fun deshabilitarControles(){
+        binding.apply {
+            etFechaReporte.isEnabled = false
+            btncancelar.isEnabled = false
+            btnImprimir.isEnabled = false
+        }
+    }
+
+    private fun habilitarControles(){
+        binding.apply {
+            etFechaReporte.isEnabled = true
+            btncancelar.isEnabled = true
+            btnImprimir.isEnabled = true
+
+            procesando = false
+        }
     }
 
     private fun obtenerUnidadesVendidasPorProducto(fecha : LocalDate){
         lifecycleScope.launch {
             try {
-                lista = reporte.obtenerUnidadesVendidasPorProducto(this@ReportePorProducto, idvendedor, fecha)
-                mostrarLista(lista)
+                lista = reporte.obtenerUnidadesVendidasPorProducto(this@ReportePorProducto, numeroCaja, fecha)
+                if(lista.isNotEmpty()){
+                    mostrarLista(lista)
+                }else{
+                    mostrarLista(lista)
+                    funciones.mensaje(this@ReportePorProducto, "No se Encontraron Registros para su Número de Caja")
+                }
+
             }catch (e: Exception){
                 println("ERROR AL OBTENER EL LISTADO DE UNIDADES VENDIDAS POR PRODUCTO -> " + e.message)
             }
@@ -178,7 +226,7 @@ class ReportePorProducto : AppCompatActivity() {
                     // ===============================
                     val btConnection = BluetoothPrintersConnections.selectFirstPaired()
                     if (btConnection != null) {
-                        reporte.imprimirTicket(btConnection, this@ReportePorProducto, lista)
+                        reporte.imprimirTicket(btConnection, this@ReportePorProducto, lista, fechaReporte)
                     } else {
                         Toast.makeText(this, "No se encontró impresora USB ni Bluetooth", Toast.LENGTH_SHORT).show()
                     }
@@ -187,12 +235,19 @@ class ReportePorProducto : AppCompatActivity() {
                     // ===============================
                     // Detectar impresora Integrada
                     // ===============================
-                    reporte.imprimirReciboIntegrado(this@ReportePorProducto, lista)
+                    reporte.imprimirReciboIntegrado(this@ReportePorProducto, lista, fechaReporte)
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "Error al imprimir: ${e.message}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
     }
 }

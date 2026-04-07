@@ -1594,6 +1594,7 @@ class Detallepedido : AppCompatActivity() {
         var hojaCarga = 0
         val multiplesHojaDeCarga = preferencias.getBoolean("multiplesHojaDeCarga", false)
         val ventaLocal = preferencias.getBoolean("tipoVentaLocal", false)
+        val numeroCaja = preferencias.getInt("numeroCaja", 0)
 
         if(!multiplesHojaDeCarga){
             idHojaCarga = preferencias.getInt("idHojaCarga", 0)
@@ -1686,6 +1687,7 @@ class Detallepedido : AppCompatActivity() {
         //json.addProperty("DTEGiro", infoCliente!!.dteGiro)
 
         json.addProperty("id_pedido_app", pedido.id_pedido_app)
+        json.addProperty("numeroCaja", numeroCaja)
 
         //se ordena la cabezera
         val detalle = JsonArray()

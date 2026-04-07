@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
     private var conexionController = ConexionController()
     private var alert: AlertDialogo? = null
 
-    private var servidor: String = ""
+    private var nombreServidor: String = ""
 
     private lateinit var puntoVenta : TextView
 
@@ -102,9 +102,9 @@ class MainActivity : AppCompatActivity() {
 
 
                 lifecycleScope.launch(Dispatchers.IO) {
-                    servidor = parent?.getItemAtPosition(position).toString()
+                    nombreServidor = parent?.getItemAtPosition(position).toString()
                     try {
-                        if(servidor == "-- SELECCIONE --"){
+                        if(nombreServidor == "-- SELECCIONE --"){
                             withContext(Dispatchers.Main){
                                 withContext(Dispatchers.Main){
                                     ip!!.text = ""
@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         }else{
-                            val servidorSeleccionado = conexionController.obtenerInformacionServidorSeleccionado(this@MainActivity, servidor)
+                            val servidorSeleccionado = conexionController.obtenerInformacionServidorSeleccionado(this@MainActivity, nombreServidor)
                             val ipServidor = servidorSeleccionado!!.ip.trim()
                             val puertoServidor = servidorSeleccionado.puerto.trim()
                             idServidorActivo = servidorSeleccionado.id
@@ -320,7 +320,7 @@ class MainActivity : AppCompatActivity() {
                                     editor!!.putInt("puerto", puerto.toInt())
                                     editor.putString("ip", ip)
                                     editor.putString("puntoVenta", pVenta)
-                                    editor.putString("nombreServidor", servidor)
+                                    editor.putString("nombreServidor", nombreServidor)
                                     editor.putInt("idServidorActivo", idServidorActivo)
                                     editor.putInt("sslActivo", sslActivo)
                                     editor.commit()

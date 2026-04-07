@@ -92,9 +92,9 @@ interface AppVentasApi {
     //----------------------------------------------------------
     //Reporte de Ventas por Producto
     //----------------------------------------------------------
-    @GET("ventasPorProducto/{idVendedor}/{fecha}")
+    @GET("ventasPorProducto/{numeroCaja}/{fecha}")
     suspend fun obtenerUnidadesVendidasPorProducto(
-        @Path("idVendedor") idVendedor : Int,
+        @Path("numeroCaja") numeroCaja : Int,
         @Path("fecha") fecha : LocalDate
     ) : List<UnidadesVendidasPorProducto>
 

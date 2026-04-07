@@ -143,22 +143,11 @@ class ReporteLiquidacion : AppCompatActivity() {
         dialog.show()
     }
 
-    @Deprecated("This method has been deprecated in favor of using the\n      " +
-            "{@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      " +
-            "The OnBackPressedDispatcher controls how back button events are dispatched\n      " +
-            "to one or more {@link OnBackPressedCallback} objects.")
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        //super.onBackPressed()
+        //  super.onBackPressed()
+
+        //   finish()
     }
-
-    /*/FUNCION PARA IMPRIMIR EL REPORTE DE LIQUIDACION
-    fun imprimirReporteLiquidacion(){
-        val printManager = ContextCompat.getSystemService(Context.PRINT_SERVICE) as PrintManager
-        val jobName = getString(R.string.app_name) + " ReporteLiquidacion"
-
-        printManager.print(jobName, object : PrintDocumentAdapter() {
-            
-        }, null)
-    }*/
 
 }
