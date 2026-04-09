@@ -45,6 +45,7 @@ class ReportePorProducto : AppCompatActivity() {
     private val instancia = "CONFIG_SERVIDOR"
     private var fechaReporte : String = ""
     private var procesando : Boolean = false
+    private lateinit var fecha : LocalDate
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +56,10 @@ class ReportePorProducto : AppCompatActivity() {
         numeroCaja = preferencias.getInt("numeroCaja", 0)
 
         permisosBluetooth()
+
+        val formato = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        fecha = LocalDate.parse(funciones.obtenerFecha().toString(), formato)
+        binding.etFechaReporte.setText(fecha.toString())
 
     }
 
@@ -99,7 +104,7 @@ class ReportePorProducto : AppCompatActivity() {
             }
             override fun afterTextChanged(s: Editable) {
                 val formato = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                val fecha = LocalDate.parse(s.toString(), formato)
+                fecha = LocalDate.parse(s.toString(), formato)
                 fechaReporte = s.toString()
                 obtenerUnidadesVendidasPorProducto(fecha)
             }

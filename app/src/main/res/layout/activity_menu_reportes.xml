@@ -42,7 +42,7 @@
 
     <!-- Card 1 -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/cvReporteLiquidacion"
+        android:id="@+id/cvCierreParcial"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintDimensionRatio="1:1"
@@ -69,7 +69,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/margin_default_16dp"
-                android:text="REPORTE DE LIQUIDACIÓN DIARIA"
+                android:text="CIERRE PARCIAL"
                 android:textAlignment="center"
                 android:textColor="@color/colorPrimary"
                 android:textStyle="bold"
@@ -132,7 +132,7 @@
         android:layout_marginStart="@dimen/margin_default_16dp"
         android:layout_marginEnd="@dimen/margin_default_16dp"
         android:layout_marginBottom="@dimen/margin_default_16dp"
-        app:constraint_referenced_ids="cvReporteLiquidacion,cvReportePorProducto"
+        app:constraint_referenced_ids="cvCierreParcial,cvReportePorProducto"
         app:flow_horizontalGap="16dp"
         app:flow_horizontalStyle="spread"
         app:flow_maxElementsWrap="2"

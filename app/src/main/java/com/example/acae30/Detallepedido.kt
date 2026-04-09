@@ -165,7 +165,6 @@ class Detallepedido : AppCompatActivity() {
 
     private val utilidades = CrearSslNoSeguro()
     private var isProcessing = false
-
     private var inventarioTiempoReal: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -453,9 +452,11 @@ class Detallepedido : AppCompatActivity() {
                     guardandoPedido = true
                     alertaPago(binding.txttotal.text.toString().toFloat())
                 } else {
+                    habilitarOpciones()
                     funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
                 }
             }else{
+                habilitarOpciones()
                 Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido",
                     Toast.LENGTH_SHORT).show()
             }
@@ -704,12 +705,14 @@ class Detallepedido : AppCompatActivity() {
 
             Timer().schedule(2300){
                 runOnUiThread {
+                    habilitarOpciones()
                     alerta!!.dismisss()
                 }
 
                 pedidoEnviado()
             }
         } catch (e: Exception) {
+            habilitarOpciones()
             alerta!!.dismisss()
             funciones.mostrarAlerta("ERROR: ${e.message}", this@Detallepedido, binding.lienzo)
         }
@@ -794,14 +797,15 @@ class Detallepedido : AppCompatActivity() {
 
                 }else{
                     runOnUiThread {
+                        habilitarOpciones()
                         Toast.makeText(this@Detallepedido,"DESEA ALMACENAR EL PEDIDO PARA LUEGO ENVIARLO", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }catch (e: Exception){
             withContext(Dispatchers.Main){
+                habilitarOpciones()
                 alerta!!.dismisss()
-
                 funciones.mostrarAlerta("ERROR AL ENVIAR EL PEDIDO", this@Detallepedido, binding.lienzo)
             }
         }
@@ -831,7 +835,8 @@ class Detallepedido : AppCompatActivity() {
     private fun envioAlerta(){
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
-        var procesando = false
+
+        var procesandoEnvio = false
 
         updateDialog.setContentView(R.layout.dialog_cancelar)
         tvUpdate = updateDialog.findViewById(R.id.tvUpdate)
@@ -845,9 +850,9 @@ class Detallepedido : AppCompatActivity() {
 
         tvUpdate.setOnClickListener {
 
-            if (procesando) return@setOnClickListener
+            if (procesandoEnvio) return@setOnClickListener
 
-            procesando = true
+            procesandoEnvio = true
 
             tvUpdate.isEnabled = false
             tvCancel.isEnabled = false
@@ -925,6 +930,7 @@ class Detallepedido : AppCompatActivity() {
                 enviarPedidoaServidor()
             }
         }else{
+            habilitarOpciones()
             funciones.mostrarAlerta("ERROR: NO TIENES CONEXION A INTERNET", this@Detallepedido, binding.lienzo)
         }
     }
@@ -1889,6 +1895,10 @@ class Detallepedido : AppCompatActivity() {
             if((infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937") && numeroOrden.isEmpty()){
                 Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL NUMERO DE ORDEN", Toast.LENGTH_SHORT)
                     .show()
+
+                procesando = false
+                btnAceptarPago.isEnabled = true
+                btnCancelarPago.isEnabled = true
             }
             else{
 

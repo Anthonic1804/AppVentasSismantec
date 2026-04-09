@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.acae30"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.acae30"
@@ -53,7 +53,7 @@ android {
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-ktx:1.13.0")
 
     implementation("androidx.activity:activity-ktx:1.8.2")
 
@@ -97,10 +97,10 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     // Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    //implementation("androidx.activity:activity:1.13.0")
-    ksp("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-runtime:2.7.0")
+    implementation("androidx.room:room-ktx:2.7.0")
+    implementation("androidx.activity:activity:1.13.0")
+    ksp("androidx.room:room-compiler:2.7.0")
 
     // Librería local
     implementation(files("libs/escposprinter-release.aar"))

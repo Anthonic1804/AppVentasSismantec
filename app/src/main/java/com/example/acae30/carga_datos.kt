@@ -122,6 +122,7 @@ class carga_datos : AppCompatActivity() {
                     }
                 }
             } else {
+                habilitarOpciones()
                 funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
             }
         }
@@ -245,6 +246,7 @@ class carga_datos : AppCompatActivity() {
                     }
 
                 } else {
+                    habilitarOpciones()
                     funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta)
                 }
             }
@@ -341,6 +343,7 @@ class carga_datos : AppCompatActivity() {
                         alert!!.dismisss()
                     }
                 } else {
+                    habilitarOpciones()
                     runOnUiThread { funciones.mostrarAlerta("ENCIENDE TUS DATOS O EL WIFI", this@carga_datos, binding.vistaalerta) }
                 }
             }
@@ -521,12 +524,20 @@ class carga_datos : AppCompatActivity() {
                 hojaCargaDialog.dismiss()
                 funciones.mensaje(this@carga_datos, "INGRESE UN NUMERO DE HOJA DE CARGA")
 
+                procesando = false
+                btnAceptar.isEnabled = true
+                btnCancelar.isEnabled = true
+
             }else if(hojaYaRegistrada){
 
                 habilitarOpciones()
 
                 hojaCargaDialog.dismiss()
                 funciones.mensaje(this@carga_datos, "LA HOJA DE CARGA YA SE ENCUENTRA CARGADA")
+
+                procesando = false
+                btnAceptar.isEnabled = true
+                btnCancelar.isEnabled = true
 
             }else {
 
@@ -721,6 +732,11 @@ class carga_datos : AppCompatActivity() {
             if(rutaSeleccionada == "-- SELECCIONE --") {
                 Toast.makeText(this, "DEBE DE SELECCIONAR UNA RUTA", Toast.LENGTH_SHORT)
                     .show()
+
+                procesando = false
+
+                btnAceptar.isEnabled = true
+                btnCancelar.isEnabled = true
             }else{
 
                 habilitarOpciones()

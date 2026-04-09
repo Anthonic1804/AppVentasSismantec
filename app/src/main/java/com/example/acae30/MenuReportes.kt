@@ -23,8 +23,8 @@ class MenuReportes : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        binding.cvReporteLiquidacion.setOnClickListener {
-            reporteLiquidacion()
+        binding.cvCierreParcial.setOnClickListener {
+            cierreParcial()
         }
 
         binding.btnAtras.setOnClickListener {
@@ -51,6 +51,12 @@ class MenuReportes : AppCompatActivity() {
     private fun inicio(){
         val intento = Intent(this@MenuReportes, Inicio::class.java)
         startActivity(intento)
+        finish()
+    }
+
+    private fun cierreParcial(){
+        val enlace = Intent(this@MenuReportes, CierreParcial::class.java)
+        startActivity(enlace)
         finish()
     }
 
