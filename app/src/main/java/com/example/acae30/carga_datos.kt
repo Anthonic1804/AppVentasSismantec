@@ -520,7 +520,7 @@ class carga_datos : AppCompatActivity() {
 
             val hojaYaRegistrada = hojaController.verificarHojaCargaIngresada(this@carga_datos, numeroHoja.toString().toInt())
 
-            if (numeroHoja == 0) {
+            if (numeroHoja.toString().toInt() == 0) {
 
                 habilitarOpciones()
 
