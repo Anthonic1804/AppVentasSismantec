@@ -514,10 +514,13 @@ class carga_datos : AppCompatActivity() {
 
             //val hojaCargaActiva = preferences.getInt("hojaCarga", 0)
             val numero = hojaCargaDialog.findViewById<TextInputEditText>(R.id.tietNumeroCarga).text.toString()
+            val numeroHoja = numero.ifEmpty {
+                0
+            }
 
-            val hojaYaRegistrada = hojaController.verificarHojaCargaIngresada(this@carga_datos, numero.trim().toInt())
+            val hojaYaRegistrada = hojaController.verificarHojaCargaIngresada(this@carga_datos, numeroHoja.toString().toInt())
 
-            if (numero.isEmpty() || numero.toInt() == 0) {
+            if (numeroHoja == 0) {
 
                 habilitarOpciones()
 
