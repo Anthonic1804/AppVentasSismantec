@@ -10,6 +10,7 @@ import com.example.acae30.modelos.JSONmodels.HojaCargaJSON
 import com.example.acae30.modelos.Login.LoginModel
 import com.example.acae30.modelos.Login.RespuestaLogin
 import com.example.acae30.modelos.RespuestaConexion
+import com.example.acae30.modelos.cierreParcial.CierreParcialDTO
 import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -90,13 +91,22 @@ interface AppVentasApi {
     ) : List<InventarioLotesEntity>
 
     //----------------------------------------------------------
-    //Reporte de Ventas por Producto
+    //Reporte de Unidades Vendidas por Producto
     //----------------------------------------------------------
     @GET("ventasPorProducto/{numeroCaja}/{fecha}")
     suspend fun obtenerUnidadesVendidasPorProducto(
         @Path("numeroCaja") numeroCaja : Int,
         @Path("fecha") fecha : LocalDate
     ) : List<UnidadesVendidasPorProducto>
+
+    //----------------------------------------------------------
+    //Obtener Datos del Cierre Parcial
+    //----------------------------------------------------------
+    @GET("generarCierreParcial/{numeroCaja}/{fecha}")
+    suspend fun obtenerDatosCierreParcialCaja(
+        @Path("numeroCaja") numeroCaja : Int,
+        @Path("fecha") fecha : LocalDate
+    ) : List<CierreParcialDTO>
 
 
     //----------------------------------------------------------
