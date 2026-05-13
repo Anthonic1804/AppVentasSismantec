@@ -80,7 +80,6 @@ interface AppVentasApi {
     //----------------------------------------------------------
     //EndPoints Inventario Lotes
     //----------------------------------------------------------
-
     @GET("inventario/lotes/cantidad")
     suspend fun obtenerTotalRegistroLotes() : Int
 
@@ -89,6 +88,15 @@ interface AppVentasApi {
         @Path("offset") offset: Int,
         @Path("limit") limit: Int
     ) : List<InventarioLotesEntity>
+
+    //---------------------------------------------------------
+    // Endpoint para el recalculo de hoja de carga
+    //---------------------------------------------------------
+    @GET("inventario/recalcularhoja/{fecha}/{idVendedor}")
+    suspend fun obtenerRecalculoHojaCarga(
+        @Path("fecha") fecha : LocalDate,
+        @Path("idVendedor") idVendedor : Int
+    ) : List<UnidadesVendidasPorProducto>
 
     //----------------------------------------------------------
     //Reporte de Unidades Vendidas por Producto

@@ -5,14 +5,18 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
+import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.database.AppDatabase
 import com.example.acae30.modelos.InventarioHojaValidar
+import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.Reader
@@ -28,6 +32,8 @@ class HojaCargaController {
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
     private var utilidades = CrearSslNoSeguro()
+    private lateinit var base : AppDatabase
+    private lateinit var servidor : String
 
     //-----------------------------------------
     //NUEVAS FUNCIONES DE RECARGAS PARA HOJA DE CARGA
@@ -348,6 +354,58 @@ class HojaCargaController {
             }
         }
         return registrada
+    }
+
+    //----------------------------------------------------------------
+    // Función para inicializar las variables principales
+    //----------------------------------------------------------------
+    private fun inicializarVariables(context: Context){
+        base = AppDatabase.getInstance(context)
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
+    }
+
+    //----------------------------------------------------------------
+    // Funcion para obtener las unidades vendidas y recalcular la hoja de carga
+    //----------------------------------------------------------------
+    suspend fun obtenerUnidadesVendidasYRecalcularHoja(context: Context, fecha : LocalDate, idVendedor: Int) : List<UnidadesVendidasPorProducto>{
+
+        withContext(Dispatchers.Main){
+            inicializarVariables(context)
+        }
+
+        val lista = mutableListOf<UnidadesVendidasPorProducto>()
+
+        withContext(Dispatchers.IO){
+            val baseUrl = servidor
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            try {
+                val respuesta = api.obtenerRecalculoHojaCarga(fecha, idVendedor)
+                lista.clear()
+                lista.addAll(respuesta)
+
+                if(lista.isNotEmpty()){
+                    Timber.d("[CONTROLLER] INGRESANDO AL METODO recalcularHojaCarga()")
+                    recalcularHojaCarga(context, lista)
+                }else{
+                    Timber.i("[CONTROLLER] NO HAY REGISTRO DE VENTAS PARA EL VENDEDOR")
+                }
+            }catch (e: Exception){
+                Timber.e(e, "[CONTROLLER] ERROR AL OBTENER LAS UNIDADES VENDIDAS DEL SERVIDOR")
+            }
+        }
+        return lista
+    }
+
+    private fun recalcularHojaCarga(context: Context, lista: List<UnidadesVendidasPorProducto>){
+
+        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        val consulta = "SELECT "
+
+        Timber.d("YA EN EL METODO recalcularHojaCArga()")
+        Timber.v("LISTA DE PRODUCTOS OBTENIDOS -> $lista")
+
     }
 
 }

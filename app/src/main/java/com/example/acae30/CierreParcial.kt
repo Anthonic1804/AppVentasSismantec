@@ -11,8 +11,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.acae30.Utilidades.Mapper
 import com.example.acae30.controllers.CierreParcialController
 import com.example.acae30.databinding.ActivityCierreParcialBinding
+import com.example.acae30.listas.CierreParcialAdapter
 import com.example.acae30.modelos.cierreParcial.CierreParcialDTO
 import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.launch
@@ -37,6 +40,8 @@ class CierreParcial : AppCompatActivity() {
     private var datosCierreParcial : List<CierreParcialDTO>? = null
 
     private var procesando : Boolean = false
+
+    private var mapper = Mapper()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         binding = ActivityCierreParcialBinding.inflate(layoutInflater)
@@ -109,7 +114,11 @@ class CierreParcial : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 datosCierreParcial = cierre.obtenerDatosCierreParcial(this@CierreParcial, numeroCaja, fecha)
-                println("RESPUESTA DEL SERVIDOR -> $datosCierreParcial")
+
+                val vistaUI = mapper.mapToUI(datosCierreParcial)
+                binding.rvCierre.adapter = CierreParcialAdapter(vistaUI)
+                binding.rvCierre.layoutManager = LinearLayoutManager(this@CierreParcial)
+
             }catch (e: Exception){
                 println("ERROR AL OBTENER LOS DATOS DEL CIERRE PARCIAL EN VISTA -> ${e.message}")
             }

@@ -201,6 +201,8 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         if(!M_CxC){
             navigationView.menu.setGroupVisible(R.id.group_cxc, false)
         }
+
+        navigationView.menu.setGroupVisible(R.id.group_herramientas, false)
     }
 
     private fun menu() {
@@ -524,6 +526,7 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
             R.id.nav_cxc -> menuCxC()
             R.id.nav_abonos -> abonos()
             R.id.nav_reporte -> reportes()
+            R.id.nav_herramientas -> menuHerramientas()
             R.id.nav_salir -> salir()
         }
         //drawerLayout.closeDrawer(GravityCompat.START)
@@ -601,6 +604,12 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
         val intento = Intent(this@Inicio, Cuentas_list::class.java)
         intento.putExtra("cuentas", true)
         startActivity(intento)
+        finish()
+    }
+
+    private fun menuHerramientas(){
+        val enlace = Intent(this@Inicio, MenuHerramientas::class.java)
+        startActivity(enlace)
         finish()
     }
 

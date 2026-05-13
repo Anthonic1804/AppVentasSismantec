@@ -1,6 +1,7 @@
 package com.example.acae30
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +19,8 @@ class MenuReportes : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMenuReportesBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        configurarResponsiveMenu()
     }
 
     override fun onStart() {
@@ -65,5 +68,18 @@ class MenuReportes : AppCompatActivity() {
         //  super.onBackPressed()
 
         //   finish()
+    }
+
+    //CONFIGURACION EL RESPONSIVE DEL MENU
+    private fun configurarResponsiveMenu(){
+        val flow = binding.flow
+        val orientation = resources.configuration.orientation
+
+        val cantidad = when(orientation){
+            Configuration.ORIENTATION_LANDSCAPE -> 4
+            else -> 2
+        }
+
+        flow.setMaxElementsWrap(cantidad)
     }
 }

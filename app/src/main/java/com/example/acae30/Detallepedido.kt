@@ -1408,7 +1408,7 @@ class Detallepedido : AppCompatActivity() {
                     null
                 )
 
-                val consulta = "SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido"
+                val consulta = "SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido ORDER BY Orden_despacho"
                 base.query(consulta).use { cdetalle ->
                     if (cdetalle.count > 0) {
                         val list = ArrayList<DetallePedido>()
@@ -1455,7 +1455,8 @@ class Detallepedido : AppCompatActivity() {
                                 cdetalle.getStringOrNull(37),
                                 cdetalle.getIntOrNull(38),
                                 cdetalle.getStringOrNull(39),
-                                cdetalle.getStringOrNull(40)
+                                cdetalle.getStringOrNull(40),
+                                cdetalle.getInt(41)
                             )
                             list.add(detalle)
                         } while (cdetalle.moveToNext())
@@ -1749,6 +1750,7 @@ class Detallepedido : AppCompatActivity() {
             d.addProperty("id_bodega", data.IdBodega)
             d.addProperty("cod_bodega", data.CodBodega)
             d.addProperty("bodega", data.Bodega)
+            d.addProperty("orden_despacho", data.OrdenDespacho)
 
 
             detalle.add(d)

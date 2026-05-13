@@ -91,23 +91,23 @@ class Tablas {
     }
 
     //CREANDO TABLA PARA CATALOGO PAIS
-    fun catalogoPais() : String{
+    /*fun catalogoPais() : String{
         return "CREATE TABLE cat_pais(" +
                 "Id INTEGER NOT NULL," +
                 "Codigo VARCHAR(10) NULL," +
                 "Valor VARCHAR(10) NULL)"
-    }
+    }*/
 
     //CREANDO TABLA PARA CATALOGO DEPARTAMENTO
-    fun catalogoDepartamento() : String {
+    /*fun catalogoDepartamento() : String {
         return "CREATE TABLE cat_departamento(" +
                 "Id INTEGER NOT NULL," +
                 "Codigo VARCHAR(10) NULL," +
                 "Valor VARCHAR(10) NULL)"
-    }
+    }*/
 
     //CREANDO TABLA PARA CATALOGO MUNICIPIO
-    fun catalogoMunicipio() : String {
+    /*fun catalogoMunicipio() : String {
         return "CREATE TABLE cat_municipio(" +
                 "Id INTEGER NOT NULL," +
                 "Codigo VARCHAR(10) NULL," +
@@ -115,10 +115,10 @@ class Tablas {
                 "Departamento VARCHAR(10) NULL," +
                 "Id_Departamento INTEGER NULL," +
                 "CodPais VARCHAR(10) NULL)"
-    }
+    }*/
 
     //CREANDO TABLA PARA EL CATALOGO DISTRITO
-    fun catalogoDistrito() : String{
+    /*fun catalogoDistrito() : String{
         return "CREATE TABLE cat_distrito(" +
                 "Id INTEGER NOT NULL," +
                 "Codigo VARCHAR(10) NULL," +
@@ -127,22 +127,22 @@ class Tablas {
                 "Id_Departamento INTEGER NULL," +
                 "Municipio VARCHAR(10) NULL," +
                 "Id_Municipio INTEGER NULL)"
-    }
+    }*/
 
     //CREANDO TABLA PARA EL CATALOGO GIRO
-    fun catalogoGiro(): String{
+    /*fun catalogoGiro(): String{
         return "CREATE TABLE cat_giro(" +
                 "Id INTEGER NOT NULL," +
                 "Codigo VARCHAR(10) NULL," +
                 "Valor VARCHAR(10) NULL)"
-    }
+    }*/
 
     //CREANDO TABLA PARA EL CATALOGO DE RUTAS
-    fun catalogoRuta() : String{
+    /*fun catalogoRuta() : String{
         return "CREATE TABLE cat_ruta(" +
                 "Id INTEGER NOT NULL," +
                 "Ruta VARCHAR(50) NULL)"
-    }
+    }*/
 
     /*fun inventario(): String {
         return "CREATE TABLE inventario (" +
@@ -176,7 +176,7 @@ class Tablas {
                 "fechaInventario VARCHAR(25) NOT NULL)"
     } //tabla inventario*/
 
-    fun inventario(): String {
+    /*fun inventario(): String {
         return "CREATE TABLE inventario (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "codigo TEXT NOT NULL," +
@@ -225,7 +225,7 @@ class Tablas {
                 "metodo_gestion TEXT NULL," +
                 "tipo_fiscal TEXT NOT NULL)"
 
-    } //tabla inventario
+    } //tabla inventario*/
 
     /*fun inventarioPrecios(): String {
 
@@ -244,7 +244,7 @@ class Tablas {
                 "Id_inventario_unidad INTEGER NOT NULL DEFAULT 0)"
     } //tabla inventario precios*/
 
-    fun inventarioPrecios(): String {
+    /*fun inventarioPrecios(): String {
 
         return "CREATE TABLE inventario_precios(" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
@@ -259,9 +259,9 @@ class Tablas {
                 "precio REAL NOT NULL," +
                 "precio_iva REAL NOT NULL," +
                 "id_inventario_unidad INTEGER NOT NULL)"
-    } //tabla inventario precios
+    } //tabla inventario precios*/
 
-    fun inventarioUnidades(): String {
+    /*fun inventarioUnidades(): String {
 
         return "CREATE TABLE inventario_unidades(" +
                 "Id INTEGER NOT NULL," +
@@ -269,9 +269,9 @@ class Tablas {
                 "Nombre_unidad TEXT NOT NULL," +
                 "Equivale REAL NOT NULL," +
                 "Unidades TEXT NOT NULL)"
-    } //tabla inventario unidades
+    } //tabla inventario unidades*/
 
-    fun inventarioLotes(): String{
+    /*fun inventarioLotes(): String{
         return "CREATE TABLE inventario_lotes(" +
                 "id INTEGER NOT NULL," +
                 "idProducto INTEGER NOT NUL," +
@@ -280,16 +280,16 @@ class Tablas {
                 "fechaVencimiento TEXT NOT NULL," +
                 "unidades REAL NOT NULL," +
                 "fracciones REAL NOT NULL)"
-    }
+    }*/
 
     //CREANDO LA TABLA VIRTUAL INVENTARIO
-    fun virtualInventario(): String {
+    /*fun virtualInventario(): String {
         return "CREATE VIRTUAL TABLE virtualinventario USING FTS4 (" +
                 "CONTENT='inventario'," +
                 "Codigo," +
                 "Descripcion" +
                 ") "
-    }
+    }*/
 
     //CREANDO TABLA HOJA DE CARGA
     fun hojaCarga():String{
@@ -301,7 +301,8 @@ class Tablas {
                 "Id_ruta INTEGER NOT NULL DEFAULT 0," +
                 "Ruta VARCHAR(50) NULL," +
                 "Devolucion INTEGER NOT NULL DEFAULT 0," +
-                "Fecha VARCHAR(25) NOT NULL DEFAULT '')"
+                "Fecha VARCHAR(25) NOT NULL DEFAULT ''," +
+                "Recalcula INTEGER NOT NULL DEFAULT 0)"
     }
 
     //CREADO TABLA HOJA DE CARGA DETALLE
@@ -499,6 +500,7 @@ class Tablas {
                 "IdBodega INTEGER NULL," +
                 "CodBodega VARCHAR(25) NULL," +
                 "Bodega VARCHAR(25) NULL," +
+                "Orden_despacho INTEGER NOT NULL DEFAULT 0," +
                 "FOREIGN KEY(Id_pedido) REFERENCES pedidos(Id_pedido)" +
                 ")"
     } //tabla detalle pedidos
@@ -545,7 +547,8 @@ class Tablas {
                     "detalle_pedidos.FechaVencimiento," +
                     "detalle_pedidos.IdBodega," +
                     "detalle_pedidos.CodBodega," +
-                    "detalle_pedidos.Bodega " +
+                    "detalle_pedidos.Bodega," +
+                    "detalle_pedidos.Orden_despacho " +
                 "FROM detalle_pedidos " +
                 "LEFT JOIN inventario " +
                 "ON inventario.Id = detalle_pedidos.Id_producto;"
@@ -732,14 +735,14 @@ class Tablas {
     }
 
     //CREANDO TABLA DE SERVIDORES
-    fun conexionServidores() : String{
+    /*fun conexionServidores() : String{
         return "CREATE TABLE servidores(" +
                 "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Nombre VARCHAR(50) NOT NULL," +
                 "Ip VARCHAR(50) NOT NULL," +
                 "Puerto VARCHAR(4) NULL," +
                 "Ssl INT NOT NULL DEFAULT 0)"
-    }
+    }*/
 
 //    //TRIGGER PARA LA INSERCION DE DATOS EN TABLA FTS4 VIRTUAL INVENTARIO
 //    fun triggerInventarioVirtual(): String {

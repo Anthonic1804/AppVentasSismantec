@@ -41,5 +41,6 @@ data class DetallePedido(
     var FechaVencimiento: String?,//37
     var IdBodega: Int?,//38
     var CodBodega: String?,//39
-    var Bodega: String?//40
+    var Bodega: String?,//40
+    var OrdenDespacho: Int //41
 )

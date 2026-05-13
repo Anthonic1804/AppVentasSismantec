@@ -245,7 +245,7 @@ class PedidosController {
         val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val lista = ArrayList<DetallePedido>()
         try{
-            val consulta = "SELECT *  FROM detalle_producto where Id_pedido=$idPedido"
+            val consulta = "SELECT *  FROM detalle_producto where Id_pedido=$idPedido ORDER BY Orden_despacho"
             val cdetalle = base.query(consulta)
 
             cdetalle.use {
@@ -293,7 +293,8 @@ class PedidosController {
                             cdetalle.getStringOrNull(37),
                             cdetalle.getIntOrNull(38),
                             cdetalle.getStringOrNull(39),
-                            cdetalle.getStringOrNull(40)
+                            cdetalle.getStringOrNull(40),
+                            cdetalle.getInt(41)
                         )
                         lista.add(detalle)
                     } while (cdetalle.moveToNext())
@@ -714,7 +715,8 @@ class PedidosController {
                         cdetalle.getStringOrNull(37),
                         cdetalle.getIntOrNull(38),
                         cdetalle.getStringOrNull(39),
-                        cdetalle.getStringOrNull(40)
+                        cdetalle.getStringOrNull(40),
+                        cdetalle.getInt(41)
                     )
                 }
             }

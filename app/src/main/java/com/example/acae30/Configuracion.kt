@@ -1,6 +1,8 @@
 package com.example.acae30
 
+import android.Manifest
 import android.app.Dialog
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -14,6 +16,7 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -26,6 +29,7 @@ import com.example.acae30.database.LimpiarBD
 import com.example.acae30.controllers.ConexionController
 import com.example.acae30.controllers.ConfigController
 import com.example.acae30.databinding.ActivityConfiguracionBinding
+import com.example.acae30.modelos.Impresor.DispositivoBT
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +88,7 @@ class Configuracion : AppCompatActivity() {
         binding = ActivityConfiguracionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        preferencias = getSharedPreferences(instancia, MODE_PRIVATE)
         alerta = AlertDialogo(this, this)
 
         nombreServidor = preferencias!!.getString("nombreServidor", "").toString()
@@ -123,7 +127,7 @@ class Configuracion : AppCompatActivity() {
             binding.lyImpresor.visibility = View.GONE
         }
 
-        binding.txtImpresor.setText(preferencias!!.getString("impresorIntegrado", ""))
+
 
         versionActualApp()
         binding.tvVersionActualApp.text = "ACAE APP Ver. $versionActual"

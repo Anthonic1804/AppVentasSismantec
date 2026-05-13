@@ -751,8 +751,10 @@ class Producto_agregar : AppCompatActivity() {
             vPrecio_iva = precioIvaPersonalizado
         }
 
+        //println("TIPO DE PRODUCTO SELECCIONADO -> ${datosProducto!!.Tipo}")
+
         //TIPO PRODUCTO
-        val tipoProducto = when(datosProducto!!.Tipo){
+        val tipoProducto = when(datosProducto!!.Tipo!!.trim()){
             "Producto" -> {
                 "PRD"
             }
@@ -775,11 +777,19 @@ class Producto_agregar : AppCompatActivity() {
         }
 
         //BODEGA
-        val idBodega = preferencias!!.getInt("idBodega", 0)
-        val codBodega = preferencias!!.getString("codBodega", null)
-        val bodega = preferencias!!.getString("bodega", null)
+        val idBodega = preferencias!!.getInt("idBodega", -1)
+        val codBodega = preferencias!!.getString("codBodega", "-1")
+        val bodega = preferencias!!.getString("bodega", "-1")
+
+        val idBodegaFinal = if(idBodega == -1) null else idBodega
+        val codBodegaFinal = if(codBodega == "-1") null else codBodega
+        val bodegaFinal = if(bodega == "-1") null else bodega
 
         try {
+
+            var ordenDespacho = 0
+            ordenDespacho = inventarioController.obtenerOrdenDespachoLinea(this@Producto_agregar, datosProducto!!.IdLinea)
+
             base.beginTransaction()
             val detalle = ContentValues()
             detalle.put("Id_pedido", idpedido)
@@ -821,9 +831,10 @@ class Producto_agregar : AppCompatActivity() {
             detalle.putNull("IdLote")
             detalle.putNull("Lote")
             detalle.putNull("FechaVencimiento")
-            detalle.put("IdBodega", idBodega)
-            detalle.put("CodBodega", codBodega)
-            detalle.put("Bodega", bodega)
+            detalle.put("IdBodega", idBodegaFinal)
+            detalle.put("CodBodega", codBodegaFinal)
+            detalle.put("Bodega", bodegaFinal)
+            detalle.put("Orden_despacho", ordenDespacho)
 
 
             val idpedidodetalle = base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
@@ -919,7 +930,8 @@ class Producto_agregar : AppCompatActivity() {
                     cursor.getStringOrNull(37),
                     cursor.getIntOrNull(38),
                     cursor.getStringOrNull(39),
-                    cursor.getStringOrNull(40)
+                    cursor.getStringOrNull(40),
+                    cursor.getInt(41)
                 )
             }
             cursor.close()

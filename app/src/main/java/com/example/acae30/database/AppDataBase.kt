@@ -7,15 +7,34 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.acae30.DAO.InventarioDao
+import com.example.acae30.Entities.CatalogoDepartamentoEntity
+import com.example.acae30.Entities.CatalogoDistritoEntity
+import com.example.acae30.Entities.CatalogoGiroEntity
+import com.example.acae30.Entities.CatalogoMunicipioEntity
+import com.example.acae30.Entities.CatalogoPaisEntity
+import com.example.acae30.Entities.CatalogoRutaEntity
 import com.example.acae30.Entities.InventarioEntity
 import com.example.acae30.Entities.InventarioLotesEntity
 import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Entities.InventarioUnidadesEntity
+import com.example.acae30.Entities.LineasEntity
+import com.example.acae30.Entities.ServidoresEntity
 
-@Database(entities = [InventarioEntity::class,
-    InventarioPreciosEntity::class,
-    InventarioLotesEntity::class,
-    InventarioUnidadesEntity::class], version = 1, exportSchema = false)
+@Database(entities = [
+        InventarioEntity::class,
+        InventarioPreciosEntity::class,
+        InventarioLotesEntity::class,
+        InventarioUnidadesEntity::class,
+        LineasEntity::class,
+        CatalogoPaisEntity::class,
+        CatalogoDepartamentoEntity::class,
+        CatalogoMunicipioEntity::class,
+        CatalogoDistritoEntity::class,
+        CatalogoGiroEntity::class,
+        CatalogoRutaEntity::class,
+        ServidoresEntity::class],
+    version = 1,
+    exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun inventarioDao(): InventarioDao
     companion object{
@@ -59,19 +78,19 @@ abstract class AppDatabase : RoomDatabase() {
                         db.execSQL(tbl.ventasDetalleTemp())
                         db.execSQL(tbl.reporteTemp())
                         db.execSQL(tbl.abonosCxc())
-                        db.execSQL(tbl.catalogoPais())
-                        db.execSQL(tbl.catalogoDepartamento())
-                        db.execSQL(tbl.catalogoMunicipio())
-                        db.execSQL(tbl.catalogoDistrito())
-                        db.execSQL(tbl.catalogoGiro())
-                        db.execSQL(tbl.catalogoRuta())
+                        //db.execSQL(tbl.catalogoPais())
+                        //db.execSQL(tbl.catalogoDepartamento())
+                        //db.execSQL(tbl.catalogoMunicipio())
+                        //db.execSQL(tbl.catalogoDistrito())
+                        //db.execSQL(tbl.catalogoGiro())
+                        //db.execSQL(tbl.catalogoRuta())
                         db.execSQL(tbl.gastos())
                         db.execSQL(tbl.inventariosolicitudCarga())
                         db.execSQL(tbl.solicitudCarga())
                         db.execSQL(tbl.solicitudCargaDetalle())
                         db.execSQL(tbl.devolucion())
                         db.execSQL(tbl.devolucionDetalle())
-                        db.execSQL(tbl.conexionServidores())
+                        //db.execSQL(tbl.conexionServidores())
 
                     }
                 }).build().also {

@@ -49,6 +49,12 @@
             android:icon="@drawable/ic_reporte"
             android:title="@string/reportes"/>
     </group>
+    <group android:id="@+id/group_herramientas">
+        <item
+            android:id="@+id/nav_herramientas"
+            android:title="HERRAMIENTAS"
+            android:icon="@drawable/ic_newconfig"/>
+    </group>
     <group>
         <item
             android:id="@+id/nav_salir"

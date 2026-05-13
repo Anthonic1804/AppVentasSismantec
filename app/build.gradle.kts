@@ -68,6 +68,9 @@ dependencies {
 
     implementation("androidx.annotation:annotation:1.8.2")
 
+    //Timber -> un Wrapper de Log.e
+    implementation("com.jakewharton.timber:timber:5.0.1")
+
     //Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 

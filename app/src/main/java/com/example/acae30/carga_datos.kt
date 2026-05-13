@@ -34,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.time.LocalDate
 
 class carga_datos : AppCompatActivity() {
@@ -160,6 +161,8 @@ class carga_datos : AppCompatActivity() {
                                 bd.execSQL("DELETE FROM Inventario")
                                 bd.execSQL("DELETE FROM Inventario_precios")
                                 bd.execSQL("DELETE FROM Inventario_unidades")
+                                bd.execSQL("DELETE FROM inventario_lotes")
+                                bd.execSQL("DELETE FROM lineas")
 
                                 inventarioController.obtenerInventarioGeneral(this@carga_datos, alert!!)
 
@@ -209,6 +212,20 @@ class carga_datos : AppCompatActivity() {
                                 inventarioController.obtenerInventarioLotes(this@carga_datos, alert!!)
                             }catch (e:Exception){
                                 println("ERROR AL OBTENER LOS LOTES DEL INVENTARIO -> ${e.message}")
+                            }
+
+                            delay(1000)
+
+                            withContext(Dispatchers.Main){
+                                alert!!.changeText("CARGANDO LINEAS")
+                            }
+
+                            delay(1000)
+
+                            try {
+                                inventarioController.obtenerListadoLineasServidor(this@carga_datos)
+                            }catch (e: Exception){
+                                Timber.e(e, "[CARGAR_DATOS] ERROR AL CARGAR LAS LINEAS DESDE EL SERVIDOR")
                             }
 
                             delay(1000)
@@ -629,6 +646,20 @@ class carga_datos : AppCompatActivity() {
                         inventarioController.obtenerInventarioLotes(this@carga_datos, alert!!)
                     }catch (e:Exception){
                         println("ERROR AL OBTENER INVENTARIO LOTES -> " + e.message)
+                    }
+
+                    delay(1000)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("CARGANDO LINEAS")
+                    }
+
+                    delay(1000)
+
+                    try {
+                        inventarioController.obtenerListadoLineasServidor(this@carga_datos)
+                    }catch (e: Exception){
+                        Timber.e(e, "[CARGAR_DATOS] ERROR AL CARGAR LAS LINEAS DESDE EL SERVIDOR")
                     }
 
                     delay(1000)

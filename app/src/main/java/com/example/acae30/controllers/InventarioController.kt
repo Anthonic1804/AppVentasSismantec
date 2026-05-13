@@ -43,12 +43,16 @@ import com.example.acae30.Entities.InventarioUnidadesEntity
 import com.example.acae30.Inicio
 import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.AgregarHeaders
+import com.example.acae30.Utilidades.ConsumirEndpoint
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.database.AppDatabase
 import com.example.acae30.modelos.UnidadMedidaModelo
 import com.google.gson.JsonArray
 import org.jetbrains.annotations.Async.Execute
 import org.json.JSONObject
+import timber.log.Timber
+import java.sql.Time
+import java.util.Timer
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 
@@ -60,6 +64,7 @@ class InventarioController {
     private var instancia = "CONFIG_SERVIDOR"
     private var utilidades = CrearSslNoSeguro()
     private val agregarHeaders = AgregarHeaders()
+    private val consumirEndpoint = ConsumirEndpoint()
 
     private lateinit var base : AppDatabase
     private lateinit var servidor : String
@@ -1721,5 +1726,69 @@ class InventarioController {
 
     }*/
 
+    //------------------------------------------
+    // FUNCION PARA OBTENER LAS LINEAS DEL SERVIDOR
+    //------------------------------------------
+    suspend fun obtenerListadoLineasServidor(context: Context){
+        val response = consumirEndpoint.consumirEndpoint(context, "inventario/lineas")
+        if(response != null){
+            val respuesta = JSONArray(response)
+
+            insertarLineasEnRoom(context, respuesta)
+        }
+    }
+
+    //-------------------------------------------------
+    // FUNCION PARA INSERTAR LAS LINEAS EN ROOM
+    //-------------------------------------------------
+    private fun insertarLineasEnRoom(context: Context, json: JSONArray){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+
+        try {
+            bd.beginTransaction()
+            bd.delete("lineas", null, null)
+
+            for(i in 0 until json.length()){
+                val dato  = json.getJSONObject(i)
+                val valor = ContentValues().apply {
+                    put("id", dato.getInt("id"))
+                    put("nombre", funciones.validateJsonIsnullString(dato, "nombre"))
+                    put("mayoreoDetalle", funciones.validateJsonIsnullString(dato, "mayoreoDetalle"))
+                    put("ordenDespacho", dato.getInt("ordenDespacho"))
+                }
+                bd.insert("lineas", SQLiteDatabase.CONFLICT_REPLACE, valor)
+            }
+            bd.setTransactionSuccessful()
+        }catch (e: Exception){
+            Timber.e(e, "[INVENTARIO_CONTROLLER] ERROR LA INSERTAR LAS LINEAS EN ROOM")
+        }finally {
+            bd.endTransaction()
+        }
+    }
+
+    //-------------------------------------------------
+    // FUNCION PARA OBTENER LA ORDEN DE DESPACHO DE LA LINEA
+    //-------------------------------------------------
+    fun obtenerOrdenDespachoLinea(context: Context, idLinea: Int?) : Int{
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        var ordenDespacho: Int = 0
+
+        try {
+            if(idLinea != null){
+                val consulta = "SELECT ordenDespacho FROM lineas WHERE id = $idLinea"
+                val cursor = bd.query(consulta)
+                cursor.use {
+                    if(cursor.count > 0){
+                        cursor.moveToFirst()
+                        ordenDespacho = cursor.getInt(0)
+                    }
+                }
+            }
+        }catch (e: Exception){
+            Timber.e(e, "[INVENTARIO_CONTROLLER] ERROR AL OBTENER EL ORDEN DE DESPACHO DE LA LINEA")
+        }
+
+        return ordenDespacho
+    }
 
 }

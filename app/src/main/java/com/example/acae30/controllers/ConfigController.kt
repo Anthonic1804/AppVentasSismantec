@@ -183,9 +183,9 @@ class ConfigController {
                         decPrecios = dato.optInt("decPrecios", 2),
                         decTotales = dato.optInt("decTotales", 2),
                         multiplesHojaDeCarga = dato.optBoolean("multiplesHojaDeCarga", false),
-                        idBodega = dato.optInt("id_bodega_inventario"),
-                        codBodega = dato.optString("cod_bodega_inventario"),
-                        bodega = dato.optString("bodega_inventario"),
+                        idBodega = if(dato.isNull("id_bodega_inventario")) null else dato.optInt("id_bodega_inventario"),
+                        codBodega = if(dato.isNull("cod_bodega_inventario")) null else dato.optString("cod_bodega_inventario"),
+                        bodega = if(dato.isNull("bodega_inventario")) null else dato.optString("bodega_inventario"),
                         inventarioTiempoReal = dato.optBoolean("inventario_tiempo_real", false),
                         eliminarPedidosAutomaticos = dato.optBoolean("eliminar_pedidos_automatico", false)
                     )
@@ -270,9 +270,22 @@ class ConfigController {
             putBoolean("multiplesHojaDeCarga", obj.multiplesHojaDeCarga)
 
             //Uso de Bodega
-            putInt("idBodega", obj.idBodega!!)
-            putString("codBodega", obj.codBodega)
-            putString("bodega", obj.bodega)
+
+            obj.idBodega?.let {
+                putInt("idBodega", it)
+            }
+
+            obj.codBodega?.let {
+                putString("codBodega", it)
+            }
+
+            obj.bodega?.let {
+                putString("bodega", it)
+            }
+
+            //putInt("idBodega", obj.idBodega!!)
+            //putString("codBodega", obj.codBodega)
+            //putString("bodega", obj.bodega)
 
             //Inventario tiempoReal
             putBoolean("inventarioTiempoReal", obj.inventarioTiempoReal)
