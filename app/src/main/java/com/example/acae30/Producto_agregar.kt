@@ -32,6 +32,7 @@ import com.example.acae30.controllers.PedidosController
 import com.example.acae30.databinding.ActivityProductoAgregarBinding
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
+import com.example.acae30.modelos.InventarioLotesModel
 import com.example.acae30.modelos.InventarioPrecios
 import com.example.acae30.modelos.JSONmodels.ActualizarPrecioPersonalizadoJSON
 import com.google.android.material.snackbar.Snackbar
@@ -132,6 +133,14 @@ class Producto_agregar : AppCompatActivity() {
 
     private var inventarioTiempoReal : Boolean = false
 
+    private lateinit var listadoLotes : ArrayList<InventarioLotesModel>
+    private var lotesActivos = 0
+    private var loteSeleccionado : String? = null
+    private var fechaVencimientoLote : String? = null
+    private var idLoteSeleccionado : Int? = null
+    private var unidadesLote : Float = 0f
+    private var fraccionesLote : Float = 0f
+    //private var detallePedido : DetallePedido? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -157,7 +166,9 @@ class Producto_agregar : AppCompatActivity() {
         idproducto = intent.getIntExtra("idproducto", 0)
         idpedido = intent.getIntExtra("idpedido", 0)
         idcliente = intent.getIntExtra("idcliente", 0)
+
         idpedidodetalle = intent.getIntExtra("idpedidodetalle", 0)
+
         nombrecliente = intent.getStringExtra("nombrecliente")
         idvisita = intent.getIntExtra("visitaid", 0)
         codigo = intent.getStringExtra("codigo").toString()
@@ -367,6 +378,25 @@ class Producto_agregar : AppCompatActivity() {
             }
         })
 
+        binding.spLotesAgregarProducto.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                val lote = parent?.getItemAtPosition(position).toString()
+
+                cargarInfoLoteSeleccionado(lote)
+
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                //NADA IMPLEMNTADO
+            }
+
+        }
+
         //SE BUSCA EL DETALLE DEL PEDIDO
         if (idproducto!! > 0) {
             val detalle = getPedidodetalle(idpedidodetalle!!)
@@ -383,8 +413,8 @@ class Producto_agregar : AppCompatActivity() {
                         precio_iva = datos.Precio_iva!!
                         precio = datos.Precio!!
                         Totalizar(cantidad)
-                        binding.txtexistencia.text = "${datos.Existencia}"
-                        binding.txtExistenciasFra.text = "${datos.Existencia_u}"
+                        binding.txtexistencia.text = "${if(lotesActivos == 1) unidadesLote else datos.Existencia}"
+                        binding.txtExistenciasFra.text = "${if(lotesActivos == 1) fraccionesLote else datos.Existencia_u}"
 
 
                         //VALIDANDO PARA VENTA DE FACCIONES
@@ -404,20 +434,25 @@ class Producto_agregar : AppCompatActivity() {
                             binding.txttituloproducto.text = "ACTUALIZAR PRODUCTO";
                             binding.btneditarprecio.visibility = View.INVISIBLE;
 
+                            //-----------------------------------------------
+                            // SETEANDO LOTE AL EDITAR EL PRODUCTO
+                            //-----------------------------------------------
+                            binding.etLoteSeleccionado.setText(detalle?.Lote)
+                            cargarInfoLoteSeleccionado(detalle?.Lote!!)
+
                             var cantidad_provisional = detalle!!.Cantidad
-//                           visor!!.text=cantidad.toString()
                             var precio_provisional = detalle!!.Precio_venta //EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
                             precioEditado = precio_provisional!!
 
                             //var precio_provisional = total_param!! / cantidad_provisional
                             cantidad = cantidad_provisional!!
-                            precio_iva = detalle.Precio_venta!! // EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
+                            precio_iva = detalle?.Precio_venta!! // EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
 
                             binding.txtcantidad.setText("${String.format("%.0f".format(cantidad) )}")
 
                             if ("${String.format("%.2f".format(precio_provisional) )}" == "${String.format("%.2f".format(precio_iva) )}")
                             {
-                                if (detalle.Precio_editado == "*") {
+                                if (detalle?.Precio_editado == "*") {
                                     // precio = detalle.Precio_venta!!
                                     precioss.add("${String.format("%.2f".format(precio_iva) )}" + "*")
                                 } else {
@@ -428,7 +463,7 @@ class Producto_agregar : AppCompatActivity() {
                             }
 
                             if (!seleccionado) {
-                                if (detalle.Precio_editado == "*") {
+                                if (detalle?.Precio_editado == "*") {
                                     precioss.add("${String.format("%.2f".format(precio_provisional) )}" + "*")
                                 } else {
                                     precioss.add("${String.format("%.2f".format(precio_provisional) )}")//EDITADO
@@ -469,17 +504,41 @@ class Producto_agregar : AppCompatActivity() {
         val datos = datosProducto
 
         val fraccion = datos!!.Fraccion
-        val existencia = datos.Existencia
-        val existenciaU = datos.Existencia_u
-        existenciaProducto = if(unidadMedida == "FRA" && fraccion!!.toFloat() > 1f){
-            (existencia!!.toFloat() * fraccion) + existenciaU.toFloat()
+        val existencia = if(lotesActivos == 1) unidadesLote else datos.Existencia
+        val existenciaU = if(lotesActivos == 1) fraccionesLote else datos.Existencia_u
+
+        existenciaProducto = if(unidadMedida == "FRA" && fraccion!! > 1f){
+
+            (existencia!! * fraccion) + existenciaU
+
         }else{
-            datos.Existencia!!.toFloat()
+            if(lotesActivos == 1) unidadesLote else datos.Existencia!!
         }
     }
 
     private fun cargarOpcionesGenerales(){
         this@Producto_agregar.lifecycleScope.launch {
+
+            //-----------------------------------------------------------------
+            //OBTENIENDO EL LISTADO DE LOTES DEL PRODUCTO
+            //-----------------------------------------------------------------
+            listadoLotes = inventarioController.obtenerLotesPorProducto(this@Producto_agregar, idproducto!!)
+            if(listadoLotes.isNotEmpty()){
+                binding.lyLote.visibility = View.VISIBLE
+
+                if(proviene == "editar"){
+                    binding.tvLoteSeleccionado.text = "LOTE"
+                    binding.spLotesAgregarProducto.visibility = View.GONE
+                    binding.etLoteSeleccionado.visibility = View.VISIBLE
+                }else{
+                    binding.spLotesAgregarProducto.visibility = View.VISIBLE
+                    binding.etLoteSeleccionado.visibility = View.GONE
+                }
+
+                lotesActivos = 1
+                cargarLotes()
+            }
+
             //---------
             //LA UNIDADES SE GENERAN AUTOMATICAS SI EL PRODUCTO LAS TIENE CONFIGURADAS
             //---------
@@ -525,6 +584,56 @@ class Producto_agregar : AppCompatActivity() {
                 binding.btneliminar.visibility = View.GONE
             }
         }
+    }
+
+    //---------------------------------------
+    //FUNCION PARA CARGAR LOS LOSTES EN EL SPINNER
+    //---------------------------------------
+    private fun cargarLotes(){
+        val listaLotes = mutableListOf<String>()
+        listaLotes.add("-- SELECCIONE --")
+
+        for(item in listadoLotes){
+            listaLotes.add(item.lote + " | " + item.fechaVencimiento)
+        }
+
+        val adapter = ArrayAdapter(this@Producto_agregar, android.R.layout.simple_spinner_item, listaLotes)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.spLotesAgregarProducto.adapter = adapter
+    }
+
+    //-----------------------------------------
+    // FUNCION PARA OBTENER LOS DATOS DEL LOTE SELECCIONADO
+    //-----------------------------------------
+    private fun cargarInfoLoteSeleccionado(lote: String){
+        if(lote != "-- SELECCIONE --"){
+
+            loteSeleccionado = lote.substringBefore(" |")
+
+            val loteEnSeleccion = listadoLotes.filter {
+                it.lote == loteSeleccionado
+            }
+
+            for(item in loteEnSeleccion){
+                fechaVencimientoLote = item.fechaVencimiento
+                idLoteSeleccionado = item.id
+                unidadesLote = item.unidades
+                fraccionesLote = item.fracciones
+            }
+
+        }else{
+            loteSeleccionado = null
+            fechaVencimientoLote = null
+            idLoteSeleccionado = null
+            unidadesLote = 0f
+            fraccionesLote = 0f
+
+        }
+
+        binding.txtexistencia.text = "$unidadesLote"
+        binding.txtExistenciasFra.text = "$fraccionesLote"
+
+        calcularExitenciaSegunUnidadSeleccionada(unidadActual)
     }
 
     //FUNCION PARA OBTENER LA BONIFICACION POR PRODUCTO O CLIENTE
@@ -828,9 +937,9 @@ class Producto_agregar : AppCompatActivity() {
             detalle.put("IdProveedor", datosProducto!!.IdProveedor)
             detalle.put("Metodo_gestion", datosProducto!!.MetodoGestion)
             detalle.put("Tipo_fiscal", tipoFiscal)
-            detalle.putNull("IdLote")
-            detalle.putNull("Lote")
-            detalle.putNull("FechaVencimiento")
+            detalle.put("IdLote", idLoteSeleccionado)
+            detalle.put("Lote", loteSeleccionado)
+            detalle.put("FechaVencimiento", fechaVencimientoLote)
             detalle.put("IdBodega", idBodegaFinal)
             detalle.put("CodBodega", codBodegaFinal)
             detalle.put("Bodega", bodegaFinal)
@@ -881,15 +990,16 @@ class Producto_agregar : AppCompatActivity() {
 
     private fun getPedidodetalle(id: Int): DetallePedido? {
         val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
-        var visita : DetallePedido? = null
+        var detallePedido : DetallePedido? = null
         try {
+
             val consulta = "SELECT * FROM detalle_producto where Id=$id"
             val cursor = base.query(consulta)
 
             if (cursor.count > 0) {
                 cursor.moveToFirst()
 
-                visita = DetallePedido(
+                detallePedido = DetallePedido(
                     cursor.getInt(0),
                     cursor.getInt(1),
                     cursor.getInt(2),
@@ -938,7 +1048,7 @@ class Producto_agregar : AppCompatActivity() {
         } catch (e: Exception) {
             println("ERROR BUSCAR EL DETALLE DEL PEDIDO -> " + e.message)
         }
-        return visita
+        return detallePedido
     } //obtiene el detalle del pedido
 
     private fun updateDetalle(iddetalle: Int?, esPrecioEditado: Boolean, bonificado: Int, precio: Float) {
@@ -949,7 +1059,7 @@ class Producto_agregar : AppCompatActivity() {
         //CONFIGURA LA DESCRIPCION DEL PRODUCTO DE ACUERDO A LA UNIDAD SELECCIONADA
         val nombreProducto = binding.txtdescripcion.text.toString()
         val descripcion = when(binding.spunidad.selectedItem.toString()){
-            "UNIDAD" -> nombreProducto
+            "UNIDAD" -> if(datosProducto!!.Unidad_medida.isBlank()) nombreProducto else datosProducto!!.Unidad_medida + " " + nombreProducto
             "FRACCION" -> datosProducto!!.Nombre_fraccion + ' ' + nombreProducto
             else -> binding.spunidad.selectedItem.toString().trim() + ' ' + nombreProducto
         }
@@ -1050,7 +1160,12 @@ class Producto_agregar : AppCompatActivity() {
         var i = 0
         try {
 
-            val consulta = "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual'"
+            val consulta = if(lotesActivos == 1){
+                "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual' AND idLote = $idLoteSeleccionado"
+            }else{
+                "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual'"
+            }
+            //val consulta = "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual'"
             val cursor = base.query(consulta)
             if (cursor.count > 0) {
                 cursor.moveToFirst()
@@ -1071,19 +1186,6 @@ class Producto_agregar : AppCompatActivity() {
             cadena.toFloat()
             return true
         } catch (nfe: NumberFormatException) {
-            return false
-        }
-    }
-
-    //FUNCION PARA VALIDAR SI EL INGRESO ES NUMERO ENTERO
-    //PARA PAPELERIA DM
-    //24-08-2022
-    private fun isInteger(cadena: String): Boolean{
-        return try{
-            cadena.toInt()
-            return  true
-        }catch (nfe: NumberFormatException){
-            binding.txtcantidad.setText("${String.format("", cantidad)}");
             return false
         }
     }

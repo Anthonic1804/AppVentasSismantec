@@ -37,7 +37,7 @@ class PedidoDetalleAdapter(
 
         var data = list[position]
         vista.cantidad.text = "${String.format("%.2f", data.Cantidad?.plus(data.Bonificado!!) ?: data.Cantidad)}"
-        vista.descripcion.text = data.Descripcion
+        vista.descripcion.text = if(data.Lote == null) data.Descripcion else data.Descripcion + " | LOTE: " + data.Lote + " | F. VENCIMIENTO: " + data.FechaVencimiento
         if (data.Precio_editado == "*") {
             vista.total.text = "$" + "${String.format("%.${decTotales}f".format(data.Total_iva) )}" + "*"
         } else {

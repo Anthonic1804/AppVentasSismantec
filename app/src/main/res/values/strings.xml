@@ -119,8 +119,8 @@
     <string name="precio_">PRECIO</string>
     <string name="existencias_">EXISTENCIAS UNI.</string>
     <string name="total_">TOTAL</string>
-    <string name="agregar_a_pedido">AGREGAR A PEDIDO</string>
-    <string name="eliminar_producto">ELIMINAR PRODUCTO</string>
+    <string name="agregar_a_pedido">AGREGAR</string>
+    <string name="eliminar_producto">ELIMINAR</string>
     <string name="_1_00">1</string>
     <string name="cantidad">CANTIDAD</string>
     <string name="btnregresar">btnRegresar</string>

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
+import android.health.connect.datatypes.ExercisePerformanceGoal
 import android.text.BoringLayout
 import android.view.View
 import android.widget.Toast
@@ -46,6 +47,7 @@ import com.example.acae30.Utilidades.AgregarHeaders
 import com.example.acae30.Utilidades.ConsumirEndpoint
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.database.AppDatabase
+import com.example.acae30.modelos.InventarioLotesModel
 import com.example.acae30.modelos.UnidadMedidaModelo
 import com.google.gson.JsonArray
 import org.jetbrains.annotations.Async.Execute
@@ -1523,7 +1525,7 @@ class InventarioController {
 
                     if (respuesta.isNotEmpty() && respuesta.last().id != 0) {
 
-                        println("INVENTAIRO PRECIOS -> " + respuesta)
+                        //println("INVENTAIRO PRECIOS -> " + respuesta)
 
                         val entidades = respuesta.map {
                             InventarioPreciosEntity(
@@ -1600,7 +1602,7 @@ class InventarioController {
 
                     val respuesta = api.obtenerLotesInventario(lastId, limite)
 
-                    println("INVENTARIO LOTES -> " + respuesta)
+                    //println("INVENTARIO LOTES -> " + respuesta)
 
                     if(respuesta.isNotEmpty() && respuesta.last().id != 0){
                         val entidades = respuesta.map {
@@ -1674,7 +1676,7 @@ class InventarioController {
 
                     val respuesta = api.obtenerUnidadesInventario(lastId, limite)
 
-                    println("INVENTARIO UNIDADES -> " + respuesta)
+                    //println("INVENTARIO UNIDADES -> " + respuesta)
 
                     if(respuesta.isNotEmpty() && respuesta.last().Id != 0){
                         val entidades = respuesta.map {
@@ -1789,6 +1791,46 @@ class InventarioController {
         }
 
         return ordenDespacho
+    }
+
+    //------------------------------------------------------------
+    // FUNCION PARA OBTENER LISTA DE LOTES POR ID DE PRODUCTO
+    //------------------------------------------------------------
+    fun obtenerLotesPorProducto(context: Context, idProducto: Int) : ArrayList<InventarioLotesModel>{
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        val listado = ArrayList<InventarioLotesModel>()
+
+        try {
+            val consulta = "SELECT id," +
+                    "idProducto," +
+                    "codigoProducto," +
+                    "lote," +
+                    "fechaVencimiento," +
+                    "unidades," +
+                    "fracciones FROM inventario_lotes WHERE idProducto = $idProducto ORDER BY fechaVencimiento"
+
+            val cursor = bd.query(consulta)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    do {
+                        val item = InventarioLotesModel(
+                            cursor.getInt(0),
+                            cursor.getInt(1),
+                            cursor.getString(2),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getFloat(5),
+                            cursor.getFloat(6)
+                        )
+                        listado.add(item)
+                    }while (cursor.moveToNext())
+                }
+            }
+        }catch (e: Exception){
+            Timber.e(e,"[INVENTARIO_CONTROLLER] ERROR AL OBTENER EL LISTADO DE LOTES -> ${e.message}")
+        }
+        return listado
     }
 
 }
