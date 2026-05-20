@@ -1,10 +1,12 @@
 package com.example.acae30.Interface
 
+import com.example.acae30.Entities.ClientePreciosEntity
 import com.example.acae30.Entities.InventarioEntity
 import com.example.acae30.Entities.InventarioLotesEntity
 import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Entities.InventarioUnidadesEntity
 import com.example.acae30.listas.InventarioRetrofit
+import com.example.acae30.modelos.ClientesPreciosDTO
 import com.example.acae30.modelos.InventarioTiempoRealModel
 import com.example.acae30.modelos.JSONmodels.HojaCargaJSON
 import com.example.acae30.modelos.Login.LoginModel
@@ -150,6 +152,21 @@ interface AppVentasApi {
     suspend fun obtenerProductoLotesPorId(
         @Path("idproducto") idproducto: Int
     ) : List<InventarioLotesEntity>
+
+
+    //---------------------------------------------------------
+    //Funciones para Clientes
+    //---------------------------------------------------------
+
+    //Obatener clientes precios cantidad
+    @GET("clientes/precios/cantidad")
+    suspend fun obtenerTotalRegistrosClientesPrecios() : Int
+
+    @GET("clientes/precios/{lastId}/{take}")
+    suspend fun obtenerClientesPrecios(
+        @Path("lastId") lastId: Int,
+        @Path("take") take: Int
+    ) : List<ClientesPreciosDTO>
 
 
 }

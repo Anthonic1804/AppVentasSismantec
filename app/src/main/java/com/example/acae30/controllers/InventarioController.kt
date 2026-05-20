@@ -775,15 +775,34 @@ class InventarioController {
         }
     }
 
-    private fun limpiandoTablasInventario(context: Context){
+    fun limpiandoTablasInventario(context: Context){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
-        bd.execSQL("DELETE FROM Inventario")
+        /*bd.execSQL("DELETE FROM Inventario")
         bd.execSQL("DELETE FROM inventario_precios")
         bd.execSQL("DELETE FROM inventario_unidades")
         bd.execSQL("DELETE FROM inventario_lotes")
         bd.execSQL("DELETE FROM hoja_carga")
         bd.execSQL("DELETE FROM hoja_carga_detalle")
-        bd.execSQL("DELETE FROM hoja_detalle_recargas")
+        bd.execSQL("DELETE FROM hoja_detalle_recargas")*/
+
+        try {
+            bd.beginTransaction()
+
+            bd.delete("Inventario", null, null)
+            bd.delete("inventario_precios", null, null)
+            bd.delete("inventario_unidades", null, null)
+            bd.delete("inventario_lotes", null, null)
+            bd.delete("hoja_carga", null, null)
+            bd.delete("hoja_carga_detalle", null, null)
+            bd.delete("hoja_detalle_recargas", null, null)
+
+            bd.setTransactionSuccessful()
+        }catch (e: Exception){
+            Timber.e(e, "[INVENTARIO_CONTROLLER] ERROR AL ELIMINAR LA INFORMACIÓN DE INVENTARIO -> ${e.message}")
+        }finally {
+            bd.endTransaction()
+        }
+
     }
 
     //FUNCION PARA INSERTAR MAESTRO HOJA CARGA

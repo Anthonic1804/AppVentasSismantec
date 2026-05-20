@@ -191,7 +191,8 @@ class MainActivity : AppCompatActivity() {
                 delay(1000)
 
                 try {
-                    clientesController.obtenerPreciosPersonalizados(this@MainActivity)
+                    //clientesController.obtenerPreciosPersonalizados(this@MainActivity)
+                    clientesController.obtenerClientesPrecios(this@MainActivity, alert!!)
                 }catch (e: Exception){
                     println("ERROR AL OBTENER LOS PRECIOS PERSONALIZADO")
                 }

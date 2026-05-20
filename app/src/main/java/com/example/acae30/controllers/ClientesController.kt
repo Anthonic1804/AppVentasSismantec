@@ -6,12 +6,17 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.view.View
+import com.example.acae30.AlertDialogo
+import com.example.acae30.DAO.ClientesDao
 import com.example.acae30.Detallepedido
+import com.example.acae30.Entities.ClientePreciosEntity
 import com.example.acae30.Funciones
+import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.AgregarHeaders
 import com.example.acae30.Utilidades.ConsumirEndpoint
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.Visita
+import com.example.acae30.database.AppDatabase
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.JSONmodels.ActualizarPagareFirmadoCliente
 import com.google.gson.Gson
@@ -21,6 +26,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -28,6 +34,7 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import java.util.Timer
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 
@@ -41,6 +48,20 @@ class ClientesController {
     private var utilidades = CrearSslNoSeguro()
     private var consumirEndpoint = ConsumirEndpoint()
     private val agregarHeaders = AgregarHeaders()
+
+
+    private lateinit var base : AppDatabase
+    private lateinit var servidor : String
+    private lateinit var clientesDao : ClientesDao
+
+    private val BLOQUE : Int = 300
+
+    private fun inicializarVariables(context: Context){
+        base = AppDatabase.getInstance(context)
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
+
+    }
 
     //OBTENER CLIENTES DEL SERVIDOR
     suspend fun obtenerClientesServidor(context: Context) {
@@ -87,12 +108,12 @@ class ClientesController {
                         throw Exception("Error de Comunicacion con el servidor:$responseCode")
                     }
                 } catch (e: Exception) {
-                    /// alert!!.dismisss()
+                    println("ERROR AL OBTENER LA RESPUESTA DEL SERVIDOR 1: ${e.message}")
 
                 }
             } //ABRIMOS LA CONEXION
         } catch (e: Exception) {
-            //alert!!.dismisss()
+            println("ERROR AL CONECTAR CON EL SERVIDOR 2: ${e.message}")
 
         }
     }
@@ -417,7 +438,7 @@ class ClientesController {
     } //inserta las cxc en la tabla
 
     //FUNCION PARA OBTENER LOS PRECIOS PERSONALIZADOS
-    suspend fun obtenerPreciosPersonalizados(context: Context){
+    /*suspend fun obtenerPreciosPersonalizados(context: Context){
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString(), context)
 
@@ -543,6 +564,8 @@ class ClientesController {
                 }
             }
 
+            println("CANTIDAD DE REGISTROS -> $cantidadRegistros")
+
             val bloque = 1000
             var inicio = 0
 
@@ -567,10 +590,10 @@ class ClientesController {
         }catch (e:Exception){
             println("ERROR GENERAL -> ${e.message}")
         }
-    }
+    }*/
 
     //FUNCION PARA HACER LOS REINTENTOS DE OBTENER Y ALMACENAR LOS PRECIOS PERSONALIZADOS
-    private suspend fun descargarBloquePrecios(url: String, inicio: Int, longitud: Int, context: Context) : Boolean{
+    /*private suspend fun descargarBloquePrecios(url: String, inicio: Int, longitud: Int, context: Context) : Boolean{
 
         var ok : Boolean = false
 
@@ -610,10 +633,10 @@ class ClientesController {
         }
 
         return ok
-    }
+    }*/
 
     //FUNCION PARA LAMACENAR LOS PRECIOS PERSONALIZADOS EN SQLITE
-    private fun almacenarPrecioPersonalizados(json: JSONArray, context: Context){
+    /*private fun almacenarPrecioPersonalizados(json: JSONArray, context: Context){
         val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
             base.beginTransaction()
@@ -635,7 +658,7 @@ class ClientesController {
         }finally {
             base.endTransaction()
         }
-    }
+    }*/
 
     //FUNCION PARA OBTENER LOS DATOS DEL CLIENTE POR ID
     fun obtenerInformacionCliente(context: Context, idCliente: Int): Cliente?{
@@ -1300,6 +1323,78 @@ class ClientesController {
             println("ERROR AL REGISTRAR EL CLIENTE EN SQLITE -> " + e.message)
         } finally {
             bd.endTransaction()
+        }
+    }
+
+    //-------------------------------------------------------
+    //Funcion para obtener los clientes del servidor
+    //-------------------------------------------------------
+    suspend fun obtenerClientesPrecios(context: Context, dialogo: AlertDialogo){
+        withContext(Dispatchers.IO){
+
+            inicializarVariables(context)
+
+            val baseUrl = servidor
+
+            clientesDao = base.clienteDao()
+
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+
+            try {
+
+                val totalClientesPrecios = try {
+                    api.obtenerTotalRegistrosClientesPrecios()
+                }catch (e: Exception){
+                    Timber.e(e, "[CLIENTES_CONTROLLER] ERROR AL OBTENER EL TOTAL DE REGISTROS DE CLIENTES PRECIOS  -> ${e.message}")
+                } as Int
+
+
+                while (hayMas){
+                    val respuesta = api.obtenerClientesPrecios(lastId, limite)
+
+                    if(respuesta.isNotEmpty() && respuesta.last().id != 0){
+
+                        val registros = respuesta.map {
+                            ClientePreciosEntity(
+                                id = it.id,
+                                idCliente = it.idCliente ?: 0,
+                                idInventario = it.idInventario ?: 0,
+                                precioP = it.precioP ?: 0.0,
+                                precioPiva = it.precioPiva ?: 0.0,
+                                bonificado = it.bonificado ?: 0.0
+                            )
+                        }
+
+                        clientesDao.insertarPreciosPersonalizados(registros)
+                        totalInsertados += registros.size
+
+
+                        //Calculando el porcentaje
+                        if(totalClientesPrecios != null && totalClientesPrecios > 0){
+                            val progreso = (totalInsertados * 100) / totalClientesPrecios
+
+                            withContext(Dispatchers.Main){
+                                dialogo.changeText("Cargando Precios Personalizados: $progreso %")
+                            }
+                        }
+
+                        lastId = respuesta.last().id
+
+                    }else{
+                        hayMas = false
+                    }
+
+                }
+
+            }catch (e: Exception){
+                Timber.e(e,"[CLIENTES_CONTROLLER] ERROR AL OBTENER LOS PRECIOS PERSONALIZADOS DE LOS CLIENTES -> ${e.message}")
+            }
         }
     }
 

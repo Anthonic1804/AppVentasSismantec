@@ -157,12 +157,16 @@ class carga_datos : AppCompatActivity() {
                             delay(1000)
 
                             try {
-                                val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
+                                /*val bd = funciones.obtenerInstancia(this@carga_datos).openHelper.writableDatabase
                                 bd.execSQL("DELETE FROM Inventario")
                                 bd.execSQL("DELETE FROM Inventario_precios")
                                 bd.execSQL("DELETE FROM Inventario_unidades")
                                 bd.execSQL("DELETE FROM inventario_lotes")
-                                bd.execSQL("DELETE FROM lineas")
+                                bd.execSQL("DELETE FROM lineas")*/
+
+                                inventarioController.limpiandoTablasInventario(this@carga_datos)
+
+                                delay(2000)
 
                                 inventarioController.obtenerInventarioGeneral(this@carga_datos, alert!!)
 
@@ -467,7 +471,8 @@ class carga_datos : AppCompatActivity() {
             delay(1000)
 
             try {
-                clientesController.obtenerPreciosPersonalizados(this@carga_datos)
+                //clientesController.obtenerPreciosPersonalizados(this@carga_datos)
+                clientesController.obtenerClientesPrecios(this@carga_datos, alert!!)
             }catch (e: Exception){
                 println("ERROR AL OBTENER LOS PRECIOS PERSONALIZADO")
             }

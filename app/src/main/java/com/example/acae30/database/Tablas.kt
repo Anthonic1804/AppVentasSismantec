@@ -2,7 +2,7 @@ package com.example.acae30.database
 
 class Tablas {
 
-    fun cliente(): String {
+   /* fun cliente(): String {
         return "CREATE TABLE clientes (" +
                 "Id INTEGER  PRIMARY KEY NOT NULL," +
                 "Codigo VARCHAR(25)  NOT NULL," +
@@ -50,10 +50,10 @@ class Tablas {
                 "DTEDistrito VARCHAR(70) NULL DEFAULT ''," +
                 "DTECodDistrito VARCHAR(10) NULL DEFAULT ''" +
                 ");"
-    } //tabla cliente
+    } //tabla cliente*/
 
     //CREANDO TABLA CLIENTES_SUCURSALES 25-01-2023
-    fun clienteSucursal(): String {
+    /*fun clienteSucursal(): String {
 
         return "CREATE TABLE cliente_sucursal(" +
                 "Id INTEGER NOT NULL," +
@@ -77,10 +77,10 @@ class Tablas {
                 "Latitud_app VARCHAR(100) NULL," +
                 "Longitud_app VARCHAR(100) NULL" +
                 ");"
-    }
+    }*/
 
     //CREANDO TABLA PARA PRECIO PESONALIZADOS POR CLIENTE
-    fun clientePrecios(): String {
+   /* fun clientePrecios(): String {
 
         return "CREATE TABLE cliente_precios(" +
                 "id_cliente INTEGER NOT NULL," +
@@ -88,7 +88,7 @@ class Tablas {
                 "precio_p NUMERIC(18,6) NOT NULL," +
                 "precio_p_iva NUMERIC(18,6) NOT NULL," +
                 "bonificado NUMERIC(18,6) NOT NULL DEFAULT 0)"
-    }
+    }*/
 
     //CREANDO TABLA PARA CATALOGO PAIS
     /*fun catalogoPais() : String{
@@ -292,7 +292,7 @@ class Tablas {
     }*/
 
     //CREANDO TABLA HOJA DE CARGA
-    fun hojaCarga():String{
+    /*fun hojaCarga():String{
         return "CREATE TABLE hoja_carga(" +
                 "Id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "idHojaCarga INTEGER NOT NULL DEFAULT 0," +
@@ -303,20 +303,20 @@ class Tablas {
                 "Devolucion INTEGER NOT NULL DEFAULT 0," +
                 "Fecha VARCHAR(25) NOT NULL DEFAULT ''," +
                 "Recalcula INTEGER NOT NULL DEFAULT 0)"
-    }
+    }*/
 
     //CREADO TABLA HOJA DE CARGA DETALLE
-    fun hojaCargaDetalle():String{
+    /*fun hojaCargaDetalle():String{
         return "CREATE TABLE hoja_carga_detalle(" +
                 "Id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "Id_hojaCarga INTEGER NOT NULL DEFAULT 0," +
                 "Id_inventario INTEGER NOT NULL DEFAULT O," +
                 "Codigo_inventario VARCHAR(25) NOT NULL," +
                 "Cantidad NUMERIC(20,6) NOT NULL DEFAULT O)"
-    }
+    }*/
 
     //CREANDO TABLA HOJA DETALLE CARGAS
-    fun hojaDetalleRecargas():String{
+    /*fun hojaDetalleRecargas():String{
         return "CREATE TABLE hoja_detalle_recargas(" +
                 "id INTEGER NOT NULL DEFAULT 0," +
                 "id_hoja INTEGER NOT NULL DEFAULT 0," +
@@ -324,15 +324,15 @@ class Tablas {
                 "codigo_producto VARCHAR(25) NOT NULL," +
                 "cantidad NUMERIC(20,6) NOT NULL DEFAULT 0," +
                 "recargado INTEGER NOT NULL DEFAULT 0)"
-    }
+    }*/
 
 
     //CREANDO LA TABLA EMPLEADOS
-    fun empleados(): String {
+    /*fun empleados(): String {
         return "CREATE TABLE empleado(" +
                 "id_empleado INTEGER NOT NULL," +
                 "nombre_empleado VARCHAR(50) NOT NULL);"
-    }
+    }*/
 
     //CREANDO TABLA DE ABONOS CXC
     fun abonosCxc() : String{

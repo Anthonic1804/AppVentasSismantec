@@ -2110,7 +2110,7 @@ class Detallepedido : AppCompatActivity() {
         // Detalle del pedido desde controlador
         // ===============================
         val listaDetalle = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-        var total = 0f
+        //var total = 0f
         val detalleBuilder = StringBuilder()
 
         // ===============================
@@ -2157,10 +2157,10 @@ class Detallepedido : AppCompatActivity() {
                 }
             }
 
-            total += item.Total_iva ?: 0f
+            //total += item.Total_iva ?: 0f
         }
 
-        total -= infoPedido.Iva_Percibido!!
+        val totalFacturado = total - infoPedido.Iva_Percibido!!
 
         if(infoPedido.Enviado == 1 && infoPedido.pedido_dte == 1){
             // ===============================
@@ -2213,7 +2213,7 @@ class Detallepedido : AppCompatActivity() {
                 .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
                 .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
                 .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
-                .append("[L]TOTAL: [R] $ ${String.format("%.2f", total)} \n")
+                .append("[L]TOTAL: [R] $ ${String.format("%.2f", totalFacturado)} \n")
                 .append("[L]VENDIDO POR: $vendedor\n")
                 .append("[L]FECHA: $fecha \n")
                 .append("[C]¡GRACIAS POR SU COMPRA! \n")
@@ -2259,7 +2259,7 @@ class Detallepedido : AppCompatActivity() {
                 .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
                 .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
                 .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
-                .append("[L]TOTAL: [R] $ ${String.format("%.2f", total)} \n")
+                .append("[L]TOTAL: [R] $ ${String.format("%.2f", totalFacturado)} \n")
                 .append("[L]VENDIDO POR: $vendedor\n")
                 .append("[L]FECHA: $fecha \n")
                 .append("[C]¡GRACIAS POR SU COMPRA! \n")
@@ -2423,7 +2423,7 @@ class Detallepedido : AppCompatActivity() {
             // Detalle del pedido desde controlador
             // ===============================
             val listaDetalle = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-            var total = 0f
+            //var total = 0f
             val detalleBuilder = StringBuilder()
 
             // ===============================
@@ -2470,10 +2470,10 @@ class Detallepedido : AppCompatActivity() {
                     }
                 }
 
-                total += item.Total_iva ?: 0f
+                //total += item.Total_iva ?: 0f
             }
 
-            total -= infoPedido.Iva_Percibido!!
+            val totalFacturado = total - infoPedido.Iva_Percibido!!
 
             if(infoPedido.Enviado == 1 && infoPedido.pedido_dte == 1){
                 // ===============================
@@ -2526,7 +2526,7 @@ class Detallepedido : AppCompatActivity() {
                     .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
                     .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
                     .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
-                    .append("[L]TOTAL: [R] $ ${String.format("%.2f", total)} \n")
+                    .append("[L]TOTAL: [R] $ ${String.format("%.2f", totalFacturado)} \n")
                     .append("[L]VENDIDO POR: $vendedor\n")
                     .append("[L]FECHA: $fecha \n")
                     .append("[C]¡GRACIAS POR SU COMPRA! \n")
@@ -2572,7 +2572,7 @@ class Detallepedido : AppCompatActivity() {
                     .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
                     .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
                     .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
-                    .append("[L]TOTAL: [R] $ ${String.format("%.2f", total)} \n")
+                    .append("[L]TOTAL: [R] $ ${String.format("%.2f", totalFacturado)} \n")
                     .append("[L]VENDIDO POR: $vendedor\n")
                     .append("[L]FECHA: $fecha \n")
                     .append("[C]¡GRACIAS POR SU COMPRA! \n")
