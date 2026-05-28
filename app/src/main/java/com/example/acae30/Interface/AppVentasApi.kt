@@ -1,14 +1,13 @@
 package com.example.acae30.Interface
 
-import com.example.acae30.Entities.ClientePreciosEntity
 import com.example.acae30.Entities.InventarioEntity
 import com.example.acae30.Entities.InventarioLotesEntity
 import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Entities.InventarioUnidadesEntity
-import com.example.acae30.listas.InventarioRetrofit
-import com.example.acae30.modelos.ClientesPreciosDTO
+import com.example.acae30.modelos.ClienteSucursalModel
+import com.example.acae30.modelos.ClientesModel
+import com.example.acae30.modelos.ClientesPreciosModel
 import com.example.acae30.modelos.InventarioTiempoRealModel
-import com.example.acae30.modelos.JSONmodels.HojaCargaJSON
 import com.example.acae30.modelos.Login.LoginModel
 import com.example.acae30.modelos.Login.RespuestaLogin
 import com.example.acae30.modelos.RespuestaConexion
@@ -20,7 +19,6 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import java.time.LocalDate
-import java.util.Date
 
 interface AppVentasApi {
 
@@ -166,7 +164,28 @@ interface AppVentasApi {
     suspend fun obtenerClientesPrecios(
         @Path("lastId") lastId: Int,
         @Path("take") take: Int
-    ) : List<ClientesPreciosDTO>
+    ) : List<ClientesPreciosModel>
 
+    //Obtener clientes cantidad
+    @GET("clientes/cantidad")
+    suspend fun obtenerTotalRegistrosClientes() : Int
+
+    //Obtener Listado de Clientes
+    @GET("clientes/{lastId}/{take}")
+    suspend fun obtenerListadoClientes(
+        @Path("lastId") lastId: Int,
+        @Path("take") take: Int
+    ) : List<ClientesModel>
+
+    //Obtener CAntidad Registros Sucursal
+    @GET("sucursales/cantidad")
+    suspend fun obtenerTotalRegitroSucursal() : Int
+
+    //Obtener Listado Clientes Sucursal
+    @GET("sucursales/{lastId}/{take}")
+    suspend fun obtenerListadoSucursales(
+        @Path("lastId") lastId: Int,
+        @Path("take") take: Int
+    ) : List<ClienteSucursalModel>
 
 }

@@ -8,6 +8,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.acae30.DAO.ClientesDao
 import com.example.acae30.DAO.InventarioDao
+import com.example.acae30.Entities.AbonosEntity
 import com.example.acae30.Entities.CatalogoDepartamentoEntity
 import com.example.acae30.Entities.CatalogoDistritoEntity
 import com.example.acae30.Entities.CatalogoGiroEntity
@@ -17,7 +18,9 @@ import com.example.acae30.Entities.CatalogoRutaEntity
 import com.example.acae30.Entities.ClientePreciosEntity
 import com.example.acae30.Entities.ClienteSucursalEntity
 import com.example.acae30.Entities.ClientesEntity
+import com.example.acae30.Entities.CuentasEntity
 import com.example.acae30.Entities.EmpleadosEntity
+import com.example.acae30.Entities.GastosEntity
 import com.example.acae30.Entities.HojaCargaDetalleEntity
 import com.example.acae30.Entities.HojaCargaEntity
 import com.example.acae30.Entities.HojaDetalleRecargasEntity
@@ -26,7 +29,11 @@ import com.example.acae30.Entities.InventarioLotesEntity
 import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Entities.InventarioUnidadesEntity
 import com.example.acae30.Entities.LineasEntity
+import com.example.acae30.Entities.PreciosAutorizadosEntity
+import com.example.acae30.Entities.ReporteTempEntity
 import com.example.acae30.Entities.ServidoresEntity
+import com.example.acae30.Entities.VentasDetalleTempEntity
+import com.example.acae30.Entities.VentasTempEntity
 
 @Database(entities = [
         InventarioEntity::class,
@@ -47,7 +54,14 @@ import com.example.acae30.Entities.ServidoresEntity
         EmpleadosEntity::class,
         ClientesEntity::class,
         ClientePreciosEntity::class,
-        ClienteSucursalEntity::class],
+        ClienteSucursalEntity::class,
+        CuentasEntity::class,
+        GastosEntity::class,
+        AbonosEntity::class,
+        PreciosAutorizadosEntity::class,
+        VentasTempEntity::class,
+        VentasDetalleTempEntity::class,
+        ReporteTempEntity::class],
     version = 1,
     exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -85,17 +99,17 @@ abstract class AppDatabase : RoomDatabase() {
                         //db.execSQL(tbl.hojaCargaDetalle())
                         //db.execSQL(tbl.hojaDetalleRecargas())
                         db.execSQL(tbl.pedidos())
-                        db.execSQL(tbl.cuentas())
+                        //db.execSQL(tbl.cuentas())
                         db.execSQL(tbl.visitas())
                         db.execSQL(tbl.detallePedidos())
                         db.execSQL(tbl.vistaDetallePedidos())
                         //db.execSQL(tbl.empleados())
-                        db.execSQL(tbl.preciosAutorizados())
-                        db.execSQL(tbl.ventasTemp())
-                        db.execSQL(tbl.ventasDetalleTemp())
-                        db.execSQL(tbl.reporteTemp())
-                        db.execSQL(tbl.abonosCxc())
-                        db.execSQL(tbl.gastos())
+                        //db.execSQL(tbl.preciosAutorizados())
+                        //db.execSQL(tbl.ventasTemp())
+                        //db.execSQL(tbl.ventasDetalleTemp())
+                        //db.execSQL(tbl.reporteTemp())
+                        //db.execSQL(tbl.abonosCxc())
+                        //db.execSQL(tbl.gastos())
                         db.execSQL(tbl.inventariosolicitudCarga())
                         db.execSQL(tbl.solicitudCarga())
                         db.execSQL(tbl.solicitudCargaDetalle())

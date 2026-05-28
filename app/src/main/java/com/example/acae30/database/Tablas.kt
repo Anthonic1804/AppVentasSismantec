@@ -335,7 +335,7 @@ class Tablas {
     }*/
 
     //CREANDO TABLA DE ABONOS CXC
-    fun abonosCxc() : String{
+    /*fun abonosCxc() : String{
         return "CREATE TABLE abonos(" +
                 "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
@@ -356,10 +356,10 @@ class Tablas {
                 "idAbonoServer INTEGER NOT NULL DEFAULT 0," +
                 "borradoLogico INTEGER NOT NULL DEFAULT 0," +
                 "abonoEnviado INTEGER NOT NULL DEFAULT 0);"
-    }
+    }*/
 
     //CREANDO LA TABLA GASTOS
-    fun gastos() : String {
+    /*fun gastos() : String {
         return "CREATE TABLE gastos(" +
                 "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
@@ -375,11 +375,11 @@ class Tablas {
                 "NumeroCaja INTEGER NULL DEFAULT 0," +
                 "gastoEnviado INTEGER NOT NULL DEFAULT 0," +
                 "idServidor INTEGER NOT NULL DEFAULT 0);"
-    }
+    }*/
 
     //-----------------------------------------------POR AQUI VOY EN LA MIGRACION -----------------------------------------
     //CREANDO LA TABLA TOKENAPP
-    fun preciosAutorizados(): String {
+    /*fun preciosAutorizados(): String {
         return "CREATE TABLE preciosAutorizados(" +
                 "Id INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Id_vendedor INTEGER NOT NULL," +
@@ -388,7 +388,7 @@ class Tablas {
                 "precio_asig NUMERIC(18,4) NOT NULL," +
                 "fecha_registrado TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
                 "id_server INTEGER NOT NULL);"
-    }
+    }*/
 
     /*ESCARRSA 15/05/2024
     * CAMBIOS EN LA TBL PEDIDOS -> SE AGREGARON LOS SIGUIENTES CAMPOS
@@ -556,15 +556,15 @@ class Tablas {
     }
 
     //TABLA REPORTE TEMP
-    fun reporteTemp(): String {
+    /*fun reporteTemp(): String {
         return "CREATE TABLE reporteTemp(" +
                 "Cliente VARCHAR(50) NOT NULL," +
                 "Sucursal VARCHAR(50) NOT NULL," +
                 "Total NUMERIC(20,6) NOT NULL)"
-    }
+    }*/
 
     //TABLA VENTAS PARA HISTORICO DE PEDIDOS
-    fun ventasTemp(): String {
+    /*fun ventasTemp(): String {
         return "CREATE TABLE ventasTemp (" +
                 "Id INTEGER NOT NULL," +
                 "Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," +
@@ -574,10 +574,10 @@ class Tablas {
                 "Vendedor VARCHAR(25) NOT NULL," +
                 "Total NUMERIC(20,6) NOT NULL," +
                 "Numero INTEGER NOT NULL);"
-    }
+    }*/
 
     //DETALLE DE HISTORICO
-    fun ventasDetalleTemp(): String {
+    /*fun ventasDetalleTemp(): String {
         return "CREATE TABLE ventasDetalleTemp (" +
                 "Id_venta INTEGER NOT NULL," +
                 "Id_producto INTEGER NOT NULL," +
@@ -585,9 +585,9 @@ class Tablas {
                 "Precio_u_iva NUMERIC(20,6) NOT NULL," +
                 "Cantidad INTEGER NOT NULL," +
                 "Total_iva NUMERIC(20,6) NOT NULL)"
-    }
+    }*/
 
-    fun cuentas(): String {
+    /*fun cuentas(): String {
         return "CREATE TABLE cuentas(" +
                 "Id INTEGER NOT NULL," +
                 "Id_cliente INTEGER NOT NULL," +
@@ -607,7 +607,7 @@ class Tablas {
                 "Fecha_cancelado DATE," +
                 "dias_tardios INTEGER DEFAULT 0)"
 
-    } //tabla de cuentas
+    } //tabla de cuentas*/
 
     fun visitas(): String {
         return "CREATE TABLE visitas (" +
