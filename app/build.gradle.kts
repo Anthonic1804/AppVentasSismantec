@@ -12,7 +12,7 @@ android {
         applicationId = "com.example.acae30"
         minSdk = 26
         versionCode = 1
-        versionName = "3.75"
+        versionName = "3.76"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

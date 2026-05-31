@@ -56,7 +56,7 @@ data class ClientesModel (
 
     @SerializedName("aporte_mensual") val aporteMensual: Double?,
 
-    @SerializedName("pagare_Firmado_app") val firmarPagareApp: Int,
+    @SerializedName("pagare_Firmado_app") val firmarPagareApp: Boolean,
 
     @SerializedName("persona_juridica") val personaJuridica: String,
 

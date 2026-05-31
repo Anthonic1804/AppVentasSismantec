@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import com.example.acae30.Entities.ClientePreciosEntity
 import com.example.acae30.Entities.ClienteSucursalEntity
 import com.example.acae30.Entities.ClientesEntity
+import com.example.acae30.Entities.CuentasEntity
 
 @Dao
 interface ClientesDao {
@@ -27,4 +28,10 @@ interface ClientesDao {
     //--------------------------------------------------
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarPreciosPersonalizados(item: List<ClientePreciosEntity>)
+
+    //--------------------------------------------------
+    //Insertando CxC Pendientes
+    //--------------------------------------------------
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarCuentasPendientes(item: List<CuentasEntity>)
 }

@@ -348,4 +348,23 @@ class Funciones {
     fun obtenerInstancia(context: Context) : AppDatabase {
         return AppDatabase.getInstance(context)
     }
+
+    //-------------------------------------------------
+    //FUNCION PARA NORMALIZAR TEXTO
+    //-------------------------------------------------
+    fun normalizarTexto(texto: String): String {
+        val original = "ÁÀÂÄáàâäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖóòôöÚÙÛÜúùûüÇç"
+        val reemplazo = "AAAAaaaaEEEEeeeeIIIIiiiiOOOOooooUUUUuuuuCc"
+
+        var resultado = texto
+        for (i in original.indices) {
+            resultado = resultado.replace(original[i], reemplazo[i])
+        }
+
+        // Elimina caracteres no ASCII
+        resultado = resultado.replace(Regex("[^\\x00-\\x7F]"), "")
+        return resultado
+    }
+
+
 }

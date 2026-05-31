@@ -45,7 +45,7 @@ class Inventariodetalle : AppCompatActivity() {
         inventarioTiempoReal = preferences.getBoolean("inventarioTiempoReal", false)
 
         binding.imageView7.setOnClickListener {
-            AlertaPrecio(this@Inventariodetalle)  //muestra la alerta
+            //AlertaPrecio(this@Inventariodetalle)  //muestra la alerta
         }
 
     }

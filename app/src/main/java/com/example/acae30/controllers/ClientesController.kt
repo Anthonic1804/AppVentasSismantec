@@ -10,6 +10,9 @@ import com.example.acae30.AlertDialogo
 import com.example.acae30.DAO.ClientesDao
 import com.example.acae30.Detallepedido
 import com.example.acae30.Entities.ClientePreciosEntity
+import com.example.acae30.Entities.ClienteSucursalEntity
+import com.example.acae30.Entities.ClientesEntity
+import com.example.acae30.Entities.CuentasEntity
 import com.example.acae30.Funciones
 import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.AgregarHeaders
@@ -46,8 +49,8 @@ class ClientesController {
     private var instancia = "CONFIG_SERVIDOR"
 
     private var utilidades = CrearSslNoSeguro()
-    private var consumirEndpoint = ConsumirEndpoint()
-    private val agregarHeaders = AgregarHeaders()
+    //private var consumirEndpoint = ConsumirEndpoint()
+    //private val agregarHeaders = AgregarHeaders()
 
 
     private lateinit var base : AppDatabase
@@ -55,16 +58,19 @@ class ClientesController {
     private lateinit var clientesDao : ClientesDao
 
     private val BLOQUE : Int = 300
+    var cargarClientes: String = ""
+    var idVendedor: Int = 0
 
     private fun inicializarVariables(context: Context){
         base = AppDatabase.getInstance(context)
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
-
+        cargarClientes = preferences.getString("cargarClientesPorRuta", "").toString()
+        idVendedor = preferences.getInt("Idvendedor", 0)
     }
 
     //OBTENER CLIENTES DEL SERVIDOR
-    suspend fun obtenerClientesServidor(context: Context) {
+    /*suspend fun obtenerClientesServidor(context: Context) {
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto",0).toString(), context)
 
@@ -116,10 +122,10 @@ class ClientesController {
             println("ERROR AL CONECTAR CON EL SERVIDOR 2: ${e.message}")
 
         }
-    }
+    }*/
 
     //GUARDAR DATOS DE CLIENTES EN SQLITE
-    private fun saveClienteDataBase(json: JSONArray, context: Context) {
+    /*private fun saveClienteDataBase(json: JSONArray, context: Context) {
 
         val total = json.length()
         val talla = (50.toFloat() / total.toFloat()).toFloat()
@@ -209,7 +215,7 @@ class ClientesController {
         } finally {
             bd.endTransaction()
         }
-    }//guarda los datos en la bd
+    }//guarda los datos en la bd*/
 
     //FUNCION PARA OBTENER SUCURSALES DE LOS CLIENTES DESDE EL SERVIDOR
     /*suspend fun obtenerClienteSucursalesServidor(context: Context){
@@ -262,7 +268,7 @@ class ClientesController {
             println("NO SE ENCONTRARON DATOS REGISTRADOS DE SUCURSALES")
         }
     }*/
-    suspend fun obtenerClienteSucursalesServidor(context: Context){
+    /*suspend fun obtenerClienteSucursalesServidor(context: Context){
         val response = consumirEndpoint.consumirEndpoint(context, "sucursales")
 
         if(response != null){
@@ -272,10 +278,10 @@ class ClientesController {
                 saveSucursalesDatabase(respuesta, context)
             }
         }
-    }
+    }*/
 
     //ALMACENAR SUCURSALES EN SQLITE
-    private fun saveSucursalesDatabase(json: JSONArray, context: Context) {
+    /*private fun saveSucursalesDatabase(json: JSONArray, context: Context) {
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         val total = json.length()
         val talla = (50.toFloat() / total.toFloat()).toFloat()
@@ -315,7 +321,7 @@ class ClientesController {
         } finally {
             bd.endTransaction()
         }
-    } //INSERTANDO DATOS EN LA TABLA SUCURSALES EN SQLITE
+    } //INSERTANDO DATOS EN LA TABLA SUCURSALES EN SQLITE*/
 
     //FUNCION PARA OBTENER LAS CXC DESDE EL SERVIDOR
     /*suspend fun obtenerCxcServidor(context: Context) {
@@ -365,7 +371,7 @@ class ClientesController {
             //alert!!.dismisss()
         }
     }*/
-    suspend fun obtenerCxcServidor(context: Context){
+    /*suspend fun obtenerCxcServidor(context: Context){
         val response = consumirEndpoint.consumirEndpoint(context, "cuentas")
         if(response != null){
             val respuesta = JSONArray(response)
@@ -373,10 +379,10 @@ class ClientesController {
                 saveCuentaDatabase(respuesta, context)
             }
         }
-    }
+    }*/
 
     //FUNCION PARA ALMACENAR LAS CXC EN SQLITE
-    private fun saveCuentaDatabase(json: JSONArray, context: Context) {
+    /*private fun saveCuentaDatabase(json: JSONArray, context: Context) {
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         val total = json.length()
         val talla = (50.toFloat() / total.toFloat()).toFloat()
@@ -435,7 +441,7 @@ class ClientesController {
         } finally {
             bd.endTransaction()
         }
-    } //inserta las cxc en la tabla
+    } //inserta las cxc en la tabla*/
 
     //FUNCION PARA OBTENER LOS PRECIOS PERSONALIZADOS
     /*suspend fun obtenerPreciosPersonalizados(context: Context){
@@ -1164,6 +1170,7 @@ class ClientesController {
         json.addProperty("Contacto", cliente.Contacto)
         json.addProperty("Id_ruta", cliente.Id_ruta)
         json.addProperty("Id_vendedor", cliente.Id_vendedor)
+        json.addProperty("vendedor", cliente.Vendedor)
         json.addProperty("Status", cliente.Status)
         json.addProperty("Aporte_mensual", cliente.Aporte_mensual)
         json.addProperty("Firmar_pagare_app", cliente.Firmar_pagare_app)
@@ -1224,6 +1231,8 @@ class ClientesController {
             data.put("Correo", funciones.validate(cliente.Correo))
             data.put("Contacto", funciones.validate((cliente.Contacto)))
             data.put("Id_ruta", funciones.validate(cliente.Id_ruta))
+            data.put("Id_vendedor", funciones.validate(cliente.Id_vendedor))
+            data.put("Vendedor", funciones.validate(cliente.Vendedor))
             data.put("Status", funciones.validate(cliente.Status))
             data.put(
                 "Aporte_mensual",
@@ -1246,6 +1255,7 @@ class ClientesController {
             data.put("DTECodGiro", funciones.validate(cliente.DTECodGiro))
             data.put("DTEDistrito", funciones.validate(cliente.DTEDistrito))
             data.put("DTECodDistrito", funciones.validate(cliente.DTECodDistrito))
+            data.put("Mayorista", funciones.validate(cliente.Mayorista))
 
             bd.insert("clientes", SQLiteDatabase.CONFLICT_REPLACE, data)
             bd.setTransactionSuccessful()
@@ -1327,7 +1337,7 @@ class ClientesController {
     }
 
     //-------------------------------------------------------
-    //Funcion para obtener los clientes del servidor
+    //Funcion para obtener los precios personalizados de clientes del servidor 30-05-2026
     //-------------------------------------------------------
     suspend fun obtenerClientesPrecios(context: Context, dialogo: AlertDialogo){
         withContext(Dispatchers.IO){
@@ -1352,7 +1362,8 @@ class ClientesController {
                     api.obtenerTotalRegistrosClientesPrecios()
                 }catch (e: Exception){
                     Timber.e(e, "[CLIENTES_CONTROLLER] ERROR AL OBTENER EL TOTAL DE REGISTROS DE CLIENTES PRECIOS  -> ${e.message}")
-                } as Int
+                    null
+                }
 
 
                 while (hayMas){
@@ -1395,6 +1406,293 @@ class ClientesController {
             }catch (e: Exception){
                 Timber.e(e,"[CLIENTES_CONTROLLER] ERROR AL OBTENER LOS PRECIOS PERSONALIZADOS DE LOS CLIENTES -> ${e.message}")
             }
+        }
+    }
+
+    //-------------------------------------------------------
+    //Funcion para obtener los clientes del Servidor 30-05-2026
+    //-------------------------------------------------------
+    suspend fun obtenerListadoClientes(context: Context, dialogo: AlertDialogo){
+        withContext(Dispatchers.IO){
+            inicializarVariables(context)
+
+            val baseUrl = servidor
+
+            clientesDao = base.clienteDao()
+
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+            try {
+
+                //--------------------------------------------
+                //Obteneniendo Cantidad de Registros
+                //--------------------------------------------
+                val totalRegistrosClientes = try {
+                    api.obtenerTotalRegistrosClientes()
+                }catch (e: Exception){
+                    Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL TOTAL DE REGISTROS DE CLIENTES -> ${e.message}")
+                    null
+                }
+
+                while (hayMas){
+
+                    val respuesta = if(cargarClientes == "V"){
+                        api.obtenerListadoClientesVendedor(idVendedor, lastId, limite)
+                    }else{
+                        api.obtenerListadoClientes(lastId, limite)
+                    }
+
+                    if(respuesta.isNotEmpty() && respuesta.last().id != 0){
+
+                        //println("RESPUES -> $respuesta")
+
+                        val item = respuesta.map {
+                            ClientesEntity(
+                                id = it.id,
+                                codigo = it.codigo,
+                                cliente = it.cliente,
+                                dui = it.dui,
+                                nit = it.nit,
+                                nrc = it.nrc,
+                                giro = it.giro,
+                                categoriaCliente = it.categoriaCliente,
+                                terminosCliente = it.terminosCliente,
+                                plazoCredito = it.plazoCredito,
+                                limiteCredito = it.limiteCredito,
+                                balance = it.balance,
+                                estadoCredito = it.estadoCredito,
+                                direccion = it.direccion,
+                                municipio = it.municipio,
+                                departamento = it.departamento,
+                                telefono1 = it.telefono1,
+                                telefono2 = it.telefono2,
+                                correo = it.correo,
+                                contacto = it.contacto,
+                                idRuta = it.idRuta,
+                                idVendedor = it.idVendedor,
+                                vendedor = it.vendedor,
+                                status = it.status,
+                                ultimaVenta = it.ultimaVenta,
+                                aporteMensual = it.aporteMensual,
+                                fechaInventario = "",
+                                firmarPagareApp = it.firmarPagareApp,
+                                personaJuridica = it.personaJuridica,
+                                dteGiro = it.dteGiro,
+                                ruta = it.ruta,
+                                dteDireccion = it.dteDireccion,
+                                dteCodDepto = it.dteCodDepto,
+                                dteCodMunicipio = it.dteCodMunicipio,
+                                dteCodPais = it.dteCodPais,
+                                dtePais = it.dtePais,
+                                dteCorreo = it.dteCorreo,
+                                dteTelefono = it.dteTelefono,
+                                latitudApp = it.latitudApp,
+                                longitudApp = it.longitudApp,
+                                nombreComercial = it.nombreComercial,
+                                mayorista = it.mayorista,
+                                dteCodGiro = it.dteCodGiro,
+                                dteDistrito = it.dteDistrito,
+                                dteCodDistrito = it.dteCodDistrito
+                            )
+                        }
+
+                        clientesDao.insertarClientes(item)
+                        totalInsertados += item.size
+
+
+                        if (totalRegistrosClientes != null && totalRegistrosClientes > 0){
+                            val progreso = (totalInsertados * 100) / totalRegistrosClientes
+
+                            withContext(Dispatchers.Main){
+                                dialogo.changeText("Cargando Clientes: $progreso %")
+                            }
+
+                        }
+
+                        lastId = respuesta.last().id
+
+                    }else{
+                        hayMas = false
+                    }
+
+                }
+
+            }catch (e: Exception){
+                Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL LISTADO DE CLIENTES -> ${e.message}")
+            }
+
+        }
+    }
+
+    //-------------------------------------------------------
+    //Funcion para obtener Sucursales de los Clientes del Servidor 30-05-2026
+    //-------------------------------------------------------
+    suspend fun obtenerListadoSucursales(context: Context, dialogo: AlertDialogo){
+        withContext(Dispatchers.IO){
+
+            inicializarVariables(context)
+
+            val baseUrl = servidor
+
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+            try {
+
+                val totalRegistroSucursales = try {
+                    api.obtenerTotalRegitroSucursal()
+                }catch (e: Exception){
+                    Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL TOTAL DE REGISTROS DE CLIENTES -> ${e.message}")
+                    null
+                }
+
+                while (hayMas){
+
+                    val respuesta = api.obtenerListadoSucursales(lastId, limite)
+
+                    if(respuesta.isNotEmpty() && respuesta.last().id != 0){
+
+                        val item = respuesta.map {
+                            ClienteSucursalEntity(
+                                id = it.id,
+                                idCliente = it.idCliente,
+                                codigoSucursal = it.codigoSucursal?.trim(),
+                                nombreSucursal = it.nombreSucursal?.trim(),
+                                direccionSucursal = it.direccionSucursal?.trim(),
+                                municipioSucursal = it.municipioSucursal?.trim(),
+                                deptoSucursal = it.deptoSucursal?.trim(),
+                                telefono1 = it.telefono1?.trim(),
+                                telefono2 = it.telefono2?.trim(),
+                                correoSucursal = it.dteCorreo?.trim(),
+                                contatoSucursal = it.contatoSucursal?.trim(),
+                                idRuta = it.idRuta,
+                                ruta = it.ruta?.trim(),
+                                dteCodDepto = it.dteCodDepto?.trim(),
+                                dteCodMunicipio = it.dteCodMunicipio?.trim(),
+                                dteCodPais = it.dteCodPais?.trim(),
+                                dteCorreo = it.dteCorreo?.trim(),
+                                latitudApp = it.latitudApp?.trim(),
+                                longitudApp = it.longitudApp?.trim()
+                            )
+                        }
+
+                        clientesDao.insertarSucursales(item)
+                        totalInsertados += item.size
+
+                        //Calculado el porcentahe
+                        if(totalRegistroSucursales != null && totalRegistroSucursales > 0){
+                            val progreso = (totalInsertados * 100) / totalRegistroSucursales
+
+                            withContext(Dispatchers.Main){
+                                dialogo.changeText("Cargando Sucursales Clientes: $progreso %")
+                            }
+                        }
+
+                        lastId = respuesta.last().id
+
+                    }else{
+                        hayMas = false
+                    }
+
+                }
+
+            }catch (e: Exception){
+                Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL LISTADO DE SUCURSALES -> ${e.message}")
+            }
+
+
+        }
+    }
+
+    //--------------------------------------------------------
+    //Funcion para obtener el Listado de CxC Pendientes del Servidor 30-05-2026
+    //--------------------------------------------------------
+    suspend fun obtenerListadoCuentasPendientes(context: Context, dialogo: AlertDialogo){
+        withContext(Dispatchers.IO){
+
+            inicializarVariables(context)
+
+            val baseUrl: String = servidor
+            clientesDao = base.clienteDao()
+
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+
+            try {
+
+                //Obteniendo la cantidad de registros CxC pendientes
+                val totalRegistros = try {
+                    api.obtenerTotalRegistroCxCPendientes()
+                }catch (e: Exception){
+                    Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER LA CANTIDAD DE REGISTROS DE CXC -> ${e.message}")
+                    null
+                }
+
+                while (hayMas){
+
+                    val respuesta = api.obtenerListadoCuentasPendientes(lastId, limite)
+
+                    if(respuesta.isNotEmpty() && respuesta.last().id != 0){
+                        val item = respuesta.map {
+                            CuentasEntity(
+                                id = it.id,
+                                idCliente = it.idCliente,
+                                codigoCliente = it.codigoCliente?.trim(),
+                                documento = it.documento.trim(),
+                                fecha = it.fecha.trim(),
+                                valor = it.valor,
+                                abonoInicial = it.abonoInicial,
+                                saldoInicial = it.saldoInicial,
+                                plazo = it.plazo,
+                                fechaVencimiento = it.fechaVencimiento?.trim(),
+                                saldoActual = it.saldoActual,
+                                fechaUltPago = it.fechaUltPago,
+                                valorPago = it.valorPago,
+                                relacionado = it.relacionado,
+                                status = it.status.trim(),
+                                fechaCancelado = it.fechaCancelado?.trim(),
+                                diasTardios = it.diasTardios
+                            )
+                        }
+
+                        clientesDao.insertarCuentasPendientes(item)
+                        totalInsertados += item.size
+
+                        //Calculando porcentaje
+                        if(totalRegistros != null && totalRegistros > 0){
+                            val progreso = (totalInsertados * 100) / totalRegistros
+
+                            withContext(Dispatchers.Main){
+                                dialogo.changeText("Cargando CxC Pendientes: $progreso %")
+                            }
+                        }
+
+                        lastId = respuesta.last().id
+
+                    }else{
+                        hayMas = false
+                    }
+
+                }
+
+            }catch (e: Exception){
+                Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER LISTADO DE CXC DEL SERVIDOR -> ${e.message}")
+            }
+
         }
     }
 

@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity() {
                 delay(1000)
 
                 try {
-                    clientesController.obtenerClientesServidor(this@MainActivity)
+                    clientesController.obtenerListadoClientes(this@MainActivity, alert!!)
                 }catch (e:Exception){
                     println("ERROR AL OBTENER LOS CLIENES -> " + e.message)
                 }
@@ -177,7 +177,8 @@ class MainActivity : AppCompatActivity() {
                 delay(1000)
 
                 try {
-                    clientesController.obtenerClienteSucursalesServidor(this@MainActivity)
+                    //clientesController.obtenerClienteSucursalesServidor(this@MainActivity)
+                    clientesController.obtenerListadoSucursales(this@MainActivity, alert!!)
                 }catch (e:Exception){
                     println("ERROR AL OBTENER LAS SUCURSALES -> " + e.message)
                 }
@@ -206,7 +207,8 @@ class MainActivity : AppCompatActivity() {
                 delay(1000)
 
                 try {
-                    clientesController.obtenerCxcServidor(this@MainActivity)
+                    clientesController.obtenerListadoCuentasPendientes(this@MainActivity, alert!!)
+                    //clientesController.obtenerCxcServidor(this@MainActivity)
                 }catch (e:Exception){
                     println("ERROR AL OBTENER LAS CXC -> " + e.message)
                 }

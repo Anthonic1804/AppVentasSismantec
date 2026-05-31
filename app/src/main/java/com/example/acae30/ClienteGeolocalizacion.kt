@@ -58,7 +58,7 @@ class ClienteGeolocalizacion : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun createMarker() {
-        val coordinate = LatLng(datosCliente!!.Latitud.toDouble(), datosCliente!!.Longitud.toDouble())
+        val coordinate = LatLng(datosCliente!!.Latitud!!.toDouble(), datosCliente!!.Longitud!!.toDouble())
         val marker : MarkerOptions = MarkerOptions().position(coordinate).title("${datosCliente!!.Cliente}")
         map.addMarker(marker)
         map.animateCamera(

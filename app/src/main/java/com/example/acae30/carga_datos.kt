@@ -443,7 +443,7 @@ class carga_datos : AppCompatActivity() {
             delay(1000)
 
             try {
-                clientesController.obtenerClientesServidor(this@carga_datos)
+                clientesController.obtenerListadoClientes(this@carga_datos, alert!!)
             }catch (e:Exception){
                 println("ERROR AL OBTENER LOS CLIENES -> " + e.message)
             }
@@ -457,7 +457,8 @@ class carga_datos : AppCompatActivity() {
             delay(1000)
 
             try {
-                clientesController.obtenerClienteSucursalesServidor(this@carga_datos)
+                //clientesController.obtenerClienteSucursalesServidor(this@carga_datos)
+                clientesController.obtenerListadoSucursales(this@carga_datos, alert!!)
             }catch (e:Exception){
                 println("ERROR AL OBTENER LAS SUCURSALES -> " + e.message)
             }
@@ -487,7 +488,8 @@ class carga_datos : AppCompatActivity() {
                 delay(1000)
 
                 try {
-                    clientesController.obtenerCxcServidor(this@carga_datos)
+                    //clientesController.obtenerCxcServidor(this@carga_datos)
+                    clientesController.obtenerListadoCuentasPendientes(this@carga_datos, alert!!)
                 }catch (e:Exception){
                     println("ERROR AL OBTENER LAS CXC -> " + e.message)
                 }

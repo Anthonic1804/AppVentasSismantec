@@ -89,37 +89,37 @@ data class ClientesEntity (
     val fechaInventario: String? = null,
 
     @ColumnInfo(name = "Firmar_pagare_app")
-    val firmarPagareApp: Int = 0,
+    val firmarPagareApp: Boolean = false,
 
     @ColumnInfo(name = "Persona_juridica")
     val personaJuridica: String = "N",
 
     @ColumnInfo(name = "dteGiro")
-    val dteGiro: String = "",
+    val dteGiro: String? = null,
 
     @ColumnInfo(name = "Ruta")
-    val ruta: String = "",
+    val ruta: String? = null,
 
     @ColumnInfo(name = "DTEDireccion")
-    val dteDireccion: String = "",
+    val dteDireccion: String? = null,
 
     @ColumnInfo(name = "DTECodDepto")
-    val dteCodDepto: String = "",
+    val dteCodDepto: String? = null,
 
     @ColumnInfo(name = "DTECodMunicipio")
-    val dteCodMunicipio: String = "",
+    val dteCodMunicipio: String? = null,
 
     @ColumnInfo(name = "DTECodPais")
-    val dteCodPais: String = "",
+    val dteCodPais: String? = null,
 
     @ColumnInfo(name = "DTEPais")
-    val dtePais: String = "",
+    val dtePais: String? = null,
 
     @ColumnInfo(name = "DTECorreo")
-    val dteCorreo: String = "",
+    val dteCorreo: String? = null,
 
     @ColumnInfo(name = "DTETelefono")
-    val dteTelefono: String = "",
+    val dteTelefono: String? = null,
 
     @ColumnInfo(name = "Latitud_app")
     val latitudApp: String? = null,
@@ -128,17 +128,17 @@ data class ClientesEntity (
     val longitudApp: String? = null,
 
     @ColumnInfo(name = "Nombre_comercial")
-    val nombreComercial: String = "",
+    val nombreComercial: String? = null,
 
     @ColumnInfo(name = "Mayorista")
     val mayorista: String = "N",
 
     @ColumnInfo(name = "DTECodGiro")
-    val dteCodGiro: String = "",
+    val dteCodGiro: String? = null,
 
     @ColumnInfo(name = "DTEDistrito")
-    val dteDistrito: String = "",
+    val dteDistrito: String? = null,
 
     @ColumnInfo(name = "DTECodDistrito")
-    val dteCodDistrito: String = ""
+    val dteCodDistrito: String? = null
 )

@@ -22,23 +22,21 @@ data class ClienteSucursalModel(
 
     @SerializedName("telefono2") val telefono2 : String?,
 
-    @SerializedName("correo") val correoSucursal : String?,
-
     @SerializedName("contacto") val contatoSucursal : String?,
 
     @SerializedName("id_ruta") val idRuta : Int,
 
-    @SerializedName("ruta") val ruta : String,
+    @SerializedName("ruta") val ruta : String?,
 
-    @SerializedName("dteCodDepto") val dteCodDepto: String,
+    @SerializedName("dteCodDepto") val dteCodDepto: String?,
 
-    @SerializedName("dteCodMunicipio") val dteCodMunicipio: String,
+    @SerializedName("dteCodMunicipio") val dteCodMunicipio: String?,
 
-    @SerializedName("dteCodPais") val dteCodPais: String,
+    @SerializedName("dteCodPais") val dteCodPais: String?,
 
-    @SerializedName("dtePais") val dtePais: String,
+    @SerializedName("dtePais") val dtePais: String?,
 
-    @SerializedName("correo") val dteCorreo: String,
+    @SerializedName("correo") val dteCorreo: String?,
 
     @SerializedName("latitud_app") val latitudApp : String?,
 

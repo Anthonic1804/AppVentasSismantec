@@ -44,22 +44,22 @@ data class ClienteSucursalEntity(
     val idRuta : Int = 0,
 
     @ColumnInfo(name = "Ruta", defaultValue = "")
-    val ruta : String = "",
+    val ruta : String? = null,
 
     @ColumnInfo(name = "DTECodDepto", defaultValue = "")
-    val dteCodDepto: String = "",
+    val dteCodDepto: String? = null,
 
     @ColumnInfo(name = "DTECodMunicipio", defaultValue = "")
-    val dteCodMunicipio: String = "",
+    val dteCodMunicipio: String? = null,
 
     @ColumnInfo(name = "DTECodPais", defaultValue = "")
-    val dteCodPais: String = "",
+    val dteCodPais:String? = null,
 
     @ColumnInfo(name = "DTEPais", defaultValue = "")
-    val dtePais: String = "",
+    val dtePais: String? = null,
 
     @ColumnInfo(name = "DTECorreo", defaultValue = "")
-    val dteCorreo: String = "",
+    val dteCorreo: String? = null,
 
     @ColumnInfo(name = "Latitud_app")
     val latitudApp : String? = null,

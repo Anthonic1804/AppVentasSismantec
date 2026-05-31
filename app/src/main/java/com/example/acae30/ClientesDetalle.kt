@@ -42,7 +42,7 @@ class ClientesDetalle : AppCompatActivity() {
         setContentView(binding.root)
 
         idcliente = intent.getIntExtra("idcliente", 0)
-        println("ID CLIENTE SELECCIONADO -> $idcliente")
+        //println("ID CLIENTE SELECCIONADO -> $idcliente")
 
         preferences = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         pagareFirmado = preferences.getBoolean("PagareObligatorio", false)

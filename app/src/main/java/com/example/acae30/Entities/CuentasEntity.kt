@@ -35,16 +35,16 @@ data class CuentasEntity(
     val plazo: Double,
 
     @ColumnInfo(name = "Fecha_vencimiento", defaultValue = "CURRENT_DATE")
-    val fechaVencimiento: String,
+    val fechaVencimiento: String? = null,
 
     @ColumnInfo(name = "Saldo_actual", defaultValue = "0")
     val saldoActual: Double,
 
-    @ColumnInfo(name = "Fecha_ult_pago", defaultValue = "CURRENT_DATE")
-    val fechaUltPago: String,
+    @ColumnInfo(name = "Fecha_ult_pago")
+    val fechaUltPago: String? = null,
 
     @ColumnInfo(name = "Valor_pago", defaultValue = "0")
-    val valorPago: Double,
+    val valorPago: Double? = null,
 
     @ColumnInfo(name = "Relacionado")
     val relacionado: String,
@@ -53,9 +53,9 @@ data class CuentasEntity(
     val status: String,
 
     @ColumnInfo(name = "Fecha_cancelado", defaultValue = "CURRENT_DATE")
-    val fechaCancelado: String,
+    val fechaCancelado: String? = null,
 
     @ColumnInfo(name = "dias_tardios", defaultValue = "0")
-    val diasTardios: Int
+    val diasTardios: Double
 
 )

@@ -645,7 +645,7 @@ class PedidosController {
 
         val fecha = funciones.obtenerFecha()
 
-        val consulta = "SELECT SUM(Total) AS Total FROM pedidos WHERE Fecha='$fecha' AND Enviado = 1 AND pedido_dte_error = 0"
+        val consulta = "SELECT SUM(Total-iva_percibido) AS Total FROM pedidos WHERE Fecha='$fecha' AND Enviado = 1 AND pedido_dte_error = 0"
         val cursor = bd.query(consulta)
         cursor.use {
             if(cursor.count > 0){

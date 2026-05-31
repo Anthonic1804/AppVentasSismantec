@@ -7,6 +7,7 @@ import com.example.acae30.Entities.InventarioUnidadesEntity
 import com.example.acae30.modelos.ClienteSucursalModel
 import com.example.acae30.modelos.ClientesModel
 import com.example.acae30.modelos.ClientesPreciosModel
+import com.example.acae30.modelos.CxCModel
 import com.example.acae30.modelos.InventarioTiempoRealModel
 import com.example.acae30.modelos.Login.LoginModel
 import com.example.acae30.modelos.Login.RespuestaLogin
@@ -171,8 +172,16 @@ interface AppVentasApi {
     suspend fun obtenerTotalRegistrosClientes() : Int
 
     //Obtener Listado de Clientes
-    @GET("clientes/{lastId}/{take}")
+    @GET("clientes/todos/{lastId}/{take}")
     suspend fun obtenerListadoClientes(
+        @Path("lastId") lastId: Int,
+        @Path("take") take: Int
+    ) : List<ClientesModel>
+
+    //Obtener Listado de Clientes
+    @GET("clientes/vendedor/{idVendedor}/{lastId}/{take}")
+    suspend fun obtenerListadoClientesVendedor(
+        @Path("idVendedor") idVendedor: Int,
         @Path("lastId") lastId: Int,
         @Path("take") take: Int
     ) : List<ClientesModel>
@@ -187,5 +196,16 @@ interface AppVentasApi {
         @Path("lastId") lastId: Int,
         @Path("take") take: Int
     ) : List<ClienteSucursalModel>
+
+    //Obtener Cantidad de Registros de CxC Pendientes
+    @GET("cuentas/cantidad")
+    suspend fun obtenerTotalRegistroCxCPendientes() : Int
+
+    //Obtener Listado de CxC Pendientes
+    @GET("cuentas/{lastId}/{take}")
+    suspend fun obtenerListadoCuentasPendientes(
+        @Path("lastId") lastId: Int,
+        @Path("take") take: Int
+    ) : List<CxCModel>
 
 }

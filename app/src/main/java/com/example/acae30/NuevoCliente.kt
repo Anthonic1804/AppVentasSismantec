@@ -2,7 +2,9 @@ package com.example.acae30
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -63,6 +65,12 @@ class NuevoCliente : AppCompatActivity() {
     private var idcliente = 0
     private var datosClientes : Cliente? = null
 
+    private lateinit var preferencias: SharedPreferences
+
+    private val instancia = "CONFIG_SERVIDOR"
+    private var idVendedor : Int = 0
+    private var vendedor: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNuevoClienteBinding.inflate(layoutInflater)
@@ -71,26 +79,31 @@ class NuevoCliente : AppCompatActivity() {
         binding.btnCapturarGeo.visibility = View.GONE
 
         vista = intent.getStringExtra("vista").toString()
+
+        preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        idVendedor = preferencias.getInt("Idvendedor", 0)
+        vendedor = preferencias.getString("Vendedor", "").toString()
+
         if(vista == "editar"){
             idcliente = intent.getIntExtra("idcliente", 0)
 
             datosClientes = clienteController.obtenerInformacionCliente(this, idcliente)
-            latitud = datosClientes!!.Latitud.ifEmpty { "00" }
-            longitud = datosClientes!!.Longitud.ifEmpty { "00" }
-            codigoPais = datosClientes!!.DTECodPais.ifEmpty { "00" }
-            pais = datosClientes!!.DTEPais.ifEmpty{"-- SELECCIONE --"}
-            codigoDepto = datosClientes!!.DTECodDepto.ifEmpty { "00" }
+            latitud = datosClientes!!.Latitud!!.ifEmpty { "00" }
+            longitud = datosClientes!!.Longitud!!.ifEmpty { "00" }
+            codigoPais = datosClientes!!.DTECodPais!!.ifEmpty { "00" }
+            pais = datosClientes!!.DTEPais!!.ifEmpty{"-- SELECCIONE --"}
+            codigoDepto = datosClientes!!.DTECodDepto!!.ifEmpty { "00" }
             departamento = datosClientes!!.Departamento!!.ifEmpty{"-- SELECCIONE --"}
-            codigoMuni = datosClientes!!.DTECodMunicipio.ifEmpty { "00" }
+            codigoMuni = datosClientes!!.DTECodMunicipio!!.ifEmpty { "00" }
             municipio = datosClientes!!.Municipio!!.ifEmpty{"-- SELECCIONE --"}
-            codigoDistri = datosClientes!!.DTECodDistrito.ifEmpty { "00" }
-            distrito = datosClientes!!.DTEDistrito.ifEmpty{"-- SELECCIONE --"}
+            codigoDistri = datosClientes!!.DTECodDistrito!!.ifEmpty { "00" }
+            distrito = datosClientes!!.DTEDistrito!!.ifEmpty{"-- SELECCIONE --"}
             idRuta = datosClientes!!.Id_ruta!!
             ruta = datosClientes!!.Ruta!!
             tipoContribuyente = datosClientes!!.Categoria_cliente!!
 
 
-            println("DATOS DEL CLIENTE -> " + datosClientes)
+            //println("DATOS DEL CLIENTE -> " + datosClientes)
 
             with(binding){
                 btnCapturarGeo.visibility = View.VISIBLE
@@ -368,6 +381,9 @@ class NuevoCliente : AppCompatActivity() {
             binding.txtNit.text.toString()
         }
 
+        val deptoFormateado = funciones.normalizarTexto(departamento).uppercase()
+        val muniFormateado = funciones.normalizarTexto(municipio).uppercase()
+
         val cliente : Cliente = Cliente(
             idcliente,
             codigoCliente,
@@ -375,7 +391,7 @@ class NuevoCliente : AppCompatActivity() {
             binding.txtDui.text.toString(),
             documento,
             binding.txtNrc.text.toString(),
-            binding.txtGiro.text.toString(),
+            "", //binding.txtGiro.text.toString()
             tipoContribuyente,
             terminos,
             0,
@@ -383,15 +399,15 @@ class NuevoCliente : AppCompatActivity() {
             0f,
             "Activo",
             binding.txtDireccion.text.toString(),
-            municipio,
-            departamento,
+            muniFormateado,
+            deptoFormateado,
             binding.txtTelefono.text.toString(),
             binding.txtTelefono.text.toString(),
             binding.txtCorreo.text.toString(),
             binding.txtContacto.text.toString(),
             idRuta,
-            0,
-            "",
+            idVendedor,
+            vendedor,
             "ACTIVO",
             "",
             0f,
