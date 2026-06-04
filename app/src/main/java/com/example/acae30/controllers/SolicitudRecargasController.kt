@@ -5,8 +5,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.AlertDialogo
+import com.example.acae30.DAO.InventarioSolicitudDao
+import com.example.acae30.Entities.InventarioSolicitudCargaEntity
 import com.example.acae30.Funciones
+import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.database.AppDatabase
 import com.example.acae30.modelos.Inventario
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDTO
@@ -15,10 +19,9 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -26,7 +29,6 @@ import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import java.time.LocalDate
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 
@@ -37,7 +39,18 @@ class SolicitudRecargasController {
     private var instancia = "CONFIG_SERVIDOR"
     private val utilidades = CrearSslNoSeguro()
 
-    suspend fun obtenerInventarioServidor(context: Context, alert : AlertDialogo) {
+    private lateinit var base : AppDatabase
+    private lateinit var servidor : String
+    private lateinit var inventarioSolicitudDao: InventarioSolicitudDao
+    private val BLOQUE : Int = 300
+
+    private fun inicializarVariables(context: Context){
+        base = AppDatabase.getInstance(context)
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
+    }
+
+    /*suspend fun obtenerInventarioServidor(context: Context, alert : AlertDialogo) {
 
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
@@ -168,19 +181,24 @@ class SolicitudRecargasController {
                 funciones.mensaje(context, "ERROR DE CONEXION CON EL SERVIDOR \n INTENTE MAS TARDE -> ${e.message}")
             }
         }
-    }
+    }*/
 
-    private fun limpiarInventariosolicitud(context: Context) {
+    /*private suspend fun limpiarInventariosolicitud(context: Context) {
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            bd.execSQL("DELETE FROM inventario_solicitud_carga")
+            //bd.execSQL("DELETE FROM inventario_solicitud_carga")
+            bd.beginTransaction()
+            bd.delete("inventario_solicitud_carga", null, null)
+            bd.setTransactionSuccessful()
+            bd.endTransaction()
         }catch (e:Exception){
-            println("ERROR AL LIMPIAR LA TBL INVENTARIO SOLICITUD CARGA -> ${e.message}")
+            //println("ERROR AL LIMPIAR LA TBL INVENTARIO SOLICITUD CARGA -> ${e.message}")
+            Timber.e(e, "[SOLICITUD_CONTROLLER] ERROR AL ELIMINAR LA INFORMACION DE INVENTARIO SOLICITUD -> ${e.message}")
         }
-    }
+    }*/
 
     //FUNCION PARA ALMACENAR EL INVENTARIO EN SQLITE
-    private fun almacenarInventarioEnSQLite(json: JSONArray, context: Context) {
+    /*private fun almacenarInventarioEnSQLite(json: JSONArray, context: Context) {
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
 
         try {
@@ -227,7 +245,7 @@ class SolicitudRecargasController {
         } finally {
             bd.endTransaction()
         }
-    }
+    }*/
 
     //FUNCION PARA OBTENER LA INFORMACION DEL PRODUCTO POR CODIGO O POR NOMBRE
     fun obtenerInformacionProductoPorString(context: Context, busqueda: String): ArrayList<Inventario>{
@@ -1037,5 +1055,104 @@ class SolicitudRecargasController {
             println("ERROR AL OBTENER LA SOLICITUD DE CARGA POR ID -> " + e.message)
         }
         return item
+    }
+
+    //---------------------------------------------------------------
+    //Obtener inventario solicitud de Carga
+    //---------------------------------------------------------------
+    suspend fun obtenerInventarioSolicitud(context: Context, alert: AlertDialogo){
+        withContext(Dispatchers.IO){
+
+            inicializarVariables(context)
+
+            val baseUrl = servidor
+            inventarioSolicitudDao = base.inventarioSolicitudDao()
+            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+
+            val limite = BLOQUE
+            var lastId = 0
+            var hayMas = true
+            var totalInsertados = 0
+
+            try {
+
+                //Obteneniendo el total de registros de inventario
+                val totalRegistros = try {
+                    api.obtenerTotalRegistrosInventario()
+                }catch (e: Exception){
+                    Timber.e(e,"[SOLICITUD_CONTROLLER] ERROR AL OBTENER LA CANTIDAD DE REGISTROS DE INVENTARIO -> ${e.message}")
+                    null
+                }
+
+                //Eliminando informacion de la tbl en Room
+                try {
+                    inventarioSolicitudDao.eliminarInventarioSolicutd()
+                }catch (e: Exception){
+                    Timber.e(e,"[SOLICITUD_CONTROLLER] ERRIR AL ELIMINAR LA INFORMACION DE INVENTARIO SOLICITUD EN ROOM -> ${e.message}")
+                }
+
+                while (hayMas){
+
+                    val respuesta = api.obtenerInventario(lastId, limite)
+
+                    if(respuesta.isNotEmpty() && respuesta.last().id != 0){
+                        val item = respuesta.map {
+                            InventarioSolicitudCargaEntity(
+                                id = it.id,
+                                codigo = it.codigo,
+                                codigoBarra = it.codigo_de_barra,
+                                tipo = it.tipo,
+                                descripcion = it.descripcion,
+                                unidadMedida = it.unidad_medida,
+                                fraccion = it.fraccion,
+                                nombreFraccion = it.nombre_fraccion,
+                                costo = it.costo,
+                                costoIva = it.costo_iva,
+                                ultCosto = it.ult_costo,
+                                ultCostoIva = it.ult_costo_iva,
+                                existencia = it.existencia,
+                                existenciaU = it.existencia_u,
+                                precio = it.precio,
+                                precioU = it.precio_u,
+                                precioUiva = it.precio_u_iva,
+                                precioIva = it.precio_iva,
+                                bonificado = it.bonificado,
+                                lote = it.lote,
+                                fechaVencimiento = it.fecha_vencimiento,
+                                precio2 = it.precio2,
+                                precio2Iva = it.precio2_iva,
+                                precioU2 = it.precio_u2,
+                                precioU2Iva = it.precio_u2_iva,
+                                precioVineta = it.precio_viñeta,
+                                precioVinetaIva = it.precio_viñeta_iva
+                            )
+                        }
+
+                        inventarioSolicitudDao.insertarInventarioSolicitud(item)
+                        totalInsertados += item.size
+
+                        //Calculando el porcentaje
+                        if(totalRegistros != null && totalRegistros > 0){
+                            val progreso = (totalInsertados * 100) / totalRegistros
+
+                            withContext(Dispatchers.Main){
+                                alert.changeText("Cargando Inventario: $progreso %")
+                            }
+                        }
+
+                        //lastId += limite
+                        lastId = respuesta.last().id
+
+                    }else{
+                        hayMas = false
+                    }
+
+                }
+
+            }catch (e: Exception){
+                Timber.e(e,"[SOLICITUD_CONTROLLER] ERROR AL OBTENER EL INVENTARIO PARA LA SOLICITUD -> ${e.message}")
+            }
+
+        }
     }
 }

@@ -8,175 +8,175 @@ import androidx.room.PrimaryKey
 data class PedidosEntity (
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "Id")
-    val id: Int = 0,
+    val id: Int,
 
-    @ColumnInfo(name = "Id_cliente")
-    val idCliente: Int = 0,
+    @ColumnInfo(name = "Id_cliente", defaultValue = "0")
+    val idCliente: Int,
 
-    @ColumnInfo(name = "Nombre_cliente")
+    @ColumnInfo(name = "Nombre_cliente", defaultValue = "")
     val nombreCliente: String,
 
-    @ColumnInfo(name = "Pago")
-    val pago: Double = 0.0,
+    @ColumnInfo(name = "Pago", defaultValue = "0.0")
+    val pago: Double,
 
-    @ColumnInfo(name = "Cambio")
-    val cambio: Double = 0.0,
+    @ColumnInfo(name = "Cambio", defaultValue = "0.0")
+    val cambio: Double,
 
-    @ColumnInfo(name = "Descuento")
-    val descuento: Double = 0.0,
+    @ColumnInfo(name = "Descuento", defaultValue = "0.0")
+    val descuento: Double,
 
-    @ColumnInfo(name = "Sumas")
-    val sumas: Double = 0.0,
+    @ColumnInfo(name = "Sumas", defaultValue = "0.0")
+    val sumas: Double,
 
-    @ColumnInfo(name = "Iva")
-    val iva: Double = 0.0,
+    @ColumnInfo(name = "Iva", defaultValue = "0.0")
+    val iva: Double,
 
-    @ColumnInfo(name = "SubTotal")
-    val subTotal: Double = 0.0,
+    @ColumnInfo(name = "SubTotal", defaultValue = "0.0")
+    val subTotal: Double,
 
-    @ColumnInfo(name = "Iva_retenido")
-    val ivaRetenido: Double = 0.0,
+    @ColumnInfo(name = "Iva_retenido", defaultValue = "0.0")
+    val ivaRetenido: Double,
 
-    @ColumnInfo(name = "Iva_percibido")
-    val ivaPercibido: Double = 0.0,
+    @ColumnInfo(name = "Iva_percibido", defaultValue = "0.0")
+    val ivaPercibido: Double,
 
-    @ColumnInfo(name = "Total")
+    @ColumnInfo(name = "Total", defaultValue = "0.0")
     val total: Double,
 
-    @ColumnInfo(name = "Enviado")
-    val enviado: Boolean = false,
+    @ColumnInfo(name = "Enviado", defaultValue = "false")
+    val enviado: Boolean,
 
-    @ColumnInfo(name = "Fecha_enviado")
-    val fechaEnviado: String = "",
+    @ColumnInfo(name = "Fecha_enviado", defaultValue = "CURRENT_TIMESTAMP")
+    val fechaEnviado: String,
 
-    @ColumnInfo(name = "Id_pedido_sistema")
-    val idPedidoSistema: Int = 0,
+    @ColumnInfo(name = "Id_pedido_sistema", defaultValue = "0")
+    val idPedidoSistema: Int,
 
     @ColumnInfo(name = "Gps")
     val gps: String? = null,
 
-    @ColumnInfo(name = "Cerrado")
-    val cerrado: Int = 0,
+    @ColumnInfo(name = "Cerrado", defaultValue = "0")
+    val cerrado: Int,
 
-    @ColumnInfo(name = "Idvisita")
-    val idVisita: Int = 0,
+    @ColumnInfo(name = "Idvisita", defaultValue = "0")
+    val idVisita: Int,
 
-    @ColumnInfo(name = "Fecha_creado")
-    val fechaCreado: String = "",
+    @ColumnInfo(name = "Fecha_creado", defaultValue = "CURRENT_TIMESTAMP")
+    val fechaCreado: String,
 
-    @ColumnInfo(name = "Id_sucursal")
-    val idSucursal: Int = 0,
+    @ColumnInfo(name = "Id_sucursal", defaultValue = "0")
+    val idSucursal: Int,
 
-    @ColumnInfo(name = "Codigo_sucursal")
-    val codigoSucursal: String = "",
+    @ColumnInfo(name = "Codigo_sucursal", defaultValue = "")
+    val codigoSucursal: String,
 
-    @ColumnInfo(name = "Nombre_sucursal")
-    val nombreSucursal: String = "",
+    @ColumnInfo(name = "Nombre_sucursal", defaultValue = "")
+    val nombreSucursal: String,
 
-    @ColumnInfo(name = "Tipo_documento")
-    val tipoDocumento: String = "FC",
+    @ColumnInfo(name = "Tipo_documento", defaultValue = "FC")
+    val tipoDocumento: String,
 
-    @ColumnInfo(name = "Tipo_envio")
+    @ColumnInfo(name = "Tipo_envio", defaultValue = "0")
     val tipoEnvio: Int = 0,
 
     @ColumnInfo(name = "Terminos")
     val terminos: String,
 
-    @ColumnInfo(name = "pagoEfectivo")
-    val pagoEfectivo: Double = 0.0,
+    @ColumnInfo(name = "pagoEfectivo", defaultValue = "0.0")
+    val pagoEfectivo: Double,
 
-    @ColumnInfo(name = "pagoCheque")
-    val pagoCheque: Double = 0.0,
+    @ColumnInfo(name = "pagoCheque", defaultValue = "0.0")
+    val pagoCheque: Double,
 
-    @ColumnInfo(name = "pagoTarjeta")
-    val pagoTarjeta: Double = 0.0,
+    @ColumnInfo(name = "pagoTarjeta", defaultValue = "0.0")
+    val pagoTarjeta: Double,
 
-    @ColumnInfo(name = "pagoDeposito")
-    val pagoDeposito: Double = 0.0,
+    @ColumnInfo(name = "pagoDeposito", defaultValue = "0.0")
+    val pagoDeposito: Double,
 
-    @ColumnInfo(name = "bancoCheque")
-    val bancoCheque: String = "",
+    @ColumnInfo(name = "bancoCheque", defaultValue = "")
+    val bancoCheque: String,
 
-    @ColumnInfo(name = "numCuentaCheque")
-    val numCuentaCheque: String = "",
+    @ColumnInfo(name = "numCuentaCheque", defaultValue = "")
+    val numCuentaCheque: String,
 
-    @ColumnInfo(name = "numCheque")
-    val numCheque: String = "",
+    @ColumnInfo(name = "numCheque", defaultValue = "")
+    val numCheque: String,
 
-    @ColumnInfo(name = "bancoTarjeta")
-    val bancoTarjeta: String = "",
+    @ColumnInfo(name = "bancoTarjeta", defaultValue = "")
+    val bancoTarjeta: String,
 
-    @ColumnInfo(name = "nombreTarjeta")
-    val nombreTarjeta: String = "",
+    @ColumnInfo(name = "nombreTarjeta", defaultValue = "")
+    val nombreTarjeta: String,
 
-    @ColumnInfo(name = "numTarjeta")
-    val numTarjeta: String = "",
+    @ColumnInfo(name = "numTarjeta", defaultValue = "")
+    val numTarjeta: String,
 
-    @ColumnInfo(name = "bancoDeposito")
-    val bancoDeposito: String = "",
+    @ColumnInfo(name = "bancoDeposito", defaultValue = "")
+    val bancoDeposito: String,
 
-    @ColumnInfo(name = "numCuentaDeposito")
-    val numCuentaDeposito: String = "",
+    @ColumnInfo(name = "numCuentaDeposito", defaultValue = "")
+    val numCuentaDeposito: String,
 
-    @ColumnInfo(name = "numDeposito")
-    val numDeposito: String = "",
+    @ColumnInfo(name = "numDeposito", defaultValue = "")
+    val numDeposito: String,
 
-    @ColumnInfo(name = "formaPago")
-    val formaPago: String = "",
+    @ColumnInfo(name = "formaPago", defaultValue = "")
+    val formaPago: String,
 
-    @ColumnInfo(name = "numero_orden")
-    val numeroOrden: String = "0",
+    @ColumnInfo(name = "numero_orden", defaultValue = "0")
+    val numeroOrden: String,
 
-    @ColumnInfo(name = "pedido_dte")
-    val pedidoDte: Int = 0,
+    @ColumnInfo(name = "pedido_dte", defaultValue = "0")
+    val pedidoDte: Int,
 
-    @ColumnInfo(name = "pedido_dte_error")
-    val pedidoDteError: Int = 0,
+    @ColumnInfo(name = "pedido_dte_error", defaultValue = "0")
+    val pedidoDteError: Int,
 
-    @ColumnInfo(name = "dteAmbiente")
-    val dteAmbiente: String = "",
+    @ColumnInfo(name = "dteAmbiente", defaultValue = "")
+    val dteAmbiente: String,
 
-    @ColumnInfo(name = "dteCodigoGeneracion")
-    val dteCodigoGeneracion: String = "",
+    @ColumnInfo(name = "dteCodigoGeneracion", defaultValue = "")
+    val dteCodigoGeneracion: String,
 
-    @ColumnInfo(name = "dteSelloRecibido")
-    val dteSelloRecibido: String = "",
+    @ColumnInfo(name = "dteSelloRecibido", defaultValue = "")
+    val dteSelloRecibido: String,
 
-    @ColumnInfo(name = "dteNumeroControl")
-    val dteNumeroControl: String = "",
+    @ColumnInfo(name = "dteNumeroControl", defaultValue = "")
+    val dteNumeroControl: String,
 
-    @ColumnInfo(name = "idDocTransmitido")
-    val idDocTransmitido: Int = 0,
+    @ColumnInfo(name = "idDocTransmitido", defaultValue = "0")
+    val idDocTransmitido: Int,
 
-    @ColumnInfo(name = "Id_ruta")
-    val idRuta: Int = 0,
+    @ColumnInfo(name = "Id_ruta", defaultValue = "0")
+    val idRuta: Int,
 
-    @ColumnInfo(name = "Ruta")
-    val ruta: String = "",
+    @ColumnInfo(name = "Ruta", defaultValue = "")
+    val ruta: String,
 
-    @ColumnInfo(name = "DTEDireccion")
-    val dteDireccion: String = "",
+    @ColumnInfo(name = "DTEDireccion", defaultValue = "")
+    val dteDireccion: String,
 
-    @ColumnInfo(name = "DTECodDepto")
-    val dteCodDepto: String = "",
+    @ColumnInfo(name = "DTECodDepto", defaultValue = "")
+    val dteCodDepto: String,
 
-    @ColumnInfo(name = "DTECodMunicipio")
-    val dteCodMunicipio: String = "",
+    @ColumnInfo(name = "DTECodMunicipio", defaultValue = "")
+    val dteCodMunicipio: String,
 
-    @ColumnInfo(name = "DTECodPais")
-    val dteCodPais: String = "",
+    @ColumnInfo(name = "DTECodPais", defaultValue = "")
+    val dteCodPais: String,
 
-    @ColumnInfo(name = "DTEPais")
-    val dtePais: String = "",
+    @ColumnInfo(name = "DTEPais", defaultValue = "")
+    val dtePais: String,
 
-    @ColumnInfo(name = "DTECorreo")
-    val dteCorreo: String = "",
+    @ColumnInfo(name = "DTECorreo", defaultValue = "")
+    val dteCorreo: String,
 
-    @ColumnInfo(name = "DTETelefono")
-    val dteTelefono: String = "",
+    @ColumnInfo(name = "DTETelefono", defaultValue = "")
+    val dteTelefono: String,
 
-    @ColumnInfo(name = "Fecha")
-    val fecha: String = "",
+    @ColumnInfo(name = "Fecha", defaultValue = "")
+    val fecha: String,
 
     @ColumnInfo(name = "Id_pedido_app")
     val idPedidoApp: String? = null

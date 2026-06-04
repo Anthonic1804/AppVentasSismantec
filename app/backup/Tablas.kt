@@ -394,7 +394,7 @@ class Tablas {
     * CAMBIOS EN LA TBL PEDIDOS -> SE AGREGARON LOS SIGUIENTES CAMPOS
     * PAGO, CAMBIO, SUMAS, IVA, SUBTOTAL, IVA_RETENIDO, IVA_PERCIBIDO
     * */
-    fun pedidos(): String {
+    /*fun pedidos(): String {
         return "CREATE TABLE [pedidos] (" +
                 "Id INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Id_cliente INTEGER   NOT NULL DEFAULT 0," +
@@ -455,9 +455,9 @@ class Tablas {
                 "Fecha VARCHAR(25) NOT NULL DEFAULT ''," +
                 "Id_pedido_app VARCHAR(100) NULL" +
                 ");"
-    }
+    }*/
 
-    fun detallePedidos(): String {
+    /*fun detallePedidos(): String {
         return "CREATE TABLE [detalle_pedidos] (" +
                 "[Id] INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "[Id_pedido] INTEGER   NOT NULL," +
@@ -503,9 +503,9 @@ class Tablas {
                 "Orden_despacho INTEGER NOT NULL DEFAULT 0," +
                 "FOREIGN KEY(Id_pedido) REFERENCES pedidos(Id_pedido)" +
                 ")"
-    } //tabla detalle pedidos
+    } //tabla detalle pedidos*/
 
-    fun vistaDetallePedidos(): String {
+    /*fun vistaDetallePedidos(): String {
         return "CREATE VIEW detalle_producto AS " +
                 "SELECT detalle_pedidos.id," +
                     "detalle_pedidos.id_pedido," +
@@ -553,7 +553,7 @@ class Tablas {
                 "LEFT JOIN inventario " +
                 "ON inventario.Id = detalle_pedidos.Id_producto;"
 
-    }
+    }*/
 
     //TABLA REPORTE TEMP
     /*fun reporteTemp(): String {
@@ -609,7 +609,7 @@ class Tablas {
 
     } //tabla de cuentas*/
 
-    fun visitas(): String {
+    /*fun visitas(): String {
         return "CREATE TABLE visitas (" +
                 "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Id_cliente INTEGER NOT NULL DEFAULT 0," +
@@ -626,9 +626,9 @@ class Tablas {
                 "Enviado BOOLEAN DEFAULT 'FALSE' NOT NULL," +
                 "Enviado_final BOOLEAN DEFAULT 'FALSE' NOT NULL" +
                 ");"
-    } //tabla de las visitas
+    } //tabla de las visitas*/
 
-    fun inventariosolicitudCarga(): String {
+    /*fun inventariosolicitudCarga(): String {
         return "CREATE TABLE inventario_solicitud_carga (" +
                 "id INTEGER  PRIMARY KEY NOT NULL," +
                 "codigo VARCHAR(100) NOT NULL," +
@@ -658,7 +658,7 @@ class Tablas {
                 "precio_viñeta NUMERIC(20,6) NOT NULL," +
                 "precio_viñeta_iva NUMERIC(20,6) NOT NULL," +
                 "fechaInventario VARCHAR(25) NOT NULL)"
-    } //tabla inventario
+    } //tabla inventario*/
 
     //CREANDO LA TABLA VIRTUAL INVENTARIO
 //    fun virtualInventarioSolicitud(): String {
@@ -670,7 +670,7 @@ class Tablas {
 //    }
 
     //TABLA SOLICITUD DE CARGA
-    fun solicitudCarga() : String{
+    /*fun solicitudCarga() : String{
         return "CREATE TABLE solicitudCarga(" +
                 "Id INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Id_Empleado INTEGER NOT NULL," +
@@ -683,10 +683,10 @@ class Tablas {
                 "Estado VARCHAR(25) NOT NULL DEFAULT 'EMITIDO'," +
                 "NumHoja NUMERIC(18,0) NOT NULL DEFAULT 0," +
                 "Guardado INTEGER NOT NULL DEFAULT 0)"
-    }
+    }*/
 
     //TABLA SOLICITUD DE CARGA DETALLE
-    fun solicitudCargaDetalle() : String{
+    /*fun solicitudCargaDetalle() : String{
         return " CREATE TABLE solicitudCargaDetalle(" +
                 "Id INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Id_solicitud_carga INTEGER NOT NULL," +
@@ -700,10 +700,10 @@ class Tablas {
                 "Precio_u_iva NUMERIC(18,4) NOT NULL," +
                 "Total NUMERIC(18,4) NOT NULL," +
                 "Enviado INT NOT NULL DEFAULT 0)"
-    }
+    }*/
 
     //TABLA PARA SOLICITUD DE DEVOLUCION
-    fun devolucion() : String{
+    /*fun devolucion() : String{
         return "CREATE TABLE devolucion(" +
                 "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Numero INTEGER NOT NULL," +
@@ -715,10 +715,10 @@ class Tablas {
                 "Id_vendedor INTEGER NOT NULL," +
                 "Vendedor VARCHAR(50) NOT NULL," +
                 "Estado VARCHAR(25) NULL)"
-    }
+    }*/
 
     //TABLA DEVOLUCION DETALLE
-    fun devolucionDetalle() : String{
+    /*fun devolucionDetalle() : String{
         return "CREATE TABLE devolucion_detalle(" +
                 "Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
                 "Id_dev INTEGER NOT NULL," +
@@ -732,7 +732,7 @@ class Tablas {
                 "Bueno NUMERIC(18,0) NOT NULL," +
                 "Averia NUMERIC(18,0) NOT NULL," +
                 "Tipo_fiscal VARCHAR(10) NOT NULL)"
-    }
+    }*/
 
     //CREANDO TABLA DE SERVIDORES
     /*fun conexionServidores() : String{

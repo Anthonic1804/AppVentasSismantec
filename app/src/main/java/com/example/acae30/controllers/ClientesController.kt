@@ -38,6 +38,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.Timer
+import java.util.concurrent.Executor
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 
@@ -1358,11 +1359,19 @@ class ClientesController {
 
             try {
 
+                //Obteniendo Total de Registros
                 val totalClientesPrecios = try {
                     api.obtenerTotalRegistrosClientesPrecios()
                 }catch (e: Exception){
                     Timber.e(e, "[CLIENTES_CONTROLLER] ERROR AL OBTENER EL TOTAL DE REGISTROS DE CLIENTES PRECIOS  -> ${e.message}")
                     null
+                }
+
+                //Limpiando ClientesPrecios
+                try {
+                    clientesDao.eliminarPreciosPersonalizados()
+                }catch (e: Exception){
+                    Timber.e(e,"[CLIENTES_CONTROLLER] ERROR AL LIMPIAR LA TABLA CLIENTES PRECIOS -> ${e.message}")
                 }
 
 
@@ -1437,6 +1446,15 @@ class ClientesController {
                 }catch (e: Exception){
                     Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL TOTAL DE REGISTROS DE CLIENTES -> ${e.message}")
                     null
+                }
+
+                //----------------------------------------
+                //Limpiando Tabla Clientes
+                //----------------------------------------
+                try {
+                    clientesDao.eliminarClientes()
+                }catch (e: Exception){
+                    Timber.e(e,"[CLIENTES_CONTROLLER] ERROR AL LIMPIAR LA TABLA CLIENTES -> ${e.message}")
                 }
 
                 while (hayMas){
@@ -1548,11 +1566,19 @@ class ClientesController {
 
             try {
 
+                //Obteniendo total registros sucursal
                 val totalRegistroSucursales = try {
                     api.obtenerTotalRegitroSucursal()
                 }catch (e: Exception){
                     Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL TOTAL DE REGISTROS DE CLIENTES -> ${e.message}")
                     null
+                }
+
+                //Limpiando tabla clientes sucursales
+                try {
+                    clientesDao.eliminarSucursales()
+                }catch (e: Exception){
+                    Timber.e(e,"[CLIENTES_CONTROLLER] ERROR AL LIMPIAR LA TABLA CLIENTES SUCUSALES -> ${e.message}")
                 }
 
                 while (hayMas){
@@ -1579,12 +1605,14 @@ class ClientesController {
                                 dteCodDepto = it.dteCodDepto?.trim(),
                                 dteCodMunicipio = it.dteCodMunicipio?.trim(),
                                 dteCodPais = it.dteCodPais?.trim(),
+                                dtePais = it.dtePais,
                                 dteCorreo = it.dteCorreo?.trim(),
                                 latitudApp = it.latitudApp?.trim(),
                                 longitudApp = it.longitudApp?.trim()
                             )
                         }
 
+                        //println("RESPUESTA -> $item")
                         clientesDao.insertarSucursales(item)
                         totalInsertados += item.size
 
@@ -1640,6 +1668,13 @@ class ClientesController {
                 }catch (e: Exception){
                     Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER LA CANTIDAD DE REGISTROS DE CXC -> ${e.message}")
                     null
+                }
+
+                //Limiando tabla cuentas
+                try {
+                    clientesDao.eliminarCuentasClientes()
+                }catch (e: Exception){
+                    Timber.e(e,"[CLIENTES_CONTROLLER] ERROR AL LIMPIAR LA TABLA CUENTAS -> ${e.message}")
                 }
 
                 while (hayMas){

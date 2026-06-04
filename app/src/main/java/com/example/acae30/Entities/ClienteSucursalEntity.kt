@@ -8,10 +8,10 @@ import androidx.room.PrimaryKey
 data class ClienteSucursalEntity(
     @PrimaryKey
     @ColumnInfo(name = "Id")
-    val id : Int = 0,
+    val id : Int,
 
     @ColumnInfo(name = "id_cliente")
-    val idCliente : Int = 0,
+    val idCliente : Int,
 
     @ColumnInfo(name = "codigo_sucursal")
     val codigoSucursal : String? = null,

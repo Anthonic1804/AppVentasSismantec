@@ -2,11 +2,14 @@ package com.example.acae30.Entities
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "cliente_precios")
 data class ClientePreciosEntity(
     @PrimaryKey
+    @ColumnInfo(name = "Id")
     val id: Int = 0,
 
     @ColumnInfo(name = "id_cliente")

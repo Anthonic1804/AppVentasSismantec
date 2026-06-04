@@ -8,6 +8,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.acae30.DAO.ClientesDao
 import com.example.acae30.DAO.InventarioDao
+import com.example.acae30.DAO.InventarioSolicitudDao
 import com.example.acae30.Entities.AbonosEntity
 import com.example.acae30.Entities.CatalogoDepartamentoEntity
 import com.example.acae30.Entities.CatalogoDistritoEntity
@@ -19,6 +20,8 @@ import com.example.acae30.Entities.ClientePreciosEntity
 import com.example.acae30.Entities.ClienteSucursalEntity
 import com.example.acae30.Entities.ClientesEntity
 import com.example.acae30.Entities.CuentasEntity
+import com.example.acae30.Entities.DevolucionDetalleEntity
+import com.example.acae30.Entities.DevolucionEntity
 import com.example.acae30.Entities.EmpleadosEntity
 import com.example.acae30.Entities.GastosEntity
 import com.example.acae30.Entities.HojaCargaDetalleEntity
@@ -27,13 +30,20 @@ import com.example.acae30.Entities.HojaDetalleRecargasEntity
 import com.example.acae30.Entities.InventarioEntity
 import com.example.acae30.Entities.InventarioLotesEntity
 import com.example.acae30.Entities.InventarioPreciosEntity
+import com.example.acae30.Entities.InventarioSolicitudCargaEntity
 import com.example.acae30.Entities.InventarioUnidadesEntity
 import com.example.acae30.Entities.LineasEntity
+import com.example.acae30.Entities.PedidoDetalleEntity
+import com.example.acae30.Entities.PedidosEntity
 import com.example.acae30.Entities.PreciosAutorizadosEntity
 import com.example.acae30.Entities.ReporteTempEntity
 import com.example.acae30.Entities.ServidoresEntity
+import com.example.acae30.Entities.SolicitudCargaDetalleEntity
+import com.example.acae30.Entities.SolicitudCargaEntity
 import com.example.acae30.Entities.VentasDetalleTempEntity
 import com.example.acae30.Entities.VentasTempEntity
+import com.example.acae30.Entities.VisitasEntity
+import com.example.acae30.views.DetalleProductoView
 
 @Database(entities = [
         InventarioEntity::class,
@@ -61,19 +71,33 @@ import com.example.acae30.Entities.VentasTempEntity
         PreciosAutorizadosEntity::class,
         VentasTempEntity::class,
         VentasDetalleTempEntity::class,
-        ReporteTempEntity::class],
+        ReporteTempEntity::class,
+        VisitasEntity::class,
+        SolicitudCargaEntity::class,
+        SolicitudCargaDetalleEntity::class,
+        DevolucionEntity::class,
+        DevolucionDetalleEntity::class,
+        InventarioSolicitudCargaEntity::class,
+        PedidosEntity::class,
+        PedidoDetalleEntity::class
+                     ],
+    views = [
+        DetalleProductoView::class
+            ],
     version = 1,
     exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun inventarioDao(): InventarioDao
     abstract fun clienteDao(): ClientesDao
 
+    abstract fun inventarioSolicitudDao(): InventarioSolicitudDao
+
     companion object{
 
         @Volatile
         private  var INSTANCE: AppDatabase? = null
 
-        private var tbl: Tablas = Tablas()
+        //private var tbl: Tablas = Tablas()
 
         fun getInstance(context: Context) : AppDatabase{
 
@@ -88,7 +112,7 @@ abstract class AppDatabase : RoomDatabase() {
                         db.query("PRAGMA journal_mode=WAL;")
                     }
 
-                    override fun onCreate(db: SupportSQLiteDatabase) {
+                   /* override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
 
                         //db.execSQL(tbl.cliente())
@@ -98,11 +122,11 @@ abstract class AppDatabase : RoomDatabase() {
                         //db.execSQL(tbl.hojaCarga())
                         //db.execSQL(tbl.hojaCargaDetalle())
                         //db.execSQL(tbl.hojaDetalleRecargas())
-                        db.execSQL(tbl.pedidos())
+                        //db.execSQL(tbl.pedidos())
                         //db.execSQL(tbl.cuentas())
-                        db.execSQL(tbl.visitas())
-                        db.execSQL(tbl.detallePedidos())
-                        db.execSQL(tbl.vistaDetallePedidos())
+                        //db.execSQL(tbl.visitas())
+                        //db.execSQL(tbl.detallePedidos())
+                        //db.execSQL(tbl.vistaDetallePedidos())
                         //db.execSQL(tbl.empleados())
                         //db.execSQL(tbl.preciosAutorizados())
                         //db.execSQL(tbl.ventasTemp())
@@ -110,13 +134,13 @@ abstract class AppDatabase : RoomDatabase() {
                         //db.execSQL(tbl.reporteTemp())
                         //db.execSQL(tbl.abonosCxc())
                         //db.execSQL(tbl.gastos())
-                        db.execSQL(tbl.inventariosolicitudCarga())
-                        db.execSQL(tbl.solicitudCarga())
-                        db.execSQL(tbl.solicitudCargaDetalle())
-                        db.execSQL(tbl.devolucion())
-                        db.execSQL(tbl.devolucionDetalle())
+                        //db.execSQL(tbl.inventariosolicitudCarga())
+                        //db.execSQL(tbl.solicitudCarga())
+                        //db.execSQL(tbl.solicitudCargaDetalle())
+                        //db.execSQL(tbl.devolucion())
+                        //db.execSQL(tbl.devolucionDetalle())
 
-                    }
+                    }*/
                 }).build().also {
                     INSTANCE = it
                 }

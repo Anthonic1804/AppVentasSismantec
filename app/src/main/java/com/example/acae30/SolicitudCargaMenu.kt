@@ -121,7 +121,13 @@ class SolicitudCargaMenu : AppCompatActivity() {
                 view.dismiss()
                 alert!!.Cargando()
                 CoroutineScope(Dispatchers.IO).launch {
-                    solicitudController.obtenerInventarioServidor(this@SolicitudCargaMenu, alert!!)
+                    //solicitudController.obtenerInventarioServidor(this@SolicitudCargaMenu, alert!!)
+                    solicitudController.obtenerInventarioSolicitud(this@SolicitudCargaMenu, alert!!)
+
+                    withContext(Dispatchers.Main){
+                        alert!!.changeText("INVENTARIO CARGADO CORRECTAMENTE")
+                        alert!!.dismisss()
+                    }
                 }
             }
             .setNegativeButton("CANCELAR"){view, _ ->

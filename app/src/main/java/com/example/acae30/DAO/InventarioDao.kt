@@ -7,7 +7,6 @@ import com.example.acae30.Entities.InventarioEntity
 import com.example.acae30.Entities.InventarioLotesEntity
 import com.example.acae30.Entities.InventarioPreciosEntity
 import com.example.acae30.Entities.InventarioUnidadesEntity
-import com.example.acae30.listas.InventarioRetrofit
 
 @Dao
 interface InventarioDao {
