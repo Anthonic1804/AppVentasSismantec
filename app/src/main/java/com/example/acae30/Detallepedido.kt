@@ -1210,7 +1210,11 @@ class Detallepedido : AppCompatActivity() {
                 if(!P_Imprimir_TK_Venta){
                     binding.btnexportar.visibility = View.GONE //visible
                 }else{
-                    binding.btnexportar.visibility = View.VISIBLE //visible
+                    if(pedido.pedido_dte_error == 2){
+                        binding.btnexportar.visibility = View.GONE //visible
+                    }else{
+                        binding.btnexportar.visibility = View.VISIBLE //visible
+                    }
                 }
 
                 //Deshabilitando el botom de agregar comentario
