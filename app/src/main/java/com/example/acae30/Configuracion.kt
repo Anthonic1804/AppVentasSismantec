@@ -128,7 +128,7 @@ class Configuracion : AppCompatActivity() {
             binding.lyImpresor.visibility = View.GONE
         }
 
-
+        binding.txtImpresor.setText(preferencias!!.getString("impresorIntegrado", ""))
 
         versionActualApp()
         binding.tvVersionActualApp.text = "ACAE APP Ver. $versionActual"
