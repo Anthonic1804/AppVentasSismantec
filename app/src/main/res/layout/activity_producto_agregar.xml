@@ -5,7 +5,7 @@
     android:id="@+id/lienzo"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Producto_agregar">
+    tools:context=".ui.pedidos.Producto_agregar">
 
     <LinearLayout
         android:id="@+id/lyEncabezado"

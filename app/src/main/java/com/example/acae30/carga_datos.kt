@@ -17,17 +17,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
-import com.example.acae30.DAO.InventarioDao
-import com.example.acae30.Entities.InventarioEntity
-import com.example.acae30.Entities.InventarioPreciosEntity
-import com.example.acae30.Retrofit.RetrofitCliente
 import com.example.acae30.controllers.CatalogosController
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.HojaCargaController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
-import com.example.acae30.database.AppDatabase
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.databinding.ActivityCargaDatosBinding
+import com.example.acae30.ui.inventario.ValidarHojaCarga
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +32,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.time.LocalDate
 
 class carga_datos : AppCompatActivity() {
 

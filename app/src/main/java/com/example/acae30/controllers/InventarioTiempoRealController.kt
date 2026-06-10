@@ -2,15 +2,15 @@ package com.example.acae30.controllers
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.example.acae30.DAO.InventarioDao
-import com.example.acae30.Entities.InventarioEntity
-import com.example.acae30.Entities.InventarioLotesEntity
-import com.example.acae30.Entities.InventarioPreciosEntity
-import com.example.acae30.Entities.InventarioUnidadesEntity
+import com.example.acae30.data.local.dao.InventarioDao
+import com.example.acae30.data.local.entity.InventarioEntity
+import com.example.acae30.data.local.entity.InventarioLotesEntity
+import com.example.acae30.data.local.entity.InventarioPreciosEntity
+import com.example.acae30.data.local.entity.InventarioUnidadesEntity
 import com.example.acae30.Funciones
-import com.example.acae30.Retrofit.RetrofitCliente
-import com.example.acae30.database.AppDatabase
-import com.example.acae30.modelos.InventarioTiempoRealModel
+import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.dto.InventarioTiempoRealDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -40,13 +40,13 @@ class InventarioTiempoRealController {
     //Funcion para realizar la busqueda en tiempo real por descripcion o codigo
     //------------------------------------------------------------------
 
-    suspend fun obtenerInventarioPorDescripcion(context: Context, busqueda: String) : List<InventarioTiempoRealModel>{
+    suspend fun obtenerInventarioPorDescripcion(context: Context, busqueda: String) : List<InventarioTiempoRealDto>{
 
         withContext(Dispatchers.Main){
             iniciarlizarVariables(context)
         }
 
-        val listaInventario = mutableListOf<InventarioTiempoRealModel>()
+        val listaInventario = mutableListOf<InventarioTiempoRealDto>()
 
         withContext(Dispatchers.IO){
             val baseUrl = servidor

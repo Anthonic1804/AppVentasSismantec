@@ -1,0 +1,145 @@
+package com.example.acae30.ui.reportes
+
+import android.content.Intent
+import android.os.Bundle
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.acae30.Funciones
+import com.example.acae30.R
+import com.example.acae30.controllers.ReporteLiquidacionController
+import com.example.acae30.databinding.ActivityReporteLiquidacionBinding
+import com.example.acae30.listas.ReporteLiquidacion.CobrosAdapter
+import com.example.acae30.modelos.ReporteLiquidacion.VentaContado
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class ReporteLiquidacion : AppCompatActivity() {
+
+    private lateinit var binding : ActivityReporteLiquidacionBinding
+    private var funciones = Funciones()
+    private var reporte = ReporteLiquidacionController()
+    private var totalContado = 0f
+    private var totalCredito = 0f
+    private var totalCobros = 0f
+    private var totalGastos = 0f
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityReporteLiquidacionBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val listadoCobros = reporte.obtenerCobros(this@ReporteLiquidacion)
+            withContext(Dispatchers.Main) {
+                armarListaCobros(listadoCobros)
+            }
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val listadoVentaContado = reporte.obtenerVentaContado(this@ReporteLiquidacion)
+            withContext(Dispatchers.Main) {
+                armarListaContado(listadoVentaContado)
+            }
+        }
+
+        totalContado = reporte.obtenerTotalVentaContado(this@ReporteLiquidacion)
+        binding.tvTotalContado2.text = "$ " + "${String.format("%.4f".format(totalContado))}"
+
+        totalCredito = reporte.obtenerTotalVentaCredito(this@ReporteLiquidacion)
+        binding.tvTotalCredito2.text = "$ " + "${String.format("%.4f".format(totalCredito))}"
+
+        totalCobros = reporte.obtenerTotalVentaCobros(this@ReporteLiquidacion)
+        binding.tvTotalCobros2.text = "$ " + "${String.format("%.4f".format(totalCobros))}"
+
+        totalGastos = reporte.obtenerTotalGastosDiarios(this@ReporteLiquidacion)
+        binding.tvTotalGastos2.text = "$ " + "${String.format("%.4f".format(totalGastos))}"
+
+        val totalDiario = (totalContado + totalCredito + totalCobros) - totalGastos
+        binding.tvTotalDiario2.text = "$ " + "${String.format("%.2f".format(totalDiario))}"
+
+
+    }
+
+
+
+    override fun onStart() {
+        super.onStart()
+
+        binding.btncancelar.setOnClickListener {
+            mensaje("DESEA CANCELAR EL PROCESO?", "CANCELAR")
+        }
+
+        binding.btnaceptar.setOnClickListener {
+            mensaje("DESEA IMPRIMIR EL REPORTE DE LIQUIDACION?", "IMPRIMIR")
+        }
+    }
+
+    private fun menuReportes(){
+        val intento = Intent(this@ReporteLiquidacion, MenuReportes::class.java)
+        startActivity(intento)
+        finish()
+    }
+
+    //FUNCION PARA ARMAR EL LISTADO EN EL RECYCLERVIEW COBROS
+    private fun armarListaCobros(lista : ArrayList<VentaContado>) {
+        val mLayoutManager = LinearLayoutManager(
+            this@ReporteLiquidacion,
+            LinearLayoutManager.VERTICAL,
+            false
+        )
+        binding.rvCobros.layoutManager = mLayoutManager
+        val adapter = CobrosAdapter(lista, this@ReporteLiquidacion)
+        binding.rvCobros.adapter = adapter
+
+    }
+
+    //FUNCION PARA ARMAR EL LISTADO EN EL RECYCLERVIEW VENTA AL CONTADO
+    private fun armarListaContado(lista : ArrayList<VentaContado>) {
+        val mLayoutManager = LinearLayoutManager(
+            this@ReporteLiquidacion,
+            LinearLayoutManager.VERTICAL,
+            false
+        )
+        binding.rvVentaContado.layoutManager = mLayoutManager
+        val adapter = CobrosAdapter(lista, this@ReporteLiquidacion)
+        binding.rvVentaContado.adapter = adapter
+
+    }
+
+    //FUNCION DE MENSAJES DE ERROR Y CONFIRMACION
+    fun mensaje(mensaje: String,  tipo: String){
+        val dialog = AlertDialog.Builder(this@ReporteLiquidacion)
+            .setTitle("INFORMACION")
+            .setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { view, _ ->
+                when(tipo){
+                    "CANCELAR" -> {
+                        view.dismiss()
+                        menuReportes()
+                    }
+                    else -> {
+                        funciones.mensaje(this@ReporteLiquidacion, "OPCION EN DESARROLLO")
+                    }
+                }
+            }
+            .setNegativeButton("CANCELAR"){ view, _ ->
+                view.dismiss()
+            }
+            .setCancelable(false)
+            .setIcon(R.drawable.ic_information)
+            .create()
+
+        dialog.show()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        //  super.onBackPressed()
+
+        //   finish()
+    }
+
+}

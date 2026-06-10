@@ -25,11 +25,12 @@ import androidx.lifecycle.lifecycleScope
 import com.dcastalia.localappupdate.DownloadApk
 import com.example.acae30.Utilidades.AgregarHeaders
 import com.example.acae30.Utilidades.CrearSslNoSeguro
-import com.example.acae30.database.LimpiarBD
+import com.example.acae30.data.local.appDatabase.LimpiarBD
 import com.example.acae30.controllers.ConexionController
 import com.example.acae30.controllers.ConfigController
 import com.example.acae30.databinding.ActivityConfiguracionBinding
 import com.example.acae30.modelos.Impresor.DispositivoBT
+import com.example.acae30.ui.servidores.MenuServidores
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

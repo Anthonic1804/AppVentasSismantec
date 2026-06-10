@@ -4,7 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
-import com.example.acae30.Retrofit.RetrofitCliente
+import com.example.acae30.data.remote.api.RetrofitCliente
 import com.example.acae30.modelos.Servidores.ServidoresModel
 
 class ConexionController {
@@ -92,7 +92,7 @@ class ConexionController {
     //------------------------------------
     //Funcion para Obtener el Listado de Servidores
     //------------------------------------
-    fun obtenerListadoServidores(context: Context) : ArrayList<ServidoresModel>{
+    /*fun obtenerListadoServidores(context: Context) : ArrayList<ServidoresModel>{
 
         val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         val listaServidores = ArrayList<ServidoresModel>()
@@ -120,7 +120,7 @@ class ConexionController {
             println("ERROR AL OBTENER EL LISTADO DE SERVIDORES -> " + e.message)
         }
         return listaServidores
-    }
+    }*/
 
     //------------------------------------------
     //Funcion para actualizar el servidor

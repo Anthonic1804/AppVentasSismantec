@@ -13,24 +13,20 @@ import android.hardware.usb.UsbManager
 import android.print.PrintManager
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.graphics.scale
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
-import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
 import com.dantsu.escposprinter.connection.usb.UsbConnection
 import com.dantsu.escposprinter.textparser.PrinterTextParserImg
-import com.example.acae30.DAO.InventarioDao
 import com.example.acae30.Funciones
 import com.example.acae30.R
-import com.example.acae30.Retrofit.RetrofitCliente
-import com.example.acae30.database.AppDatabase
+import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDate
-import java.util.Date
 import kotlin.text.StringBuilder
 
 class ReporteVentaUnidadesController {

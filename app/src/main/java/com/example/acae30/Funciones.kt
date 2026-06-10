@@ -13,7 +13,7 @@ import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import com.example.acae30.database.AppDatabase
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.google.android.material.snackbar.Snackbar
 import org.json.JSONObject
 import java.io.IOException

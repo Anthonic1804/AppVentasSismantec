@@ -6,7 +6,7 @@
     android:background="@drawable/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".NuevoServidor">
+    tools:context=".ui.servidores.NuevoServidor">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView2"

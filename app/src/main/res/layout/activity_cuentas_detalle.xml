@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/recicler"
-    tools:context=".CuentasDetalle">
+    tools:context=".ui.clientes.CuentasDetalle">
 
     <LinearLayout
         android:id="@+id/lyEncabezado"

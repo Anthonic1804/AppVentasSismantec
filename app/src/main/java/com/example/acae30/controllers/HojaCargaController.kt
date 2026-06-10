@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
-import com.example.acae30.Retrofit.RetrofitCliente
+import com.example.acae30.data.remote.api.RetrofitCliente
 import com.example.acae30.Utilidades.CrearSslNoSeguro
-import com.example.acae30.database.AppDatabase
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.modelos.InventarioHojaValidar
 import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import kotlinx.coroutines.CoroutineScope

@@ -7,7 +7,7 @@ import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import androidx.appcompat.app.AlertDialog
 import androidx.coordinatorlayout.widget.CoordinatorLayout.DispatchChangeEvent
-import com.example.acae30.AbonosCxc
+import com.example.acae30.ui.abonos.AbonosCxc
 import com.example.acae30.Funciones
 import com.example.acae30.R
 import com.example.acae30.Utilidades.CrearSslNoSeguro

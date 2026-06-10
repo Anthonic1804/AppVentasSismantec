@@ -10,7 +10,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.example.acae30.Funciones
-import com.example.acae30.Pedido
+import com.example.acae30.ui.pedidos.Pedido
 import com.example.acae30.R
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.JSONmodels.PedidoDTE

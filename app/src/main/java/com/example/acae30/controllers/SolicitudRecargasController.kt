@@ -5,12 +5,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.AlertDialogo
-import com.example.acae30.DAO.InventarioSolicitudDao
-import com.example.acae30.Entities.InventarioSolicitudCargaEntity
+import com.example.acae30.data.local.dao.InventarioSolicitudDao
+import com.example.acae30.data.local.entity.InventarioSolicitudCargaEntity
 import com.example.acae30.Funciones
-import com.example.acae30.Retrofit.RetrofitCliente
+import com.example.acae30.data.remote.api.RetrofitCliente
 import com.example.acae30.Utilidades.CrearSslNoSeguro
-import com.example.acae30.database.AppDatabase
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.modelos.Inventario
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDTO

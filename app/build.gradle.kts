@@ -55,11 +55,6 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.13.0")
 
-    implementation("androidx.activity:activity-ktx:1.8.2")
-
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.5")
-
-
     implementation("androidx.appcompat:appcompat:1.7.0")
 
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
@@ -68,11 +63,18 @@ dependencies {
 
     implementation("androidx.annotation:annotation:1.8.2")
 
-    //Timber -> un Wrapper de Log.e
-    implementation("com.jakewharton.timber:timber:5.0.1")
+    implementation("androidx.activity:activity-ktx:1.8.2")
+
+    //ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.5")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.5")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.5")
 
     //Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    //Timber -> un Wrapper de Log.e
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Scanner cámara
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
@@ -103,6 +105,7 @@ dependencies {
     implementation("androidx.room:room-runtime:2.7.0")
     implementation("androidx.room:room-ktx:2.7.0")
     implementation("androidx.activity:activity:1.13.0")
+    implementation("androidx.compose.ui:ui:1.11.2")
     ksp("androidx.room:room-compiler:2.7.0")
 
     // Librería local

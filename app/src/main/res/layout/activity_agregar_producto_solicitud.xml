@@ -6,7 +6,7 @@
     android:background="@color/recicler"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AgregarProductoSolicitud">
+    tools:context=".ui.solicitudes.AgregarProductoSolicitud">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView4"

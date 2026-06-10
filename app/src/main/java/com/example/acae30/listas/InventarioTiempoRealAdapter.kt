@@ -10,10 +10,10 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.R
-import com.example.acae30.modelos.InventarioTiempoRealModel
+import com.example.acae30.data.remote.dto.InventarioTiempoRealDto
 
 class InventarioTiempoRealAdapter(
-    private val lista: List<InventarioTiempoRealModel>,
+    private val lista: List<InventarioTiempoRealDto>,
     private val context: Context,
     val itemClick : (Int) -> Unit
 ) : RecyclerView.Adapter<InventarioTiempoRealAdapter.MyViewHolder>() {

@@ -7,7 +7,7 @@
     android:background="@color/blanco_suave"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Inventariodetalle">
+    tools:context=".ui.inventario.Inventariodetalle">
 
     <LinearLayout
         android:id="@+id/lyTitulo"

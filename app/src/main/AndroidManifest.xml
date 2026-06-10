@@ -38,44 +38,44 @@
             android:name=".MenuHerramientas"
             android:exported="false" />
         <activity
-            android:name=".CierreParcial"
+            android:name=".ui.reportes.CierreParcial"
             android:exported="false" />
         <activity
-            android:name=".ReportePorProducto"
+            android:name=".ui.reportes.ReportePorProducto"
             android:exported="false" />
         <activity
-            android:name=".InventarioTiempoReal"
+            android:name=".ui.inventario.InventarioTiempoReal"
             android:exported="false" />
         <activity
-            android:name=".MenuServidores"
+            android:name=".ui.servidores.MenuServidores"
             android:exported="false" />
         <activity
-            android:name=".NuevoServidor"
+            android:name=".ui.servidores.NuevoServidor"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity
-            android:name=".MenuAverias"
+            android:name=".ui.averias.MenuAverias"
             android:exported="false" />
         <activity
-            android:name=".ValidarHojaCarga"
+            android:name=".ui.inventario.ValidarHojaCarga"
             android:exported="false" /> <!-- Broadcast para permisos USB -->
         <meta-data
             android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
             android:value="true" />
 
         <activity
-            android:name=".AgregarProductosDevolucion"
+            android:name=".ui.devoluciones.AgregarProductosDevolucion"
             android:exported="false" />
         <activity
-            android:name=".NuevaDevolucion"
+            android:name=".ui.devoluciones.NuevaDevolucion"
             android:exported="false" />
         <activity
-            android:name=".MenuDevoluciones"
+            android:name=".ui.devoluciones.MenuDevoluciones"
             android:exported="false" />
         <activity
-            android:name=".ClienteGeolocalizacion"
+            android:name=".ui.clientes.ClienteGeolocalizacion"
             android:exported="false" />
 
         <meta-data
@@ -83,49 +83,49 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".AgregarProductoSolicitud"
+            android:name=".ui.solicitudes.AgregarProductoSolicitud"
             android:exported="false" />
         <activity
-            android:name=".ListadoProductosSolicitud"
+            android:name=".ui.solicitudes.ListadoProductosSolicitud"
             android:exported="false" />
         <activity
-            android:name=".NuevaSolicitud"
+            android:name=".ui.solicitudes.NuevaSolicitud"
             android:exported="false" />
         <activity
-            android:name=".SolicitudCargaMenu"
+            android:name=".ui.solicitudes.SolicitudCargaMenu"
             android:exported="false" />
         <activity
-            android:name=".NuevoGasto"
+            android:name=".ui.gastos.NuevoGasto"
             android:exported="false" />
         <activity
-            android:name=".MenuGasto"
+            android:name=".ui.gastos.MenuGasto"
             android:exported="false" />
         <activity
-            android:name=".NuevaSucursal"
+            android:name=".ui.clientes.NuevaSucursal"
             android:exported="false" />
         <activity
-            android:name=".Sucursales"
+            android:name=".ui.clientes.Sucursales"
             android:exported="false" />
         <activity
-            android:name=".NuevoCliente"
+            android:name=".ui.clientes.NuevoCliente"
             android:exported="false" />
         <activity
-            android:name=".ReporteLiquidacion"
+            android:name=".ui.reportes.ReporteLiquidacion"
             android:exported="false" />
         <activity
-            android:name=".MenuReportes"
+            android:name=".ui.reportes.MenuReportes"
             android:exported="false" />
         <activity
-            android:name=".NuevoAbono"
+            android:name=".ui.abonos.NuevoAbono"
             android:exported="false" />
         <activity
-            android:name=".AbonosCxc"
+            android:name=".ui.abonos.AbonosCxc"
             android:exported="false" />
         <activity
-            android:name=".HistoricoPedidoDetalles"
+            android:name=".ui.historico.HistoricoPedidoDetalles"
             android:exported="false" />
         <activity
-            android:name=".HistoricoPedidos"
+            android:name=".ui.historico.HistoricoPedidos"
             android:exported="false" />
         <activity
             android:name=".PreciosAutorizados"
@@ -134,28 +134,28 @@
             android:name=".NuevoPrecioAutorizado"
             android:exported="false" />
         <activity
-            android:name=".firmarPagare"
+            android:name=".ui.clientes.firmarPagare"
             android:exported="false" />
-        <activity android:name=".Visita" />
-        <activity android:name=".CuentasDetalle" />
-        <activity android:name=".Cuentas_list" />
-        <activity android:name=".Inventariodetalle" />
+        <activity android:name=".ui.pedidos.Visita" />
+        <activity android:name=".ui.clientes.CuentasDetalle" />
+        <activity android:name=".ui.clientes.Cuentas_list" />
+        <activity android:name=".ui.inventario.Inventariodetalle" />
         <activity
-            android:name=".ClientesDetalle"
-            android:parentActivityName=".Clientes" />
-        <activity android:name=".Producto_agregar" />
-        <activity android:name=".verPagare" />
-        <activity android:name=".Detallepedido" />
+            android:name=".ui.clientes.ClientesDetalle"
+            android:parentActivityName=".ui.clientes.Clientes" />
+        <activity android:name=".ui.pedidos.Producto_agregar" />
+        <activity android:name=".ui.clientes.verPagare" />
+        <activity android:name=".ui.pedidos.Detallepedido" />
         <activity
-            android:name=".Pedido"
+            android:name=".ui.pedidos.Pedido"
             android:label="@string/title_activity_pedido"
             android:parentActivityName=".Inicio"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".Producto_detalle" />
         <activity
-            android:name=".Inventario"
+            android:name=".ui.inventario.Inventario"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".Clientes" />
+        <activity android:name=".ui.clientes.Clientes" />
         <activity android:name=".Configuracion" />
         <activity android:name=".carga_datos" />
         <activity android:name=".Inicio" />
