@@ -4,7 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.example.acae30.Funciones
-import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.remote.api.conexion.ConexionApi
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.modelos.Servidores.ServidoresModel
 
 class ConexionController {
@@ -28,7 +29,7 @@ class ConexionController {
     suspend fun verificarConexionServidor(ip: String, puerto: String, sslActivo: Int, context: Context) : String{
         val servidor = funciones.verificarServidor(ip, puerto, sslActivo)
 
-        val api = RetrofitCliente.obtenerApi(servidor, context)
+        val api = RetrofitCliente.obtenerApi<ConexionApi>(servidor, context)
 
         var respuestaServidor: String = ""
 

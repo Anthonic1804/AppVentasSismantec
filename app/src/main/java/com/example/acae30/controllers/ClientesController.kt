@@ -14,10 +14,11 @@ import com.example.acae30.data.local.entity.ClienteSucursalEntity
 import com.example.acae30.data.local.entity.ClientesEntity
 import com.example.acae30.data.local.entity.CuentasEntity
 import com.example.acae30.Funciones
-import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.ui.pedidos.Visita
 import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.clientes.ClientesApi
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.JSONmodels.ActualizarPagareFirmadoCliente
 import com.google.gson.Gson
@@ -1343,7 +1344,7 @@ class ClientesController {
 
             clientesDao = base.clienteDao()
 
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<ClientesApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0
@@ -1423,7 +1424,7 @@ class ClientesController {
 
             clientesDao = base.clienteDao()
 
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<ClientesApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0
@@ -1551,7 +1552,7 @@ class ClientesController {
 
             val baseUrl = servidor
 
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<ClientesApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0
@@ -1646,7 +1647,7 @@ class ClientesController {
             val baseUrl: String = servidor
             clientesDao = base.clienteDao()
 
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<ClientesApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0

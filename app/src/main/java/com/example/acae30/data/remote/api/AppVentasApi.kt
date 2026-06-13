@@ -12,6 +12,7 @@ import com.example.acae30.data.remote.dto.InventarioTiempoRealDto
 import com.example.acae30.modelos.Login.LoginModel
 import com.example.acae30.modelos.Login.RespuestaLogin
 import com.example.acae30.data.remote.dto.RespuestaConexionDto
+import com.example.acae30.data.remote.dto.UpdateAppDto
 import com.example.acae30.modelos.cierreParcial.CierreParcialDTO
 import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import retrofit2.Response
@@ -26,6 +27,12 @@ interface AppVentasApi {
     //Conexion con el Servidor
     @GET("conexion")
     suspend fun conectarServidor() : List<RespuestaConexionDto>
+
+    //-------------------------------------------------------
+    //Buscar Actualizacion App
+    //-------------------------------------------------------
+    @GET("updateapp")
+    suspend fun obtenerActualizacionApp(): List<UpdateAppDto>
 
     //--------------------------------------
     //EndPoints Login

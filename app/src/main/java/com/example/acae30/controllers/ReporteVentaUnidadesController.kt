@@ -20,8 +20,9 @@ import com.dantsu.escposprinter.connection.usb.UsbConnection
 import com.dantsu.escposprinter.textparser.PrinterTextParserImg
 import com.example.acae30.Funciones
 import com.example.acae30.R
-import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.reportes.ReportesApi
 import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -61,7 +62,7 @@ class ReporteVentaUnidadesController {
 
         withContext(Dispatchers.IO){
             val baseUrl = servidor
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<ReportesApi>(baseUrl, context)
 
             try {
                 val respuesta = api.obtenerUnidadesVendidasPorProducto(numeroCaja, fecha)

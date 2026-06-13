@@ -4,7 +4,8 @@ import android.content.Context
 import com.example.acae30.Funciones
 import com.example.acae30.data.local.dao.ServidoresDao
 import com.example.acae30.data.local.entity.ServidoresEntity
-import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.remote.api.conexion.ConexionApi
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 
 private val funciones = Funciones()
 class ServidoresRepository(
@@ -23,7 +24,7 @@ class ServidoresRepository(
 
         val servidor = funciones.verificarServidor(ip, puerto, sslActivo)
 
-        val api = RetrofitCliente.obtenerApi(servidor, context)
+        val api = RetrofitCliente.obtenerApi<ConexionApi>(servidor, context)
 
         return try {
 
@@ -34,7 +35,6 @@ class ServidoresRepository(
                 ?: "SIN_RESPUESTA"
 
         } catch (e: Exception) {
-
             "ERROR_CONEXION -> ${e.message}"
         }
     }

@@ -35,11 +35,12 @@ import com.example.acae30.data.local.entity.InventarioLotesEntity
 import com.example.acae30.data.local.entity.InventarioPreciosEntity
 import com.example.acae30.data.local.entity.InventarioUnidadesEntity
 import com.example.acae30.Inicio
-import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.AgregarHeaders
 import com.example.acae30.Utilidades.ConsumirEndpoint
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.inventario.InventarioApi
 import com.example.acae30.modelos.InventarioLotesModel
 import com.example.acae30.modelos.UnidadMedidaModelo
 import timber.log.Timber
@@ -1395,7 +1396,7 @@ class InventarioController {
 
             val baseUrl = servidor
             inventarioDao = base.inventarioDao()
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0
@@ -1510,7 +1511,7 @@ class InventarioController {
 
             inventarioDao = base.inventarioDao()
 
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0
@@ -1589,7 +1590,7 @@ class InventarioController {
             val baseUrl: String = servidor
             inventarioDao = base.inventarioDao()
 
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0
@@ -1664,7 +1665,7 @@ class InventarioController {
 
             inventarioDao = base.inventarioDao()
 
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0

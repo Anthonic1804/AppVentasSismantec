@@ -262,12 +262,9 @@ class Configuracion : AppCompatActivity() {
 
             deshabilitarOpcion()
 
-            val contexto = this
             alerta!!.Cargando()
 
-            CoroutineScope(Dispatchers.IO).launch {
-                reconectarServidor(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), contexto)
-            }
+            reconectarServidor(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), sslActivo)
 
         }//guarda los datos del servidor
 
@@ -572,7 +569,7 @@ class Configuracion : AppCompatActivity() {
         }
     } //obtiene la ip y el puerto del servidor
 
-    private suspend fun reconectarServidor(ip: String, puerto: String, context: Context) {
+    /*private suspend fun reconectarServidor(ip: String, puerto: String, context: Context) {
         if (funciones.isInternetAvailable(this)) {
             try {
                 val servidor = funciones.getServidor(ip, puerto, this@Configuracion)
@@ -676,7 +673,52 @@ class Configuracion : AppCompatActivity() {
                 alert.show()
             }
         } //valida que este encendido los datos o el wifi
-    }//valida que haya comunicacion con el servidor
+    }//valida que haya comunicacion con el servidor*/
+    private fun reconectarServidor(ip: String, puerto: String, sslActivo: Int){
+        lifecycleScope.launch(Dispatchers.IO) {
+            val hayInternet = funciones.isInternetAvailable(this@Configuracion)
+            if(hayInternet){
+
+                val respuesta = conexionController.verificarConexionServidor(ip, puerto, sslActivo, this@Configuracion)
+                if(respuesta == "Conexion Exitosa"){
+                    runOnUiThread {
+                        habilitarOpcion()
+                        alerta!!.changeText("RECONEXION EXITOSA")
+                    }
+
+                    delay(1000)
+
+                    runOnUiThread {
+                        alerta!!.dismisss()
+                    }
+                }else{
+                    runOnUiThread {
+                        habilitarOpcion()
+                        alerta!!.changeText("ERROR DE CONEXION CON EL SERVIDOR")
+                    }
+
+                    delay(1000)
+
+                    runOnUiThread {
+                        alerta!!.dismisss()
+                    }
+                }
+
+            }else{
+                runOnUiThread {
+                    habilitarOpcion()
+                    alerta!!.changeText("ERROR NO HAY CONEXION DE INTERNET")
+                }
+
+                delay(1000)
+
+                runOnUiThread {
+                    alerta!!.dismisss()
+                }
+            }
+        }
+    }
+
 
 
     @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")

@@ -8,9 +8,10 @@ import com.example.acae30.AlertDialogo
 import com.example.acae30.data.local.dao.InventarioSolicitudDao
 import com.example.acae30.data.local.entity.InventarioSolicitudCargaEntity
 import com.example.acae30.Funciones
-import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.inventario.InventarioApi
 import com.example.acae30.modelos.Inventario
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDTO
@@ -1067,7 +1068,7 @@ class SolicitudRecargasController {
 
             val baseUrl = servidor
             inventarioSolicitudDao = base.inventarioSolicitudDao()
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             val limite = BLOQUE
             var lastId = 0

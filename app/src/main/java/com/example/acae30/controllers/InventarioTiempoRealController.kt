@@ -8,8 +8,9 @@ import com.example.acae30.data.local.entity.InventarioLotesEntity
 import com.example.acae30.data.local.entity.InventarioPreciosEntity
 import com.example.acae30.data.local.entity.InventarioUnidadesEntity
 import com.example.acae30.Funciones
-import com.example.acae30.data.remote.api.RetrofitCliente
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.inventario.InventarioApi
 import com.example.acae30.data.remote.dto.InventarioTiempoRealDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -50,7 +51,7 @@ class InventarioTiempoRealController {
 
         withContext(Dispatchers.IO){
             val baseUrl = servidor
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             try {
                 val respuesta = api.obtenerProductoPorString(busqueda)
@@ -78,7 +79,7 @@ class InventarioTiempoRealController {
         withContext(Dispatchers.IO){
 
             val baseUrl = servidor
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
             inventarioDao = base.inventarioDao()
 
             try {
@@ -157,7 +158,7 @@ class InventarioTiempoRealController {
 
             val baseUrl = servidor
             inventarioDao = base.inventarioDao()
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             try {
 
@@ -205,7 +206,7 @@ class InventarioTiempoRealController {
         withContext(Dispatchers.IO){
             val baseUrl: String = servidor
             inventarioDao = base.inventarioDao()
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             try {
 
@@ -248,7 +249,7 @@ class InventarioTiempoRealController {
 
             inventarioDao = base.inventarioDao()
 
-            val api = RetrofitCliente.obtenerApi(baseUrl, context)
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             try {
 
