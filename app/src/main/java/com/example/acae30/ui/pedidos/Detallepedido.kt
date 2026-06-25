@@ -169,6 +169,9 @@ class Detallepedido : AppCompatActivity() {
     private var isProcessing = false
     private var inventarioTiempoReal: Boolean = false
 
+    private var balanceActual: Float = 0f
+    private var limiteCredito: Float = 0f
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -194,6 +197,10 @@ class Detallepedido : AppCompatActivity() {
         clienteMosoro = preferencias.getInt("clienteMoroso", 0)
         P_Imprimir_TK_Venta = preferencias.getBoolean("P_Imprimir_TK_Venta", false)
         inventarioTiempoReal = preferencias.getBoolean("inventarioTiempoReal", false)
+
+        //OBTENIENDO BALANCE Y LIMITE DE CREDITO
+        balanceActual = preferencias.getFloat("balanceActual", 0f)
+        limiteCredito = preferencias.getFloat("limiteCredito", 0f)
 
         visita_enviada = false
 
@@ -392,54 +399,61 @@ class Detallepedido : AppCompatActivity() {
 
             deshabilitarOpciones()
 
-            if(cantidadItemsPedido <= limiteItemPedido){
-                if(codigo == "01"){
-                    nombre = binding.txtCliente.text.toString()
-                    CoroutineScope(Dispatchers.IO).launch {
-                        pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
-                    }
-                }
+            val nuevoBalance = balanceActual + total
 
-                if (ConfirmarDetallePedido() > 0) {
-                    val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-                    enviandoPedido = true
-
-                    if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
-
-                        //MOSTRAR LA VENTA DE PAGO SI ESTÁ ACTIVA
-                        val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
-                        if(!facturacionLocal){
-                            alertaPago(binding.txttotal.text.toString().toFloat())
-                        }else{
-                            envioAlerta()
+            if(nuevoBalance > limiteCredito && terminosPedidos == "Credito"){
+                habilitarOpciones()
+                funciones.mostrarAlerta("ERROR: FACTURACION SOBREPASA EL LIMITE DE CREDITO", this@Detallepedido, binding.lienzo)
+            }else{
+                if(cantidadItemsPedido <= limiteItemPedido){
+                    if(codigo == "01"){
+                        nombre = binding.txtCliente.text.toString()
+                        CoroutineScope(Dispatchers.IO).launch {
+                            pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
                         }
-                    }else{
-                        verificarConexionEnvio()
                     }
-                } else {
-                    habilitarOpciones()
-                    funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
-                }
-                /*if(clienteMosoro == 1 && terminosPedidos != "Contado"){
-                    funciones.mostrarAlerta("ERROR: NO PUEDE FACTURAR AL CREDITO A CLIENTE EN MORA", this@Detallepedido, binding.lienzo)
-                }else{
+
                     if (ConfirmarDetallePedido() > 0) {
                         val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
                         enviandoPedido = true
 
                         if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
-                            alertaPago(total)
+
+                            //MOSTRAR LA VENTA DE PAGO SI ESTÁ ACTIVA
+                            val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
+                            if(!facturacionLocal){
+                                alertaPago(binding.txttotal.text.toString().toFloat())
+                            }else{
+                                envioAlerta()
+                            }
                         }else{
                             verificarConexionEnvio()
                         }
                     } else {
+                        habilitarOpciones()
                         funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
                     }
-                }*/
-            }else{
-                habilitarOpciones()
-                Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido",
-                    Toast.LENGTH_SHORT).show()
+                    /*if(clienteMosoro == 1 && terminosPedidos != "Contado"){
+                        funciones.mostrarAlerta("ERROR: NO PUEDE FACTURAR AL CREDITO A CLIENTE EN MORA", this@Detallepedido, binding.lienzo)
+                    }else{
+                        if (ConfirmarDetallePedido() > 0) {
+                            val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
+                            enviandoPedido = true
+
+                            if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
+                                alertaPago(total)
+                            }else{
+                                verificarConexionEnvio()
+                            }
+                        } else {
+                            funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
+                        }
+                    }*/
+                }else{
+                    habilitarOpciones()
+                    Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido",
+                        Toast.LENGTH_SHORT).show()
+                }
             }
         }
 

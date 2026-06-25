@@ -155,6 +155,8 @@ class Visita : AppCompatActivity() {
         binding.btnpedido.setOnClickListener {
             CreatePedido()
             clienteMoroso()
+            obtenerBalanceActualClientePorId()
+
             val intento = Intent(this, Detallepedido::class.java)
             intento.putExtra("idcliente", idcliente)
             intento.putExtra("nombrecliente", nombre)
@@ -854,5 +856,25 @@ class Visita : AppCompatActivity() {
 
                 alerta!!.dismisss()
             }
+    }
+
+    //-------------------------------------------------------------------------------
+    //FUNCION PARA OBTENER EL BALANCE ACTUAL DEL CLIENTE
+    //-------------------------------------------------------------------------------
+    private fun obtenerBalanceActualClientePorId(){
+        lifecycleScope.launch {
+            val obtenerBalanceCliente = clientesController.obtenerBalacenClientePorId(this@Visita, idcliente)
+
+            preferencias.edit{
+                remove("balanceActual")
+                remove("limiteCredito")
+            }
+
+            preferencias.edit {
+                putFloat("balanceActual", obtenerBalanceCliente.balance)
+                putFloat("limiteCredito", obtenerBalanceCliente.limiteCredito)
+            }
+
+        }
     }
 }

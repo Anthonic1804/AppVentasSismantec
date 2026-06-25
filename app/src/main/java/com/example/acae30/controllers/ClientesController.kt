@@ -19,6 +19,7 @@ import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.ui.pedidos.Visita
 import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.remote.api.clientes.ClientesApi
+import com.example.acae30.data.remote.dto.BalanceClienteDTO
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.JSONmodels.ActualizarPagareFirmadoCliente
 import com.google.gson.Gson
@@ -1725,5 +1726,29 @@ class ClientesController {
 
         }
     }
+
+    //-----------------------------------------------------------------------------------
+    //FUNCION PARA OBTENER EL BALACE ACTUAL Y LIMITE DE CREDITO DE UN CLIENTE POR ID
+    //-----------------------------------------------------------------------------------
+    suspend fun obtenerBalacenClientePorId(
+        context: Context, idCliente: Int) : BalanceClienteDTO = withContext(Dispatchers.IO){
+
+            inicializarVariables(context)
+
+            val baseUrl: String = servidor
+            val api = RetrofitCliente.obtenerApi<ClientesApi>(baseUrl, context)
+
+            try {
+                val respuesta = api.obtenerBalancePorIdCliente(idCliente)
+                if(respuesta.isSuccessful){
+                    respuesta.body()
+                } else {
+                    Timber.e("[CLIENTE_CONTROLLER] RESPUESTA DEL SERVIDOR VACIA EN BALANCE DEL CLIENTE")
+                }
+            }catch (e: Exception){
+                Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL BALANCE DEL CLIENTE -> ${e.message}")
+            } as BalanceClienteDTO
+
+        }
 
 }

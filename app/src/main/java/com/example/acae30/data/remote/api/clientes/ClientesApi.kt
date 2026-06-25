@@ -1,9 +1,11 @@
 package com.example.acae30.data.remote.api.clientes
 
+import com.example.acae30.data.remote.dto.BalanceClienteDTO
 import com.example.acae30.data.remote.dto.ClienteSucursalDto
 import com.example.acae30.data.remote.dto.ClientesDto
 import com.example.acae30.data.remote.dto.ClientesPreciosDto
 import com.example.acae30.data.remote.dto.CxCDto
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
 
@@ -62,4 +64,10 @@ interface ClientesApi {
         @Path("lastId") lastId: Int,
         @Path("take") take: Int
     ) : List<CxCDto>
+
+    //Obtener el Balance y Limite de Credito en Tiempo Real
+    @GET("clientes/balance/{idCliente}")
+    suspend fun obtenerBalancePorIdCliente(
+        @Path("idCliente") idCliente: Int
+    ) : Response<BalanceClienteDTO>
 }
