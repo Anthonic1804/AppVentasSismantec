@@ -36,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -863,16 +864,21 @@ class Visita : AppCompatActivity() {
     //-------------------------------------------------------------------------------
     private fun obtenerBalanceActualClientePorId(){
         lifecycleScope.launch {
-            val obtenerBalanceCliente = clientesController.obtenerBalacenClientePorId(this@Visita, idcliente)
+            try {
+                val obtenerBalanceCliente = clientesController.obtenerBalacenClientePorId(this@Visita, idcliente)
 
-            preferencias.edit{
-                remove("balanceActual")
-                remove("limiteCredito")
-            }
+                preferencias.edit{
+                    remove("balanceActual")
+                    remove("limiteCredito")
+                }
 
-            preferencias.edit {
-                putFloat("balanceActual", obtenerBalanceCliente.balance)
-                putFloat("limiteCredito", obtenerBalanceCliente.limiteCredito)
+                preferencias.edit {
+                    putFloat("balanceActual", obtenerBalanceCliente.balance)
+                    putFloat("limiteCredito", obtenerBalanceCliente.limiteCredito)
+                }
+
+            }catch (e: Exception){
+                Timber.e(e, "[VISITA] ERROR AL OBTENER EL ESTADO DEL CLIENTE")
             }
 
         }

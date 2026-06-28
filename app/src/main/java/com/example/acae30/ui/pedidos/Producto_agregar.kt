@@ -141,6 +141,8 @@ class Producto_agregar : AppCompatActivity() {
     private var fraccionesLote : Float = 0f
     //private var detallePedido : DetallePedido? = null
 
+    private var tipoBonificacion: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -158,6 +160,7 @@ class Producto_agregar : AppCompatActivity() {
         decPrecios = preferencias!!.getInt("decPrecios",2)
         decTotales = preferencias!!.getInt("decTotales",2)
         inventarioTiempoReal = preferencias!!.getBoolean("inventarioTiempoReal", false)
+        tipoBonificacion = preferencias!!.getString("tipoBonificacion","").toString()
 
         //-----------
         //SETEANDO LOS INTENT QUE VIENEN DESDE EL FORMULARIO ANTERIOR
@@ -641,17 +644,30 @@ class Producto_agregar : AppCompatActivity() {
     //FUNCION PARA OBTENER LA BONIFICACION POR PRODUCTO O CLIENTE
     private fun verificarBonificados(unidad: String){
         //OBTENIENDO LA BONIFICACION PERSONALIZADA POR CLIENTE
+
         val clienteBonificado = clientesController.obtenerBonificacionCliente(idcliente!!,
             idproducto!!,this@Producto_agregar)
-        bonificacion = if(unidad == "UNI"){
-            if(clienteBonificado > 0){
-                clienteBonificado
-            }else{
-                datosProducto!!.Bonificado!!.toFloat()
+
+        bonificacion = when(tipoBonificacion){
+
+            "T" -> {
+                if(clienteBonificado > 0) clienteBonificado else datosProducto!!.Bonificado!!
             }
-        } else {
-            0f
+
+            "BC" -> {
+                if(unidad == "UNI") clienteBonificado else 0f
+            }
+
+            "BP" -> {
+                if(unidad == "UNI") datosProducto!!.Bonificado!! else 0f
+            }
+
+            else -> {
+                0f
+            }
+
         }
+
     }
 
     private fun cargarUnidadesMedida(){

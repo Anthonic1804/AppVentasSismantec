@@ -68,5 +68,14 @@ data class PermisosApp(
 
     //Inventario en tiempo real
     var inventarioTiempoReal : Boolean,
-    var eliminarPedidosAutomaticos: Boolean
+    var eliminarPedidosAutomaticos: Boolean,
+
+    //Tipo de Bonificacion
+    /**
+     * T -> TODOS (FICHA CLIENTE Y PRODUCTO)
+     * BC -> BONICIFACION FICHA CLIENTE
+     * BP -> BONIFICACION FICHA PRODUCTO
+     * SB -> SIN BONIFICACION
+     */
+    val tipoBonificacion: String
 )

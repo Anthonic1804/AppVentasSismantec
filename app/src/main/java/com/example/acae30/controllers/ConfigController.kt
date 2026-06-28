@@ -187,7 +187,8 @@ class ConfigController {
                         codBodega = if(dato.isNull("cod_bodega_inventario")) null else dato.optString("cod_bodega_inventario"),
                         bodega = if(dato.isNull("bodega_inventario")) null else dato.optString("bodega_inventario"),
                         inventarioTiempoReal = dato.optBoolean("inventario_tiempo_real", false),
-                        eliminarPedidosAutomaticos = dato.optBoolean("eliminar_pedidos_automatico", false)
+                        eliminarPedidosAutomaticos = dato.optBoolean("eliminar_pedidos_automatico", false),
+                        tipoBonificacion = dato.optString("tipoBonificacion", "T")
                     )
 
                     confirmarPagareObligatorio(item, context)
@@ -291,6 +292,9 @@ class ConfigController {
             putBoolean("inventarioTiempoReal", obj.inventarioTiempoReal)
             putBoolean("eliminarPedidosAutomaticos", obj.eliminarPedidosAutomaticos)
 
+            //tipo de Bonificacion
+            putString("tipoBonificacion", obj.tipoBonificacion)
+
         }
     }
 
@@ -359,6 +363,9 @@ class ConfigController {
             //inventario tiempo real
             remove("inventarioTiempoReal")
             remove("eliminarPedidosAutomaticos")
+
+            //Tipo Bonificacion
+            remove("tipoBonificacion")
         }
     }
 }
