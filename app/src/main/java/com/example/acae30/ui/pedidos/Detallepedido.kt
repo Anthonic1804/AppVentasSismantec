@@ -69,6 +69,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -2039,8 +2040,17 @@ class Detallepedido : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "Error al imprimir: ${e.message}", Toast.LENGTH_LONG).show()
+            //e.printStackTrace()
+            //Toast.makeText(this, "Error al imprimir: ${e.message}", Toast.LENGTH_LONG).show()
+
+            Timber.e(e, "[IMPRESION] ERROR AL IMPRIMIR EL COMPROBANTE ")
+
+            Toast.makeText(
+                this,
+                "${e.javaClass.simpleName}: ${e.message ?: "Sin mensaje"}",
+                Toast.LENGTH_LONG
+            ).show()
+
         }
     }
 
@@ -2365,7 +2375,7 @@ class Detallepedido : AppCompatActivity() {
         val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
         //val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
 
-        val printManager = getSystemService(PRINT_SERVICE) as PrintManager
+        //val printManager = getSystemService(PRINT_SERVICE) as PrintManager
         val impresorIntegrado = preferencias.getString("impresorIntegrado", "sinNombre")
 
         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()

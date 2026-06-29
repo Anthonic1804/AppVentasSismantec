@@ -29,6 +29,11 @@ import androidx.core.database.getFloatOrNull
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.pedidos.PedidosApi
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
+import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
+import timber.log.Timber
 import java.util.UUID
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
@@ -41,6 +46,14 @@ class PedidosController {
     private var instancia = "CONFIG_SERVIDOR"
     private var utilidades = CrearSslNoSeguro()
     private val clientesController = ClientesController()
+    private lateinit var base : AppDatabase
+    private lateinit var servidor : String
+
+    private fun inicializarVariables(context: Context){
+        base = AppDatabase.getInstance(context)
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
+    }
 
     //FUNCION PARA ACTUALIZAR EL TIPO DE ENVIO SELECCIONADO
     fun updateTipoPedido(tipoPedido:Int, idpedido:Int, context: Context){
@@ -785,5 +798,29 @@ class PedidosController {
             base.endTransaction()
         }
         return idPedido
+    }
+
+    //-----------------------------------------------------------
+    // Funcion para obtener los pedidos transmitidos
+    //-----------------------------------------------------------
+    suspend fun obtenerPedidosTransmitidos(
+        context: Context, idPedido: Int
+    ) : PedidoTransmitidoDTO = withContext(Dispatchers.IO){
+
+        inicializarVariables(context)
+
+        val baseUrl : String = servidor
+        val api = RetrofitCliente.obtenerApi<PedidosApi>(baseUrl, context)
+
+        try {
+            val respuesta = api.obtenerPedidoTransmitido(idPedido)
+            if(respuesta.isSuccessful){
+                respuesta.body()
+            }else{
+                Timber.e("[PEDIDO_CONTROLLER] RESPUESTA DEL SERVIDOR VACIA")
+            }
+        }catch (e: Exception){
+            Timber.e(e,"[PEDIDO_CONTROLER] ERROR AL OBTENER LA INFORMACION DEL PEDIDO TRANSMITIDO -> ${e.message}")
+        } as PedidoTransmitidoDTO
     }
 }
