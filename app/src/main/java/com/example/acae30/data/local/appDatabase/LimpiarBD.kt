@@ -9,9 +9,8 @@ class LimpiarBD {
     //Funcion para Limiar (Eliminar) la bd al actualizar
     //-----------------------------------------
     fun limpiarBdAlActualizar(context: Context){
-        Room.databaseBuilder(context, AppDatabase::class.java, "Acae.db")
-            .fallbackToDestructiveMigration()
-            .build()
+        context.deleteDatabase("Acae.db")
+        context.deleteSharedPreferences("CONFIG_SERVIDOR")
     }
 
 }

@@ -846,6 +846,8 @@ class Configuracion : AppCompatActivity() {
     //FUNCION PARA CREAR EL DIALOG DE ACTUALIZAR APP
     private fun mensajeUpdate(versionServer: String, urlServer: String, eliminarBDInterna: Boolean){
 
+        //Timber.e("[CONFIGURACION] VALOR DE BORRARBD -> $eliminarBDInterna")
+
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
 
@@ -857,7 +859,6 @@ class Configuracion : AppCompatActivity() {
         tvUpdate.setOnClickListener {
 
             updateDialog.dismiss()
-
             //----------------------------------
             //Condicion para reiniciar BD
             //----------------------------------
