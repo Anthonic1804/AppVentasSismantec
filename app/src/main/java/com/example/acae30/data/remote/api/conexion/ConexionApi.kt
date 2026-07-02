@@ -18,8 +18,8 @@ interface ConexionApi {
     //-------------------------------------------------------
     //Buscar Actualizacion App
     //-------------------------------------------------------
-    @GET("updateapp")
-    suspend fun obtenerActualizacionApp(): List<UpdateAppDto>
+    @GET("updateapp/v2/buscar")
+    suspend fun obtenerActualizacionApp(): Response<UpdateAppDto>
 
     //--------------------------------------
     //EndPoints Login

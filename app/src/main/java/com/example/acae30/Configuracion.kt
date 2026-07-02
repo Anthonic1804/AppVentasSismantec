@@ -38,6 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
@@ -48,8 +49,9 @@ import javax.net.ssl.HttpsURLConnection
 
 class Configuracion : AppCompatActivity() {
 
-    private var versionAppServer : String? = null
-    private var urlAppServer : String? = null
+    //private var versionAppServer : String? = null
+    //private var urlAppServer : String? = null
+    //private val obligarEliminarBdInternarApp: Boolean = false
     private lateinit var tvUpdate : TextView
     private lateinit var tvCancel : TextView
     private var versionActual : Float = 0f
@@ -61,7 +63,7 @@ class Configuracion : AppCompatActivity() {
     private var configController = ConfigController()
     private var funciones = Funciones()
     private var conexionController = ConexionController()
-    private val agregarHeaders = AgregarHeaders()
+    //private val agregarHeaders = AgregarHeaders()
 
     private var servidor: String = ""
     private var nombreServidor: String = ""
@@ -69,12 +71,12 @@ class Configuracion : AppCompatActivity() {
     private var puertoServidor: String = ""
     private var puntoVenta: String = ""
 
-    private var utilidades = CrearSslNoSeguro()
+    //private var utilidades = CrearSslNoSeguro()
 
     private var idServidorActivo: Int = 0
     private var sslActivo: Int = 0
 
-    //private var limpiarBD = LimpiarBD()
+    private var limpiarBD = LimpiarBD()
 
     private var isProcessing = false
 
@@ -215,9 +217,7 @@ class Configuracion : AppCompatActivity() {
 
             if (funciones.isInternetAvailable(this)) {
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    obtenerNuevaVersionApp()
-                }//COURUTINA CARGAR DATOS DE ACTUALIZACION
+                obtenerNuevaVersionApp()
 
             } else {
                 habilitarOpcion()
@@ -728,7 +728,7 @@ class Configuracion : AppCompatActivity() {
     }//anula el boton atras
 
     //FUNCION PARA VERIFICAR LA VERSION DE LA APP INSTALADA
-    private suspend fun obtenerNuevaVersionApp() {
+   /* private suspend fun obtenerNuevaVersionApp() {
         try {
             val servidor = funciones.getServidor(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), this@Configuracion)
             val direccion = servidor + "updateapp"
@@ -803,17 +803,48 @@ class Configuracion : AppCompatActivity() {
             alerta!!.dismisss()
             ShowAlert("ERROR AL CONECTARSE CON EL SERVIDOR")
         }
-    }
+    }*/
 
-    private fun ShowAlert(mensaje: String) {
-        val alert: Snackbar = Snackbar.make(binding.vistaalerta, mensaje, Snackbar.LENGTH_LONG)
-        alert.view.setBackgroundColor(ContextCompat.getColor(this@Configuracion, R.color.moderado))
-        alert.show()
-    }
+    private fun obtenerNuevaVersionApp(){
+        lifecycleScope.launch {
 
+            runOnUiThread {
+                alerta!!.Cargando()
+            }
+
+            delay(3000)
+
+            try {
+
+                val actualizacionApp = conexionController.obtenerActualizacionApp(this@Configuracion)
+
+                if(actualizacionApp.version!!.isEmpty() || versionActual >= actualizacionApp.version.toFloat()){
+                    runOnUiThread {
+                        habilitarOpcion()
+                        alerta!!.dismisss()
+                        Toast.makeText(applicationContext, "NO ES NECESARIO ACTUALIZAR", Toast.LENGTH_SHORT).show()
+                    }
+                }else{
+                    runOnUiThread {
+                        habilitarOpcion()
+                        alerta!!.dismisss()
+                        mensajeUpdate(actualizacionApp.version, actualizacionApp.enlaceDescarga!!, actualizacionApp.eliminarBd!!)
+                    }
+                }
+
+            }catch (e: Exception){
+                Timber.e(e,"[CONFIGURACION] ERROR AL OBTENER LA ACTUALIZACION DE LA APP")
+
+                habilitarOpcion()
+                alerta!!.dismisss()
+                ShowAlert("ERROR AL CONECTARSE CON EL SERVIDOR")
+            }
+
+        }
+    }
 
     //FUNCION PARA CREAR EL DIALOG DE ACTUALIZAR APP
-    private fun mensajeUpdate(versionServer: String, urlServer: String){
+    private fun mensajeUpdate(versionServer: String, urlServer: String, eliminarBDInterna: Boolean){
 
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
@@ -824,16 +855,13 @@ class Configuracion : AppCompatActivity() {
 
 
         tvUpdate.setOnClickListener {
-            //updateDialog.dismiss()
-            //Toast.makeText(applicationContext, "FUNCION EN DESARROLLO", Toast.LENGTH_SHORT).show()
+
             updateDialog.dismiss()
-            descargarVersionApp(urlServer, "UpdateApp_$versionServer")
 
             //----------------------------------
             //Condicion para reiniciar BD
             //----------------------------------
-            /*if(BuildConfig.VERSION_CODE < versionAppServer!!.toInt()){
-
+            if(eliminarBDInterna){
                 lifecycleScope.launch(Dispatchers.IO) {
 
                     limpiarBD.limpiarBdAlActualizar(this@Configuracion)
@@ -841,7 +869,9 @@ class Configuracion : AppCompatActivity() {
                         descargarVersionApp(urlServer, "UpdateApp_$versionServer")
                     }
                 }
-            }*/
+            }else{
+                descargarVersionApp(urlServer, "UpdateApp_$versionServer")
+            }
         }
 
         tvCancel.setOnClickListener {
@@ -850,6 +880,12 @@ class Configuracion : AppCompatActivity() {
 
         updateDialog.show()
 
+    }
+
+    private fun ShowAlert(mensaje: String) {
+        val alert: Snackbar = Snackbar.make(binding.vistaalerta, mensaje, Snackbar.LENGTH_LONG)
+        alert.view.setBackgroundColor(ContextCompat.getColor(this@Configuracion, R.color.moderado))
+        alert.show()
     }
 
     //FUNCION PARA ACTUALIZAR LA VERSION ACTUAL DE LA APP

@@ -8,6 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.acae30.data.local.dao.ClientesDao
 import com.example.acae30.data.local.dao.InventarioDao
 import com.example.acae30.data.local.dao.InventarioSolicitudDao
+import com.example.acae30.data.local.dao.PedidosDao
 import com.example.acae30.data.local.dao.ServidoresDao
 import com.example.acae30.data.local.entity.AbonosEntity
 import com.example.acae30.data.local.entity.CatalogoDepartamentoEntity
@@ -28,6 +29,7 @@ import com.example.acae30.data.local.entity.HojaCargaDetalleEntity
 import com.example.acae30.data.local.entity.HojaCargaEntity
 import com.example.acae30.data.local.entity.HojaDetalleRecargasEntity
 import com.example.acae30.data.local.entity.InventarioEntity
+import com.example.acae30.data.local.entity.InventarioFTSEntity
 import com.example.acae30.data.local.entity.InventarioLotesEntity
 import com.example.acae30.data.local.entity.InventarioPreciosEntity
 import com.example.acae30.data.local.entity.InventarioSolicitudCargaEntity
@@ -45,42 +47,42 @@ import com.example.acae30.data.local.entity.VentasTempEntity
 import com.example.acae30.data.local.entity.VisitasEntity
 import com.example.acae30.data.local.views.DetalleProductoView
 
+//InventarioFTSEntity::class,
 @Database(entities = [
-        InventarioEntity::class,
-        InventarioPreciosEntity::class,
-        InventarioLotesEntity::class,
-        InventarioUnidadesEntity::class,
-        LineasEntity::class,
-        CatalogoPaisEntity::class,
-        CatalogoDepartamentoEntity::class,
-        CatalogoMunicipioEntity::class,
-        CatalogoDistritoEntity::class,
-        CatalogoGiroEntity::class,
-        CatalogoRutaEntity::class,
-        ServidoresEntity::class,
-        HojaCargaEntity::class,
-        HojaCargaDetalleEntity::class,
-        HojaDetalleRecargasEntity::class,
-        EmpleadosEntity::class,
-        ClientesEntity::class,
-        ClientePreciosEntity::class,
-        ClienteSucursalEntity::class,
-        CuentasEntity::class,
-        GastosEntity::class,
-        AbonosEntity::class,
-        PreciosAutorizadosEntity::class,
-        VentasTempEntity::class,
-        VentasDetalleTempEntity::class,
-        ReporteTempEntity::class,
-        VisitasEntity::class,
-        SolicitudCargaEntity::class,
-        SolicitudCargaDetalleEntity::class,
-        DevolucionEntity::class,
-        DevolucionDetalleEntity::class,
-        InventarioSolicitudCargaEntity::class,
-        PedidosEntity::class,
-        PedidoDetalleEntity::class
-                     ],
+    InventarioEntity::class,
+    InventarioPreciosEntity::class,
+    InventarioLotesEntity::class,
+    InventarioUnidadesEntity::class,
+    LineasEntity::class,
+    CatalogoPaisEntity::class,
+    CatalogoDepartamentoEntity::class,
+    CatalogoMunicipioEntity::class,
+    CatalogoDistritoEntity::class,
+    CatalogoGiroEntity::class,
+    CatalogoRutaEntity::class,
+    ServidoresEntity::class,
+    HojaCargaEntity::class,
+    HojaCargaDetalleEntity::class,
+    HojaDetalleRecargasEntity::class,
+    EmpleadosEntity::class,
+    ClientesEntity::class,
+    ClientePreciosEntity::class,
+    ClienteSucursalEntity::class,
+    CuentasEntity::class,
+    GastosEntity::class,
+    AbonosEntity::class,
+    PreciosAutorizadosEntity::class,
+    VentasTempEntity::class,
+    VentasDetalleTempEntity::class,
+    ReporteTempEntity::class,
+    VisitasEntity::class,
+    SolicitudCargaEntity::class,
+    SolicitudCargaDetalleEntity::class,
+    DevolucionEntity::class,
+    DevolucionDetalleEntity::class,
+    InventarioSolicitudCargaEntity::class,
+    PedidosEntity::class,
+    PedidoDetalleEntity::class],
     views = [
         DetalleProductoView::class
             ],
@@ -91,6 +93,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun clienteDao(): ClientesDao
     abstract fun inventarioSolicitudDao(): InventarioSolicitudDao
     abstract fun servidoresDao(): ServidoresDao
+    abstract fun pedidosDao() : PedidosDao
 
     companion object{
 
