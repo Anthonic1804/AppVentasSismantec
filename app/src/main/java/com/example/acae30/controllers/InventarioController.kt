@@ -1841,4 +1841,21 @@ class InventarioController {
         return listado
     }
 
+    //------------------------------------------------------------
+    // Obtener Id Unidad Medida Seleccionada 06/07/2026
+    //------------------------------------------------------------
+    suspend fun obtenerIdUnidadMedidaSeleccionada(
+        context: Context, idInventario: Int, unidadMedida: String): UnidadMedidaModelo?{
+
+        iniciarlizarVariables(context)
+        inventarioDao = base.inventarioDao()
+
+        return try {
+            inventarioDao.obtenerIdUnidadMedidaSeleccionada(idInventario, unidadMedida)
+        }catch (e: Exception){
+            Timber.e(e, "[INVENTARIO_CONTROLLER] ERROR AL OBTENER LA UNIDAD DE MEDIDA")
+        } as UnidadMedidaModelo?
+
+    }
+
 }

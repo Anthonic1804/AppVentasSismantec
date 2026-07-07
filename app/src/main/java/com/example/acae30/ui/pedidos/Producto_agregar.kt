@@ -99,7 +99,7 @@ class Producto_agregar : AppCompatActivity() {
     private var clientesController = ClientesController()
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
-    private val pedidosController = PedidosController()
+    //private val pedidosController = PedidosController()
 
     //---------
     //VARIABLES PARA EL USO DE CONTROLES
@@ -561,7 +561,7 @@ class Producto_agregar : AppCompatActivity() {
             binding.tvPrecioPersonalizado.visibility = View.GONE
 
             //OBTENIENDO EL PRECIO PERSONALIZADO POR CLIENTE
-            precioIvaPersonalizado = clientesController.obtenerPrecioPersoCliente(idcliente!!,
+            /*precioIvaPersonalizado = clientesController.obtenerPrecioPersoCliente(idcliente!!,
                 idproducto!!, this@Producto_agregar, false)
 
             if(precioIvaPersonalizado > 0){
@@ -571,6 +571,22 @@ class Producto_agregar : AppCompatActivity() {
                     btneditarprecio.visibility = View.GONE
 
                     tvPrecioPersonalizado.text = "${String.format("%.${decPrecios}f".format(precioIvaPersonalizado))}"
+                }
+            }*/
+            val precioPersonalizado = clientesController.obtenerPrecioPersonalizadoCliente(idcliente!!, idproducto!!, this@Producto_agregar) ?: 0f
+
+            if(precioPersonalizado > 0){
+                runOnUiThread {
+
+                    precioIvaPersonalizado = precioPersonalizado
+
+                    binding.apply {
+                        tvPrecioPersonalizado.visibility = View.VISIBLE
+                        spprecio.visibility = View.GONE
+                        btneditarprecio.visibility = View.GONE
+
+                        tvPrecioPersonalizado.text = "${String.format("%.${decPrecios}f".format(precioIvaPersonalizado))}"
+                    }
                 }
             }
 
@@ -868,8 +884,18 @@ class Producto_agregar : AppCompatActivity() {
 
     private fun AddDetallePedido(esPrecioEditado: Boolean, bonificado:Int, precioIva: Float): Int {
         val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
-        var vPrecio: Float = precioIva / 1.13f
-        var vPrecio_iva = precioIva
+
+        var vPrecio: Float
+        var vPrecio_iva: Float
+
+        //CONFIGURA EL PRECIO PERSONALIZADO DEL CLIENTE
+        if(precioIvaPersonalizado > 0){
+            vPrecio = (precioIvaPersonalizado / 1.13).toFloat()
+            vPrecio_iva = precioIvaPersonalizado
+        }else{
+            vPrecio = precioIva / 1.13f
+            vPrecio_iva = precioIva
+        }
 
         //CONFIGURA LA DESCRIPCION DEL PRODUCTO DE ACUERDO A LA UNIDAD SELECCIONADA
         val nombreProducto = binding.txtdescripcion.text.toString()
@@ -879,11 +905,6 @@ class Producto_agregar : AppCompatActivity() {
             else -> binding.spunidad.selectedItem.toString().trim() + ' ' + nombreProducto
         }
 
-        //CONFIGURA EL PRECIO PERSONALIZADO DEL CLIENTE
-        if(precioIvaPersonalizado > 0){
-            vPrecio = (precioIvaPersonalizado / 1.13).toFloat()
-            vPrecio_iva = precioIvaPersonalizado
-        }
 
         //println("TIPO DE PRODUCTO SELECCIONADO -> ${datosProducto!!.Tipo}")
 
@@ -1656,7 +1677,7 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     //SELECCIONANDO ESCALA PARA EDITAR PRODUCTO EN DETALL
-    private fun seleccionarCantidadenEscala(idPedido: Int, idProducto: Int): Float{
+    /*private fun seleccionarCantidadenEscala(idPedido: Int, idProducto: Int): Float{
         val db = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
         var cantidadEscala = 0f
         try {
@@ -1678,7 +1699,7 @@ class Producto_agregar : AppCompatActivity() {
             println("ERROR: AL SELECCIONAR LA ESCALA -> " + e.message)
         }
         return cantidadEscala
-    }
+    }*/
 
     //FUNCION PARA REGRESAR AL DETALLE DEL PEDIDO
     private fun provieneDetallePedido(idpedido: Int, idcliente: Int?, nombrecliente: String?, idvisita: Int, codigo: String, visita: String,

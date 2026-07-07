@@ -9,6 +9,7 @@ import com.example.acae30.data.local.entity.InventarioFTSEntity
 import com.example.acae30.data.local.entity.InventarioLotesEntity
 import com.example.acae30.data.local.entity.InventarioPreciosEntity
 import com.example.acae30.data.local.entity.InventarioUnidadesEntity
+import com.example.acae30.modelos.UnidadMedidaModelo
 
 @Dao
 interface InventarioDao {
@@ -57,5 +58,17 @@ interface InventarioDao {
         LIMIT 50
     """)
     suspend fun busquedaInventarioFTS(busqueda: String) : List<InventarioEntity>*/
+
+    //-------------------------------------------------------
+    // Obtener unidades de Medida por idProducto  06/07/2026
+    //-------------------------------------------------------
+    @Query("SELECT * " +
+            "FROM inventario_unidades " +
+            "WHERE id_inventario = :idInventario " +
+            "AND Nombre_unidad = :unidadMedida")
+    suspend fun obtenerIdUnidadMedidaSeleccionada(
+        idInventario: Int,
+        unidadMedida: String
+    ): UnidadMedidaModelo?
 
 }

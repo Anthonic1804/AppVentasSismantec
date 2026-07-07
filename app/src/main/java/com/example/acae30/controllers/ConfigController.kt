@@ -188,7 +188,8 @@ class ConfigController {
                         bodega = if(dato.isNull("bodega_inventario")) null else dato.optString("bodega_inventario"),
                         inventarioTiempoReal = dato.optBoolean("inventario_tiempo_real", false),
                         eliminarPedidosAutomaticos = dato.optBoolean("eliminar_pedidos_automatico", false),
-                        tipoBonificacion = dato.optString("tipoBonificacion", "T")
+                        tipoBonificacion = dato.optString("tipoBonificacion", "T"),
+                        habilitarFTS4 =  dato.optBoolean("habilitarFTS4", false)
                     )
 
                     confirmarPagareObligatorio(item, context)
@@ -295,6 +296,9 @@ class ConfigController {
             //tipo de Bonificacion
             putString("tipoBonificacion", obj.tipoBonificacion)
 
+            //Habilitar FTS4
+            putBoolean("habilitarFTS4", obj.habilitarFTS4!!)
+
         }
     }
 
@@ -366,6 +370,9 @@ class ConfigController {
 
             //Tipo Bonificacion
             remove("tipoBonificacion")
+
+            //FullText Search 4
+            remove("habilitarFTS4")
         }
     }
 }

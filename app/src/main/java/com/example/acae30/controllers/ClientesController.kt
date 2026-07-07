@@ -1008,7 +1008,7 @@ class ClientesController {
     }
 
     //FUNCION PARA OBTENER EL PRECIO PERSONALIZADO POR ID CLIENTE E ID PRODUCTO
-    fun obtenerPrecioPersoCliente(idCliente: Int, idProducto: Int, context: Context, facExpo: Boolean) : Float{
+    /*fun obtenerPrecioPersoCliente(idCliente: Int, idProducto: Int, context: Context, facExpo: Boolean) : Float{
         preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var precioIva = 0f
@@ -1032,7 +1032,7 @@ class ClientesController {
             println("ERROR AL BUSCAR EL PRECIO PERSONALIZADO -> ${e.message}")
         }
         return precioIva
-    }
+    }*/
 
     //FUNCION PARA OBTENER LAS BONIFICACIONES PERSONALIDAS POR ID CLIENTE E ID PRODUCTO
     fun obtenerBonificacionCliente(idCliente: Int, idProducto: Int, context: Context) : Float{
@@ -1750,5 +1750,39 @@ class ClientesController {
             } as BalanceClienteDTO
 
         }
+
+    //--------------------------------------------------------------
+    //Obtener Precio Personalizado por id Cliente y id Producto 06/07/2026
+    //--------------------------------------------------------------
+    suspend fun obtenerPrecioPersonalizadoCliente(
+        idCliente: Int, idInventario: Int, context: Context) : Float?{
+
+        inicializarVariables(context)
+        clientesDao = base.clienteDao()
+
+        return try {
+            clientesDao.obtenerPrecioPersonalizadoCliente(idCliente, idInventario)
+        }catch (e: Exception){
+            Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL PRECIO PERSONALIZADO DEL CLIENTE")
+        } as Float?
+
+    }
+
+    //-----------------------------------------------------------------
+    //Obtener Bonificado de Clientes 06/07/2026
+    //-----------------------------------------------------------------
+    suspend fun obtenerCantidadBonificadoClientePorIdProducto(
+        idCliente: Int, idInventario: Int, context: Context): Float?{
+        inicializarVariables(context)
+
+        clientesDao = base.clienteDao()
+
+        return try {
+            clientesDao.obtenerCantidadBonificadoClientePorIdProducto(idCliente, idInventario)
+        }catch (e: Exception){
+            Timber.e(e,"[CLIENTE_CONTROLLER] ERROR AL OBTENER LA BONIFICACION DEL PRODUCTO DEL CLIENTE")
+        } as Float?
+
+    }
 
 }

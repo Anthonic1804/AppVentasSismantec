@@ -8,6 +8,7 @@ import com.example.acae30.data.local.entity.ClientePreciosEntity
 import com.example.acae30.data.local.entity.ClienteSucursalEntity
 import com.example.acae30.data.local.entity.ClientesEntity
 import com.example.acae30.data.local.entity.CuentasEntity
+import com.example.acae30.modelos.UnidadMedidaModelo
 
 @Dao
 interface ClientesDao {
@@ -60,4 +61,29 @@ interface ClientesDao {
     //----------------------------------------------------
     @Query("DELETE FROM cuentas")
     suspend fun eliminarCuentasClientes()
+
+    //-----------------------------------------------------
+    //  Obtener Precio Personalizado del Cliente 06/07/2026
+    //-----------------------------------------------------
+    @Query("SELECT precio_p_iva " +
+            "FROM cliente_precios " +
+            "WHERE id_cliente = :idCliente " +
+            "AND id_inventario = :idInventario")
+    suspend fun obtenerPrecioPersonalizadoCliente(
+        idCliente: Int,
+        idInventario: Int
+    ) : Float?
+
+    //------------------------------------------------------
+    // Obtener Bonificados de Clientes 06/07/2026
+    //------------------------------------------------------
+    @Query("SELECT bonificado " +
+            "FROM cliente_precios " +
+            "WHERE id_cliente = :idCliente " +
+            "AND id_inventario = :idInventario")
+    suspend fun obtenerCantidadBonificadoClientePorIdProducto(
+        idCliente: Int,
+        idInventario: Int
+    ) : Float?
+
 }

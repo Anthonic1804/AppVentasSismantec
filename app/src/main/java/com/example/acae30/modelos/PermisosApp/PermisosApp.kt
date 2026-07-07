@@ -77,5 +77,8 @@ data class PermisosApp(
      * BP -> BONIFICACION FICHA PRODUCTO
      * SB -> SIN BONIFICACION
      */
-    val tipoBonificacion: String
+    val tipoBonificacion: String,
+
+    //Habilitando Full Text Search
+    val habilitarFTS4: Boolean?
 )
