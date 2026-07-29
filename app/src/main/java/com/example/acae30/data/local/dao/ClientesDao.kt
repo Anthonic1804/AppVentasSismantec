@@ -8,7 +8,7 @@ import com.example.acae30.data.local.entity.ClientePreciosEntity
 import com.example.acae30.data.local.entity.ClienteSucursalEntity
 import com.example.acae30.data.local.entity.ClientesEntity
 import com.example.acae30.data.local.entity.CuentasEntity
-import com.example.acae30.modelos.UnidadMedidaModelo
+import com.example.acae30.data.local.models.UnidadMedidaModelo
 
 @Dao
 interface ClientesDao {

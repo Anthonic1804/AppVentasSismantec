@@ -4,26 +4,32 @@ import com.google.gson.annotations.SerializedName
 
 data class PedidoTransmitidoDTO(
 
+    @SerializedName("encontrado")
+    val encontrado: Boolean,
+
+    @SerializedName("idPedido")
+    val idPedido: Int?,
+
     @SerializedName("pedido_dte")
-    val pedidoDte: Boolean,
+    val pedidoDte: Boolean?,
 
     @SerializedName("pedido_dte_error")
-    val pedidoDteError: Boolean,
+    val pedidoDteError: Boolean?,
 
     @SerializedName("dteAmbiente")
-    val dteAmbiente: String,
+    val dteAmbiente: String?,
 
     @SerializedName("dteCodigoGeneracion")
-    val dteCodigoGeneracion: String,
+    val dteCodigoGeneracion: String?,
 
     @SerializedName("dteSelloRecibido")
-    val dteSelloRecibido: String,
+    val dteSelloRecibido: String?,
 
     @SerializedName("dteNumeroControl")
-    val dteNumeroControl: String,
+    val dteNumeroControl: String?,
 
     @SerializedName("idDocTransmitido")
-    val idDocTransmitido: Int
+    val idDocTransmitido: Int?
 
 
 )

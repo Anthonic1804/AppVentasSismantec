@@ -11,10 +11,11 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.Funciones
 import com.example.acae30.R
+import com.example.acae30.data.local.models.Inventario
 import com.squareup.picasso.Picasso
 
 class InventarioAdapter(
-    private val lista: List<com.example.acae30.modelos.Inventario>?,
+    private val lista: List<Inventario>?,
     private val context: Context,
     private var vistaInventario:Int? = null, //TIPO DE VISTA DEL INVENTARIO
     val itemClick: (Int) -> Unit

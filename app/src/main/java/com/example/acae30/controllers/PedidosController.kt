@@ -146,7 +146,7 @@ class PedidosController {
     //FUNCION PARA OBTENER PEDIDOS NO TRANSMITIDOS EN SQLITE
     fun obtenerPedidosNoTransmitidos(context: Context) :ArrayList<Pedidos>{
         val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
-        var pedido = ArrayList<Pedidos>()
+        val pedido = ArrayList<Pedidos>()
         try {
             val consulta = "SELECT Id," +
                     " Id_cliente," +
@@ -165,7 +165,8 @@ class PedidosController {
                     "Iva," +
                     "Iva_percibido, " +
                     "pedido_dte, " +
-                    "pedido_dte_error FROM pedidos WHERE Enviado=1 AND pedido_dte=0 AND Tipo_documento != 'RC'"
+                    "pedido_dte_error," +
+                    "Id_pedido_app FROM pedidos WHERE (enviado = 0 OR pedido_dte=0) AND Tipo_documento != 'RC'"
             val cursor = db.query(consulta)
             cursor.use {
                 if(cursor.count > 0){
@@ -196,16 +197,18 @@ class PedidosController {
                             "",
                             "",
                             "",
-                            ""
+                            "",
+                            cursor.getString(17)
                         )
                         pedido.add(item)
                     }while (cursor.moveToNext())
                 }
             }
-            return pedido
         }catch (e:Exception){
-            throw Exception("ERROR NO SE ENCONTRARON PEDIDOS -> " + e.message)
+            Timber.e(e, "[PEDIDO_CONTROLLER] ERROR AL OBTENER EL LISTADO DE PEDIDOS NO ENVIADOS")
         }
+
+        return pedido
     }
 
     //FUNCION PARA OBTENER INFORMACION DEL PEDIDO
@@ -243,7 +246,8 @@ class PedidosController {
                         cursor.getString(22),
                         cursor.getString(24),
                         cursor.getString(21),
-                        cursor.getString(49)
+                        cursor.getString(49),
+                        ""
                     )
                 }
             }
@@ -804,7 +808,7 @@ class PedidosController {
     // Funcion para obtener los pedidos transmitidos
     //-----------------------------------------------------------
     suspend fun obtenerPedidosTransmitidos(
-        context: Context, idPedido: Int
+        context: Context, idPedidoApp: String
     ) : PedidoTransmitidoDTO = withContext(Dispatchers.IO){
 
         inicializarVariables(context)
@@ -813,7 +817,7 @@ class PedidosController {
         val api = RetrofitCliente.obtenerApi<PedidosApi>(baseUrl, context)
 
         try {
-            val respuesta = api.obtenerPedidoTransmitido(idPedido)
+            val respuesta = api.obtenerPedidoTransmitido(idPedidoApp)
             if(respuesta.isSuccessful){
                 respuesta.body()
             }else{
@@ -822,5 +826,43 @@ class PedidosController {
         }catch (e: Exception){
             Timber.e(e,"[PEDIDO_CONTROLER] ERROR AL OBTENER LA INFORMACION DEL PEDIDO TRANSMITIDO -> ${e.message}")
         } as PedidoTransmitidoDTO
+    }
+
+    //--------------------------------------------------------------
+    // Actualizar información del Pedido Transmitido
+    //--------------------------------------------------------------
+    suspend fun actualizarInformacionPedidoTransmitido(context: Context, idPedido: Int, pedidoDTE : Int, pedidoDteError:Int,
+                                                       dteAmbiente:String, dteCodigoGeneracion:String, dteSelloRecibido:String, dteNumeroControl:String,
+                                                       idDocTransmitido: Int){
+        inicializarVariables(context)
+
+        val dao = base.pedidosDao()
+
+        try {
+            dao.actualizarInformacionPedido(idPedido, pedidoDTE, pedidoDteError, dteAmbiente, dteCodigoGeneracion,
+                dteSelloRecibido, dteNumeroControl, idDocTransmitido)
+        }catch (e: Exception){
+            Timber.e(e, "[PEDIDO_CONTROLLER] ERROR AL ACTUALIZAR LA INFORMACIÓN DEL PEDIDO TRANSMITIDO")
+        }
+
+    }
+
+    //---------------------------------------------------------
+    // Funcion para actualizar el estado del pedido al ser enviado
+    //---------------------------------------------------------
+    suspend fun actualizarEstadoPedidoEnviado(context: Context, idServidor: Int, idPedido: Int) : Boolean{
+
+        inicializarVariables(context)
+
+        val dao = base.pedidosDao()
+
+        return try{
+            val actualizados = dao.actualizarIdServidorConfirmandoPedido(idServidor, idPedido)
+            actualizados > 0
+        }catch (e: Exception){
+            Timber.e(e,"[PEDIDO_CONTROLLER] ERROR AL ACTUALIZAR EL ENVIO DEL PEDIDO")
+        } as Boolean
+
+
     }
 }

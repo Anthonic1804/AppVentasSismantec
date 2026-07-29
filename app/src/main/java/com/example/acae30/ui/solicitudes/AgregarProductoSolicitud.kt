@@ -1,6 +1,7 @@
 package com.example.acae30.ui.solicitudes
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -13,7 +14,7 @@ import com.example.acae30.ui.solicitudes.ListadoProductosSolicitud
 import com.example.acae30.R
 import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivityAgregarProductoSolicitudBinding
-import com.example.acae30.modelos.Inventario
+import com.example.acae30.data.local.models.Inventario
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,6 +39,9 @@ class AgregarProductoSolicitud : AppCompatActivity() {
     private var enviado : Int = 0
     private var idServidorSolicitud : Int = 0
     private var estado: String = ""
+    private lateinit var preferences: SharedPreferences
+    private val instancia = "CONFIG_SERVIDOR"
+    private var solicitudSinExistencia: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +56,9 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         descripcion = intent.getStringExtra("descripcion").toString()
         estado = intent.getStringExtra("estado").toString()
         enviado = intent.getIntExtra("enviado", 0)
+
+        preferences = getSharedPreferences(instancia, MODE_PRIVATE)
+        solicitudSinExistencia = preferences.getBoolean("Solicitud_Carga_SinExistencia", false)
 
 
         if(proceso == "nuevo"){
@@ -294,14 +301,26 @@ class AgregarProductoSolicitud : AppCompatActivity() {
         if(cantidadIngresada.isNotEmpty() && isInteger(cantidadIngresada)){
             cantidad = cantidadIngresada.toFloat()
 
-            if(cantidad > existencia || cantidad == 0f){
-                binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
-                binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
-                binding.btnagregar.isEnabled = false
+            if (!solicitudSinExistencia){
+                if(cantidad > existencia || cantidad == 0f){
+                    binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
+                    binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
+                    binding.btnagregar.isEnabled = false
+                }else{
+                    binding.btnagregar.isEnabled = true
+                    totalizar(cantidad)
+                    binding.btnagregar.setBackgroundResource(R.drawable.border_btnenviar)
+                }
             }else{
-                binding.btnagregar.isEnabled = true
-                totalizar(cantidad)
-                binding.btnagregar.setBackgroundResource(R.drawable.border_btnenviar)
+                if(cantidad == 0f){
+                    binding.txtcantidad.error = "Debe de Ingresar una Cantidad";
+                    binding.btnagregar.setBackgroundResource(R.drawable.border_btndisable)
+                    binding.btnagregar.isEnabled = false
+                }else{
+                    binding.btnagregar.isEnabled = true
+                    totalizar(cantidad)
+                    binding.btnagregar.setBackgroundResource(R.drawable.border_btnenviar)
+                }
             }
 
         }else{

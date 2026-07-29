@@ -802,23 +802,25 @@ class Detallepedido : AppCompatActivity() {
 
                 pedido.Vendedor = vendedor//agregamos los datos del vendedor
 
-                val enviado = SendPedido(pedido, idpedido)//envia el pedido y actualiza el estado del pedido en el cel
-                alerta!!.dismisss()
+                lifecycleScope.launch {
+                    val enviado = SendPedido(pedido, idpedido)//envia el pedido y actualiza el estado del pedido en el cel
+                    alerta!!.dismisss()
 
-                if(enviado){
-                    //SI EL PEDIDO YA HA FUE CERRADO NO REALIZA LA DESCARGA NUEVAMENTE
-                    if(pedido.Cerrado!! == 0){
-                        //DESCARGANDO INVENTARIO
-                        descargarInventario()
+                    if(enviado) {
+                        //SI EL PEDIDO YA HA FUE CERRADO NO REALIZA LA DESCARGA NUEVAMENTE
+                        if (pedido.Cerrado!! == 0) {
+                            //DESCARGANDO INVENTARIO
+                            descargarInventario()
+                        }
+
+                        pedidoEnviado()
                     }
-
-                    pedidoEnviado()
-
-                }else{
-                    runOnUiThread {
-                        habilitarOpciones()
-                        Toast.makeText(this@Detallepedido,"DESEA ALMACENAR EL PEDIDO PARA LUEGO ENVIARLO", Toast.LENGTH_SHORT).show()
-                    }
+//                    }else{
+//                        runOnUiThread {
+//                            habilitarOpciones()
+//                            Toast.makeText(this@Detallepedido,"DESEA ALMACENAR EL PEDIDO PARA LUEGO ENVIARLO", Toast.LENGTH_SHORT).show()
+//                        }
+//                    }
                 }
             }
         }catch (e: Exception){
@@ -1499,7 +1501,7 @@ class Detallepedido : AppCompatActivity() {
         }
     }
 
-    private fun SendPedido(pedido: CabezeraPedidoSend, idpedido: Int) : Boolean  {
+    private suspend fun SendPedido(pedido: CabezeraPedidoSend, idpedido: Int) : Boolean  {
         var enviado = false
         try {
             val objecto = convertToJson(pedido, idpedido) //convertimos a json el objecto pedido
@@ -1512,7 +1514,9 @@ class Detallepedido : AppCompatActivity() {
 
             val sslContext = utilidades.crearSslInseguro()
 
-            with(url.openConnection() as HttpURLConnection) {
+            with(withContext(Dispatchers.IO) {
+                url.openConnection()
+            } as HttpURLConnection) {
 
                 if(this is HttpsURLConnection){
                     sslSocketFactory = sslContext.socketFactory
@@ -1529,7 +1533,7 @@ class Detallepedido : AppCompatActivity() {
                     val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
                     or.write(objecto.toString()) //escribo el json
                     or.flush() //se envia el json
-                    val errorcode = responseCode
+
                     BufferedReader(InputStreamReader(inputStream) as Reader?).use {
                         try {
                             val respuesta = StringBuffer()
@@ -1539,16 +1543,24 @@ class Detallepedido : AppCompatActivity() {
                                 inpuline = it.readLine()
                             }
                             it.close()
-                            val data: String? = respuesta.toString()
-                            if (data != null && data.length > 0) {
+                            val data: String = respuesta.toString()
+                            if (data.isNotEmpty()) {
                                 val datosservidor = JSONObject(data)
+
                                 if (!datosservidor.isNull("error") && !datosservidor.isNull("response")) {
                                     when (responseCode) {
+                                        200->{
+                                            enviado = false
+                                            runOnUiThread {
+                                                funciones.mostrarMensaje("PEDIDO YA ENVIADO, SINCRONICE POR FAVOR", this@Detallepedido, binding.lienzo)
+                                            }
+                                        }
                                         201 -> {
-                                            val idpedidoS = datosservidor.getString("error").toInt()
-                                            if (idpedidoS > 0) {
+                                            val idPedidoServidor = datosservidor.getString("error").toInt()
+                                            if (idPedidoServidor > 0) {
                                                 enviado = true
-                                                ConfirmarPedido(idpedido, idpedidoS)
+                                                pedidosController.actualizarEstadoPedidoEnviado(this@Detallepedido, idPedidoServidor, idpedido)
+                                                //ConfirmarPedido(idpedido, idpedidoS)
                                             } else {
                                                 enviado = false
                                                 funciones.mostrarAlerta("ERROR: AL ENVIAR EL PEDIDO", this@Detallepedido, binding.lienzo)
@@ -1556,30 +1568,43 @@ class Detallepedido : AppCompatActivity() {
                                         }
                                         400 -> {
                                             enviado = false
-                                            funciones.mostrarAlerta("ERROR: RESPUESTA NO ENCONTRADA", this@Detallepedido, binding.lienzo)
+                                            runOnUiThread {
+                                                funciones.mostrarAlerta("ERROR: AL ENVIAR EL PEDIDO", this@Detallepedido, binding.lienzo)
+                                            }
                                         }
                                         500 -> {
                                             enviado = false
-                                            funciones.mostrarAlerta("ERROR INTERNO DEL SERVIDOR", this@Detallepedido, binding.lienzo)
+                                            runOnUiThread {
+                                                funciones.mostrarAlerta("ERROR INTERNO DEL SERVIDOR", this@Detallepedido, binding.lienzo)
+                                            }
                                         }
                                     }
                                 } else {
                                     enviado = false
-                                    funciones.mostrarAlerta("ERROR: NO HEY RESPUESTA DEL SERVIDOR 1", this@Detallepedido, binding.lienzo)
+                                    runOnUiThread {
+                                        funciones.mostrarAlerta("ERROR RESPUESTA DEL SERVIDOR NULA", this@Detallepedido, binding.lienzo)
+                                    }
                                 }
                             } else {
                                 enviado = false
-                                funciones.mostrarAlerta("ERROR: NO HAY RESPUESTA DEL SERVIDOR 2", this@Detallepedido, binding.lienzo)
+                                runOnUiThread {
+                                    funciones.mostrarAlerta("ERROR AL OBTENER RESPUETA DEL SERVIDOR", this@Detallepedido, binding.lienzo)
+                                }
                             }
                         } catch (e: Exception) {
                             enviado = false
-                            funciones.mostrarAlerta("ERROR: AL LEER LA RESPUESTA DEL SERVER", this@Detallepedido, binding.lienzo)
+                            runOnUiThread {
+                                funciones.mostrarAlerta("ERROR AL LEER LA RESPUESTA DEL SERVIDOR", this@Detallepedido, binding.lienzo)
+                            }
+                            Timber.e(e, "[DETALLE_PEDEIDO] ERROR AL LEER LA RESPUESTA DEL SERVIDOR")
                         }
                     } //se obtiene la respuesta del servidor
                 } catch (e: Exception) {
                     enviado = false
-                    //funciones.mostrarAlerta("ERROR: AL ENVIAR EL JSON DEL PEDIDO", this@Detallepedido, binding.lienzo)
-                    println("ERROR AL ENVIAR EL PEDIDO -> ${e.message}")
+                    runOnUiThread {
+                        funciones.mostrarAlerta("ERROR DE CONEXION CON EL SERVIDOR", this@Detallepedido, binding.lienzo)
+                    }
+                    Timber.e(e,"[DETALLE_PEDIDO] ERROR DE CONEXION CON EL SERVIDOR")
                 }
 
             }
@@ -1590,7 +1615,7 @@ class Detallepedido : AppCompatActivity() {
         return enviado
     } //funcion que envia el pedido a la bd
 
-    private fun ConfirmarPedido(idpedido: Int, idservidor: Int) {
+   /* private fun ConfirmarPedido(idpedido: Int, idservidor: Int) {
         val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.writableDatabase
         try {
             bd.execSQL("UPDATE pedidos set Id_pedido_sistema=$idservidor,Enviado=1,Cerrado=1 WHERE Id=$idpedido")
@@ -1598,7 +1623,7 @@ class Detallepedido : AppCompatActivity() {
         } catch (e: Exception) {
             throw Exception(e.message)
         }
-    } //actualiza el pedido y confirma que se envio
+    } //actualiza el pedido y confirma que se envio*/
 
     private fun ConfirmarDetallePedido(): Int {
         val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
@@ -1622,13 +1647,22 @@ class Detallepedido : AppCompatActivity() {
 
     private fun convertToJson(pedido: CabezeraPedidoSend, idpedido_param: Int): JsonObject {
 
-        var idvisita_v = 0.toInt()
+        var idvisita_v = 0
         val puntoVenta = preferencias.getString("puntoVenta", "").toString()
         var idHojaCarga = 0
         var hojaCarga = 0
         val multiplesHojaDeCarga = preferencias.getBoolean("multiplesHojaDeCarga", false)
         val ventaLocal = preferencias.getBoolean("tipoVentaLocal", false)
         val numeroCaja = preferencias.getInt("numeroCaja", 0)
+
+        //BODEGA
+        val idBodega = preferencias.getInt("idBodega", -1)
+        val codBodega = preferencias.getString("codBodega", "-1")
+        val bodega = preferencias.getString("bodega", "-1")
+
+        val idBodegaFinal = if(idBodega == -1) null else idBodega
+        val codBodegaFinal = if(codBodega == "-1") null else codBodega
+        val bodegaFinal = if(bodega == "-1") null else bodega
 
         if(!multiplesHojaDeCarga){
             idHojaCarga = preferencias.getInt("idHojaCarga", 0)
@@ -1637,7 +1671,7 @@ class Detallepedido : AppCompatActivity() {
 
         //val idHojaCargaMaster = preferencias.getInt("idHojaCargaMaster", 0)
 
-        var horaProceso = funciones.getFechaHoraProceso()
+        val horaProceso = funciones.getFechaHoraProceso()
 
         val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
@@ -1722,6 +1756,10 @@ class Detallepedido : AppCompatActivity() {
 
         json.addProperty("id_pedido_app", pedido.id_pedido_app)
         json.addProperty("numeroCaja", numeroCaja)
+
+        json.addProperty("idBodega", idBodegaFinal)
+        json.addProperty("codBodega", codBodegaFinal)
+        json.addProperty("bodega", bodegaFinal)
 
         //se ordena la cabezera
         val detalle = JsonArray()

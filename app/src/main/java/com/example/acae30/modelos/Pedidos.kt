@@ -26,5 +26,6 @@ data class Pedidos(
     var Tipo_documento: String?,
     var Terminos: String?,
     var Nombre_sucursal: String?,
-    var Sucursal_Direccion: String?
+    var Sucursal_Direccion: String?,
+    var IdPedidoApp: String?
 )

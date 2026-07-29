@@ -12,7 +12,7 @@ import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.remote.api.inventario.InventarioApi
-import com.example.acae30.modelos.Inventario
+import com.example.acae30.data.local.models.Inventario
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCarga
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDTO
 import com.example.acae30.modelos.SolicitudCarga.SolicitudCargaDetalle

@@ -297,7 +297,7 @@ class Inventario : AppCompatActivity() {
     }
 
     //IMPLEMENTADA LA FUNCION DE NO AGREGAR PRODUCTOS SIN EXISTENCIAS
-    private fun MostrarLista(list: List<com.example.acae30.modelos.Inventario>) {
+    private fun MostrarLista(list: List<com.example.acae30.data.local.models.Inventario>) {
             try {
                 if (list.isNotEmpty()) {
                     //MOSTRANDO INVENTARIO EN VISTA LISTA

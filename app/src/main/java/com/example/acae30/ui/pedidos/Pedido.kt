@@ -23,16 +23,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.AlertDialogo
-import com.example.acae30.ui.pedidos.Detallepedido
 import com.example.acae30.Funciones
 import com.example.acae30.Inicio
 import com.example.acae30.R
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.PedidosController
+import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
 import com.example.acae30.listas.PedidosAdapter
 import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
 import com.example.acae30.modelos.JSONmodels.DatosReporteJSON
-import com.example.acae30.modelos.JSONmodels.PedidoDTE
 import com.example.acae30.modelos.Pedidos
 import com.example.acae30.ui.clientes.Clientes
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -54,7 +53,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONArray
-import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
@@ -208,17 +206,34 @@ class Pedido : AppCompatActivity() {
                 val pedidosNoTransmitidos : ArrayList<Pedidos> = pedidosController.obtenerPedidosNoTransmitidos(this@Pedido)
                 //var idPedidoDTE = 0
                 delay(1000)
-                if(pedidosNoTransmitidos.size > 0){
+                if(pedidosNoTransmitidos.isNotEmpty()){
                     for(i in 0 until pedidosNoTransmitidos.size){
                         val item = pedidosNoTransmitidos[i]
 
                         runOnUiThread {
-                            messageAsync("SINCRONIZANDO PEDIDO DEL CLIENTE: \n ${item.Nombre_cliente}")
+                            messageAsync("SINCRONIZANDO PEDIDO DEL CLIENTE: \n ${item.Nombre_cliente} \n IdPedido: ${item.IdPedidoApp}")
                         }
 
                         delay(1000)
 
-                        obtenerPedidosDTEServidor(item.Id_pedido_sistema!!)
+                        //obtenerPedidosDTEServidor(item.Id_pedido_sistema!!)
+                        val pedido: PedidoTransmitidoDTO = pedidosController.obtenerPedidosTransmitidos(this@Pedido, item.IdPedidoApp!!)
+
+                        //println("PEDIDO ENCONTRAOD: ${pedido.encontrado}")
+
+                        if(pedido.encontrado){
+                            val pedidoDTE = if(pedido.pedidoDte!!) 1 else 0
+                            val pedidoDteError = if(pedido.pedidoDteError!!) 1 else 0
+
+                            if(pedido.pedidoDte) {
+                                //Actualizando informacion DTE del Pedido Transmitido
+                                pedidosController.actualizarInformacionPedidoTransmitido(this@Pedido, item.Id, pedidoDTE, pedidoDteError, pedido.dteAmbiente!!,
+                                    pedido.dteCodigoGeneracion!!, pedido.dteSelloRecibido!!, pedido.dteNumeroControl!!, pedido.idDocTransmitido!!)
+                            }else{
+                                //Cerrando Pedido no transmitido
+                                pedidosController.actualizarEstadoPedidoEnviado(this@Pedido, pedido.idPedido!!, item.Id)
+                            }
+                        }
 
                     }
 
@@ -502,6 +517,7 @@ class Pedido : AppCompatActivity() {
                             "",
                             "",
                             cursor.getString(17),
+                            "",
                             "",
                             "",
                             ""
@@ -864,7 +880,7 @@ class Pedido : AppCompatActivity() {
     }
 
     //FUNCION PARA OBTENER LOS PEDIDOS DESDE EL SERVIDOR
-    private fun obtenerPedidosDTEServidor(Id_pedido:Int) {
+    /*private fun obtenerPedidosDTEServidor(Id_pedido:Int) {
         try {
             val datos = PedidoDTE(
                 Id_pedido
@@ -961,7 +977,7 @@ class Pedido : AppCompatActivity() {
                 funciones!!.mensaje(this@Pedido, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
             }
         }
-    }
+    }*/
 
     private fun actualizarVistaDTE(){
         try {

@@ -30,7 +30,7 @@ import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.databinding.ActivityProductoAgregarBinding
 import com.example.acae30.modelos.DetallePedido
-import com.example.acae30.modelos.Inventario
+import com.example.acae30.data.local.models.Inventario
 import com.example.acae30.modelos.InventarioLotesModel
 import com.example.acae30.modelos.InventarioPrecios
 import com.example.acae30.modelos.JSONmodels.ActualizarPrecioPersonalizadoJSON
@@ -40,6 +40,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -180,15 +181,10 @@ class Producto_agregar : AppCompatActivity() {
         total_param = intent.getFloatExtra("total_param", 0.toFloat())
 
         cargarOpcionesGenerales()
-
     }
 
     override fun onStart() {
         super.onStart()
-
-        cargarUnidadesMedida()
-
-        cargarListadoPrecios(unidadActual)
 
         // Actualizar el total cuando cambie el precio
         binding.spprecio.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -402,104 +398,6 @@ class Producto_agregar : AppCompatActivity() {
 
         }
 
-        //SE BUSCA EL DETALLE DEL PEDIDO
-        if (idproducto!! > 0) {
-            val detalle = getPedidodetalle(idpedidodetalle!!)
-            this@Producto_agregar.lifecycleScope.launch {
-                try {
-                    val datos = datosProducto
-
-                    if (datos != null) {
-
-                        binding.txtcodigo.text = datos.Codigo
-                        binding.txtdescripcion.text = datos.descripcion
-                        codigoProducto = datos.Codigo.toString()
-
-                        precio_iva = datos.Precio_iva!!
-                        precio = datos.Precio!!
-                        Totalizar(cantidad)
-                        binding.txtexistencia.text = "${if(lotesActivos == 1) unidadesLote else datos.Existencia}"
-                        binding.txtExistenciasFra.text = "${if(lotesActivos == 1) fraccionesLote else datos.Existencia_u}"
-
-
-                        //VALIDANDO PARA VENTA DE FACCIONES
-                        //existenciaProducto = datos.Existencia!!.toFloat()
-
-                        calcularExitenciaSegunUnidadSeleccionada(unidadActual)
-
-
-                        // Agregar precios a lista
-
-                        val precioss = ArrayList<String>()
-
-                        var seleccionado = false
-
-                        if (proviene == "editar") {
-                            binding.btnagregar.text = "ACTUALIZAR PRODUCTO";
-                            binding.txttituloproducto.text = "ACTUALIZAR PRODUCTO";
-                            binding.btneditarprecio.visibility = View.INVISIBLE;
-
-                            //-----------------------------------------------
-                            // SETEANDO LOTE AL EDITAR EL PRODUCTO
-                            //-----------------------------------------------
-                            binding.etLoteSeleccionado.setText(detalle?.Lote)
-                            cargarInfoLoteSeleccionado(detalle?.Lote!!)
-
-                            var cantidad_provisional = detalle!!.Cantidad
-                            var precio_provisional = detalle!!.Precio_venta //EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
-                            precioEditado = precio_provisional!!
-
-                            //var precio_provisional = total_param!! / cantidad_provisional
-                            cantidad = cantidad_provisional!!
-                            precio_iva = detalle?.Precio_venta!! // EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
-
-                            binding.txtcantidad.setText("${String.format("%.0f".format(cantidad) )}")
-
-                            if ("${String.format("%.2f".format(precio_provisional) )}" == "${String.format("%.2f".format(precio_iva) )}")
-                            {
-                                if (detalle?.Precio_editado == "*") {
-                                    // precio = detalle.Precio_venta!!
-                                    precioss.add("${String.format("%.2f".format(precio_iva) )}" + "*")
-                                } else {
-                                    // precio = detalle.Precio_venta!!
-                                    precioss.add("${String.format("%.2f".format(precio_iva) )}")
-                                }
-                                seleccionado = true
-                            }
-
-                            if (!seleccionado) {
-                                if (detalle?.Precio_editado == "*") {
-                                    precioss.add("${String.format("%.2f".format(precio_provisional) )}" + "*")
-                                } else {
-                                    precioss.add("${String.format("%.2f".format(precio_provisional) )}")//EDITADO
-                                }
-
-                            }
-
-                            precioss.add("${String.format("%.2f".format(datos.Precio_iva) )}")
-                        } else {
-                            // precio vi;eta debe ir
-                            precioss.add("${String.format("%.2f".format(datos.Precio_iva) )}")
-                        }
-
-                        Totalizar(cantidad)
-
-                    } else {
-                        println("No se Han encontrado los datos")
-                    }
-                } catch (e: Exception) {
-                    /*  runOnUiThread {
-                          alert!!.dismisss()
-                          Toast.makeText(this@Producto_agregar, e.message, Toast.LENGTH_LONG).show()
-                      }*/
-                }
-
-            }
-
-        } else {
-
-        }
-
 
         CambioCantidad()
     }
@@ -524,6 +422,13 @@ class Producto_agregar : AppCompatActivity() {
     private fun cargarOpcionesGenerales(){
         this@Producto_agregar.lifecycleScope.launch {
 
+            //---------
+            //LA UNIDADES SE GENERAN AUTOMATICAS SI EL PRODUCTO LAS TIENE CONFIGURADAS
+            //---------
+            datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!)
+
+            //Timber.e("[PRODUCTO SELECCIONADO] PRUEBA DE PRODUCTO SELECCIONADO: -> ${datosProducto!!.descripcion}")
+
             //-----------------------------------------------------------------
             //OBTENIENDO EL LISTADO DE LOTES DEL PRODUCTO
             //-----------------------------------------------------------------
@@ -543,11 +448,6 @@ class Producto_agregar : AppCompatActivity() {
                 lotesActivos = 1
                 cargarLotes()
             }
-
-            //---------
-            //LA UNIDADES SE GENERAN AUTOMATICAS SI EL PRODUCTO LAS TIENE CONFIGURADAS
-            //---------
-            datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!, false)
 
             //--------
             // ASIGNADO DATOS DEL CLIENTE
@@ -603,6 +503,110 @@ class Producto_agregar : AppCompatActivity() {
                 binding.btneliminar.visibility = View.VISIBLE
             } else {
                 binding.btneliminar.visibility = View.GONE
+            }
+
+            runOnUiThread {
+                cargarUnidadesMedida()
+
+                cargarListadoPrecios(unidadActual)
+
+                //SE BUSCA EL DETALLE DEL PEDIDO
+                if (idproducto!! > 0) {
+                    val detalle = getPedidodetalle(idpedidodetalle!!)
+                    this@Producto_agregar.lifecycleScope.launch {
+                        try {
+                            val datos = datosProducto
+
+                            if (datos != null) {
+
+                                binding.txtcodigo.text = datos.Codigo
+                                binding.txtdescripcion.text = datos.descripcion
+                                codigoProducto = datos.Codigo.toString()
+
+                                precio_iva = datos.Precio_iva!!
+                                precio = datos.Precio!!
+                                Totalizar(cantidad)
+                                binding.txtexistencia.text = "${if(lotesActivos == 1) unidadesLote else datos.Existencia}"
+                                binding.txtExistenciasFra.text = "${if(lotesActivos == 1) fraccionesLote else datos.Existencia_u}"
+
+
+                                //VALIDANDO PARA VENTA DE FACCIONES
+                                //existenciaProducto = datos.Existencia!!.toFloat()
+
+                                calcularExitenciaSegunUnidadSeleccionada(unidadActual)
+
+
+                                // Agregar precios a lista
+
+                                val precioss = ArrayList<String>()
+
+                                var seleccionado = false
+
+                                if (proviene == "editar") {
+                                    binding.btnagregar.text = "ACTUALIZAR PRODUCTO";
+                                    binding.txttituloproducto.text = "ACTUALIZAR PRODUCTO";
+                                    binding.btneditarprecio.visibility = View.INVISIBLE;
+
+                                    //-----------------------------------------------
+                                    // SETEANDO LOTE AL EDITAR EL PRODUCTO
+                                    //-----------------------------------------------
+                                    binding.etLoteSeleccionado.setText(detalle?.Lote)
+                                    cargarInfoLoteSeleccionado(detalle?.Lote!!)
+
+                                    var cantidad_provisional = detalle!!.Cantidad
+                                    var precio_provisional = detalle!!.Precio_venta //EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
+                                    precioEditado = precio_provisional!!
+
+                                    //var precio_provisional = total_param!! / cantidad_provisional
+                                    cantidad = cantidad_provisional!!
+                                    precio_iva = detalle?.Precio_venta!! // EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
+
+                                    binding.txtcantidad.setText("${String.format("%.0f".format(cantidad) )}")
+
+                                    if ("${String.format("%.2f".format(precio_provisional) )}" == "${String.format("%.2f".format(precio_iva) )}")
+                                    {
+                                        if (detalle?.Precio_editado == "*") {
+                                            // precio = detalle.Precio_venta!!
+                                            precioss.add("${String.format("%.2f".format(precio_iva) )}" + "*")
+                                        } else {
+                                            // precio = detalle.Precio_venta!!
+                                            precioss.add("${String.format("%.2f".format(precio_iva) )}")
+                                        }
+                                        seleccionado = true
+                                    }
+
+                                    if (!seleccionado) {
+                                        if (detalle?.Precio_editado == "*") {
+                                            precioss.add("${String.format("%.2f".format(precio_provisional) )}" + "*")
+                                        } else {
+                                            precioss.add("${String.format("%.2f".format(precio_provisional) )}")//EDITADO
+                                        }
+
+                                    }
+
+                                    precioss.add("${String.format("%.2f".format(datos.Precio_iva) )}")
+                                } else {
+                                    // precio vi;eta debe ir
+                                    precioss.add("${String.format("%.2f".format(datos.Precio_iva) )}")
+                                }
+
+                                Totalizar(cantidad)
+
+                            } else {
+                                println("No se Han encontrado los datos")
+                            }
+                        } catch (e: Exception) {
+                            /*  runOnUiThread {
+                                  alert!!.dismisss()
+                                  Toast.makeText(this@Producto_agregar, e.message, Toast.LENGTH_LONG).show()
+                              }*/
+                        }
+
+                    }
+
+                } else {
+
+                }
             }
         }
     }

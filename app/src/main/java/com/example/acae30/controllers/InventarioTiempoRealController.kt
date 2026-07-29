@@ -255,14 +255,14 @@ class InventarioTiempoRealController {
 
                 val respuesta = api.obtenerProductoUnidadesPorId(idProducto)
 
-                if(respuesta.isNotEmpty() && respuesta.last().Id != 0){
+                if(respuesta.isNotEmpty() && respuesta.last().id != 0){
                     val entidades = respuesta.map {
                         InventarioUnidadesEntity(
-                            Id = it.Id,
-                            Id_inventario = it.Id_inventario,
-                            Nombre_unidad = it.Nombre_unidad ?: "",
-                            Equivale = it.Equivale ?: 0f,
-                            Unidades = it.Unidades ?: ""
+                            Id = it.id,
+                            Id_inventario = it.idInventario,
+                            Nombre_unidad = it.nombreUnidad ?: "",
+                            Equivale = it.equivale ?: 0f,
+                            Unidades = it.unidades ?: ""
                         )
                     }
 

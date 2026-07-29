@@ -17,7 +17,7 @@ import com.example.acae30.controllers.SolicitudDevolucionesController
 import com.example.acae30.controllers.SolicitudRecargasController
 import com.example.acae30.databinding.ActivityListadoProductosSolicitudBinding
 import com.example.acae30.listas.InventarioAdapter
-import com.example.acae30.modelos.Inventario
+import com.example.acae30.data.local.models.Inventario
 import com.example.acae30.ui.devoluciones.AgregarProductosDevolucion
 import com.example.acae30.ui.devoluciones.NuevaDevolucion
 import kotlinx.coroutines.launch
@@ -126,7 +126,7 @@ class ListadoProductosSolicitud : AppCompatActivity() {
                     bindind.listadoInventario.layoutManager = mLayoutManager
                     val adapter = InventarioAdapter(list, this, vistaInventario) { position ->
                         val existeniasProducto = list[position].Existencia!!.toFloat()
-                        if (!pedidoSinExistencia && existeniasProducto <= 0f) {
+                        if (!pedidoSinExistencia && existeniasProducto <= 0f) { //!pedidoSinExistencia && existeniasProducto <= 0f
                             Toast.makeText(
                                 this@ListadoProductosSolicitud,
                                 "NO SE PUEDEN AGREGAR PRODUCTOS SIN EXISTENCIAS",

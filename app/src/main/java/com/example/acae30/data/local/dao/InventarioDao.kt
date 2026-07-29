@@ -9,7 +9,8 @@ import com.example.acae30.data.local.entity.InventarioFTSEntity
 import com.example.acae30.data.local.entity.InventarioLotesEntity
 import com.example.acae30.data.local.entity.InventarioPreciosEntity
 import com.example.acae30.data.local.entity.InventarioUnidadesEntity
-import com.example.acae30.modelos.UnidadMedidaModelo
+import com.example.acae30.data.local.models.Inventario
+import com.example.acae30.data.local.models.UnidadMedidaModelo
 
 @Dao
 interface InventarioDao {
@@ -70,5 +71,22 @@ interface InventarioDao {
         idInventario: Int,
         unidadMedida: String
     ): UnidadMedidaModelo?
+
+    //--------------------------------------------------------
+    // Obtener el informacion de un producto por su id
+    //--------------------------------------------------------
+    @Query("""
+        SELECT 
+             Id, codigo, tipo, descripcion, unidad_medida, fraccion, nombre_fraccion,
+             existencia, costo, costo_iva, precio_iva, precio, precio_u, precio_u_iva,
+             fecha_inventario, bonificado, existencia_u, codigo_de_barra, condicion_mercado,
+             id_marca, id_sku, id_rubro, id_linea, id_sublinea, id_productor,
+             id_proveedor, metodo_gestion, tipo_fiscal
+        FROM Inventario
+        WHERE id = :idInventario
+    """)
+    suspend fun obtenerInformacionProductoPorId(
+        idInventario: Int
+    ) : Inventario?
 
 }

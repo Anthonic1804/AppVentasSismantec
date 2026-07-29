@@ -132,7 +132,7 @@ class Inventariodetalle : AppCompatActivity() {
     private fun cargarInformacionProducto(){
         this@Inventariodetalle.lifecycleScope.launch {
             try {
-                val producto = inventarioController.obtenerInformacionProductoPorId(this@Inventariodetalle ,idinventario, false)
+                val producto = inventarioController.obtenerInformacionProductoPorId(this@Inventariodetalle ,idinventario)
                 with(binding){
                     txtcodigo.text = producto!!.Codigo
                     txtdescripcion.text = producto.descripcion
@@ -176,16 +176,20 @@ class Inventariodetalle : AppCompatActivity() {
     }
 
     private fun AlertaPrecio(contexto: Inventariodetalle) {
-        val dialogo = Dialog(this)
-        dialogo.setContentView(com.example.acae30.R.layout.alerta_costo)
-        val costoProducto = dialogo.findViewById<TextView>(com.example.acae30.R.id.txtcosto)
+        lifecycleScope.launch {
+            val dialogo = Dialog(this@Inventariodetalle)
+            dialogo.setContentView(com.example.acae30.R.layout.alerta_costo)
+            val costoProducto = dialogo.findViewById<TextView>(com.example.acae30.R.id.txtcosto)
 
-        val producto = inventarioController.obtenerInformacionProductoPorId(this@Inventariodetalle ,idinventario, false)
+            val producto = inventarioController.obtenerInformacionProductoPorId(this@Inventariodetalle ,idinventario)
 
-        costoProducto!!.text = String.format("%.4f", producto!!.costo_iva)
+            runOnUiThread {
+                costoProducto!!.text = String.format("%.4f", producto!!.costo_iva)
+                dialogo.show()
+            }
 
-        dialogo.show()
 
+        }
     } //muestra la alerta para MOSTRAR EL COSTO
 
 }

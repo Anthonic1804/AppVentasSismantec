@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import android.widget.Toast
 import com.example.acae30.Funciones
-import com.example.acae30.modelos.Inventario
+import com.example.acae30.data.local.models.Inventario
 import com.example.acae30.modelos.InventarioPrecios
 import com.example.acae30.modelos.JSONmodels.HojaCargaJSON
 import com.google.gson.Gson
@@ -42,7 +42,7 @@ import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.remote.api.inventario.InventarioApi
 import com.example.acae30.modelos.InventarioLotesModel
-import com.example.acae30.modelos.UnidadMedidaModelo
+import com.example.acae30.data.local.models.UnidadMedidaModelo
 import timber.log.Timber
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
@@ -70,8 +70,8 @@ class InventarioController {
     }
 
     //FUNCION PARA OBTENER INFORMACION DEL PRODUCTO POR ID
-    fun obtenerInformacionProductoPorId(context: Context ,idInventario: Int, facExpo: Boolean): Inventario?{
-        val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
+    suspend fun obtenerInformacionProductoPorId(context: Context ,idInventario: Int): Inventario?{
+        /*val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
         var datos: Inventario? = null
         try {
             val consulta = "SELECT * FROM inventario WHERE Id=$idInventario"
@@ -148,7 +148,17 @@ class InventarioController {
         }catch (e:Exception){
             println("ERROR: DETALLE DEL PRODUCTO -> ${e.message}")
         }
-        return datos
+        return datos*/
+
+        iniciarlizarVariables(context)
+        inventarioDao = base.inventarioDao()
+
+        return try {
+            inventarioDao.obtenerInformacionProductoPorId(idInventario)
+        }catch (e: Exception){
+            Timber.e(e,"[INVENTARIO_CONTROLLER] ERROR AL OBTENER LA INFORMACION DEL PRODUCTO EN INVENTARIO")
+        } as Inventario?
+
     }
 
     //FUNCION PARA OBTENER LAS ESCALAS DE PRECIO POR PRODUCTO
@@ -1654,7 +1664,8 @@ class InventarioController {
     //---------------------------------------------
     //Funcion para cargar las unidades de medida
     //---------------------------------------------
-    suspend fun obtenerInventarioUnidades( context: Context, dialogo: AlertDialogo){
+    suspend fun
+            obtenerInventarioUnidades( context: Context, dialogo: AlertDialogo){
 
         withContext(Dispatchers.Main){
             iniciarlizarVariables(context)
@@ -1686,14 +1697,14 @@ class InventarioController {
 
                     //println("INVENTARIO UNIDADES -> " + respuesta)
 
-                    if(respuesta.isNotEmpty() && respuesta.last().Id != 0){
+                    if(respuesta.isNotEmpty() && respuesta.last().id != 0){
                         val entidades = respuesta.map {
                             InventarioUnidadesEntity(
-                                Id = it.Id,
-                                Id_inventario = it.Id_inventario,
-                                Nombre_unidad = it.Nombre_unidad ?: "",
-                                Equivale = it.Equivale ?: 0f,
-                                Unidades = it.Unidades ?: ""
+                                Id = it.id,
+                                Id_inventario = it.idInventario,
+                                Nombre_unidad = it.nombreUnidad ?: "",
+                                Equivale = it.equivale ?: 0f,
+                                Unidades = it.unidades ?: ""
                             )
                         }
 
@@ -1709,7 +1720,7 @@ class InventarioController {
                             }
                         }
 
-                        lastId = respuesta.last().Id
+                        lastId = respuesta.last().id
                     }else{
                         hayMas = false
                     }

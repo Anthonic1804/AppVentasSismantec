@@ -5,6 +5,7 @@ import com.example.acae30.data.local.entity.InventarioLotesEntity
 import com.example.acae30.data.local.entity.InventarioPreciosEntity
 import com.example.acae30.data.local.entity.InventarioUnidadesEntity
 import com.example.acae30.data.remote.dto.InventarioTiempoRealDto
+import com.example.acae30.data.remote.dto.InventarioUnidadesDTO
 import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -49,7 +50,7 @@ interface InventarioApi {
     suspend fun obtenerUnidadesInventario(
         @Path("offset") offset: Int,
         @Path("limit") limit: Int
-    ) : List<InventarioUnidadesEntity>
+    ) : List<InventarioUnidadesDTO>
 
     //----------------------------------------------------------
     //EndPoints Inventario Lotes
@@ -89,7 +90,7 @@ interface InventarioApi {
     @GET("inventario/busqueda/unidades/{idproducto}")
     suspend fun obtenerProductoUnidadesPorId(
         @Path("idproducto") idproducto: Int
-    ) : List<InventarioUnidadesEntity>
+    ) : List<InventarioUnidadesDTO>
 
     //Obtener Inventario Lotes por IdProducto
     @GET("inventario/busqueda/lotes/{idproducto}")
