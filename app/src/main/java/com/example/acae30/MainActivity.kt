@@ -16,10 +16,17 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
-import com.example.acae30.controllers.ConexionController
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.local.entity.ServidoresEntity
+import com.example.acae30.data.repository.ServidoresRepository
+import com.example.acae30.ui.factories.ServidoresViewModelFactory
+import com.example.acae30.ui.servidores.ServidoresViewModel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +54,8 @@ class MainActivity : AppCompatActivity() {
     private var cbxActivarSSL : CheckBox? = null
 
     private var clientesController = ClientesController()
-    private var conexionController = ConexionController()
+    // REFACTORIZACIÓN: Cambio de ConexionController a ServidoresViewModel
+    private lateinit var servidoresViewModel: ServidoresViewModel
     private var alert: AlertDialogo? = null
 
     private var nombreServidor: String = ""
@@ -58,6 +66,9 @@ class MainActivity : AppCompatActivity() {
 
     private var idServidorActivo: Int = 0
     private var sslActivo: Int = 0
+
+    // REFACTORIZACIÓN: Lista local para el Spinner
+    private var listaServidoresEntity: List<ServidoresEntity> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,6 +90,14 @@ class MainActivity : AppCompatActivity() {
         //amarramos el widgets a las variables
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
 
+        // INICIALIZACIÓN MVVM
+        val dao = AppDatabase.getInstance(this).servidoresDao()
+        val repository = ServidoresRepository(dao)
+        val factory = ServidoresViewModelFactory(repository)
+        servidoresViewModel = ViewModelProvider(this, factory)[ServidoresViewModel::class.java]
+
+        observarViewModel()
+
         btnGuardarServidor!!.setOnClickListener {
             validar()
         }
@@ -87,6 +106,63 @@ class MainActivity : AppCompatActivity() {
 
         cargaInicial()
         cargarServidores()
+    }
+
+    //-----------------------------------
+    // REFACTORIZACIÓN MVVM: Observar cambios en el ViewModel
+    //-----------------------------------
+    private fun observarViewModel() {
+        // Observar listado de servidores para el Spinner
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                servidoresViewModel.servidores.collect { lista ->
+                    listaServidoresEntity = lista
+                    actualizarSpinnerServidores(lista)
+                }
+            }
+        }
+
+        // Observar resultado de conexión para el login
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                servidoresViewModel.resultadoConexion.collect { respuesta ->
+                    if (respuesta.isNotEmpty()) {
+                        manejarRespuestaConexion(respuesta)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun actualizarSpinnerServidores(lista: List<ServidoresEntity>) {
+        val nombres = mutableListOf("-- SELECCIONE --")
+        nombres.addAll(lista.map { it.nombre })
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombres)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        listaServidor!!.adapter = adapter
+    }
+
+    private fun manejarRespuestaConexion(respuesta: String) {
+        if (respuesta == "Conexion Exitosa") {
+            val editor = preferencias!!.edit()
+            editor.putInt("puerto", puerto!!.text.toString().toInt())
+            editor.putString("ip", ip!!.text.toString())
+            editor.putString("puntoVenta", puntoVenta.text.toString())
+            editor.putString("nombreServidor", nombreServidor)
+            editor.putInt("idServidorActivo", idServidorActivo)
+            editor.putInt("sslActivo", sslActivo)
+            editor.apply()
+
+            alerta!!.dismisss()
+            val intent = Intent(this, Login::class.java)
+            startActivity(intent)
+            finish()
+        } else {
+            alerta!!.dismisss()
+            val snack = Snackbar.make(this.vista!!, respuesta, Snackbar.LENGTH_LONG)
+            snack.view.setBackgroundColor(resources.getColor(R.color.moderado))
+            snack.show()
+        }
     }
 
     override fun onStart() {
@@ -99,44 +175,29 @@ class MainActivity : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
+                nombreServidor = parent?.getItemAtPosition(position).toString()
+                if(nombreServidor == "-- SELECCIONE --"){
+                    ip!!.text = ""
+                    puerto!!.text = ""
+                    btnGuardarServidor!!.isEnabled = false
+                }else{
+                    // REFACTORIZACIÓN: Uso de lista cargada por el ViewModel
+                    val servidorSeleccionado = listaServidoresEntity.find { it.nombre == nombreServidor }
+                    servidorSeleccionado?.let {
+                        val ipServidor = it.ip.trim()
+                        val puertoServidor = it.puerto.trim()
+                        idServidorActivo = it.id
+                        sslActivo = it.ssl
 
-
-                lifecycleScope.launch(Dispatchers.IO) {
-                    nombreServidor = parent?.getItemAtPosition(position).toString()
-                    try {
-                        if(nombreServidor == "-- SELECCIONE --"){
-                            withContext(Dispatchers.Main){
-                                withContext(Dispatchers.Main){
-                                    ip!!.text = ""
-                                    puerto!!.text = ""
-                                    btnGuardarServidor!!.isEnabled = false
-                                }
-                            }
-                        }else{
-                            val servidorSeleccionado = conexionController.obtenerInformacionServidorSeleccionado(this@MainActivity, nombreServidor)
-                            val ipServidor = servidorSeleccionado!!.ip.trim()
-                            val puertoServidor = servidorSeleccionado.puerto.trim()
-                            idServidorActivo = servidorSeleccionado.id
-                            sslActivo = servidorSeleccionado.ssl
-
-                            withContext(Dispatchers.Main){
-                                ip!!.text = ipServidor
-                                puerto!!.text = puertoServidor
-                                btnGuardarServidor!!.isEnabled = true
-
-                                cbxActivarSSL!!.isChecked = sslActivo == 1
-                            }
-
-                        }
-                    }catch (e:Exception){
-                        println("ERROR AL TRAER LA INFORMACION DEL SERVIDOR -> " + e.message)
+                        ip!!.text = ipServidor
+                        puerto!!.text = puertoServidor
+                        btnGuardarServidor!!.isEnabled = true
+                        cbxActivarSSL!!.isChecked = sslActivo == 1
                     }
                 }
-
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
-
         }
 
     }
@@ -286,84 +347,9 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun verificarConexion(ip: String, puerto: String, pVenta: String) {
-        try {
-            val servidor = funciones!!.getServidor(ip, puerto, this@MainActivity)
-            val ruta: String = servidor + "conexion" //ruta de la api
-            val url = URL(ruta)
-            val ctx = this.vista
-
-            val sslContext = utilidades.crearSslInseguro()
-
-            with(url.openConnection() as HttpURLConnection) {
-
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier{_, _ -> true}
-                }
-
-                try {
-                    connectTimeout = 30000
-                    requestMethod = "GET"  // optional default is GET
-                    val i: Int? = responseCode
-                    if (responseCode == 200) {
-                        inputStream.bufferedReader().use {
-                            val response = StringBuffer()
-                            var inputLine = it.readLine()
-                            while (inputLine != null) {
-                                response.append(inputLine)
-                                inputLine = it.readLine()
-                            } //obtenemo la respuesta del servidor
-                            it.close()
-                            val respuesta =
-                                JSONArray(response.toString()) //se convierte en un json array
-                            if (respuesta.length() > 0) {
-                                val error = respuesta.getJSONObject(0)
-                                if (error.getInt("error") == 200) {
-                                    val editor = preferencias!!.edit()
-                                    editor!!.putInt("puerto", puerto.toInt())
-                                    editor.putString("ip", ip)
-                                    editor.putString("puntoVenta", pVenta)
-                                    editor.putString("nombreServidor", nombreServidor)
-                                    editor.putInt("idServidorActivo", idServidorActivo)
-                                    editor.putInt("sslActivo", sslActivo)
-                                    editor.commit()
-                                    //se guarda la direccion del servidor y se envia al login
-                                    alerta!!.dismisss()
-                                    val intet: Intent = Intent(ctx!!.context, Login::class.java)
-                                    startActivity(intet)
-                                    //redirige hacia el login
-                                    this@MainActivity.finish() //termina la actividad
-                                } else {
-                                    throw Exception(error.getString("response"))
-                                }
-                            } else {
-                                throw  Exception("No se ha Recibido Respuesta del Servidor")
-                            }
-                        }
-                    } else {
-                        throw  Exception("No se encontro el Servidor")
-                    }
-                } catch (e: Exception) {
-                    throw Exception(e.message)
-                }
-            }
-
-        } catch (e: Exception) {
-            alerta!!.dismisss()
-            if (e.message.toString() == "Host unreachable") {
-                val alert: Snackbar =
-                    Snackbar.make(this.vista!!, "Servidor no Encontrado", Snackbar.LENGTH_LONG)
-                alert.view.setBackgroundColor(resources.getColor(R.color.moderado))
-                alert.show()
-            } else {
-                val alert: Snackbar =
-                    Snackbar.make(this.vista!!, e.message.toString(), Snackbar.LENGTH_LONG)
-                alert.view.setBackgroundColor(resources.getColor(R.color.moderado))
-                alert.show()
-            }
-
-        }
-    } //comprueba la comunicacion
+        // REFACTORIZACIÓN: Delegar la conexión al ViewModel
+        servidoresViewModel.verificarConexion(ip, puerto, sslActivo, this@MainActivity)
+    }
 
     override fun onStop() {
         if (ip!!.text.length > 0) {
@@ -422,19 +408,8 @@ class MainActivity : AppCompatActivity() {
     }//anula el boton atras
 
     //--------------------------------
-    //Funcion para obtener el listado de servidores
+    // REFACTORIZACIÓN: La carga ahora es automática vía observarViewModel()
     //--------------------------------
-    private fun cargarServidores(){
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val lista = conexionController.obtenerListadoNombreServidores(this@MainActivity)
-                val servidor = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_item, lista)
-                servidor.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                listaServidor!!.adapter = servidor
-            }catch (e:Exception){
-                println("ERROR AL TRAER LA LISTA DE SERVIDORES -> " + e.message)
-            }
-        }
-    }
+    private fun cargarServidores(){ }
 
 }

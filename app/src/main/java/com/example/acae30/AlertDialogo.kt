@@ -52,6 +52,10 @@ class AlertDialogo(act: Activity, context: Context) {
         dialogo.dismiss()
     }
 
+    fun isShowing(): Boolean {
+        return ::dialogo.isInitialized && dialogo.isShowing
+    }
+
     fun changeText(mensaje: String) {
         val textocarga = dialogo.findViewById<TextView>(R.id.txtcargando)
         if (textocarga != null) {

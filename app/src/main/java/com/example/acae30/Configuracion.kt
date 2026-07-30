@@ -21,16 +21,23 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.dcastalia.localappupdate.DownloadApk
 import com.example.acae30.Utilidades.AgregarHeaders
 import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.local.appDatabase.LimpiarBD
-import com.example.acae30.controllers.ConexionController
+import com.example.acae30.data.local.entity.ServidoresEntity
+import com.example.acae30.data.repository.ServidoresRepository
 import com.example.acae30.controllers.ConfigController
 import com.example.acae30.databinding.ActivityConfiguracionBinding
 import com.example.acae30.modelos.Impresor.DispositivoBT
+import com.example.acae30.ui.factories.ServidoresViewModelFactory
 import com.example.acae30.ui.servidores.MenuServidores
+import com.example.acae30.ui.servidores.ServidoresViewModel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +69,8 @@ class Configuracion : AppCompatActivity() {
 
     private var configController = ConfigController()
     private var funciones = Funciones()
-    private var conexionController = ConexionController()
+    // REFACTORIZACIÓN: Se reemplaza ConexionController por ServidoresViewModel
+    private lateinit var servidoresViewModel: ServidoresViewModel
     //private val agregarHeaders = AgregarHeaders()
 
     private var servidor: String = ""
@@ -75,6 +83,9 @@ class Configuracion : AppCompatActivity() {
 
     private var idServidorActivo: Int = 0
     private var sslActivo: Int = 0
+
+    // REFACTORIZACIÓN: Lista local de servidores para facilitar búsquedas por nombre
+    private var listaServidoresEntity: List<ServidoresEntity> = emptyList()
 
     private var limpiarBD = LimpiarBD()
 
@@ -93,6 +104,14 @@ class Configuracion : AppCompatActivity() {
 
         preferencias = getSharedPreferences(instancia, MODE_PRIVATE)
         alerta = AlertDialogo(this, this)
+
+        // INICIALIZACIÓN MVVM
+        val dao = AppDatabase.getInstance(this).servidoresDao()
+        val repository = ServidoresRepository(dao)
+        val factory = ServidoresViewModelFactory(repository)
+        servidoresViewModel = ViewModelProvider(this, factory)[ServidoresViewModel::class.java]
+
+        observarViewModel()
 
         nombreServidor = preferencias!!.getString("nombreServidor", "").toString()
         ipServidor = preferencias!!.getString("ip", "").toString()
@@ -350,46 +369,31 @@ class Configuracion : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
+                servidor = parent?.getItemAtPosition(position).toString()
+                if (servidor == "-- SELECCIONE --") {
+                    binding.txtNombreServidor.setText(nombreServidor)
+                    binding.txtip.setText(ipServidor)
+                    binding.txtpuerto.setText(puertoServidor)
+                    binding.btnActualizarServidor.isEnabled = false
+                } else {
+                    // REFACTORIZACIÓN: Buscar en la lista local cargada por el ViewModel
+                    val servidorSeleccionado = listaServidoresEntity.find { it.nombre == servidor }
+                    servidorSeleccionado?.let {
+                        val ip = it.ip.trim()
+                        val puerto = it.puerto.trim()
+                        idServidorActivo = it.id
+                        sslActivo = it.ssl
 
-
-                lifecycleScope.launch(Dispatchers.IO) {
-                    servidor = parent?.getItemAtPosition(position).toString()
-                    try {
-                        if(servidor == "-- SELECCIONE --"){
-                            withContext(Dispatchers.Main){
-                                withContext(Dispatchers.Main){
-                                    binding.txtNombreServidor.setText(nombreServidor)
-                                    binding.txtip.setText(ipServidor)
-                                    binding.txtpuerto.setText(puertoServidor)
-                                    binding.btnActualizarServidor.isEnabled = false
-                                }
-                            }
-                        }else{
-                            val servidorSeleccionado = conexionController.obtenerInformacionServidorSeleccionado(this@Configuracion, servidor)
-                            val ipServidor = servidorSeleccionado!!.ip.trim()
-                            val puertoServidor = servidorSeleccionado.puerto.trim()
-                            idServidorActivo = servidorSeleccionado.id
-                            sslActivo = servidorSeleccionado.ssl
-
-                            withContext(Dispatchers.Main){
-                                binding.txtNombreServidor.setText(servidor)
-                                binding.txtip.setText(ipServidor)
-                                binding.txtpuerto.setText(puertoServidor)
-                                binding.btnActualizarServidor.isEnabled = true
-
-                                binding.cbxActivarSSL.isChecked = sslActivo == 1
-                            }
-
-                        }
-                    }catch (e:Exception){
-                        println("ERROR AL TRAER LA INFORMACION DEL SERVIDOR -> " + e.message)
+                        binding.txtNombreServidor.setText(servidor)
+                        binding.txtip.setText(ip)
+                        binding.txtpuerto.setText(puerto)
+                        binding.btnActualizarServidor.isEnabled = true
+                        binding.cbxActivarSSL.isChecked = sslActivo == 1
                     }
                 }
-
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
-
         }
 
         binding.spNumeroCaja.onItemSelectedListener = object : OnItemSelectedListener {
@@ -517,6 +521,82 @@ class Configuracion : AppCompatActivity() {
         }
     }
 
+
+    //-----------------------------------
+    // REFACTORIZACIÓN MVVM: Observar cambios en el ViewModel
+    //-----------------------------------
+    private fun observarViewModel() {
+        // Observar listado de servidores para el Spinner
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                servidoresViewModel.servidores.collect { lista ->
+                    listaServidoresEntity = lista
+                    actualizarSpinnerServidores(lista)
+                }
+            }
+        }
+
+        // Observar resultado de conexión
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                servidoresViewModel.resultadoConexion.collect { respuesta ->
+                    if (respuesta.isNotEmpty()) {
+                        manejarRespuestaReconexion(respuesta)
+                    }
+                }
+            }
+        }
+
+        // Observar información de actualización
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                servidoresViewModel.updateInfo.collect { updateDto ->
+                    if (updateDto != null) {
+                        manejarInfoActualizacion(updateDto)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun actualizarSpinnerServidores(lista: List<ServidoresEntity>) {
+        val nombres = mutableListOf("-- SELECCIONE --")
+        nombres.addAll(lista.map { it.nombre })
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombres)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.spServidor.adapter = adapter
+    }
+
+    private fun manejarRespuestaReconexion(respuesta: String) {
+        if (respuesta == "Conexion Exitosa") {
+            habilitarOpcion()
+            alerta!!.changeText("RECONEXION EXITOSA")
+        } else {
+            habilitarOpcion()
+            alerta!!.changeText("ERROR DE CONEXION CON EL SERVIDOR")
+        }
+
+        // Importante: Reseteamos el estado en el ViewModel para que no se procese repetidamente
+        // y permitamos futuras reconexiones sin bloqueos.
+        // (Aunque el ViewModel ya lo hace al inicio, esto es una buena práctica de limpieza)
+
+        lifecycleScope.launch {
+            delay(1000)
+            alerta!!.dismisss()
+        }
+    }
+
+    private fun manejarInfoActualizacion(actualizacionApp: com.example.acae30.data.remote.dto.UpdateAppDto) {
+        if (actualizacionApp.version!!.isEmpty() || versionActual >= actualizacionApp.version.toFloat()) {
+            habilitarOpcion()
+            alerta!!.dismisss()
+            Toast.makeText(applicationContext, "NO ES NECESARIO ACTUALIZAR", Toast.LENGTH_SHORT).show()
+        } else {
+            habilitarOpcion()
+            alerta!!.dismisss()
+            mensajeUpdate(actualizacionApp.version, actualizacionApp.enlaceDescarga!!, actualizacionApp.eliminarBd!!)
+        }
+    }
 
     private fun seleccionarImagen() {
         seleccionarImagenLauncher.launch("image/*") // solo permite imágenes
@@ -675,46 +755,16 @@ class Configuracion : AppCompatActivity() {
         } //valida que este encendido los datos o el wifi
     }//valida que haya comunicacion con el servidor*/
     private fun reconectarServidor(ip: String, puerto: String, sslActivo: Int){
-        lifecycleScope.launch(Dispatchers.IO) {
-            val hayInternet = funciones.isInternetAvailable(this@Configuracion)
-            if(hayInternet){
-
-                val respuesta = conexionController.verificarConexionServidor(ip, puerto, sslActivo, this@Configuracion)
-                if(respuesta == "Conexion Exitosa"){
-                    runOnUiThread {
-                        habilitarOpcion()
-                        alerta!!.changeText("RECONEXION EXITOSA")
-                    }
-
-                    delay(1000)
-
-                    runOnUiThread {
-                        alerta!!.dismisss()
-                    }
-                }else{
-                    runOnUiThread {
-                        habilitarOpcion()
-                        alerta!!.changeText("ERROR DE CONEXION CON EL SERVIDOR")
-                    }
-
-                    delay(1000)
-
-                    runOnUiThread {
-                        alerta!!.dismisss()
-                    }
-                }
-
-            }else{
-                runOnUiThread {
-                    habilitarOpcion()
-                    alerta!!.changeText("ERROR NO HAY CONEXION DE INTERNET")
-                }
-
+        val hayInternet = funciones.isInternetAvailable(this@Configuracion)
+        if(hayInternet){
+            // REFACTORIZACIÓN: Usar ViewModel para verificar conexión
+            servidoresViewModel.verificarConexion(ip, puerto, sslActivo, this@Configuracion)
+        }else{
+            habilitarOpcion()
+            alerta!!.changeText("ERROR NO HAY CONEXION DE INTERNET")
+            lifecycleScope.launch {
                 delay(1000)
-
-                runOnUiThread {
-                    alerta!!.dismisss()
-                }
+                alerta!!.dismisss()
             }
         }
     }
@@ -806,40 +856,20 @@ class Configuracion : AppCompatActivity() {
     }*/
 
     private fun obtenerNuevaVersionApp(){
+        alerta!!.Cargando()
+        
+        // REFACTORIZACIÓN: Usar ViewModel para buscar actualización
+        val servidorUrl = funciones.getServidor(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), this@Configuracion)
+        servidoresViewModel.buscarActualizacion(servidorUrl, this@Configuracion)
+
+        // Pequeño timeout de seguridad por si el servidor no responde
         lifecycleScope.launch {
-
-            runOnUiThread {
-                alerta!!.Cargando()
-            }
-
-            delay(3000)
-
-            try {
-
-                val actualizacionApp = conexionController.obtenerActualizacionApp(this@Configuracion)
-
-                if(actualizacionApp.version!!.isEmpty() || versionActual >= actualizacionApp.version.toFloat()){
-                    runOnUiThread {
-                        habilitarOpcion()
-                        alerta!!.dismisss()
-                        Toast.makeText(applicationContext, "NO ES NECESARIO ACTUALIZAR", Toast.LENGTH_SHORT).show()
-                    }
-                }else{
-                    runOnUiThread {
-                        habilitarOpcion()
-                        alerta!!.dismisss()
-                        mensajeUpdate(actualizacionApp.version, actualizacionApp.enlaceDescarga!!, actualizacionApp.eliminarBd!!)
-                    }
-                }
-
-            }catch (e: Exception){
-                Timber.e(e,"[CONFIGURACION] ERROR AL OBTENER LA ACTUALIZACION DE LA APP")
-
+            delay(15000) // 15 segundos
+            if (isProcessing && alerta!!.isShowing()) {
                 habilitarOpcion()
                 alerta!!.dismisss()
-                ShowAlert("ERROR AL CONECTARSE CON EL SERVIDOR")
+                Toast.makeText(this@Configuracion, "TIEMPO DE ESPERA AGOTADO", Toast.LENGTH_SHORT).show()
             }
-
         }
     }
 
@@ -943,20 +973,9 @@ class Configuracion : AppCompatActivity() {
     }
 
     //--------------------------------
-    //Funcion para obtener el listado de servidores
+    // REFACTORIZACIÓN: El listado ahora se carga automáticamente vía Flow en observarViewModel()
     //--------------------------------
-    private fun cargarServidores(){
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val lista = conexionController.obtenerListadoNombreServidores(this@Configuracion)
-                val servidor = ArrayAdapter(this@Configuracion, android.R.layout.simple_spinner_item, lista)
-                servidor.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item)
-                binding.spServidor.adapter = servidor
-            }catch (e:Exception){
-                println("ERROR AL TRAER LA LISTA DE SERVIDORES -> " + e.message)
-            }
-        }
-    }
+    private fun cargarServidores(){ }
 
     //-------------------------------------
     //Funcion para redireccionar al menu Servidores
