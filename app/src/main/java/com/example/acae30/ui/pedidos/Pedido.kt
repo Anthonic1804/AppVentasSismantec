@@ -217,21 +217,53 @@ class Pedido : AppCompatActivity() {
                         delay(1000)
 
                         //obtenerPedidosDTEServidor(item.Id_pedido_sistema!!)
-                        val pedido: PedidoTransmitidoDTO = pedidosController.obtenerPedidosTransmitidos(this@Pedido, item.IdPedidoApp!!)
+                        
+                        /*
+                         * CÓDIGO ANTERIOR (Comentado para comparación):
+                         * val pedido: PedidoTransmitidoDTO = pedidosController.obtenerPedidosTransmitidos(this@Pedido, item.IdPedidoApp!!)
+                         * if(pedido.encontrado){
+                         *     val pedidoDTE = if(pedido.pedidoDte!!) 1 else 0
+                         *     val pedidoDteError = if(pedido.pedidoDteError!!) 1 else 0
+                         *     if(pedido.pedidoDte) {
+                         *         pedidosController.actualizarInformacionPedidoTransmitido(this@Pedido, item.Id, pedidoDTE, pedidoDteError, pedido.dteAmbiente!!, ...)
+                         *     } else {
+                         *         pedidosController.actualizarEstadoPedidoEnviado(this@Pedido, pedido.idPedido!!, item.Id)
+                         *     }
+                         * }
+                         */
 
-                        //println("PEDIDO ENCONTRAOD: ${pedido.encontrado}")
+                        /*
+                         * NUEVO CÓDIGO:
+                         * Realizamos validaciones seguras para evitar el java.lang.NullPointerException (NPE).
+                         * Reemplazamos el operador '!!' por comparaciones seguras y valores por defecto.
+                         */
+                        val idPedidoApp = item.IdPedidoApp ?: ""
+                        if (idPedidoApp.isNotEmpty()) {
+                            
+                            val pedido: PedidoTransmitidoDTO = pedidosController.obtenerPedidosTransmitidos(this@Pedido, idPedidoApp)
 
-                        if(pedido.encontrado){
-                            val pedidoDTE = if(pedido.pedidoDte!!) 1 else 0
-                            val pedidoDteError = if(pedido.pedidoDteError!!) 1 else 0
+                            if (pedido.encontrado) {
+                                // Evitamos el crash usando '== true' en lugar de '!!'
+                                val pedidoDTE = if (pedido.pedidoDte == true) 1 else 0
+                                val pedidoDteError = if (pedido.pedidoDteError == true) 1 else 0
 
-                            if(pedido.pedidoDte) {
-                                //Actualizando informacion DTE del Pedido Transmitido
-                                pedidosController.actualizarInformacionPedidoTransmitido(this@Pedido, item.Id, pedidoDTE, pedidoDteError, pedido.dteAmbiente!!,
-                                    pedido.dteCodigoGeneracion!!, pedido.dteSelloRecibido!!, pedido.dteNumeroControl!!, pedido.idDocTransmitido!!)
-                            }else{
-                                //Cerrando Pedido no transmitido
-                                pedidosController.actualizarEstadoPedidoEnviado(this@Pedido, pedido.idPedido!!, item.Id)
+                                if (pedido.pedidoDte == true) {
+                                    // Actualizando informacion DTE del Pedido Transmitido de forma segura
+                                    pedidosController.actualizarInformacionPedidoTransmitido(
+                                        this@Pedido, 
+                                        item.Id, 
+                                        pedidoDTE, 
+                                        pedidoDteError, 
+                                        pedido.dteAmbiente ?: "",
+                                        pedido.dteCodigoGeneracion ?: "", 
+                                        pedido.dteSelloRecibido ?: "", 
+                                        pedido.dteNumeroControl ?: "", 
+                                        pedido.idDocTransmitido ?: 0
+                                    )
+                                } else {
+                                    // Cerrando Pedido no transmitido con ID seguro
+                                    pedidosController.actualizarEstadoPedidoEnviado(this@Pedido, pedido.idPedido ?: 0, item.Id)
+                                }
                             }
                         }
 

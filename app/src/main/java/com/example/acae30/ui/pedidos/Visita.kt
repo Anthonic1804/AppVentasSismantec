@@ -225,6 +225,18 @@ class Visita : AppCompatActivity() {
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permiso concedido, obtener la ubicación
+
+                // CÓDIGO ANTERIOR (Comentado para comparación):
+                // updateGPS()
+
+                /*
+                 * NUEVO CÓDIGO:
+                 * Mostramos el diálogo de "Cargando" antes de llamar a updateGPS().
+                 * Es necesario porque updateGPS() contiene la instrucción 'alerta!!.dismisss()'.
+                 * Al mostrarlo aquí, aseguramos que el objeto diálogo exista y no ocurra un crash.
+                 */
+                alerta!!.Cargando()
+                alerta!!.changeText("Buscando tu ubicación")
                 updateGPS()
             } else {
                 // Permiso denegado, mostrar un mensaje o realizar otra acción

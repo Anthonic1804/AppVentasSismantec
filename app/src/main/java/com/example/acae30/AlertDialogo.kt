@@ -49,7 +49,19 @@ class AlertDialogo(act: Activity, context: Context) {
     }
 
     fun dismisss() {
-        dialogo.dismiss()
+        // Código anterior (comentado para comparación):
+        // dialogo.dismiss()
+
+        /*
+         * NUEVO CÓDIGO:
+         * Antes de cerrar el diálogo, validamos dos cosas:
+         * 1. Que la variable 'dialogo' ya haya sido creada (isInitialized).
+         * 2. Que el diálogo esté visible en pantalla (isShowing).
+         * Esto evita que la aplicación se cierre (crash) si intentamos ocultar algo que no existe.
+         */
+        if (::dialogo.isInitialized && dialogo.isShowing) {
+            dialogo.dismiss()
+        }
     }
 
     fun isShowing(): Boolean {

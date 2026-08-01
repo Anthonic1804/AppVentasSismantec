@@ -398,62 +398,91 @@ class Detallepedido : AppCompatActivity() {
 
             if(isProcessing) return@setOnClickListener
 
-            deshabilitarOpciones()
+            /*
+             * CÓDIGO ANTERIOR (Comentado para comparación):
+             * deshabilitarOpciones()
+             * val nuevoBalance = balanceActual + total
+             * if(nuevoBalance > limiteCredito && terminosPedidos == "Credito"){
+             *     habilitarOpciones()
+             *     funciones.mostrarAlerta("ERROR: FACTURACION SOBREPASA EL LIMITE DE CREDITO", this@Detallepedido, binding.lienzo)
+             * }else{ ... flujo de envio ... }
+             */
 
-            val nuevoBalance = balanceActual + total
+            /*
+             * NUEVO CÓDIGO (Validación en tiempo real):
+             * Iniciamos una corrutina en el lifecycleScope para realizar la validación de red
+             * antes de proceder con el envío del pedido.
+             */
+            lifecycleScope.launch {
+                try {
+                    deshabilitarOpciones()
 
-            if(nuevoBalance > limiteCredito && terminosPedidos == "Credito"){
-                habilitarOpciones()
-                funciones.mostrarAlerta("ERROR: FACTURACION SOBREPASA EL LIMITE DE CREDITO", this@Detallepedido, binding.lienzo)
-            }else{
-                if(cantidadItemsPedido <= limiteItemPedido){
-                    if(codigo == "01"){
-                        nombre = binding.txtCliente.text.toString()
-                        CoroutineScope(Dispatchers.IO).launch {
-                            pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
-                        }
+                    // 1. Mostramos el diálogo de carga para indicar que estamos verificando datos en la nube.
+                    alerta!!.Cargando()
+                    alerta!!.changeText("Verificando saldo real en el servidor...")
+
+                    // 2. Consultamos el balance y límite de crédito actualizados directamente desde la API.
+                    // Esto garantiza que no usemos datos de hace 15 o 20 minutos.
+                    val balanceFresh = clientesController.obtenerBalacenClientePorId(this@Detallepedido, idcliente)
+
+                    // 3. Actualizamos nuestras variables locales con la respuesta "fresca" del servidor.
+                    balanceActual = balanceFresh.balance
+                    limiteCredito = balanceFresh.limiteCredito
+
+                    // 4. Calculamos el nuevo balance sumando el total del pedido actual.
+                    val nuevoBalanceReal = balanceActual + total
+
+                    // 5. Validamos si el nuevo saldo sobrepasa el límite (solo aplica para términos de "Credito").
+                    if (nuevoBalanceReal > limiteCredito && terminosPedidos == "Credito") {
+                        alerta!!.dismisss() // Cerramos el diálogo de carga
+                        habilitarOpciones() // Reactivamos los botones
+                        funciones.mostrarAlerta("ERROR: EL SALDO REAL ($balanceActual) + ESTE PEDIDO ($total) SOBREPASA EL LÍMITE DE CRÉDITO ($limiteCredito)", this@Detallepedido, binding.lienzo)
+                        return@launch // Detenemos el proceso de envío
                     }
 
-                    if (ConfirmarDetallePedido() > 0) {
-                        val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-                        enviandoPedido = true
+                    // Si el crédito es suficiente, cerramos el diálogo de verificación y seguimos.
+                    alerta!!.dismisss()
 
-                        if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
-
-                            //MOSTRAR LA VENTA DE PAGO SI ESTÁ ACTIVA
-                            val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
-                            if(!facturacionLocal){
-                                alertaPago(binding.txttotal.text.toString().toFloat())
-                            }else{
-                                envioAlerta()
+                    // --- INICIO DEL FLUJO DE ENVÍO ORIGINAL ---
+                    if (cantidadItemsPedido <= limiteItemPedido) {
+                        if (codigo == "01") {
+                            nombre = binding.txtCliente.text.toString()
+                            // Actualizamos el nombre en la BD local de forma asíncrona
+                            withContext(Dispatchers.IO) {
+                                pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
                             }
-                        }else{
-                            verificarConexionEnvio()
                         }
-                    } else {
-                        habilitarOpciones()
-                        funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
-                    }
-                    /*if(clienteMosoro == 1 && terminosPedidos != "Contado"){
-                        funciones.mostrarAlerta("ERROR: NO PUEDE FACTURAR AL CREDITO A CLIENTE EN MORA", this@Detallepedido, binding.lienzo)
-                    }else{
+
                         if (ConfirmarDetallePedido() > 0) {
                             val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
                             enviandoPedido = true
 
-                            if(pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0){
-                                alertaPago(total)
-                            }else{
+                            if (pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0) {
+                                // MOSTRAR LA VENTA DE PAGO SI ESTÁ ACTIVA
+                                val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
+                                if (!facturacionLocal) {
+                                    alertaPago(binding.txttotal.text.toString().toFloat())
+                                } else {
+                                    envioAlerta()
+                                }
+                            } else {
                                 verificarConexionEnvio()
                             }
                         } else {
+                            habilitarOpciones()
                             funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
                         }
-                    }*/
-                }else{
+                    } else {
+                        habilitarOpciones()
+                        Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido", Toast.LENGTH_SHORT).show()
+                    }
+                    // --- FIN DEL FLUJO DE ENVÍO ORIGINAL ---
+
+                } catch (e: Exception) {
+                    // En caso de error de red o de la API, detenemos el proceso por seguridad.
+                    alerta!!.dismisss()
                     habilitarOpciones()
-                    Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido",
-                        Toast.LENGTH_SHORT).show()
+                    funciones.mostrarAlerta("ERROR AL VERIFICAR SALDO ACTUALIZADO: ${e.message}", this@Detallepedido, binding.lienzo)
                 }
             }
         }
