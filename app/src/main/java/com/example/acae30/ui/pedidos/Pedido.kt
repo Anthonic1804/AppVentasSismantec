@@ -27,13 +27,20 @@ import com.example.acae30.Funciones
 import com.example.acae30.Inicio
 import com.example.acae30.R
 import com.example.acae30.Utilidades.CrearSslNoSeguro
-import com.example.acae30.controllers.PedidosController
-import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.repository.PedidosRepository
+import com.example.acae30.domain.usecase.SincronizarPedidosUseCase
 import com.example.acae30.listas.PedidosAdapter
 import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
 import com.example.acae30.modelos.JSONmodels.DatosReporteJSON
 import com.example.acae30.modelos.Pedidos
+import com.example.acae30.ui.factories.PedidosViewModelFactory
 import com.example.acae30.ui.clientes.Clientes
+import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
+import com.example.acae30.controllers.PedidosController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
@@ -99,14 +106,17 @@ class Pedido : AppCompatActivity() {
     private lateinit var lblTitulo: TextView
 
 
-    private var pedidosController = PedidosController()
+    // private var pedidosController = PedidosController()
+    // REFACTORIZACIÓN MVVM: Declaración del ViewModel y el Adaptador
+    private lateinit var viewModel: PedidosViewModel
+    private lateinit var adapter: PedidosAdapter
 
     private var tipoVentaLocal: Boolean = false
 
     private val utilidades = CrearSslNoSeguro()
 
     //Variable de control de accion
-    private var isProcessing = false
+    //private var isProcessing = false
 
     private var inventarioTiempoReal: Boolean = false
     private var eliminarPedidosAutomaticos: Boolean = false
@@ -129,6 +139,15 @@ class Pedido : AppCompatActivity() {
         eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
         tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
+        // REFACTORIZACIÓN MVVM: Inicialización de Arquitectura Limpia
+        val dao = AppDatabase.getInstance(this).pedidosDao()
+        val repository = PedidosRepository(dao)
+        val useCase = SincronizarPedidosUseCase(repository)
+        val factory = PedidosViewModelFactory(repository, useCase)
+        viewModel = ViewModelProvider(this, factory)[PedidosViewModel::class.java]
+
+        observarViewModel()
+
         btnatras = findViewById(R.id.imbtnatras)
         btnReporte = findViewById(R.id.btnReporte)
 
@@ -138,6 +157,8 @@ class Pedido : AppCompatActivity() {
         funciones = Funciones()
         reciclado = findViewById(R.id.recicler)
 
+        // REFACTORIZACIÓN MVVM: Inicialización única del Adaptador
+        setupRecyclerView()
 
         lienzo = findViewById(R.id.lienzo)
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
@@ -151,9 +172,13 @@ class Pedido : AppCompatActivity() {
             finish()
         }
 
-        //sincronizar los datos que no se han enviado
+        //sincronizar los datos que no se han enviado manualmente desde el botón
         btnsincronizar!!.setOnClickListener {
-            sincronizacionDePedidos()
+            // Refrescar valor justo antes de llamar a la sincronización manual
+            eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
+            tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
+            
+            viewModel.sincronizarPedidos(this@Pedido, false, eliminarPedidosAutomaticos, tipoVentaLocal)
         }
 
         btnatras!!.setOnClickListener {
@@ -167,7 +192,10 @@ class Pedido : AppCompatActivity() {
         solicitarPermisos()
         if(tipoVentaLocal){
 
-            sincronizacionDePedidos()
+            // Sincronización automática al inicio si es venta local
+            // Se ejecuta de forma silenciosa (esSilencioso = true)
+            // sincronizacionDePedidos(esSegundoPlano = true)
+            viewModel.sincronizarPedidos(this@Pedido, true, eliminarPedidosAutomaticos, tipoVentaLocal)
 
         }else{
             // MOSTRAR MENSAJE DE GPS
@@ -181,165 +209,101 @@ class Pedido : AppCompatActivity() {
         }
     }
 
-    //FUNCION PARA SINCRONIZAR LOS PEDIDOS AUTOMATICAMENTE
-    private fun sincronizacionDePedidos(){
-
-        //Si ya esta activa sale de la funcion
-        if(isProcessing) return
-
-        //Si no esta activa, deshabilitamos los controller
-        isProcessing = true
-        btnsincronizar!!.isEnabled = false
-        btnatras!!.isEnabled = false
-        btnReporte.isEnabled = false
-
-        lifecycleScope.launch(Dispatchers.IO) {
-
-            val hayInternet = funciones!!.isInternetAvailable(this@Pedido)
-            if(hayInternet){
-
-                runOnUiThread {
-                    alert!!.Cargando()
-                    messageAsync("SINCRONIZANDO PEDIDOS")
-                }
-
-                val pedidosNoTransmitidos : ArrayList<Pedidos> = pedidosController.obtenerPedidosNoTransmitidos(this@Pedido)
-                //var idPedidoDTE = 0
-                delay(1000)
-                if(pedidosNoTransmitidos.isNotEmpty()){
-                    for(i in 0 until pedidosNoTransmitidos.size){
-                        val item = pedidosNoTransmitidos[i]
-
-                        runOnUiThread {
-                            messageAsync("SINCRONIZANDO PEDIDO DEL CLIENTE: \n ${item.Nombre_cliente} \n IdPedido: ${item.IdPedidoApp}")
-                        }
-
-                        delay(1000)
-
-                        //obtenerPedidosDTEServidor(item.Id_pedido_sistema!!)
-                        
-                        /*
-                         * CÓDIGO ANTERIOR (Comentado para comparación):
-                         * val pedido: PedidoTransmitidoDTO = pedidosController.obtenerPedidosTransmitidos(this@Pedido, item.IdPedidoApp!!)
-                         * if(pedido.encontrado){
-                         *     val pedidoDTE = if(pedido.pedidoDte!!) 1 else 0
-                         *     val pedidoDteError = if(pedido.pedidoDteError!!) 1 else 0
-                         *     if(pedido.pedidoDte) {
-                         *         pedidosController.actualizarInformacionPedidoTransmitido(this@Pedido, item.Id, pedidoDTE, pedidoDteError, pedido.dteAmbiente!!, ...)
-                         *     } else {
-                         *         pedidosController.actualizarEstadoPedidoEnviado(this@Pedido, pedido.idPedido!!, item.Id)
-                         *     }
-                         * }
-                         */
-
-                        /*
-                         * NUEVO CÓDIGO:
-                         * Realizamos validaciones seguras para evitar el java.lang.NullPointerException (NPE).
-                         * Reemplazamos el operador '!!' por comparaciones seguras y valores por defecto.
-                         */
-                        val idPedidoApp = item.IdPedidoApp ?: ""
-                        if (idPedidoApp.isNotEmpty()) {
-                            
-                            val pedido: PedidoTransmitidoDTO = pedidosController.obtenerPedidosTransmitidos(this@Pedido, idPedidoApp)
-
-                            if (pedido.encontrado) {
-                                // Evitamos el crash usando '== true' en lugar de '!!'
-                                val pedidoDTE = if (pedido.pedidoDte == true) 1 else 0
-                                val pedidoDteError = if (pedido.pedidoDteError == true) 1 else 0
-
-                                if (pedido.pedidoDte == true) {
-                                    // Actualizando informacion DTE del Pedido Transmitido de forma segura
-                                    pedidosController.actualizarInformacionPedidoTransmitido(
-                                        this@Pedido, 
-                                        item.Id, 
-                                        pedidoDTE, 
-                                        pedidoDteError, 
-                                        pedido.dteAmbiente ?: "",
-                                        pedido.dteCodigoGeneracion ?: "", 
-                                        pedido.dteSelloRecibido ?: "", 
-                                        pedido.dteNumeroControl ?: "", 
-                                        pedido.idDocTransmitido ?: 0
-                                    )
-                                } else {
-                                    // Cerrando Pedido no transmitido con ID seguro
-                                    pedidosController.actualizarEstadoPedidoEnviado(this@Pedido, pedido.idPedido ?: 0, item.Id)
-                                }
-                            }
-                        }
-
+    //-----------------------------------
+    // REFACTORIZACIÓN MVVM: Observar cambios en el ViewModel
+    //-----------------------------------
+    private fun observarViewModel() {
+        // Observar listado de pedidos para el RecyclerView
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.pedidos.collect { listaEntities ->
+                    // Mapear de PedidosEntity (Room) al modelo Pedidos (Adapter)
+                    val listaPedidos = ArrayList<Pedidos>()
+                    listaEntities.forEach { entity ->
+                        listaPedidos.add(
+                            Pedidos(
+                                entity.id,
+                                entity.idCliente,
+                                entity.nombreCliente,
+                                entity.total.toFloat(),
+                                entity.descuento.toFloat(),
+                                if (entity.enviado) 1 else 0,
+                                entity.fechaEnviado,
+                                entity.idPedidoSistema,
+                                entity.gps,
+                                entity.cerrado,
+                                entity.idVisita,
+                                entity.fechaCreado,
+                                entity.sumas.toFloat(),
+                                entity.iva.toFloat(),
+                                entity.ivaPercibido.toFloat(),
+                                entity.pedidoDte,
+                                entity.pedidoDteError,
+                                entity.dteAmbiente,
+                                entity.dteCodigoGeneracion,
+                                entity.dteSelloRecibido,
+                                entity.dteNumeroControl,
+                                entity.tipoDocumento,
+                                entity.terminos,
+                                entity.nombreSucursal,
+                                entity.dteDireccion,
+                                entity.idPedidoApp
+                            )
+                        )
                     }
-
-                    runOnUiThread {
-                        messageAsync("PEDIDOS SINCRONIZADOS CORRECTAMENTE")
-                    }
-
-                    delay(1000)
-
-                    //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
-                    if(tipoVentaLocal && eliminarPedidosAutomaticos){
-                        pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
-                    }
-
-                    delay(1000)
-
-                    runOnUiThread {
-                        actualizarVistaDTE()
-                    }
-
-                    delay(1000)
-
-                    runOnUiThread {
-                        alert!!.dismisss()
-
-                        isProcessing = false
-                        btnsincronizar!!.isEnabled = true
-                        btnatras!!.isEnabled = true
-                        btnReporte.isEnabled = true
-                    }
-
-                }else{
-
-                    //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
-                    if(tipoVentaLocal && eliminarPedidosAutomaticos){
-                        pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
-                    }
-
-                    delay(1000)
-
-                    runOnUiThread {
-                        actualizarVistaDTE()
-                    }
-
-                    delay(1000)
-
-                    runOnUiThread {
-                        messageAsync("NO SE ENCONTRARON PEDIDOS NO SINCRONIZADOS")
-                    }
-
-                    delay(1000)
-
-                    runOnUiThread {
-                        alert!!.dismisss()
-
-                        isProcessing = false
-                        btnsincronizar!!.isEnabled = true
-                        btnatras!!.isEnabled = true
-                        btnReporte.isEnabled = true
-                    }
-                }
-            }else{
-                runOnUiThread {
-                    funciones!!.mensaje(this@Pedido, "NO TIENE CONEXION A INTENET")
-
-                    isProcessing = false
-                    btnsincronizar!!.isEnabled = true
-                    btnatras!!.isEnabled = true
-                    btnReporte.isEnabled = true
-
+                    ShowList(listaPedidos)
                 }
             }
-
         }
+
+        // Observar estado de la sincronización
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.syncStatus.collect { status ->
+                    status?.let {
+                        manejarEstadoSincronizacion(it)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun manejarEstadoSincronizacion(status: SincronizarPedidosUseCase.SyncProgress) {
+        val esSegundoPlano = viewModel.esSegundoPlano.value
+
+        when (status) {
+            is SincronizarPedidosUseCase.SyncProgress.Iniciando -> {
+                if (!esSegundoPlano) {
+                    alert?.Cargando()
+                    messageAsync("INICIANDO SINCRONIZACIÓN...")
+                }
+            }
+            is SincronizarPedidosUseCase.SyncProgress.Procesando -> {
+                if (!esSegundoPlano) {
+                    messageAsync(status.mensaje)
+                }
+            }
+            is SincronizarPedidosUseCase.SyncProgress.Exito -> {
+                if (!esSegundoPlano) {
+                    messageAsync("SINCRONIZACIÓN COMPLETADA CON ÉXITO")
+                }
+            }
+            is SincronizarPedidosUseCase.SyncProgress.Error -> {
+                if (!esSegundoPlano) {
+                    funciones?.mensaje(this, status.error)
+                }
+            }
+            is SincronizarPedidosUseCase.SyncProgress.Finalizado -> {
+                if (!esSegundoPlano) {
+                    lifecycleScope.launch {
+                        delay(1000)
+                        alert?.dismisss()
+                    }
+                }
+                viewModel.resetSyncStatus()
+            }
+        }
+    }
 
 
         /*if (funciones!!.isInternetAvailable(this@Pedido)){
@@ -426,7 +390,6 @@ class Pedido : AppCompatActivity() {
         }else{
             funciones!!.mensaje(this@Pedido, "NO TIENE CONEXION A INTENET")
         }*/
-    }
 
     //MENSANJE ASINCRONO
     private fun messageAsync(mensaje: String) {
@@ -435,28 +398,24 @@ class Pedido : AppCompatActivity() {
         }
     }
 
+    // REFACTORIZACIÓN MVVM: La lista ahora se actualiza automáticamente observando el Flow
+    /*
     override fun onStart() {
         super.onStart()
-        //GlobalScope.launch(Dispatchers.IO) {
-        this@Pedido.lifecycleScope.launch {
-            try {
-                val lista = GetPedido()
-                if (lista.size > 0) {
-                    ShowList(lista)
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    val alert: Snackbar = Snackbar.make(
-                        lienzo!!,
-                        e.message.toString(),
-                        Snackbar.LENGTH_LONG
-                    )
-                    alert.view.setBackgroundColor(resources.getColor(R.color.moderado))
-                    alert.show()
-                }
-            }
-        }
+        // ... anterior código de carga ...
+    }
+    */
+    override fun onStart() {
+        super.onStart()
+        
+        // REFACTORIZACIÓN MVVM: Refrescar preferencias para asegurar valores actualizados
+        // (Especialmente si el usuario regresó desde Configuración)
+        inventarioTiempoReal = preferencias.getBoolean("inventarioTiempoReal", false)
+        eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
+        tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
+        // El listado se carga vía Flow en observarViewModel()
+        
         //BOTON PARA GENERAR EL REPORTE DE PEDIDOS EN PDF
         btnReporte.setOnClickListener {
             fechaDoc = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"))
@@ -469,16 +428,38 @@ class Pedido : AppCompatActivity() {
         lifecycleScope.cancel()
     }
 
+    /**
+     * PASO 1: Configuración inicial del RecyclerView y el Adaptador inteligente (ListAdapter)
+     */
+    private fun setupRecyclerView() {
+        adapter = PedidosAdapter(this@Pedido) { position ->
+            val data = adapter.currentList[position]
+            val intento = Intent(this@Pedido, Detallepedido::class.java).apply {
+                putExtra("nombrecliente", data.Nombre_cliente)
+                putExtra("idcliente", data.Id_cliente!!)
+                putExtra("codigo", "")
+                putExtra("idpedido", data.Id)
+                putExtra("from", "ver")
+            }
+            startActivity(intento)
+            finish()
+        }
+        
+        reciclado!!.layoutManager = LinearLayoutManager(this@Pedido, LinearLayoutManager.VERTICAL, false)
+        reciclado!!.adapter = adapter
+    }
+
+    /**
+     * PASO 2: Envío de la lista al adaptador.
+     * Al usar ListAdapter, solo necesitamos llamar a submitList y DiffUtil hará el resto.
+     */
     private fun ShowList(list: ArrayList<Pedidos>) {
+        /* --- CÓDIGO ANTERIOR COMENTADO PARA COMPARACIÓN ---
         var mLayoutManager = LinearLayoutManager(this@Pedido, LinearLayoutManager.VERTICAL, false)
         reciclado!!.layoutManager = mLayoutManager
         val adapter = PedidosAdapter(list, this@Pedido) { position ->
-
-            //GlobalScope.launch(Dispatchers.Main) {
             this@Pedido.lifecycleScope.launch {
-
                 val data = list.get(position)
-
                 val intento = Intent(this@Pedido, Detallepedido::class.java)
                 intento.putExtra("nombrecliente", data.Nombre_cliente)
                 intento.putExtra("idcliente", data.Id_cliente!!)
@@ -487,84 +468,21 @@ class Pedido : AppCompatActivity() {
                 intento.putExtra("from", "ver")
                 startActivity(intento)
                 finish()
-
             }
-
         }
         reciclado!!.adapter = adapter
+        --------------------------------------------------- */
 
+        // Nuevo código MVVM: 
+        adapter.submitList(list)
     }
 
+    // REFACTORIZACIÓN MVVM: Reemplazado por el Flow de Room
+    /*
     private fun GetPedido(): ArrayList<Pedidos> {
-        val base = funciones!!.obtenerInstancia(this@Pedido).openHelper.readableDatabase
-        try {
-            val cursor = base.query(
-                "SELECT Id," +
-                        " Id_cliente," +
-                        " Nombre_cliente," +
-                        " Total," +
-                        " Descuento," +
-                        " Enviado," +
-                        " Fecha_enviado," +
-                        " Id_pedido_sistema," +
-                        " Gps," +
-                        " Cerrado," +
-                        " Idvisita," +
-                        " strftime('%d/%m/%Y %H:%M'," +
-                        " fecha_creado) as fecha_creado," +
-                        "Sumas," +
-                        "Iva," +
-                        "Iva_percibido, " +
-                        "pedido_dte, " +
-                        "pedido_dte_error," +
-                        "Tipo_documento FROM pedidos " +
-                        "order by id desc"
-            )
-            var lista = ArrayList<Pedidos>()
-            cursor.use {
-                if (cursor.count > 0) {
-                    cursor.moveToFirst()
-                    do {
-
-                        val pedido = Pedidos(
-                            cursor.getInt(0),
-                            cursor.getInt(1),
-                            cursor.getString(2),
-                            cursor.getFloat(3),
-                            cursor.getFloat(4),
-                            cursor.getInt(5),
-                            cursor.getString(6),
-                            cursor.getInt(7),
-                            cursor.getString(8),
-                            cursor.getInt(9),
-                            cursor.getInt(10),
-                            cursor.getString(11),
-                            cursor.getFloat(12),
-                            cursor.getFloat(13),
-                            cursor.getFloat(14),
-                            cursor.getInt(15),
-                            cursor.getInt(16),
-                            "",
-                            "",
-                            "",
-                            "",
-                            cursor.getString(17),
-                            "",
-                            "",
-                            "",
-                            ""
-                        )
-                        lista.add(pedido)
-
-                    } while (cursor.moveToNext())
-                }
-            }
-            return lista
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        }
-
-    }//obtiene el listado de los pedidos
+        ...
+    }
+    */
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
@@ -1011,21 +929,16 @@ class Pedido : AppCompatActivity() {
         }
     }*/
 
+    // REFACTORIZACIÓN MVVM: Esta función ya no es necesaria porque Room actualiza el Flow automáticamente
+    /*
     private fun actualizarVistaDTE(){
         try {
             val lista = GetPedido()
             ShowList(lista)
         } catch (e: Exception) {
-            runOnUiThread {
-                val alert: Snackbar = Snackbar.make(
-                    lienzo!!,
-                    e.message.toString(),
-                    Snackbar.LENGTH_LONG
-                )
-                alert.view.setBackgroundColor(resources.getColor(R.color.moderado))
-                alert.show()
-            }
+            ...
         }
     }
+    */
 
 }

@@ -417,25 +417,24 @@ class Detallepedido : AppCompatActivity() {
                 try {
                     deshabilitarOpciones()
 
-                    // 1. Mostramos el diálogo de carga para indicar que estamos verificando datos en la nube.
+                    // Mostramos el diálogo de carga para indicar que estamos verificando datos en la nube.
                     alerta!!.Cargando()
                     alerta!!.changeText("Verificando saldo real en el servidor...")
 
-                    // 2. Consultamos el balance y límite de crédito actualizados directamente desde la API.
-                    // Esto garantiza que no usemos datos de hace 15 o 20 minutos.
+                    // Consultamos el balance y límite de crédito actualizados directamente desde la API.
                     val balanceFresh = clientesController.obtenerBalacenClientePorId(this@Detallepedido, idcliente)
 
-                    // 3. Actualizamos nuestras variables locales con la respuesta "fresca" del servidor.
+                    // Actualizamos nuestras variables locales con la respuesta "fresca" del servidor.
                     balanceActual = balanceFresh.balance
                     limiteCredito = balanceFresh.limiteCredito
 
-                    // 4. Calculamos el nuevo balance sumando el total del pedido actual.
+                    // Calculamos el nuevo balance sumando el total del pedido actual.
                     val nuevoBalanceReal = balanceActual + total
 
-                    // 5. Validamos si el nuevo saldo sobrepasa el límite (solo aplica para términos de "Credito").
+                    // Validamos si el nuevo saldo sobrepasa el límite (solo aplica para términos de "Credito").
                     if (nuevoBalanceReal > limiteCredito && terminosPedidos == "Credito") {
-                        alerta!!.dismisss() // Cerramos el diálogo de carga
-                        habilitarOpciones() // Reactivamos los botones
+                        alerta!!.dismisss()
+                        habilitarOpciones()
                         funciones.mostrarAlerta("ERROR: EL SALDO REAL ($balanceActual) + ESTE PEDIDO ($total) SOBREPASA EL LÍMITE DE CRÉDITO ($limiteCredito)", this@Detallepedido, binding.lienzo)
                         return@launch // Detenemos el proceso de envío
                     }
@@ -482,7 +481,10 @@ class Detallepedido : AppCompatActivity() {
                     // En caso de error de red o de la API, detenemos el proceso por seguridad.
                     alerta!!.dismisss()
                     habilitarOpciones()
-                    funciones.mostrarAlerta("ERROR AL VERIFICAR SALDO ACTUALIZADO: ${e.message}", this@Detallepedido, binding.lienzo)
+                    funciones.mostrarAlerta("ERROR AL VERIFICAR SALDO ACTUALIZADO: ${e.message}",
+                        this@Detallepedido, binding.lienzo)
+
+                    Timber.e("ERROR AL VERIFICAR SALDO ACTUALIZADO: ${e.message}")
                 }
             }
         }
