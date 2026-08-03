@@ -41,6 +41,7 @@ import com.example.acae30.controllers.PedidosController
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.acae30.databinding.ActivityPedidoBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
@@ -78,35 +79,24 @@ import javax.net.ssl.HttpsURLConnection
 
 class Pedido : AppCompatActivity() {
 
-    private var funciones: Funciones? = null
-    private var reciclado: RecyclerView? = null
-    private var lienzo: ConstraintLayout? = null
-    private var btnsincronizar: Button? = null
+    private var funciones = Funciones()
     lateinit var preferencias: SharedPreferences
     private val instancia = "CONFIG_SERVIDOR"
     private var idvendedor = 0
-    private var btnatras: ImageButton? = null
     private var vendedor = ""
     private var ip = ""
     private var puerto = 0
     private var proviene: String? = ""
     private var fechaDoc = ""
-
     val fecha: String = LocalDate.now()
         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-
     private val tituloText = "DETALLE DE PEDIDOS ENVIADOS"
-
     private var alert: AlertDialogo? = null
-
-    private lateinit var btnReporte: FloatingActionButton
     private lateinit var tvUpdate : TextView
     private lateinit var tvCancel : TextView
     private lateinit var lblMensaje: TextView
     private lateinit var lblTitulo: TextView
 
-
-    // private var pedidosController = PedidosController()
     // REFACTORIZACIÓN MVVM: Declaración del ViewModel y el Adaptador
     private lateinit var viewModel: PedidosViewModel
     private lateinit var adapter: PedidosAdapter
@@ -116,16 +106,18 @@ class Pedido : AppCompatActivity() {
     private val utilidades = CrearSslNoSeguro()
 
     //Variable de control de accion
-    //private var isProcessing = false
-
     private var inventarioTiempoReal: Boolean = false
     private var eliminarPedidosAutomaticos: Boolean = false
+
+    //Inicializando Binding
+    private lateinit var binding: ActivityPedidoBinding
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_pedido)
-        btnsincronizar = findViewById(R.id.btnsincronizar)
+        binding = ActivityPedidoBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
         preferencias = getSharedPreferences(this.instancia, MODE_PRIVATE)
         idvendedor = preferencias.getInt("Idvendedor", 0)
         vendedor = preferencias.getString("Vendedor", "").toString()
@@ -148,20 +140,13 @@ class Pedido : AppCompatActivity() {
 
         observarViewModel()
 
-        btnatras = findViewById(R.id.imbtnatras)
-        btnReporte = findViewById(R.id.btnReporte)
-
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
-
-        funciones = Funciones()
-        reciclado = findViewById(R.id.recicler)
 
         // REFACTORIZACIÓN MVVM: Inicialización única del Adaptador
         setupRecyclerView()
 
-        lienzo = findViewById(R.id.lienzo)
-        findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
+        binding.nuevoPedido.setOnClickListener { view ->
             preferencias.edit {
                 putBoolean("busqueda", true)
                 putBoolean("visita", true)
@@ -173,7 +158,7 @@ class Pedido : AppCompatActivity() {
         }
 
         //sincronizar los datos que no se han enviado manualmente desde el botón
-        btnsincronizar!!.setOnClickListener {
+        binding.btnsincronizar.setOnClickListener {
             // Refrescar valor justo antes de llamar a la sincronización manual
             eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
             tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
@@ -181,32 +166,51 @@ class Pedido : AppCompatActivity() {
             viewModel.sincronizarPedidos(this@Pedido, false, eliminarPedidosAutomaticos, tipoVentaLocal)
         }
 
-        btnatras!!.setOnClickListener {
+        binding.imbtnatras.setOnClickListener {
             val intento = Intent(this, Inicio::class.java)
             startActivity(intento)
             finish()
 
-        } //regresa al menu principal
+        }
 
         // SOLICITAR PERMISOS DE GPS
         solicitarPermisos()
-        if(tipoVentaLocal){
 
+        //Verificando si la configuracion es tipo de venta local
+        if(tipoVentaLocal){
             // Sincronización automática al inicio si es venta local
-            // Se ejecuta de forma silenciosa (esSilencioso = true)
-            // sincronizacionDePedidos(esSegundoPlano = true)
             viewModel.sincronizarPedidos(this@Pedido, true, eliminarPedidosAutomaticos, tipoVentaLocal)
 
         }else{
             // MOSTRAR MENSAJE DE GPS
             if (proviene == "inicio") {
-                AlertaGPS(this@Pedido)
+                alertaGPS()
             }
         }
 
         if(inventarioTiempoReal){
-            funciones!!.limpiarHojaCarga(this@Pedido)
+            funciones.limpiarHojaCarga(this@Pedido)
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        
+        // REFACTORIZACIÓN MVVM: Refrescar preferencias para asegurar valores actualizados
+        inventarioTiempoReal = preferencias.getBoolean("inventarioTiempoReal", false)
+        eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
+        tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
+        
+        //BOTON PARA GENERAR EL REPORTE DE PEDIDOS EN PDF
+        binding.btnReporte.setOnClickListener {
+            fechaDoc = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"))
+            mensajeReporte(it)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        lifecycleScope.cancel()
     }
 
     //-----------------------------------
@@ -251,7 +255,7 @@ class Pedido : AppCompatActivity() {
                             )
                         )
                     }
-                    ShowList(listaPedidos)
+                    mostrarListado(listaPedidos)
                 }
             }
         }
@@ -268,6 +272,12 @@ class Pedido : AppCompatActivity() {
         }
     }
 
+    //Funcion para mostrar el listado de pedidos
+    private fun mostrarListado(list: ArrayList<Pedidos>) {
+        adapter.submitList(list)
+    }
+
+    //Funcion para manejar los estados de la Sincronización
     private fun manejarEstadoSincronizacion(status: SincronizarPedidosUseCase.SyncProgress) {
         val esSegundoPlano = viewModel.esSegundoPlano.value
 
@@ -290,7 +300,7 @@ class Pedido : AppCompatActivity() {
             }
             is SincronizarPedidosUseCase.SyncProgress.Error -> {
                 if (!esSegundoPlano) {
-                    funciones?.mensaje(this, status.error)
+                    funciones.mensaje(this, status.error)
                 }
             }
             is SincronizarPedidosUseCase.SyncProgress.Finalizado -> {
@@ -305,92 +315,6 @@ class Pedido : AppCompatActivity() {
         }
     }
 
-
-        /*if (funciones!!.isInternetAvailable(this@Pedido)){
-            alert!!.Cargando()
-            messageAsync("SINCRONIZANDO PEDIDOS")
-
-            CoroutineScope(Dispatchers.IO).launch {
-                val pedidosNoTransmitidos : ArrayList<Pedidos> = pedidosController.obtenerPedidosNoTransmitidos(this@Pedido)
-                //var idPedidoDTE = 0
-                delay(1000)
-                if(pedidosNoTransmitidos.size > 0){
-                    for(i in 0 until pedidosNoTransmitidos.size){
-                        val item = pedidosNoTransmitidos[i]
-
-                        withContext(Dispatchers.Main){
-                            messageAsync("SINCRONIZANDO PEDIDO DEL CLIENTE: \n ${item.Nombre_cliente}")
-                        }
-
-                        delay(1000)
-
-                        obtenerPedidosDTEServidor(item.Id_pedido_sistema!!)
-
-                    }
-
-                    withContext(Dispatchers.Main){
-                        messageAsync("PEDIDOS SINCRONIZADOS CORRECTAMENTE")
-                    }
-
-                    delay(1000)
-
-                    //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
-                    if(tipoVentaLocal){
-                        pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        actualizarVistaDTE()
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        alert!!.dismisss()
-                    }
-
-                }else{
-
-                    //VERIFICANDO SI VENTA LOCAL ESTA ACTIVO PARA ELIMINAR LOS PEDIDOS YA TRANSMITIDOS
-                    if(tipoVentaLocal){
-                        pedidosController.eliminarPedidosAntiguos(this@Pedido, true)
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        actualizarVistaDTE()
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        messageAsync("NO SE ENCONTRARON PEDIDOS NO SINCRONIZADOS")
-                    }
-
-                    delay(1000)
-
-                    withContext(Dispatchers.Main){
-                        alert!!.dismisss()
-                    }
-                }
-
-                /*
-                if(pedidoDTE != null)
-                {
-                    idPedidoDTE = pedidoDTE.Id_pedido_sistema!!
-                }
-
-                if (idPedidoDTE > 0) {
-                    obtenerPedidosDTEServidor(idPedidoDTE)
-                }*/
-            }
-        }else{
-            funciones!!.mensaje(this@Pedido, "NO TIENE CONEXION A INTENET")
-        }*/
-
     //MENSANJE ASINCRONO
     private fun messageAsync(mensaje: String) {
         if (alert != null) {
@@ -398,39 +322,8 @@ class Pedido : AppCompatActivity() {
         }
     }
 
-    // REFACTORIZACIÓN MVVM: La lista ahora se actualiza automáticamente observando el Flow
-    /*
-    override fun onStart() {
-        super.onStart()
-        // ... anterior código de carga ...
-    }
-    */
-    override fun onStart() {
-        super.onStart()
-        
-        // REFACTORIZACIÓN MVVM: Refrescar preferencias para asegurar valores actualizados
-        // (Especialmente si el usuario regresó desde Configuración)
-        inventarioTiempoReal = preferencias.getBoolean("inventarioTiempoReal", false)
-        eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
-        tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
-        // El listado se carga vía Flow en observarViewModel()
-        
-        //BOTON PARA GENERAR EL REPORTE DE PEDIDOS EN PDF
-        btnReporte.setOnClickListener {
-            fechaDoc = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"))
-            mensajeReporte(it)
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        lifecycleScope.cancel()
-    }
-
-    /**
-     * PASO 1: Configuración inicial del RecyclerView y el Adaptador inteligente (ListAdapter)
-     */
+    //Configurando el RecyvlerView
     private fun setupRecyclerView() {
         adapter = PedidosAdapter(this@Pedido) { position ->
             val data = adapter.currentList[position]
@@ -445,44 +338,9 @@ class Pedido : AppCompatActivity() {
             finish()
         }
         
-        reciclado!!.layoutManager = LinearLayoutManager(this@Pedido, LinearLayoutManager.VERTICAL, false)
-        reciclado!!.adapter = adapter
+        binding.listadoPedidos.layoutManager = LinearLayoutManager(this@Pedido, LinearLayoutManager.VERTICAL, false)
+        binding.listadoPedidos.adapter = adapter
     }
-
-    /**
-     * PASO 2: Envío de la lista al adaptador.
-     * Al usar ListAdapter, solo necesitamos llamar a submitList y DiffUtil hará el resto.
-     */
-    private fun ShowList(list: ArrayList<Pedidos>) {
-        /* --- CÓDIGO ANTERIOR COMENTADO PARA COMPARACIÓN ---
-        var mLayoutManager = LinearLayoutManager(this@Pedido, LinearLayoutManager.VERTICAL, false)
-        reciclado!!.layoutManager = mLayoutManager
-        val adapter = PedidosAdapter(list, this@Pedido) { position ->
-            this@Pedido.lifecycleScope.launch {
-                val data = list.get(position)
-                val intento = Intent(this@Pedido, Detallepedido::class.java)
-                intento.putExtra("nombrecliente", data.Nombre_cliente)
-                intento.putExtra("idcliente", data.Id_cliente!!)
-                intent.putExtra("codigo", "")
-                intento.putExtra("idpedido", data.Id)
-                intento.putExtra("from", "ver")
-                startActivity(intento)
-                finish()
-            }
-        }
-        reciclado!!.adapter = adapter
-        --------------------------------------------------- */
-
-        // Nuevo código MVVM: 
-        adapter.submitList(list)
-    }
-
-    // REFACTORIZACIÓN MVVM: Reemplazado por el Flow de Room
-    /*
-    private fun GetPedido(): ArrayList<Pedidos> {
-        ...
-    }
-    */
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
@@ -499,23 +357,20 @@ class Pedido : AppCompatActivity() {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
-            ),  /* Este codigo es para identificar tu request */
+            ),
             1
         )
     }
 
-    private fun AlertaGPS(contexto: Pedido) {
-        val dialogo = Dialog(this)
+    //Funcion para mostrar la alerta de tener activo el GPS
+    private fun alertaGPS() {
+        val dialogo = Dialog(this@Pedido)
         dialogo.setContentView(R.layout.alerta_gps)
-
-        // Acccion de click al boton OK
         dialogo.findViewById<Button>(R.id.btnok).setOnClickListener {
             dialogo.dismiss()
-        }//boton eliminar
-
+        }
         dialogo.show()
-
-    } //muestra la alerta para agregar precio
+    }
 
     //FUNCIONES PARA REPORTE DE PEDIDOS ENVIADOS DIARIMENTE DESDE LA APP
     //MODIFICACION 21/06/2023
@@ -555,7 +410,7 @@ class Pedido : AppCompatActivity() {
             val objecto =
                 Gson().toJson(datos)
 
-            val servidor = funciones!!.getServidor(ip, puerto.toString(), this@Pedido)
+            val servidor = funciones.getServidor(ip, puerto.toString(), this@Pedido)
             val ruta: String = servidor + "pedido/reporte"
             val url = URL(ruta)
 
@@ -621,13 +476,13 @@ class Pedido : AppCompatActivity() {
             }
         } catch (e: Exception) {
             runOnUiThread {
-                funciones!!.mensaje(this@Pedido, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
+                funciones.mensaje(this@Pedido, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
             }
         }
     }
     //FUNCION PARA CARGAR LOS PEDIDOS ENVIADOS EN LA BD
     private fun cargarPedidos(json: JSONArray, view: View) {
-        val bd = funciones!!.obtenerInstancia(this@Pedido).openHelper.writableDatabase
+        val bd = funciones.obtenerInstancia(this@Pedido).openHelper.writableDatabase
         try {
             bd.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
             bd.delete("reporteTemp", null, null) //LIMPIANDO LA TABLA VENTASTEMP
@@ -635,9 +490,9 @@ class Pedido : AppCompatActivity() {
             for (i in 0 until json.length()) {
                 val dato = json.getJSONObject(i)
                 val valor = ContentValues()
-                valor.put("Cliente", funciones!!.validateJsonIsnullString(dato, "cliente"))
-                valor.put("Sucursal", funciones!!.validateJsonIsnullString(dato, "sucursal"))
-                valor.put("Total", funciones!!.validate(dato.getString("total").toFloat()))
+                valor.put("Cliente", funciones.validateJsonIsnullString(dato, "cliente"))
+                valor.put("Sucursal", funciones.validateJsonIsnullString(dato, "sucursal"))
+                valor.put("Total", funciones.validate(dato.getString("total").toFloat()))
 
                 bd.insert("reporteTemp", SQLiteDatabase.CONFLICT_REPLACE, valor) //INSERTANDO EN VENTASDETALLE
             } //FINALIZANDO ITERACION FOR
@@ -793,7 +648,7 @@ class Pedido : AppCompatActivity() {
 
             documento.close()
 
-            val alert: Snackbar = Snackbar.make(lienzo!!, "REPORTE GENERADO CORRECTAMENTE", Snackbar.LENGTH_LONG)
+            val alert: Snackbar = Snackbar.make(binding.lienzo, "REPORTE GENERADO CORRECTAMENTE", Snackbar.LENGTH_LONG)
             alert.view.setBackgroundColor(ContextCompat.getColor(this@Pedido, R.color.btnVerde))
             alert.show()
 
@@ -805,7 +660,7 @@ class Pedido : AppCompatActivity() {
     }
     //FUNCION PARA OBTENER LOS DATOS PARA EL REPORTE
     private fun getReporte(): ArrayList<DatosReporteJSON> {
-        val base = funciones!!.obtenerInstancia(this@Pedido).openHelper.readableDatabase
+        val base = funciones.obtenerInstancia(this@Pedido).openHelper.readableDatabase
         try {
             val cursor = base.query("SELECT *  FROM reporteTemp")
             val lista = ArrayList<DatosReporteJSON>()
@@ -828,117 +683,5 @@ class Pedido : AppCompatActivity() {
         }
 
     }
-
-    //FUNCION PARA OBTENER LOS PEDIDOS DESDE EL SERVIDOR
-    /*private fun obtenerPedidosDTEServidor(Id_pedido:Int) {
-        try {
-            val datos = PedidoDTE(
-                Id_pedido
-            )
-            val objecto =
-                Gson().toJson(datos)
-
-            val servidor = funciones!!.getServidor(ip, puerto.toString(), this@Pedido)
-
-            val ruta: String = servidor + "pedido/dte"
-            val url = URL(ruta)
-
-            val sslContext = utilidades.crearSslInseguro()
-
-            with(url.openConnection() as HttpURLConnection) {
-
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier { _, _ -> true }
-                }
-
-                try {
-                    connectTimeout = 20000
-                    setRequestProperty(
-                        "Content-Type",
-                        "application/json;charset=utf-8"
-                    )
-                    requestMethod = "POST"
-                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                    or.write(objecto) //SE ESCRIBE EL OBJ JSON
-                    or.flush() //SE ENVIA EL OBJ JSON
-                    when (responseCode) {
-                        200 -> {
-                            BufferedReader(InputStreamReader(inputStream) as Reader?).use {
-                                try {
-                                    val respuesta = StringBuffer()
-                                    var inpuline = it.readLine()
-                                    while (inpuline != null) {
-                                        respuesta.append(inpuline)
-                                        inpuline = it.readLine()
-                                    }
-                                    it.close()
-                                    val res = JSONObject(respuesta.toString())
-                                    if (res.length() > 0) {
-                                        //cargarPedidos(res, view)
-                                        val res_pedido_dte: String = res.getString("pedido_dte")
-                                        val res_pedido_dte_error: String = res.getString("pedido_dte_error")
-                                        val dteAmbiente : String = res.getString("dteAmbiente")
-                                        val dteCodigoGeneracion : String = res.getString("dteCodigoGeneracion")
-                                        val dteSelloRecibido: String = res.getString("dteSelloRecibido")
-                                        val dteNumeroControl: String = res.getString("dteNumeroControl")
-                                        val idDocTransmitido : Int = res.getInt("idDocTransmitido")
-                                        var pedido_dte = 0
-                                        var pedido_dte_error = 0
-
-                                        if(res_pedido_dte == "true"){
-                                            pedido_dte = 1
-                                        }
-
-                                        if(res_pedido_dte_error == "true"){
-                                            pedido_dte_error = 1
-                                        }
-
-                                        pedidosController.actualizarEstadoTransmisionPedido(this@Pedido, Id_pedido,pedido_dte, pedido_dte_error, dteAmbiente, dteCodigoGeneracion,
-                                            dteSelloRecibido, dteNumeroControl, idDocTransmitido)
-
-                                    } else {
-                                        //runOnUiThread { Toast.makeText(this@Pedido, "NO SE ENCONTRARON PEDIDOS DE ESTE DIA", Toast.LENGTH_LONG).show() }
-                                    }
-                                } catch (e: Exception) {
-                                    throw Exception(e.message)
-                                }
-                            }
-                        }
-
-                        400 -> {
-                            //runOnUiThread { Toast.makeText(this@Pedido, "PARAMETROS ERRONEOS", Toast.LENGTH_LONG).show() }
-                        }
-
-                        404 -> {
-                            //runOnUiThread { Toast.makeText(this@Pedido, "NO SE ENCONTRARON PEDIDOS ENVIADOS", Toast.LENGTH_LONG).show() }
-                        }
-
-                        else -> {
-                            //runOnUiThread { Toast.makeText(this@Pedido, "ERROR DE CONEXION CON EL SERVIDOR", Toast.LENGTH_LONG).show() }
-                        }
-                    }
-                } catch (e: Exception) {
-                    throw Exception(e.message)
-                }
-            }
-        } catch (e: Exception) {
-            runOnUiThread {
-                funciones!!.mensaje(this@Pedido, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
-            }
-        }
-    }*/
-
-    // REFACTORIZACIÓN MVVM: Esta función ya no es necesaria porque Room actualiza el Flow automáticamente
-    /*
-    private fun actualizarVistaDTE(){
-        try {
-            val lista = GetPedido()
-            ShowList(lista)
-        } catch (e: Exception) {
-            ...
-        }
-    }
-    */
 
 }

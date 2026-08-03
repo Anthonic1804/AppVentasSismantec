@@ -1,26 +1,27 @@
-# Corrección de NullPointerException en Sincronización de Pedidos
+# Corrección de visualización en la pantalla de Pedidos
 
-Se corregirá el crash reportado en `Pedido.kt` eliminando el uso inseguro del operador `!!` en el flujo de sincronización. Se implementará un manejo de nulos seguro para los datos provenientes de la API y de la base de datos local.
+El listado de pedidos no se muestra debido a un error en el archivo de diseño `activity_pedido.xml`. Se está utilizando un `CoordinatorLayout` como raíz, pero los elementos hijos utilizan atributos de `ConstraintLayout` (como `app:layout_constraint...`) y tamaños de `0dp`. En un `CoordinatorLayout`, estos atributos son ignorados, lo que resulta en que el `RecyclerView` tenga un tamaño de 0x0 y no sea visible.
 
 ## Cambios Propuestos
 
-### Módulo de Pedidos
+### Módulo de Interfaz de Usuario
+
+#### [MODIFY] [activity_pedido.xml](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/res/layout/activity_pedido.xml)
+- Cambiar el layout raíz de `androidx.coordinatorlayout.widget.CoordinatorLayout` a `androidx.constraintlayout.widget.ConstraintLayout`.
+- Asegurar que todos los elementos hijos (Toolbar, RecyclerView y FABs) tengan las restricciones (`constraints`) correctas para un `ConstraintLayout`.
+- Específicamente, para los `FloatingActionButton`, reemplazar `android:layout_gravity` por restricciones de borde inferior y derecho.
 
 #### [MODIFY] [Pedido.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/ui/pedidos/Pedido.kt)
-- **Localización**: Dentro de la función `sincronizacionDePedidos()`.
-- **Cambios**:
-    - Reemplazar `item.IdPedidoApp!!` por una verificación de nulidad previa.
-    - Cambiar `pedido.pedidoDte!!` y `pedido.pedidoDteError!!` por comparaciones seguras (`== true`).
-    - En la llamada a `actualizarInformacionPedidoTransmitido`, reemplazar todos los `!!` en los strings por el operador Elvis `?: ""` para evitar el crash si el servidor no devuelve esos campos.
-    - En la llamada a `actualizarEstadoPedidoEnviado`, usar `pedido.idPedido ?: 0` en lugar de `pedido.idPedido!!`.
-- **Estilo**: Se mantendrá el código original comentado para facilitar la comparación y se añadirán comentarios explicativos.
+- Verificar si hay algún código que dependa de `CoordinatorLayout` (aunque no parece haber ninguno en el uso actual del binding).
 
 ## Plan de Verificación
 
-### Verificación Automatizada
-- Ejecutar `gradlew app:assembleDebug` para asegurar que no hay errores de sintaxis.
+### Verificación Visual
+1. Desplegar la aplicación en el dispositivo.
+2. Navegar a la pantalla de Pedidos.
+3. Verificar que el listado de pedidos sea visible y ocupe el espacio correcto debajo del encabezado.
+4. Verificar que los botones flotantes (FAB) estén posicionados correctamente en la esquina inferior derecha.
 
-### Verificación Manual
-1. Intentar sincronizar pedidos cuando el servidor devuelve información incompleta o nula (por ejemplo, pedidos que no son DTE).
-2. Verificar en el Logcat que no se produzca el `NullPointerException`.
-3. Confirmar que los pedidos se marcan como sincronizados correctamente en la base de datos local.
+### Verificación Técnica
+- Ejecutar `ui_state` para confirmar que el `RecyclerView` ahora aparece en la jerarquía con dimensiones válidas.
+- Confirmar que no hay errores de compilación tras el cambio de layout.
