@@ -1,10 +1,11 @@
 package com.example.acae30.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.acae30.data.local.entity.PedidosEntity
 import com.example.acae30.data.local.models.PedidosNoTransmitidosModel
-import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -90,6 +91,12 @@ interface PedidosDao {
     // REFACTORIZACIÓN MVVM: Eliminar detalles de pedidos que ya no existen
     @Query("DELETE FROM detalle_pedidos WHERE Id_pedido NOT IN (SELECT Id FROM pedidos)")
     suspend fun limpiarDetallesHuerfanos()
+
+    //-------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: Insertar un nuevo pedido en Room
+    //-------------------------------------------------------
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarPedido(pedido: PedidosEntity): Long
 
 
 

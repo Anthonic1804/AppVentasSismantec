@@ -18,21 +18,30 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.AlertDialogo
-import com.example.acae30.ui.clientes.ClientesDetalle
-import com.example.acae30.ui.pedidos.Detallepedido
 import com.example.acae30.Funciones
-import com.example.acae30.ui.historico.HistoricoPedidos
 import com.example.acae30.Inicio
-import com.example.acae30.ui.clientes.NuevoCliente
-import com.example.acae30.ui.pedidos.Pedido
 import com.example.acae30.R
 import com.example.acae30.controllers.ClientesController
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.clientes.ClientesApi
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
+import com.example.acae30.data.repository.ClientesRepository
+import com.example.acae30.data.repository.PedidosRepository
 import com.example.acae30.databinding.ActivityClientesBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
+import com.example.acae30.ui.factories.ClientesViewModelFactory
+import com.example.acae30.ui.historico.HistoricoPedidos
+import com.example.acae30.ui.pedidos.Detallepedido
+import com.example.acae30.ui.pedidos.Pedido
+import com.example.acae30.ui.pedidos.Visita
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
@@ -68,6 +77,10 @@ class Clientes : AppCompatActivity() {
 
     private lateinit var binding : ActivityClientesBinding
 
+    // REFACTORIZACIÓN MVVM: Declaración de ViewModel
+    private lateinit var viewModel: ClientesViewModel
+    private var tipoVentaLocal = false
+
     //VARIABLES PARA LA CAPTURA DE LA GEOLOCALIZACION
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
@@ -96,6 +109,24 @@ class Clientes : AppCompatActivity() {
         cargarClientesPorRuta = preferences!!.getString("cargarClientesPorRuta", "").toString()
 
         P_Mantto_Clientes = preferences!!.getBoolean("P_Mantto_Clientes", false)
+        tipoVentaLocal = preferences!!.getBoolean("tipoVentaLocal", false)
+
+        // REFACTORIZACIÓN MVVM: Inicialización de la arquitectura
+        val db = AppDatabase.getInstance(this)
+        val clientesDao = db.clienteDao()
+        val pedidosDao = db.pedidosDao()
+        val reporteDao = db.reporteDao() // Requerido para el constructor de PedidosRepository
+        
+        val servidor = funciones.getServidor(preferences!!.getString("ip", ""), preferences!!.getInt("puerto", 0).toString(), this)
+        val clientesApi = RetrofitCliente.obtenerApi<ClientesApi>(servidor, this)
+        
+        val clientesRepository = ClientesRepository(clientesDao, clientesApi)
+        val pedidosRepository = PedidosRepository(pedidosDao, reporteDao)
+        
+        val factory = ClientesViewModelFactory(clientesRepository, pedidosRepository)
+        viewModel = ViewModelProvider(this, factory)[ClientesViewModel::class.java]
+
+        observarViewModel()
 
         alert = AlertDialogo(this, this)
         busqueda = findViewById(R.id.busquedainv)
@@ -149,6 +180,41 @@ class Clientes : AppCompatActivity() {
         // OBTERNIENDO UBICACIÓN
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         capturarLocalizacion()
+    }
+
+    //---------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: Observar eventos de navegación
+    //---------------------------------------------------------
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.eventoNavegacion.collect { destino ->
+                    when (destino) {
+                        is ClientesViewModel.Navegacion.IrADetallePedido -> {
+                            val intento = Intent(this@Clientes, Detallepedido::class.java)
+                            intento.putExtra("idcliente", destino.idCliente)
+                            intento.putExtra("nombrecliente", destino.nombre)
+                            intento.putExtra("codigo", destino.codigo)
+                            intento.putExtra("idpedido", destino.idPedido)
+                            intento.putExtra("visitaid", 0) // Para local es 0
+                            intento.putExtra("idapi", 0)    // Para local es 0
+                            intento.putExtra("from", "visita")
+                            startActivity(intento)
+                            finish()
+                        }
+                        is ClientesViewModel.Navegacion.IrAVisita -> {
+                            val intento = Intent(this@Clientes, Visita::class.java)
+                            intento.putExtra("idcliente", destino.idCliente)
+                            intento.putExtra("nombrecliente", destino.nombre)
+                            intento.putExtra("codigo", destino.codigo)
+                            startActivity(intento)
+                        }
+                        null -> {}
+                    }
+                    if (destino != null) viewModel.resetNavegacion()
+                }
+            }
+        }
     }
 
     // Manejar el resultado de la solicitud de permisos
@@ -304,12 +370,22 @@ class Clientes : AppCompatActivity() {
                             //OPCION PARA VERIFICAR LA FIRMA DEL PAGARE
                             if ((cliente.Firmar_pagare_app!!.toInt() == 1 && cliente.Terminos_cliente == "Credito") || (cliente.Terminos_cliente == "Contado")) {
 
-                                clienteController.verificarPagareObligatorio(
-                                    this@Clientes,
+                                /* 
+                                 * CÓDIGO ANTERIOR (Comentado para comparación):
+                                 * clienteController.verificarPagareObligatorio(
+                                 *    this@Clientes, cliente.Id!!, cliente.Cliente!!, cliente.Codigo!!, visita
+                                 * )
+                                 */
+
+                                /* 
+                                 * NUEVO CÓDIGO (Refactorización MVVM):
+                                 * El ViewModel decide si crear pedido directo (Local) o ir a Visita (Externa).
+                                 */
+                                viewModel.seleccionarCliente(
                                     cliente.Id!!,
                                     cliente.Cliente!!,
                                     cliente.Codigo!!,
-                                    visita
+                                    tipoVentaLocal
                                 )
 
                             } else {
@@ -318,12 +394,18 @@ class Clientes : AppCompatActivity() {
                             }
                         } else {
                             //SIN VERIFICACION DE LA FIRMA DEL PAGARE
-                            clienteController.verificarPagareObligatorio(
-                                this@Clientes,
+                            
+                            /* 
+                             * CÓDIGO ANTERIOR:
+                             * clienteController.verificarPagareObligatorio(...)
+                             */
+                            
+                            // NUEVO CÓDIGO:
+                            viewModel.seleccionarCliente(
                                 cliente.Id!!,
                                 cliente.Cliente!!,
                                 cliente.Codigo!!,
-                                visita
+                                tipoVentaLocal
                             )
                         }
                     } else {

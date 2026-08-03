@@ -86,4 +86,10 @@ interface ClientesDao {
         idInventario: Int
     ) : Float?
 
+    //------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: Obtener información de un cliente por su ID
+    //------------------------------------------------------
+    @Query("SELECT * FROM clientes WHERE Id = :idCliente")
+    suspend fun obtenerClientePorId(idCliente: Int): ClientesEntity?
+
 }

@@ -15,7 +15,6 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.Bundle
-import android.print.PrintManager
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -44,8 +43,6 @@ import com.dantsu.escposprinter.connection.usb.UsbConnection
 import com.dantsu.escposprinter.textparser.PrinterTextParserImg
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
-import com.example.acae30.ui.inventario.InventarioTiempoReal
-import com.example.acae30.ui.pedidos.Producto_agregar
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
@@ -60,6 +57,7 @@ import com.example.acae30.modelos.JSONmodels.CabezeraPedidoSend
 import com.example.acae30.modelos.Sucursales
 import com.example.acae30.modelos.dataPedidos
 import com.example.acae30.ui.inventario.Inventario
+import com.example.acae30.ui.inventario.InventarioTiempoReal
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.gson.JsonArray
@@ -304,6 +302,20 @@ class Detallepedido : AppCompatActivity() {
         if (idpedido > 0) {
             val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
             try {
+                /*
+                 * CÓDIGO ANTERIOR (Comentado para comparación):
+                 * El INNER JOIN obligaba a que existiera una visita. Si idvisita era 0 (Local), no devolvía nada.
+                 * 
+                 * val sql = "select c.codigo as codigo, c.cliente as nombre, c.id as idcliente, v.id as idvisita, v.enviado as visita_enviada, ... " +
+                 *           "from pedidos p inner join clientes c on p.Id_cliente = c.Id inner join visitas v on p.idvisita = v.id " +
+                 *           "where p.id = ${idpedido}"
+                 */
+
+                /*
+                 * NUEVO CÓDIGO:
+                 * Usamos LEFT JOIN en la tabla visitas. Esto permite cargar el pedido y el cliente
+                 * incluso si la visita no existe (idvisita = 0), que es lo que sucede en VENTAS LOCALES.
+                 */
                 val sql = "select c.codigo as codigo, " +
                         "c.cliente as nombre, " +
                         "c.id as idcliente, " +
@@ -313,7 +325,7 @@ class Detallepedido : AppCompatActivity() {
                         "from pedidos p " +
                         "inner join clientes c " +
                         "on p.Id_cliente = c.Id " +
-                        "inner join visitas v on p.idvisita = v.id " +
+                        "left join visitas v on p.idvisita = v.id " + // <--- CAMBIO CLAVE: LEFT JOIN
                         "where p.id = ${idpedido}"
 
                 val cursor = base.query(sql)
@@ -323,9 +335,13 @@ class Detallepedido : AppCompatActivity() {
                         codigo = cursor.getString(0)
                         nombre = cursor.getString(1)
                         idcliente = cursor.getInt(2)
-                        idvisita = cursor.getInt(3)
-                        visita_enviada = cursor.getInt(4) == 1
+                        
+                        // Manejamos la visita de forma segura por si es nula (Venta Local)
+                        idvisita = cursor.getIntOrNull(3) ?: 0
+                        visita_enviada = (cursor.getIntOrNull(4) ?: 0) == 1
+                        
                         binding.fechaCreacion.text = cursor.getString(5)
+                        binding.txtCliente.setText(nombre) // Aseguramos que el nombre se vea en la UI
                     } else {
                         throw Exception("Error al obtener código de cliente")
                     }
@@ -334,13 +350,6 @@ class Detallepedido : AppCompatActivity() {
                 println("ERROR AL OBTENER INFORMACION DE LA VISITA DEL CLIENTE -> " + e.message)
             }
         }
-
-        //MODIFICACION 04/12/2023
-        // VERIFICAMOS SI TENEMOS CONEXION A INTERNET PARA PODER ENVIAR EL PEDIDO O ALMACENARLO
-//        if(!funciones.isInternetAvailable(this@Detallepedido)){
-//            binding.btnenviar.isEnabled = false
-//            binding.btnenviar.setBackgroundResource(R1.drawable.border_btndisable)
-//        }
 
         binding.imbtnatras.setOnClickListener {
             val intento = Intent(this, Pedido::class.java)
@@ -398,21 +407,6 @@ class Detallepedido : AppCompatActivity() {
 
             if(isProcessing) return@setOnClickListener
 
-            /*
-             * CÓDIGO ANTERIOR (Comentado para comparación):
-             * deshabilitarOpciones()
-             * val nuevoBalance = balanceActual + total
-             * if(nuevoBalance > limiteCredito && terminosPedidos == "Credito"){
-             *     habilitarOpciones()
-             *     funciones.mostrarAlerta("ERROR: FACTURACION SOBREPASA EL LIMITE DE CREDITO", this@Detallepedido, binding.lienzo)
-             * }else{ ... flujo de envio ... }
-             */
-
-            /*
-             * NUEVO CÓDIGO (Validación en tiempo real):
-             * Iniciamos una corrutina en el lifecycleScope para realizar la validación de red
-             * antes de proceder con el envío del pedido.
-             */
             lifecycleScope.launch {
                 try {
                     deshabilitarOpciones()
@@ -869,8 +863,24 @@ class Detallepedido : AppCompatActivity() {
 
     //FUNCION PARA FINALIZAR EL ENVIO DEL PEDIDO
     private fun pedidoEnviado(){
-        val visita = visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido)
-        if(visita!!.Abierta){
+        /*
+         * CÓDIGO ANTERIOR (Comentado para comparación):
+         * El uso de '!!' causaba un crash en VENTAS LOCALES porque no existe visita (idvisita = 0).
+         * 
+         * val visita = visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido)
+         * if(visita!!.Abierta){ ... }
+         */
+
+        /*
+         * NUEVO CÓDIGO:
+         * Implementamos una navegación segura. 
+         * 1. Si idvisita es 0 (Modo Local), vamos directo al listado de pedidos.
+         * 2. Si hay una visita real, validamos si está abierta antes de redirigir.
+         */
+        val visita = if (idvisita > 0) visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido) else null
+        
+        if(visita != null && visita.Abierta){
+            // FLUJO EXTERNO: Regresamos a la visita para que el vendedor la finalice o continúe
             val intento = Intent(this@Detallepedido, Visita::class.java)
             intento.putExtra("idcliente", idcliente)
             intento.putExtra("nombrecliente", nombre)
@@ -881,11 +891,11 @@ class Detallepedido : AppCompatActivity() {
             startActivity(intento)
             finish()
         }else{
+            // FLUJO LOCAL o VISITA CERRADA: Vamos directo al listado general de pedidos
             val intento = Intent(this@Detallepedido, Pedido::class.java)
             startActivity(intento)
             finish()
         }
-
     }
 
     private fun envioAlerta(){
@@ -1646,16 +1656,6 @@ class Detallepedido : AppCompatActivity() {
         return enviado
     } //funcion que envia el pedido a la bd
 
-   /* private fun ConfirmarPedido(idpedido: Int, idservidor: Int) {
-        val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.writableDatabase
-        try {
-            bd.execSQL("UPDATE pedidos set Id_pedido_sistema=$idservidor,Enviado=1,Cerrado=1 WHERE Id=$idpedido")
-            //bd!!.execSQL("UPDATE pedidos set Enviado=1,Cerrado=1 WHERE Id=$idpedido")
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        }
-    } //actualiza el pedido y confirma que se envio*/
-
     private fun ConfirmarDetallePedido(): Int {
         val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         var cantidadDetallepedido = 0.toInt()
@@ -1706,18 +1706,37 @@ class Detallepedido : AppCompatActivity() {
 
         val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
-            val sql = "select v.Idvisita from visitas v inner join pedidos p on v.id = p.idvisita where p.id = ${idpedido_param}"
+            /*
+             * CÓDIGO ANTERIOR (Comentado para comparación):
+             * El INNER JOIN impedía obtener el JSON si no había visita (Modo Local).
+             * 
+             * val sql = "select v.Idvisita from visitas v inner join pedidos p on v.id = p.idvisita where p.id = ${idpedido_param}"
+             */
+
+            /*
+             * NUEVO CÓDIGO:
+             * Cambiamos a LEFT JOIN para que, si el pedido se creó sin visita (idvisita = 0),
+             * la consulta no falle y nos permita enviar el pedido al servidor con ID de visita 0.
+             */
+            val sql = "select v.Idvisita from pedidos p " +
+                    "left join visitas v on p.idvisita = v.id " +
+                    "where p.id = ${idpedido_param}"
+            
             val cursor = base.query(sql)
             cursor.use {
                 if (cursor.count > 0) {
                     cursor.moveToFirst()
-                    idvisita_v = cursor.getInt(0)
+                    // Si Idvisita es NULL (porque no hay visita), asignamos 0
+                    idvisita_v = cursor.getIntOrNull(0) ?: 0
                 } else {
-                    throw Exception("Error al obtener código de cliente")
+                    // En modo local es normal no encontrar la visita, así que solo ponemos 0
+                    idvisita_v = 0
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            // Si hay un error, por seguridad ponemos 0 para no bloquear el envío
+            idvisita_v = 0
+            println("ADVERTENCIA: No se pudo obtener ID de visita del servidor, usando 0 -> ${e.message}")
         }
 
         val terminosPedidoEnviar = if(ventaLocal){

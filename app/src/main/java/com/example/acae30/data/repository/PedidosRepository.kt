@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.acae30.Funciones
 import com.example.acae30.data.local.dao.PedidosDao
 import com.example.acae30.data.local.dao.ReporteDao
+import com.example.acae30.data.local.entity.PedidosEntity
 import com.example.acae30.data.local.entity.ReporteTempEntity
 import com.example.acae30.data.remote.api.pedidos.PedidosApi
 import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
@@ -11,12 +12,105 @@ import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
 import com.example.acae30.data.remote.dto.ReportePedidoDTO
 import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
 import timber.log.Timber
+import java.util.UUID
 
 class PedidosRepository(
     private val dao: PedidosDao,
     private val reporteDao: ReporteDao
 ) {
     private val funciones = Funciones()
+
+    //---------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: MÉTODOS DE CREACIÓN DE PEDIDO
+    //---------------------------------------------------------
+
+    /**
+     * Crea un nuevo pedido en la base de datos local (Room).
+     * Migrado desde PedidosController para cumplir con Clean Architecture.
+     */
+    suspend fun crearNuevoPedidoLocal(
+        idCliente: Int,
+        nombreCliente: String,
+        terminos: String,
+        idRuta: Int,
+        ruta: String,
+        tipoDocumento: String,
+        dteDireccion: String,
+        dteCodDepto: String,
+        dteCodMunicipio: String,
+        dteCodPais: String,
+        dtePais: String,
+        dteCorreo: String,
+        dteTelefono: String,
+        idVisitaGlobal: Int = 0,
+        gps: String = "0,0"
+    ): Int {
+        val fechaHora = funciones.getFechaHoraProceso() ?: ""
+        val fecha = funciones.obtenerFecha() ?: ""
+        val idPedidoApp = UUID.randomUUID().toString()
+
+        val pedido = PedidosEntity(
+            id = 0, // Auto-generado por Room
+            idCliente = idCliente,
+            nombreCliente = nombreCliente,
+            pago = 0.0,
+            cambio = 0.0,
+            descuento = 0.0,
+            sumas = 0.0,
+            iva = 0.0,
+            subTotal = 0.0,
+            ivaRetenido = 0.0,
+            ivaPercibido = 0.0,
+            total = 0.0,
+            enviado = false,
+            fechaEnviado = "",
+            idPedidoSistema = 0,
+            gps = gps,
+            cerrado = 0,
+            idVisita = idVisitaGlobal,
+            fechaCreado = fechaHora,
+            idSucursal = 0,
+            codigoSucursal = "",
+            nombreSucursal = "",
+            tipoDocumento = tipoDocumento,
+            terminos = terminos,
+            pagoEfectivo = 0.0,
+            pagoCheque = 0.0,
+            pagoTarjeta = 0.0,
+            pagoDeposito = 0.0,
+            bancoCheque = "",
+            numCuentaCheque = "",
+            numCheque = "",
+            bancoTarjeta = "",
+            nombreTarjeta = "",
+            numTarjeta = "",
+            bancoDeposito = "",
+            numCuentaDeposito = "",
+            numDeposito = "",
+            formaPago = "",
+            numeroOrden = "0",
+            pedidoDte = 0,
+            pedidoDteError = 0,
+            dteAmbiente = "",
+            dteCodigoGeneracion = "",
+            dteSelloRecibido = "",
+            dteNumeroControl = "",
+            idDocTransmitido = 0,
+            idRuta = idRuta,
+            ruta = ruta,
+            dteDireccion = dteDireccion,
+            dteCodDepto = dteCodDepto,
+            dteCodMunicipio = dteCodMunicipio,
+            dteCodPais = dteCodPais,
+            dtePais = dtePais,
+            dteCorreo = dteCorreo,
+            dteTelefono = dteTelefono,
+            fecha = fecha,
+            idPedidoApp = idPedidoApp
+        )
+
+        return dao.insertarPedido(pedido).toInt()
+    }
 
     // REFACTORIZACIÓN MVVM: Flujo para la lista de la UI (Todos los pedidos)
     fun obtenerTodosLosPedidosFlow() = dao.obtenerTodosLosPedidosFlow()
