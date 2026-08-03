@@ -4,19 +4,16 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.acae30.data.repository.PedidosRepository
+import com.example.acae30.domain.usecase.ObtenerDatosReporteUseCase
 import com.example.acae30.domain.usecase.SincronizarPedidosUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-/**
- * REFACTORIZACIÓN MVVM: ViewModel para la pantalla de Pedidos.
- * Gestiona el estado de la UI y coordina la lógica con los Casos de Uso.
- */
 class PedidosViewModel(
     private val repository: PedidosRepository,
-    private val sincronizarUseCase: SincronizarPedidosUseCase
+    private val sincronizarUseCase: SincronizarPedidosUseCase,
+    private val obtenerReporteUseCase: ObtenerDatosReporteUseCase
 ) : ViewModel() {
 
     // REFACTORIZACIÓN MVVM: Lista de pedidos observada directamente desde Room
@@ -30,13 +27,12 @@ class PedidosViewModel(
     private val _esSegundoPlano = MutableStateFlow(false)
     val esSegundoPlano = _esSegundoPlano.asStateFlow()
 
-    /**
-     * Inicia el proceso de sincronización.
-     * @param context Contexto necesario para verificar red y acceder a SharedPreferences en el repositorio.
-     * @param esSilencioso Si es true, la UI no mostrará diálogos de carga.
-     * @param eliminarAutomaticos Preferencia del usuario para limpiar pedidos antiguos.
-     * @param tipoVentaLocal Indica si la app está en modo venta local.
-     */
+    // REFACTORIZACIÓN MVVM: Estado de generación del reporte PDF
+    private val _reportStatus = MutableStateFlow<ObtenerDatosReporteUseCase.ReportStatus?>(null)
+    val reportStatus = _reportStatus.asStateFlow()
+
+
+     //Inicia el proceso de sincronización.
     fun sincronizarPedidos(
         context: Context,
         esSilencioso: Boolean,
@@ -52,10 +48,22 @@ class PedidosViewModel(
         }
     }
 
-    /**
-     * Limpia el estado de sincronización después de procesarlo en la UI.
-     */
+     //Obtiene los datos del servidor y los guarda localmente para generar el PDF.
+    fun obtenerDatosReporte(idVendedor: Int, fecha: String, context: Context) {
+        viewModelScope.launch {
+            obtenerReporteUseCase.ejecutar(idVendedor, fecha, context).collect { status ->
+                _reportStatus.value = status
+            }
+        }
+    }
+
+     //Limpia el estado de sincronización después de procesarlo en la UI.
     fun resetSyncStatus() {
         _syncStatus.value = null
+    }
+
+     //Limpia el estado del reporte.
+    fun resetReportStatus() {
+        _reportStatus.value = null
     }
 }

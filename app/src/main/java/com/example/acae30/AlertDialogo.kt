@@ -12,8 +12,6 @@ class AlertDialogo(act: Activity, context: Context) {
     var actividad: Activity
     private lateinit var dialogo: Dialog
 
-
-    //lateinit var textocarga:TextView
     init {
         actividad = act
     }
@@ -49,11 +47,7 @@ class AlertDialogo(act: Activity, context: Context) {
     }
 
     fun dismisss() {
-        // Código anterior (comentado para comparación):
-        // dialogo.dismiss()
-
         /*
-         * NUEVO CÓDIGO:
          * Antes de cerrar el diálogo, validamos dos cosas:
          * 1. Que la variable 'dialogo' ya haya sido creada (isInitialized).
          * 2. Que el diálogo esté visible en pantalla (isShowing).
@@ -69,9 +63,12 @@ class AlertDialogo(act: Activity, context: Context) {
     }
 
     fun changeText(mensaje: String) {
-        val textocarga = dialogo.findViewById<TextView>(R.id.txtcargando)
-        if (textocarga != null) {
-            textocarga.text = mensaje
+         //Verificamos que 'dialogo' esté inicializado antes de buscar el TextView.
+        if (::dialogo.isInitialized) {
+            val textocarga = dialogo.findViewById<TextView>(R.id.txtcargando)
+            if (textocarga != null) {
+                textocarga.text = mensaje
+            }
         }
     }
 

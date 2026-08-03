@@ -8,10 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 
-/**
- * REFACTORIZACIÓN MVVM: Caso de Uso para la sincronización de pedidos.
- * Encapsula la lógica de negocio de verificar pedidos en el servidor y actualizar localmente.
- */
 class SincronizarPedidosUseCase(
     private val repository: PedidosRepository
 ) {
@@ -26,9 +22,7 @@ class SincronizarPedidosUseCase(
         object Finalizado : SyncProgress()
     }
 
-    /**
-     * Ejecuta la sincronización emitiendo estados de progreso.
-     */
+     //Ejecuta la sincronización emitiendo estados de progreso.
     fun ejecutar(
         context: Context,
         eliminarAutomaticos: Boolean,
@@ -39,14 +33,14 @@ class SincronizarPedidosUseCase(
         
         emit(SyncProgress.Iniciando)
 
-        // 1. Verificación de internet
+        // Verificación de internet
         if (!funciones.isInternetAvailable(context)) {
             emit(SyncProgress.Error("NO TIENE CONEXION A INTERNET"))
             return@flow
         }
 
         try {
-            // 2. Obtener pedidos pendientes
+            // Obtener pedidos pendientes
             val pedidos = repository.obtenerPedidosNoTransmitidosLocal()
             delay(500)
 
@@ -55,7 +49,7 @@ class SincronizarPedidosUseCase(
                     emit(SyncProgress.Procesando("SINCRONIZANDO PEDIDO:\n${item.nombreCliente}\nID: ${item.idPedidoApp}"))
                     delay(800)
 
-                    // 3. Consultar al servidor
+                    // Consultar al servidor
                     val idApp = item.idPedidoApp ?: ""
                     if (idApp.isNotEmpty()) {
                         val pedidoRemoto = repository.obtenerPedidoTransmitidoRemote(idApp, context)
@@ -77,7 +71,7 @@ class SincronizarPedidosUseCase(
                                     pedidoRemoto.idDocTransmitido ?: 0
                                 )
                             } else {
-                                // Marcar como enviado simple
+                                // Marcar como enviado
                                 repository.actualizarEstadoPedidoEnviado(
                                     pedidoRemoto.idPedido ?: 0,
                                     item.id
@@ -91,10 +85,9 @@ class SincronizarPedidosUseCase(
                 emit(SyncProgress.Procesando("NO HAY PEDIDOS PENDIENTES"))
             }
 
-            // 4. Limpieza si aplica (tipoVentaLocal y eliminarAutomaticos activos)
+            // Eliminar (tipoVentaLocal y eliminarAutomaticos activos)
             if (tipoVentaLocal && eliminarAutomaticos) {
                 val fechaActual = funciones.obtenerFecha() ?: ""
-                // PASO 9 (CORREGIDO): Ahora borra tanto los antiguos como los transmitidos de hoy
                 repository.eliminarPedidos(fechaActual, eliminarCompletos = true)
             }
 

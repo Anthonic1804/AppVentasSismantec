@@ -3,13 +3,18 @@ package com.example.acae30.data.repository
 import android.content.Context
 import com.example.acae30.Funciones
 import com.example.acae30.data.local.dao.PedidosDao
+import com.example.acae30.data.local.dao.ReporteDao
+import com.example.acae30.data.local.entity.ReporteTempEntity
 import com.example.acae30.data.remote.api.pedidos.PedidosApi
 import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
+import com.example.acae30.data.remote.dto.ReportePedidoDTO
+import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
 import timber.log.Timber
 
 class PedidosRepository(
-    private val dao: PedidosDao
+    private val dao: PedidosDao,
+    private val reporteDao: ReporteDao
 ) {
     private val funciones = Funciones()
 
@@ -60,21 +65,66 @@ class PedidosRepository(
     // REFACTORIZACIÓN MVVM: Limpieza de pedidos antiguos o ya procesados
     suspend fun eliminarPedidos(fechaActual: String, eliminarCompletos: Boolean) {
         
-        // PASO 1: Primero eliminamos los detalles (hijos) para evitar el error de Foreign Key
+        // Eliminamos los detalles
         dao.eliminarDetallesAntiguos(fechaActual)
         
         if (eliminarCompletos) {
             dao.eliminarDetallesTransmitidosDelDia(fechaActual)
         }
 
-        // PASO 2: Ahora que los hijos han sido borrados, ya podemos borrar los padres (pedidos)
+        // Eliminanos Pedidos
         dao.eliminarPedidosAntiguos(fechaActual)
 
         if (eliminarCompletos) {
             dao.eliminarPedidosTransmitidosDelDia(fechaActual)
         }
 
-        // PASO 3: Limpieza final de seguridad
+        // Eliminamos pedidos con error
         dao.limpiarDetallesHuerfanos()
     }
+
+    //---------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: MÉTODOS PARA REPORTE PDF
+    //---------------------------------------------------------
+
+    //OBTENER PEDIDOS ENVIADOS
+    suspend fun obtenerReporteDiarioRemote(idVendedor: Int, fecha: String, context: Context): List<ReportePedidoDTO>? {
+        val preferencias = context.getSharedPreferences("CONFIG_SERVIDOR", Context.MODE_PRIVATE)
+        val ip = preferencias.getString("ip", "") ?: ""
+        val puerto = preferencias.getInt("puerto", 0).toString()
+        val servidor = funciones.getServidor(ip, puerto, context)
+
+        val api = RetrofitCliente.obtenerApi<PedidosApi>(servidor, context)
+
+        return try {
+            val busqueda = BusquedaReporteJSON(idVendedor, fecha)
+            val respuesta = api.obtenerReporteDiario(busqueda)
+            if (respuesta.isSuccessful) {
+                respuesta.body()
+            } else {
+                Timber.e("Error API reporte: ${respuesta.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error de conexión en reporte")
+            null
+        }
+    }
+
+    //INSERTAR PEDOS EN LA TBL REPORTETMP
+    suspend fun actualizarTablaReporteLocal(datos: List<ReportePedidoDTO>) {
+        reporteDao.limpiarTabla()
+        val entidades = datos.map { dto ->
+            ReporteTempEntity(
+                id = 0,
+                cliente = dto.cliente ?: "",
+                sucursal = dto.sucursal ?: "",
+                total = dto.total ?: 0.0
+            )
+        }
+        reporteDao.insertarLista(entidades)
+    }
+
+    //OBTENIENDO LOS PEDIDOS DEL REPORTE
+    suspend fun obtenerDatosReporteLocal() = reporteDao.obtenerTodos()
 }

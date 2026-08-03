@@ -9,6 +9,7 @@ import com.example.acae30.data.local.dao.ClientesDao
 import com.example.acae30.data.local.dao.InventarioDao
 import com.example.acae30.data.local.dao.InventarioSolicitudDao
 import com.example.acae30.data.local.dao.PedidosDao
+import com.example.acae30.data.local.dao.ReporteDao
 import com.example.acae30.data.local.dao.ServidoresDao
 import com.example.acae30.data.local.entity.AbonosEntity
 import com.example.acae30.data.local.entity.CatalogoDepartamentoEntity
@@ -94,13 +95,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun inventarioSolicitudDao(): InventarioSolicitudDao
     abstract fun servidoresDao(): ServidoresDao
     abstract fun pedidosDao() : PedidosDao
+    abstract fun reporteDao() : ReporteDao
 
     companion object{
 
         @Volatile
         private  var INSTANCE: AppDatabase? = null
-
-        //private var tbl: Tablas = Tablas()
 
         fun getInstance(context: Context) : AppDatabase{
 
@@ -114,36 +114,6 @@ abstract class AppDatabase : RoomDatabase() {
                         super.onOpen(db)
                         db.query("PRAGMA journal_mode=WAL;")
                     }
-
-                   /* override fun onCreate(db: SupportSQLiteDatabase) {
-                        super.onCreate(db)
-
-                        //db.execSQL(tbl.cliente())
-                        //db.execSQL(tbl.clienteSucursal())
-                        //db.execSQL(tbl.clientePrecios())
-                        //db.execSQL(tbl.inventarioUnidades())
-                        //db.execSQL(tbl.hojaCarga())
-                        //db.execSQL(tbl.hojaCargaDetalle())
-                        //db.execSQL(tbl.hojaDetalleRecargas())
-                        //db.execSQL(tbl.pedidos())
-                        //db.execSQL(tbl.cuentas())
-                        //db.execSQL(tbl.visitas())
-                        //db.execSQL(tbl.detallePedidos())
-                        //db.execSQL(tbl.vistaDetallePedidos())
-                        //db.execSQL(tbl.empleados())
-                        //db.execSQL(tbl.preciosAutorizados())
-                        //db.execSQL(tbl.ventasTemp())
-                        //db.execSQL(tbl.ventasDetalleTemp())
-                        //db.execSQL(tbl.reporteTemp())
-                        //db.execSQL(tbl.abonosCxc())
-                        //db.execSQL(tbl.gastos())
-                        //db.execSQL(tbl.inventariosolicitudCarga())
-                        //db.execSQL(tbl.solicitudCarga())
-                        //db.execSQL(tbl.solicitudCargaDetalle())
-                        //db.execSQL(tbl.devolucion())
-                        //db.execSQL(tbl.devolucionDetalle())
-
-                    }*/
                 }).build().also {
                     INSTANCE = it
                 }

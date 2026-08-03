@@ -2,80 +2,43 @@ package com.example.acae30.ui.pedidos
 
 import android.Manifest
 import android.app.Dialog
-import android.content.ContentValues
 import android.content.Intent
 import android.content.SharedPreferences
-import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
-import android.os.Environment
 import android.os.StrictMode
 import android.view.View
 import android.widget.Button
-import android.widget.ImageButton
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
 import com.example.acae30.Inicio
 import com.example.acae30.R
-import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.Utilidades.PdfReportManager
 import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.repository.PedidosRepository
+import com.example.acae30.databinding.ActivityPedidoBinding
+import com.example.acae30.domain.usecase.ObtenerDatosReporteUseCase
 import com.example.acae30.domain.usecase.SincronizarPedidosUseCase
 import com.example.acae30.listas.PedidosAdapter
-import com.example.acae30.modelos.JSONmodels.BusquedaReporteJSON
-import com.example.acae30.modelos.JSONmodels.DatosReporteJSON
 import com.example.acae30.modelos.Pedidos
-import com.example.acae30.ui.factories.PedidosViewModelFactory
 import com.example.acae30.ui.clientes.Clientes
-import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
-import com.example.acae30.controllers.PedidosController
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.repeatOnLifecycle
-import com.example.acae30.databinding.ActivityPedidoBinding
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.example.acae30.ui.factories.PedidosViewModelFactory
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.Gson
-import com.itextpdf.text.BaseColor
-import com.itextpdf.text.Document
-import com.itextpdf.text.DocumentException
-import com.itextpdf.text.Element
-import com.itextpdf.text.Font
-import com.itextpdf.text.FontFactory
-import com.itextpdf.text.PageSize
-import com.itextpdf.text.Paragraph
-import com.itextpdf.text.pdf.PdfPCell
-import com.itextpdf.text.pdf.PdfPTable
-import com.itextpdf.text.pdf.PdfWriter
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.json.JSONArray
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.io.Reader
-import java.net.HttpURLConnection
-import java.net.URL
-import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.HttpsURLConnection
 
 class Pedido : AppCompatActivity() {
 
@@ -90,7 +53,6 @@ class Pedido : AppCompatActivity() {
     private var fechaDoc = ""
     val fecha: String = LocalDate.now()
         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-    private val tituloText = "DETALLE DE PEDIDOS ENVIADOS"
     private var alert: AlertDialogo? = null
     private lateinit var tvUpdate : TextView
     private lateinit var tvCancel : TextView
@@ -101,13 +63,10 @@ class Pedido : AppCompatActivity() {
     private lateinit var viewModel: PedidosViewModel
     private lateinit var adapter: PedidosAdapter
 
-    private var tipoVentaLocal: Boolean = false
-
-    private val utilidades = CrearSslNoSeguro()
-
     //Variable de control de accion
     private var inventarioTiempoReal: Boolean = false
     private var eliminarPedidosAutomaticos: Boolean = false
+    private var tipoVentaLocal: Boolean = false
 
     //Inicializando Binding
     private lateinit var binding: ActivityPedidoBinding
@@ -132,10 +91,15 @@ class Pedido : AppCompatActivity() {
         tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
         // REFACTORIZACIÓN MVVM: Inicialización de Arquitectura Limpia
-        val dao = AppDatabase.getInstance(this).pedidosDao()
-        val repository = PedidosRepository(dao)
-        val useCase = SincronizarPedidosUseCase(repository)
-        val factory = PedidosViewModelFactory(repository, useCase)
+        val db = AppDatabase.getInstance(this)
+        val pedidosDao = db.pedidosDao()
+        val reporteDao = db.reporteDao()
+        
+        val repository = PedidosRepository(pedidosDao, reporteDao)
+        val sincronizarUseCase = SincronizarPedidosUseCase(repository)
+        val reporteUseCase = ObtenerDatosReporteUseCase(repository)
+        
+        val factory = PedidosViewModelFactory(repository, sincronizarUseCase, reporteUseCase)
         viewModel = ViewModelProvider(this, factory)[PedidosViewModel::class.java]
 
         observarViewModel()
@@ -270,6 +234,57 @@ class Pedido : AppCompatActivity() {
                 }
             }
         }
+
+        // REFACTORIZACIÓN MVVM: Observar estado de la generación de reporte PDF
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.reportStatus.collect { status ->
+                    status?.let {
+                        manejarEstadoReporte(it)
+                    }
+                }
+            }
+        }
+    }
+
+    //Funcion para el Manejo de Estado de Generación del Reporte
+    private fun manejarEstadoReporte(status: ObtenerDatosReporteUseCase.ReportStatus) {
+        when (status) {
+            is ObtenerDatosReporteUseCase.ReportStatus.Iniciando -> {
+                alert?.Cargando()
+                messageAsync("PREPARANDO REPORTE...")
+            }
+            is ObtenerDatosReporteUseCase.ReportStatus.Descargando -> {
+                // Si el estado llega muy rápido y el diálogo no se mostró, lo forzamos
+                if (alert?.isShowing() == false) alert?.Cargando()
+                messageAsync("DESCARGANDO DATOS DEL SERVIDOR...")
+            }
+            is ObtenerDatosReporteUseCase.ReportStatus.Guardando -> {
+                if (alert?.isShowing() == false) alert?.Cargando()
+                messageAsync("PROCESANDO INFORMACIÓN...")
+            }
+            is ObtenerDatosReporteUseCase.ReportStatus.Exito -> {
+                // Generar el archivo PDF
+                val manager = PdfReportManager()
+                val archivo = manager.generarPdfReporteDiario(vendedor, fecha, fechaDoc, status.datos)
+
+                if (archivo != null) {
+                    val snack = Snackbar.make(binding.lienzo, "REPORTE GENERADO CORRECTAMENTE", Snackbar.LENGTH_LONG)
+                    snack.view.setBackgroundColor(ContextCompat.getColor(this, R.color.btnVerde))
+                    snack.show()
+                } else {
+                    funciones.mensaje(this, "ERROR AL ESCRIBIR EL ARCHIVO PDF")
+                }
+                
+                alert?.dismisss()
+                viewModel.resetReportStatus()
+            }
+            is ObtenerDatosReporteUseCase.ReportStatus.Error -> {
+                alert?.dismisss()
+                funciones.mensaje(this, status.mensaje)
+                viewModel.resetReportStatus()
+            }
+        }
     }
 
     //Funcion para mostrar el listado de pedidos
@@ -375,6 +390,8 @@ class Pedido : AppCompatActivity() {
     //FUNCIONES PARA REPORTE DE PEDIDOS ENVIADOS DIARIMENTE DESDE LA APP
     //MODIFICACION 21/06/2023
     //FUNCION PARA EL MENSAJE DE ADVERTENCIA DE REPORTE
+
+    //REFACTORIZADO 03/08/2026
     private fun mensajeReporte(view: View){
         val updateDialog = Dialog(this, R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
@@ -391,7 +408,7 @@ class Pedido : AppCompatActivity() {
 
         tvUpdate.setOnClickListener {
             updateDialog.dismiss()
-            obtenerPedidos(idvendedor, fecha, view)
+            viewModel.obtenerDatosReporte(idvendedor, fecha, this@Pedido)
         }
 
         tvCancel.setOnClickListener {
@@ -399,289 +416,6 @@ class Pedido : AppCompatActivity() {
         }
 
         updateDialog.show()
-    }
-    //FUNCION PARA OBTENER LOS PEDIDOS DESDE EL SERVIDOR
-    private fun obtenerPedidos(Idvendedor: Int, Fecha: String, view: View) {
-        try {
-            val datos = BusquedaReporteJSON(
-                Idvendedor,
-                Fecha
-            )
-            val objecto =
-                Gson().toJson(datos)
-
-            val servidor = funciones.getServidor(ip, puerto.toString(), this@Pedido)
-            val ruta: String = servidor + "pedido/reporte"
-            val url = URL(ruta)
-
-            val sslContext = utilidades.crearSslInseguro()
-
-            with(url.openConnection() as HttpURLConnection) {
-
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier { _, _ -> true }
-                }
-
-                try {
-                    connectTimeout = 20000
-                    setRequestProperty(
-                        "Content-Type",
-                        "application/json;charset=utf-8"
-                    )
-                    requestMethod = "POST"
-                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                    or.write(objecto) //SE ESCRIBE EL OBJ JSON
-                    or.flush() //SE ENVIA EL OBJ JSON
-                    when (responseCode) {
-                        200 -> {
-                            BufferedReader(InputStreamReader(inputStream) as Reader?).use {
-                                try {
-                                    val respuesta = StringBuffer()
-                                    var inpuline = it.readLine()
-                                    while (inpuline != null) {
-                                        respuesta.append(inpuline)
-                                        inpuline = it.readLine()
-                                    }
-                                    it.close()
-                                    val res = JSONArray(respuesta.toString())
-                                    if (res.length() > 0) {
-                                        cargarPedidos(res, view)
-                                    } else {
-                                        runOnUiThread {
-                                            Toast.makeText(this@Pedido, "NO SE ENCONTRARON PEDIDOS DE ESTE DIA", Toast.LENGTH_LONG).show()
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    throw Exception(e.message)
-                                }
-                            }
-                        }
-
-                        400 -> {
-                            runOnUiThread { Toast.makeText(this@Pedido, "PARAMETROS ERRONEOS", Toast.LENGTH_LONG).show() }
-                        }
-
-                        404 -> {
-                            runOnUiThread { Toast.makeText(this@Pedido, "NO SE ENCONTRARON PEDIDOS ENVIADOS", Toast.LENGTH_LONG).show() }
-                        }
-
-                        else -> {
-                            runOnUiThread { Toast.makeText(this@Pedido, "ERROR DE CONEXION CON EL SERVIDOR", Toast.LENGTH_LONG).show() }
-                        }
-                    }
-                } catch (e: Exception) {
-                    throw Exception(e.message)
-                }
-            }
-        } catch (e: Exception) {
-            runOnUiThread {
-                funciones.mensaje(this@Pedido, "ERROR EN LA CONEXION CON EL SERVIDOR -> " + e.message)
-            }
-        }
-    }
-    //FUNCION PARA CARGAR LOS PEDIDOS ENVIADOS EN LA BD
-    private fun cargarPedidos(json: JSONArray, view: View) {
-        val bd = funciones.obtenerInstancia(this@Pedido).openHelper.writableDatabase
-        try {
-            bd.beginTransaction() //INICIANDO TRANSACCION DE REGISTRO
-            bd.delete("reporteTemp", null, null) //LIMPIANDO LA TABLA VENTASTEMP
-
-            for (i in 0 until json.length()) {
-                val dato = json.getJSONObject(i)
-                val valor = ContentValues()
-                valor.put("Cliente", funciones.validateJsonIsnullString(dato, "cliente"))
-                valor.put("Sucursal", funciones.validateJsonIsnullString(dato, "sucursal"))
-                valor.put("Total", funciones.validate(dato.getString("total").toFloat()))
-
-                bd.insert("reporteTemp", SQLiteDatabase.CONFLICT_REPLACE, valor) //INSERTANDO EN VENTASDETALLE
-            } //FINALIZANDO ITERACION FOR
-            bd.setTransactionSuccessful() //TRANSACCION COMPLETA
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        } finally {
-            bd.endTransaction()
-
-            generarPDF()
-            //verificarPermisos(view)
-        }
-    }
-
-    //FUNCION PARA GENERAR EL REPORTE EN PDF
-    private fun generarPDF() {
-        try {
-            val carpeta = "/reportespdf"
-            val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath + carpeta
-
-            val dir = File(path)
-            if(!dir.exists()){
-                dir.mkdirs()
-                Toast.makeText(this, "CARPETA CREADA CON EXITO", Toast.LENGTH_LONG).show()
-            }
-
-            val archivo = File(dir, vendedor + "_$fechaDoc.pdf")
-            val fos = FileOutputStream(archivo)
-
-            val documento = Document(PageSize.LETTER, 2.5f, 2.5f, 3.5f, 3.5f)
-            PdfWriter.getInstance(documento, fos)
-
-            documento.open()
-
-            //ESPACIOS
-            val espaciosDocumento = Paragraph(
-                "\n\n\n"
-            )
-            documento.add(espaciosDocumento)
-
-            //AGREGANDO TITULO PEDIDO
-            val fechaDocumento = Paragraph(
-                "$tituloText\n\n",
-                FontFactory.getFont("arial", 14f, Font.BOLD, BaseColor.BLACK)
-            )
-            fechaDocumento.alignment = Element.ALIGN_CENTER
-            documento.add(fechaDocumento)
-
-            //DATOS DEL VENDEDOR
-            val tablaCliente = PdfPTable(1)
-            tablaCliente.widthPercentage = 80f
-            val cellInforCliente = PdfPCell(
-                Paragraph(
-                    "VENDEDOR: $vendedor\n" +
-                            "FECHA: $fecha\n\n\n",
-                    FontFactory.getFont("arial", 12f, Font.NORMAL, BaseColor.BLACK)
-                )
-            )
-            cellInforCliente.horizontalAlignment = Element.ALIGN_LEFT
-            cellInforCliente.border = 0
-            tablaCliente.addCell(cellInforCliente)
-            documento.add(tablaCliente)
-
-            //DATOS DEL PEDIDO
-            val tablaPedido = PdfPTable(3)
-            tablaPedido.widthPercentage = 80f
-
-            val cellReferencia = PdfPCell(
-                Paragraph(
-                    "CLIENTE",
-                    FontFactory.getFont("arial", 12f, Font.BOLD, BaseColor.BLACK)
-                )
-            )
-            cellReferencia.horizontalAlignment = Element.ALIGN_CENTER
-            tablaPedido.addCell(cellReferencia)
-
-            val cellDescripcion = PdfPCell(
-                Paragraph(
-                    "SUCURSAL",
-                    FontFactory.getFont("arial", 12f, Font.BOLD, BaseColor.BLACK)
-                )
-            )
-            cellDescripcion.horizontalAlignment = Element.ALIGN_CENTER
-            tablaPedido.addCell(cellDescripcion)
-
-            val cellTotal = PdfPCell(
-                Paragraph(
-                    "TOTAL",
-                    FontFactory.getFont("arial", 12f, Font.BOLD, BaseColor.BLACK)
-                )
-            )
-            cellTotal.horizontalAlignment = Element.ALIGN_CENTER
-            tablaPedido.addCell(cellTotal)
-
-            //AGREGANDO EL CONTENIDO DEL PEDIDO
-            val lista = getReporte()
-            var total = 0f
-
-            for(data in lista){
-
-                val cellReferenciaP = PdfPCell(
-                    Paragraph(
-                        "" + data.Cliente,
-                        FontFactory.getFont("arial", 10f, Font.NORMAL, BaseColor.BLACK)
-                    )
-                )
-                cellReferenciaP.horizontalAlignment = Element.ALIGN_CENTER
-                tablaPedido.addCell(cellReferenciaP)
-
-                val cellDescripcionP = PdfPCell(
-                    Paragraph(
-                        "" + data.Sucursal,
-                        FontFactory.getFont("arial", 10f, Font.NORMAL, BaseColor.BLACK)
-                    )
-                )
-                cellDescripcionP.horizontalAlignment = Element.ALIGN_CENTER
-                tablaPedido.addCell(cellDescripcionP)
-
-                val cellTotalP = PdfPCell(
-                    Paragraph(
-                        "$ " + data.Total,
-                        FontFactory.getFont("arial", 10f, Font.NORMAL, BaseColor.BLACK)
-                    )
-                )
-                cellTotalP.horizontalAlignment = Element.ALIGN_RIGHT
-                tablaPedido.addCell(cellTotalP)
-
-                total += data.Total
-            }
-
-            val cellReferenciaP = PdfPCell(Paragraph(""))
-            cellReferenciaP.border = 0
-            tablaPedido.addCell(cellReferenciaP)
-
-            val cellCantidadP = PdfPCell(
-                Paragraph(
-                    "TOTAL",
-                    FontFactory.getFont("arial", 14f, Font.BOLD, BaseColor.BLACK)
-                )
-            )
-            cellCantidadP.horizontalAlignment = Element.ALIGN_RIGHT
-            tablaPedido.addCell(cellCantidadP)
-
-            val cellTotalP = PdfPCell(
-                Paragraph(
-                    "$ " + total,
-                    FontFactory.getFont("arial", 14f, Font.BOLD, BaseColor.BLACK)
-                )
-            )
-            cellTotalP.horizontalAlignment = Element.ALIGN_RIGHT
-            tablaPedido.addCell(cellTotalP)
-            documento.add(tablaPedido)
-
-            documento.close()
-
-            val alert: Snackbar = Snackbar.make(binding.lienzo, "REPORTE GENERADO CORRECTAMENTE", Snackbar.LENGTH_LONG)
-            alert.view.setBackgroundColor(ContextCompat.getColor(this@Pedido, R.color.btnVerde))
-            alert.show()
-
-        }catch (e: FileNotFoundException){
-            e.printStackTrace()
-        }catch (e: DocumentException){
-            e.printStackTrace()
-        }
-    }
-    //FUNCION PARA OBTENER LOS DATOS PARA EL REPORTE
-    private fun getReporte(): ArrayList<DatosReporteJSON> {
-        val base = funciones.obtenerInstancia(this@Pedido).openHelper.readableDatabase
-        try {
-            val cursor = base.query("SELECT *  FROM reporteTemp")
-            val lista = ArrayList<DatosReporteJSON>()
-            cursor.use {
-                if (cursor.count > 0) {
-                    cursor.moveToFirst()
-                    do {
-                        val detalle = DatosReporteJSON(
-                            cursor.getString(0),
-                            cursor.getString(1),
-                            cursor.getFloat(2)
-                        )
-                        lista.add(detalle)
-                    } while (cursor.moveToNext())
-                }
-            }
-            return lista
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        }
-
     }
 
 }
