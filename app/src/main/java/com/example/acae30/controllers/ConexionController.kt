@@ -1,21 +1,7 @@
 package com.example.acae30.controllers
 
-import android.content.ContentValues
-import android.content.Context
-import android.content.SharedPreferences
-import android.database.sqlite.SQLiteDatabase
-import com.example.acae30.Funciones
-import com.example.acae30.data.local.appDatabase.AppDatabase
-import com.example.acae30.data.remote.api.conexion.ConexionApi
-import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
-import com.example.acae30.data.remote.dto.UpdateAppDto
-import com.example.acae30.modelos.Servidores.ServidoresModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import timber.log.Timber
-
 class ConexionController {
-
+/*
     private var funciones = Funciones()
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
@@ -265,5 +251,5 @@ class ConexionController {
         } as UpdateAppDto
 
     }
-
+*/
 }

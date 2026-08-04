@@ -11,11 +11,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.Funciones
 import com.example.acae30.R
 import com.example.acae30.modelos.Pedidos
-
-/**
- * REFACTORIZACIÓN MVVM: PedidosAdapter ahora hereda de ListAdapter.
- * Esto permite el uso de DiffUtil para actualizaciones eficientes de la lista.
- */
 class PedidosAdapter(
     private val context: Context,
     private val itemClick: (Int) -> Unit
@@ -102,9 +97,6 @@ class PedidosAdapter(
         }
     }
 
-    /**
-     * Objeto estático para comparar elementos de la lista de forma eficiente.
-     */
     companion object {
         private val DiffCallback = object : DiffUtil.ItemCallback<Pedidos>() {
             override fun areItemsTheSame(oldItem: Pedidos, newItem: Pedidos): Boolean {

@@ -2,13 +2,12 @@ package com.example.acae30.controllers
 
 import android.content.Context
 import com.example.acae30.Funciones
-import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.Cuenta
 
 class CuentasController {
 
     val funciones = Funciones()
-
+/*
     //FUNCION PARA OBTENER LAS CXC POR CLIENTE
     fun obtenerCuentasPorNombre(cliente: String, context: Context): ArrayList<Cliente> {
         val base = funciones.obtenerInstancia(context).openHelper.readableDatabase
@@ -150,7 +149,7 @@ class CuentasController {
         }
         return lista
     }
-
+*/
     //FUNCION PARA OBTENER LAS CUENTAS DEL CLIENTE POR ID Y FILTRO
     fun obtenerCxCporIdCliente(idcliente: Int, context: Context, filtro: String) : ArrayList<Cuenta>{
         val base = funciones.obtenerInstancia(context).openHelper.readableDatabase

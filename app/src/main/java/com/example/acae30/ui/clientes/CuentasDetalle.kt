@@ -3,24 +3,29 @@ package com.example.acae30.ui.clientes
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.acae30.R
-import com.example.acae30.controllers.CuentasController
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.repository.CuentasRepository
 import com.example.acae30.databinding.ActivityCuentasDetalleBinding
 import com.example.acae30.listas.CuentaAdapter
 import com.example.acae30.modelos.Cuenta
+import com.example.acae30.ui.factories.CuentasViewModelFactory
 import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.util.Locale
 
 class CuentasDetalle : AppCompatActivity() {
     private var idcliente = 0
     private var nombrecliente = ""
-
-
     private lateinit var binding: ActivityCuentasDetalleBinding
-    private val cuentasController = CuentasController()
+    private lateinit var viewModel: CuentasViewModel
+    private lateinit var adapter: CuentaAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +35,25 @@ class CuentasDetalle : AppCompatActivity() {
         idcliente = intent.getIntExtra("idcliente", 0)
         nombrecliente = intent.getStringExtra("nombrecliente").toString()
 
+        // REFACTORIZACIÓN MVVM: Inicialización de Arquitectura Limpia
+        val dao = AppDatabase.getInstance(this).cuentasDao()
+        val repository = CuentasRepository(dao)
+        val factory = CuentasViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, factory)[CuentasViewModel::class.java]
+
+        configuracionInicial()
+        observarViewModel()
+    }
+
+    //-------------------------------------------------------------
+    // Configuración inicial de la interfaz.
+    //-------------------------------------------------------------
+    private fun configuracionInicial() {
         binding.txtcliente.text = nombrecliente
+        
+        adapter = CuentaAdapter(this)
+        binding.rvlista.layoutManager = LinearLayoutManager(this)
+        binding.rvlista.adapter = adapter
 
         binding.imgatras.setOnClickListener {
             Regresar()
@@ -38,44 +61,46 @@ class CuentasDetalle : AppCompatActivity() {
 
         binding.btnVencidas.setOnClickListener {
             binding.tvEncabezadoCuentas.text = getString(R.string.detalle_de_cuentas_vencidas)
-            cargarLista("Vencidas")
+            // REFACTORIZACIÓN MVVM: Delegar carga al ViewModel
+            viewModel.cargarDetalleCuentas(idcliente, "Vencidas")
         }
 
         binding.btnVigentes.setOnClickListener {
             binding.tvEncabezadoCuentas.text = getString(R.string.detalle_de_cuentas_vigentes)
-            cargarLista("Vigentes")
+            viewModel.cargarDetalleCuentas(idcliente, "Vigentes")
         }
 
         binding.btnTodas.setOnClickListener {
             binding.tvEncabezadoCuentas.text = getString(R.string.detalle_de_cuentas)
-            cargarLista("Todas")
+            viewModel.cargarDetalleCuentas(idcliente, "Todas")
+        }
+    }
+
+    //-------------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: Observar reactivamente los datos del detalle.
+    //-------------------------------------------------------------
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.detalleCuentas.collect { lista ->
+                    if (lista.isNotEmpty()) {
+                        binding.rvlista.visibility = View.VISIBLE
+                        actualizarLista(lista)
+                    } else {
+                        binding.rvlista.visibility = View.GONE
+                        binding.txttotal.text = "$ 0.00"
+                    }
+                }
+            }
         }
     }
 
     override fun onStart() {
         super.onStart()
-        cargarLista("Todas")
+        // REFACTORIZACIÓN MVVM: Carga inicial
+        viewModel.cargarDetalleCuentas(idcliente, "Todas")
     }
 
-    //FUNCION PARA CARGAR LA LISTA DE CXC EN EL RECICLERVIEW
-    private fun cargarLista(filtro: String){
-        this@CuentasDetalle.lifecycleScope.launch {
-            try {
-                val data = cuentasController.obtenerCxCporIdCliente(idcliente, this@CuentasDetalle, filtro)
-                if (data.size > 0) {
-                    binding.rvlista.visibility = View.VISIBLE
-                    list(data)
-                }else{
-                    binding.rvlista.visibility = View.GONE
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this@CuentasDetalle, e.message.toString(), Toast.LENGTH_SHORT)
-                        .show()
-                }
-            }
-        }
-    }
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
@@ -88,25 +113,19 @@ class CuentasDetalle : AppCompatActivity() {
         finish()
     }
 
-    //FUNCION PARA ARMAR LA LISTA DE CXC
-    private fun list(list: ArrayList<Cuenta>) {
+    //-------------------------------------------------------------
+    //Actualiza el adaptador y el total de la deuda.
+    //-------------------------------------------------------------
+    private fun actualizarLista(list: List<Cuenta>) {
         try {
-            if (list.size > 0) {
-                val mLayoutManager =
-                    LinearLayoutManager(this@CuentasDetalle, LinearLayoutManager.VERTICAL, false)
-                binding.rvlista.layoutManager = mLayoutManager
-                var t = 0.toFloat()
-                for (i in 0 until list.size) {
-                    val data = list[i]
-                    t += data.Saldo_actual!!
-                }
-                binding.txttotal.text = "$ " + String.format("%.2f", t)
-                val adapter = CuentaAdapter(list, this@CuentasDetalle)
-                binding.rvlista.adapter = adapter
-
-            }
+            var totalDeuda = 0f
+            list.forEach { totalDeuda += it.Saldo_actual ?: 0f }
+            
+            binding.txttotal.text = "$ " + String.format(Locale.getDefault(), "%.2f", totalDeuda)
+            adapter.submitList(list)
         } catch (e: Exception) {
-            throw Exception("ERROR: AL ENCONTRAR LAS CXC -> " + e.message)
+            //Toast.makeText(this, "Error al calcular total: ${e.message}", Toast.LENGTH_SHORT).show()
+            Timber.e(e, "[CUENTASDETALLE] ERROR AL CALCULAR EL TOTAL DE LA DEUDA")
         }
     }
 }

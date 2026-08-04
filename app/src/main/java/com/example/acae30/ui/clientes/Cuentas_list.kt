@@ -7,29 +7,29 @@ import android.widget.SearchView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.acae30.ui.clientes.CuentasDetalle
-import com.example.acae30.Funciones
 import com.example.acae30.Inicio
 import com.example.acae30.R
-import com.example.acae30.controllers.CuentasController
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.repository.CuentasRepository
 import com.example.acae30.databinding.ActivityCuentasListBinding
 import com.example.acae30.listas.ClienteAdapter
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.ui.abonos.AbonosCxc
 import com.example.acae30.ui.abonos.NuevoAbono
+import com.example.acae30.ui.factories.CuentasViewModelFactory
 import kotlinx.coroutines.launch
 
 class Cuentas_list : AppCompatActivity() {
     private var preferences : SharedPreferences? = null
     private var instancia = "CONFIG_SERVIDOR"
     private var busquedaCliente : String? = null
-
     private var vista = ""
-
-    private var funciones = Funciones()
-    private var cuentasController = CuentasController()
+    private lateinit var viewModel: CuentasViewModel
     private lateinit var binding : ActivityCuentasListBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +40,20 @@ class Cuentas_list : AppCompatActivity() {
         preferences = getSharedPreferences(instancia, MODE_PRIVATE)
         vista = preferences!!.getString("vista", "").toString()
 
+        // REFACTORIZACIÓN MVVM: Inicialización de Arquitectura Limpia
+        val dao = AppDatabase.getInstance(this).cuentasDao()
+        val repository = CuentasRepository(dao)
+        val factory = CuentasViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, factory)[CuentasViewModel::class.java]
+
+        configuracionInicial()
+        observarViewModel()
+    }
+
+    //-------------------------------------------------------------
+    // Configuración inicial de vistas y eventos de clic.
+    //-------------------------------------------------------------
+    private fun configuracionInicial() {
         when(vista){
             "abono" -> {
                 binding.tvTituloCxc.text = getString(R.string.listado_de_cuentas_nuevo_abono)
@@ -49,7 +63,28 @@ class Cuentas_list : AppCompatActivity() {
             }
         }
 
+        binding.btnAtras.setOnClickListener {
+            atras()
+        }
 
+        busqueda()
+    }
+
+    //-------------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: Observar los cambios de datos en el ViewModel de forma reactiva.
+    //-------------------------------------------------------------
+
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar lista de clientes con deudas
+                viewModel.clientesConCuentas.collect { lista ->
+                    if (lista.isNotEmpty()) {
+                        mostrarLista(ArrayList(lista))
+                    }
+                }
+            }
+        }
     }
 
     override fun onStart() {
@@ -60,67 +95,41 @@ class Cuentas_list : AppCompatActivity() {
             binding.searchCuenta.setQuery("$busquedaCliente", true)
         }
 
-        binding.btnAtras.setOnClickListener {
+        //-------------------------------------------------------------
+        // REFACTORIZACIÓN MVVM: Disparar la carga de datos inicial
+        //-------------------------------------------------------------
+        viewModel.cargarClientesConCuentas(busquedaCliente ?: "")
+    }
 
-            when(vista){
-                "abono" -> {
-                    eliminarBusqueda()
-
-                    val intento = Intent(this, AbonosCxc::class.java)
-                    startActivity(intento)
-                    finish()
-                }
-                else -> {
-                    eliminarBusqueda()
-
-                    val intento = Intent(this, Inicio::class.java)
-                    startActivity(intento)
-                    finish()
-                }
+    private fun atras() {
+        when(vista){
+            "abono" -> {
+                eliminarBusqueda()
+                val intento = Intent(this, AbonosCxc::class.java)
+                startActivity(intento)
+                finish()
+            }
+            else -> {
+                eliminarBusqueda()
+                val intento = Intent(this, Inicio::class.java)
+                startActivity(intento)
+                finish()
             }
         }
-        //GlobalScope.launch(Dispatchers.IO) {
-        this@Cuentas_list.lifecycleScope.launch {
-            try {
-                val data = obtenerCuentas()
-                if (data.size > 0) {
-                    MostrarLista(data)
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this@Cuentas_list, e.message.toString(), Toast.LENGTH_LONG).show()
-                }
-            }
-        } //ejecuta la funcion asyncrona
-
-        busqueda() //recibe los parametro de busqueda
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-     //   super.onBackPressed()
-       // finish()
-    }
-
-    private fun obtenerCuentas() : ArrayList<Cliente>{
-
-        val listado : ArrayList<Cliente> = if(!busquedaCliente.isNullOrEmpty()){
-            cuentasController.obtenerCuentasPorNombre(busquedaCliente.toString(), this@Cuentas_list)
-        }else{
-            cuentasController.obtenerTodaslasCxC(this@Cuentas_list)
-        }
-
-        return listado
-    }
-
+    //-------------------------------------------------------------
     //FUNCION PARA MANTENER LA BUSQUEDA DEL CLIENTE
+    //-------------------------------------------------------------
     private fun buscarCliente(busqueda : String){
         preferences!!.edit {
             putString("busquedaCliente", busqueda)
         }
     }
 
+    //-------------------------------------------------------------
     //FUNCION PARA ELIMINAR LA BUSQUEDA PERSISTENTE DEL CLIENTE
+    //-------------------------------------------------------------
     private fun eliminarBusqueda(){
         val clientSearch = preferences!!.getString("busquedaCliente", "")
         preferences!!.edit {
@@ -133,9 +142,6 @@ class Cuentas_list : AppCompatActivity() {
         }
     }
 
-    //BUSQUEDA DE CLIENTES DINAMICA
-    //MODIFICACION PARA LA LIBRERIA DM
-    //31-08-2022
     private fun busqueda() {
         binding.searchCuenta.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(p0: String?): Boolean {
@@ -143,98 +149,51 @@ class Cuentas_list : AppCompatActivity() {
             }
 
             override fun onQueryTextChange(texto: String): Boolean {
-                val dSearch = cuentasController.obtenerCuentasPorNombre(texto, this@Cuentas_list)
-                MostrarLista(dSearch)
+                // REFACTORIZACIÓN MVVM: ejecutar la búsqueda en el ViewModel
+                viewModel.cargarClientesConCuentas(texto)
                 return false
             }
-
         })
-    } //obtiene los resultados de la busqueda
+    }
 
-    private fun CountCuenta(idcliente: Int): Int {
-        val bd = funciones.obtenerInstancia(this@Cuentas_list).openHelper.readableDatabase
+    private fun mostrarLista(list: ArrayList<Cliente>?) {
         try {
-            val consulta = "SELECT COUNT(*) FROM cuentas where Id_cliente=$idcliente AND status LIKE '%PENDIENTE%'"
-            val cursor =
-                bd.query(consulta)
-            val cuentas = 0
-            return if (cursor.count > 0) {
-                cursor.count
-            } else {
-                cuentas
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        }
-    } //revisa si tiene cuentas el cliente
-
-    private fun MostrarLista(list: ArrayList<Cliente>?) {
-        try {
-            if (list!!.size > 0) {
+            if (list!!.isNotEmpty()) {
                 val mLayoutManager =
                     LinearLayoutManager(this@Cuentas_list, LinearLayoutManager.VERTICAL, false)
                 binding.lista.layoutManager = mLayoutManager
+                
                 val adapter =
                     ClienteAdapter(list, this@Cuentas_list, this@Cuentas_list, 0) { position ->
                         val cliente = list[position]
-                        runOnUiThread {
-                            //GlobalScope.launch(Dispatchers.IO) {
-                            this@Cuentas_list.lifecycleScope.launch {
-                                try {
-                                    val cuentas = CountCuenta(cliente.Id!!)
-                                    if (cuentas > 0) {
-                                        when (vista) {
-                                            "abono" -> {
-                                                val intento = Intent(
-                                                    this@Cuentas_list,
-                                                    NuevoAbono::class.java
-                                                )
-                                                intento.putExtra("idcliente", cliente.Id!!)
-                                                startActivity(intento)
-                                                finish()
-                                            }
 
-                                            else -> {
-                                                buscarCliente(binding.searchCuenta.query.toString())
-
-                                                val intento = Intent(
-                                                    this@Cuentas_list,
-                                                    CuentasDetalle::class.java
-                                                )
-                                                intento.putExtra("idcliente", cliente.Id!!)
-                                                intento.putExtra("nombrecliente", cliente.Cliente!!)
-                                                startActivity(intento)
-                                                finish()
-                                            }
-                                        }
-                                    } else {
-                                        runOnUiThread {
-                                            funciones.mostrarAlerta(
-                                                "Este cliente no Tiene cuentas Pendientes",
-                                                this@Cuentas_list,
-                                                binding.lienzo
-                                            )
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    runOnUiThread {
-                                        funciones.mostrarAlerta(
-                                            "ERROR: AL MOSTRAR EL LISTADO" + e.message.toString(),
-                                            this@Cuentas_list,
-                                            binding.lienzo
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
+                        // REFACTORIZACIÓN MVVM: El proceso de navegación se decide aquí de forma limpia
+                        irADetalle(cliente)
                     }
                 binding.lista.adapter = adapter
-
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            Toast.makeText(this, "Error al mostrar lista: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun irADetalle(cliente: Cliente) {
+        when (vista) {
+            "abono" -> {
+                val intento = Intent(this@Cuentas_list, NuevoAbono::class.java)
+                intento.putExtra("idcliente", cliente.Id!!)
+                startActivity(intento)
+                finish()
+            }
+
+            else -> {
+                buscarCliente(binding.searchCuenta.query.toString())
+                val intento = Intent(this@Cuentas_list, CuentasDetalle::class.java)
+                intento.putExtra("idcliente", cliente.Id!!)
+                intento.putExtra("nombrecliente", cliente.Cliente!!)
+                startActivity(intento)
+                finish()
+            }
         }
     }
 }

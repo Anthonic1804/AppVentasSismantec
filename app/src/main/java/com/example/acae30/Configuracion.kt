@@ -33,6 +33,7 @@ import com.example.acae30.data.local.appDatabase.LimpiarBD
 import com.example.acae30.data.local.entity.ServidoresEntity
 import com.example.acae30.data.repository.ServidoresRepository
 import com.example.acae30.controllers.ConfigController
+import com.example.acae30.data.remote.dto.UpdateAppDto
 import com.example.acae30.databinding.ActivityConfiguracionBinding
 import com.example.acae30.modelos.Impresor.DispositivoBT
 import com.example.acae30.ui.factories.ServidoresViewModelFactory
@@ -55,46 +56,31 @@ import javax.net.ssl.HttpsURLConnection
 
 
 class Configuracion : AppCompatActivity() {
-
-    //private var versionAppServer : String? = null
-    //private var urlAppServer : String? = null
-    //private val obligarEliminarBdInternarApp: Boolean = false
     private lateinit var tvUpdate : TextView
     private lateinit var tvCancel : TextView
     private var versionActual : Float = 0f
-
     private val instancia = "CONFIG_SERVIDOR"
     private var preferencias: SharedPreferences? = null
     private var alerta: AlertDialogo? = null
 
     private var configController = ConfigController()
     private var funciones = Funciones()
-    // REFACTORIZACIÓN: Se reemplaza ConexionController por ServidoresViewModel
-    private lateinit var servidoresViewModel: ServidoresViewModel
-    //private val agregarHeaders = AgregarHeaders()
-
     private var servidor: String = ""
     private var nombreServidor: String = ""
     private var ipServidor: String = ""
     private var puertoServidor: String = ""
     private var puntoVenta: String = ""
-
-    //private var utilidades = CrearSslNoSeguro()
-
     private var idServidorActivo: Int = 0
     private var sslActivo: Int = 0
 
     // REFACTORIZACIÓN: Lista local de servidores para facilitar búsquedas por nombre
     private var listaServidoresEntity: List<ServidoresEntity> = emptyList()
-
+    // REFACTORIZACIÓN: Se reemplaza ConexionController por ServidoresViewModel
+    private lateinit var servidoresViewModel: ServidoresViewModel
     private var limpiarBD = LimpiarBD()
-
     private var isProcessing = false
-
     private var listaNumeroCaja = mutableListOf<Int>()
     private var numeroCaja = 0
-
-
     private lateinit var binding : ActivityConfiguracionBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,9 +112,6 @@ class Configuracion : AppCompatActivity() {
         //FUNCIONES AGRAGADAS PARA LOS CONTROLES DE VISTA DE INVENTARIO
 
         binding.swSinExistencias.isEnabled = false
-
-        //CARGANDO SERVIDORES AL SPINNER
-        cargarServidores()
 
         cargarNumeroCaja()
 
@@ -217,7 +200,7 @@ class Configuracion : AppCompatActivity() {
 
         binding.btnImpresor.setOnClickListener {
 
-            var impresor = binding.txtImpresor.text
+            val impresor = binding.txtImpresor.text
 
             preferencias!!.edit{
                 remove("impresorIntegrado")
@@ -576,17 +559,13 @@ class Configuracion : AppCompatActivity() {
             alerta!!.changeText("ERROR DE CONEXION CON EL SERVIDOR")
         }
 
-        // Importante: Reseteamos el estado en el ViewModel para que no se procese repetidamente
-        // y permitamos futuras reconexiones sin bloqueos.
-        // (Aunque el ViewModel ya lo hace al inicio, esto es una buena práctica de limpieza)
-
         lifecycleScope.launch {
             delay(1000)
             alerta!!.dismisss()
         }
     }
 
-    private fun manejarInfoActualizacion(actualizacionApp: com.example.acae30.data.remote.dto.UpdateAppDto) {
+    private fun manejarInfoActualizacion(actualizacionApp: UpdateAppDto) {
         if (actualizacionApp.version!!.isEmpty() || versionActual >= actualizacionApp.version.toFloat()) {
             habilitarOpcion()
             alerta!!.dismisss()
@@ -603,7 +582,6 @@ class Configuracion : AppCompatActivity() {
     }
 
     // Launcher para seleccionar imagen
-
     private val seleccionarImagenLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             if (uri != null) {
@@ -620,7 +598,7 @@ class Configuracion : AppCompatActivity() {
             }
         }
 
-    // 🔹 Copiar imagen seleccionada a almacenamiento interno
+    // Copiar imagen seleccionada a almacenamiento interno
     private fun guardarImagenEnInterno(uri: Uri, fileName: String): File? {
         return try {
             val inputStream = contentResolver.openInputStream(uri)
@@ -649,111 +627,6 @@ class Configuracion : AppCompatActivity() {
         }
     } //obtiene la ip y el puerto del servidor
 
-    /*private suspend fun reconectarServidor(ip: String, puerto: String, context: Context) {
-        if (funciones.isInternetAvailable(this)) {
-            try {
-                val servidor = funciones.getServidor(ip, puerto, this@Configuracion)
-                val ruta: String = servidor + "conexion"
-                val url = URL(ruta)
-
-                val sslContext = utilidades.crearSslInseguro()
-
-                with(url.openConnection() as HttpURLConnection) {
-
-
-                    if(this is HttpsURLConnection){
-                        sslSocketFactory = sslContext.socketFactory
-                        hostnameVerifier = HostnameVerifier{_, _ -> true}
-                    }
-
-                    connectTimeout = 30000
-                    requestMethod = "GET"
-                    if (responseCode == 200) {
-                        inputStream.bufferedReader().use {
-                            val response = StringBuffer()
-                            var inputline = it.readLine()
-                            while (inputline != null) {
-                                response.append(inputline)
-                                inputline = it.readLine()
-                            }
-                            it.close() //cerramos el buffer
-                            val respuesta = JSONArray(response.toString())
-                            if (respuesta.length() > 0) {
-                                val res = respuesta.getJSONObject(0) //obtenemos los datos
-
-
-                                if (res.getInt("error") > 0) {
-                                    preferencias!!.edit(commit = true) {
-                                        this.putInt("puerto", puerto.toInt())
-                                        putString("ip", ip)
-                                    }
-
-                                    withContext(Dispatchers.Main){
-
-                                        habilitarOpcion()
-
-                                        alerta!!.dismisss()
-                                        val alert: Snackbar = Snackbar.make(binding.vistaalerta, res.getString("response"), Snackbar.LENGTH_LONG)
-                                        alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.btnVerde))
-                                        alert.show()
-
-                                    }
-
-
-                                } else {
-                                    withContext(Dispatchers.Main){
-                                        habilitarOpcion()
-                                    }
-                                    throw  Exception(res.getString("response"))
-                                } //valida que la respuesta sea  la correcta
-                            } else {
-                                withContext(Dispatchers.Main){
-                                    habilitarOpcion()
-                                }
-                                throw  Exception("Se Conecto con el Servidor, No hubo Respuesta")
-                            }//valida que se haya obtenido datos del JSON
-                        } //obtenmos los datos que nos envia el servidor
-                    } else {
-                        withContext(Dispatchers.Main){
-                            habilitarOpcion()
-                        }
-                        throw  Exception("Error de Comunicacion, Codigo:$responseCode")
-                    } //valida que el codigo de respuesta del servidor sea ok 200
-                }
-            } catch (e: Exception) {
-
-
-
-                println("ERROR 1 -> " + e.message)
-
-                withContext(Dispatchers.Main){
-                    habilitarOpcion()
-
-                    alerta!!.dismisss()
-                    val alert: Snackbar =
-                        Snackbar.make(binding.vistaalerta, e.message.toString(), Snackbar.LENGTH_LONG)
-                    alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
-                    alert.show()
-                }
-
-
-            } //valida se si presenta algun error de conexion u otro
-        } else {
-
-            withContext(Dispatchers.Main){
-                habilitarOpcion()
-
-                alerta!!.dismisss()
-                val alert: Snackbar = Snackbar.make(
-                    binding.vistaalerta,
-                    "Enciende los Datos o el Wifi",
-                    Snackbar.LENGTH_LONG
-                )
-                alert.view.setBackgroundColor(ContextCompat.getColor(context, R.color.moderado))
-                alert.show()
-            }
-        } //valida que este encendido los datos o el wifi
-    }//valida que haya comunicacion con el servidor*/
     private fun reconectarServidor(ip: String, puerto: String, sslActivo: Int){
         val hayInternet = funciones.isInternetAvailable(this@Configuracion)
         if(hayInternet){
@@ -769,91 +642,11 @@ class Configuracion : AppCompatActivity() {
         }
     }
 
-
-
     @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
     override fun onBackPressed() {
         //super.onBackPressed();
 
     }//anula el boton atras
-
-    //FUNCION PARA VERIFICAR LA VERSION DE LA APP INSTALADA
-   /* private suspend fun obtenerNuevaVersionApp() {
-        try {
-            val servidor = funciones.getServidor(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), this@Configuracion)
-            val direccion = servidor + "updateapp"
-            val url = URL(direccion)
-
-            val sslContext = utilidades.crearSslInseguro()
-
-            with(withContext(Dispatchers.IO) {
-                url.openConnection()
-            } as HttpURLConnection) {
-
-                val token = preferencias!!.getString("token", "")
-                agregarHeaders.agregarHeaders(this, token, sslContext)
-
-                try {
-                    runOnUiThread {
-                        alerta!!.Cargando()
-                    }
-                    delay(5000)
-                    connectTimeout = 30000
-                    requestMethod = "GET"
-                    if (responseCode == 200) {
-                        inputStream.bufferedReader().use { data ->
-                            var talla = 0
-                            val response = StringBuffer()
-                            var inputLine = data.readLine()
-                            while (inputLine != null) {
-                                response.append(inputLine)
-                                inputLine = data.readLine()
-                                talla++
-                            }
-                            data.close()
-                            val respuesta = JSONArray(response.toString())
-                            if (respuesta.length() > 0) {
-                                for (i in 0 until respuesta.length()) {
-                                    val dato = respuesta.getJSONObject(i)
-
-                                    versionAppServer = funciones.validateJsonIsnullString(dato, "version")
-                                    urlAppServer = funciones.validateJsonIsnullString(dato, "url")
-
-                                    runOnUiThread {
-                                        if(versionActual >= versionAppServer!!.toFloat()){
-                                            habilitarOpcion()
-                                            alerta!!.dismisss()
-                                            Toast.makeText(applicationContext, "NO ES NECESARIO ACTUALIZAR", Toast.LENGTH_SHORT).show()
-                                        }else{
-                                            habilitarOpcion()
-                                            alerta!!.dismisss()
-                                            mensajeUpdate(versionAppServer.toString(), urlAppServer.toString())
-                                        }
-                                    }
-
-                                } //termina el for
-                            } else {
-                                habilitarOpcion()
-                                alerta!!.dismisss()
-                                ShowAlert("NO SE ENCONTRARON DATOS DE ACTUALIZACIOIN")
-                            } //caso que la respuesta venga vacia
-                        }
-                    } else {
-                        habilitarOpcion()
-                        alerta!!.dismisss()
-                        throw Exception("SERVIDOR: NO SE ENCONTRARON DATOS DE ACTUALIZACION")
-                    }
-                } catch (e: Exception) {
-                    habilitarOpcion()
-                    alerta!!.dismisss()
-                    throw Exception(e.message)
-                }
-            }//termina de obtener los datos
-        } catch (e: Exception) {
-            alerta!!.dismisss()
-            ShowAlert("ERROR AL CONECTARSE CON EL SERVIDOR")
-        }
-    }*/
 
     private fun obtenerNuevaVersionApp(){
         alerta!!.Cargando()
@@ -971,11 +764,6 @@ class Configuracion : AppCompatActivity() {
         // Cierra el proceso actual
         Runtime.getRuntime().exit(0)
     }
-
-    //--------------------------------
-    // REFACTORIZACIÓN: El listado ahora se carga automáticamente vía Flow en observarViewModel()
-    //--------------------------------
-    private fun cargarServidores(){ }
 
     //-------------------------------------
     //Funcion para redireccionar al menu Servidores

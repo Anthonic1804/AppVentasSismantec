@@ -90,8 +90,9 @@ class carga_datos : AppCompatActivity() {
         inventarioTiempoReal = preferences.getBoolean("inventarioTiempoReal", false)
 
 
-        var multiplesHojaDeCarga = preferences.getBoolean("multiplesHojaDeCarga", false)
-        println("MULTIPLES HOJAS ACTIVAS -> " + multiplesHojaDeCarga)
+        /*val multiplesHojaDeCarga = preferences.getBoolean("multiplesHojaDeCarga", false)
+        //println("MULTIPLES HOJAS ACTIVAS -> " + multiplesHojaDeCarga)
+        Timber.d("[CARGAR_DATOS] MULTIPLES HOJAS DE CARGA ACTIVAS -> $multiplesHojaDeCarga")*/
 
     }
 

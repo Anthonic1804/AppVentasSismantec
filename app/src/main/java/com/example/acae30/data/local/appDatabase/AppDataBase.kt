@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.acae30.data.local.dao.ClientesDao
+import com.example.acae30.data.local.dao.CuentasDao
 import com.example.acae30.data.local.dao.InventarioDao
 import com.example.acae30.data.local.dao.InventarioSolicitudDao
 import com.example.acae30.data.local.dao.PedidosDao
@@ -96,6 +97,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun servidoresDao(): ServidoresDao
     abstract fun pedidosDao() : PedidosDao
     abstract fun reporteDao() : ReporteDao
+    abstract fun cuentasDao(): CuentasDao
 
     companion object{
 
