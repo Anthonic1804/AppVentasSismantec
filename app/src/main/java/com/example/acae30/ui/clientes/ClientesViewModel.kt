@@ -7,6 +7,7 @@ import com.example.acae30.domain.usecase.CrearPedidoDirectoUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class ClientesViewModel(
     private val repository: ClientesRepository,
@@ -22,9 +23,9 @@ class ClientesViewModel(
     private val _eventoNavegacion = MutableStateFlow<Navegacion?>(null)
     val eventoNavegacion = _eventoNavegacion.asStateFlow()
 
-    /**
-     * Procesa la selección de un cliente y decide el flujo según el tipo de venta.
-     */
+    //-------------------------------------------------------------
+    // Procesa la selección de un cliente y decide el flujo según el tipo de venta.
+    //-------------------------------------------------------------
     fun seleccionarCliente(
         idCliente: Int,
         nombre: String,
@@ -33,17 +34,17 @@ class ClientesViewModel(
     ) {
         viewModelScope.launch {
             if (tipoVentaLocal) {
-                // FLUJO LOCAL: Crear pedido directamente
+                // PROCESO LOCAL: Crear pedido directamente
                 try {
                     val nuevoIdPedido = crearPedidoDirectoUseCase.ejecutar(idCliente)
                     _eventoNavegacion.value = Navegacion.IrADetallePedido(
                         idCliente, nombre, codigo, nuevoIdPedido
                     )
                 } catch (e: Exception) {
-                    // Manejar error (podrías añadir un StateFlow de errores)
+                    Timber.e(e, "[CLIENTES_VIEW_MODEL] ERROR EN PROCESO DE TIPOVENTALOCA = TRUE")
                 }
             } else {
-                // FLUJO EXTERNO: Ir a Visita.kt para GPS
+                // PROCESO EXTERNO: Ir a Visita.kt para GPS
                 _eventoNavegacion.value = Navegacion.IrAVisita(idCliente, nombre, codigo)
             }
         }

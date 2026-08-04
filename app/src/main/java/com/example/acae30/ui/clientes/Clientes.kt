@@ -115,7 +115,7 @@ class Clientes : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         val clientesDao = db.clienteDao()
         val pedidosDao = db.pedidosDao()
-        val reporteDao = db.reporteDao() // Requerido para el constructor de PedidosRepository
+        val reporteDao = db.reporteDao()
         
         val servidor = funciones.getServidor(preferences!!.getString("ip", ""), preferences!!.getInt("puerto", 0).toString(), this)
         val clientesApi = RetrofitCliente.obtenerApi<ClientesApi>(servidor, this)
@@ -217,7 +217,10 @@ class Clientes : AppCompatActivity() {
         }
     }
 
+    //---------------------------------------------------------
     // Manejar el resultado de la solicitud de permisos
+    //---------------------------------------------------------
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
@@ -231,7 +234,9 @@ class Clientes : AppCompatActivity() {
         }
     }
 
+    //---------------------------------------------------------
     //FUNCION PARA CAPTURAR LA GEOLOCALIZACION
+    //---------------------------------------------------------
     private fun capturarLocalizacion() {
         // Verificar permisos de ubicación
         if (ContextCompat.checkSelfPermission(
@@ -251,7 +256,9 @@ class Clientes : AppCompatActivity() {
         }
     }
 
+    //---------------------------------------------------------
     // HACER PETICIÓN DE POSICIÓN ACTUAL DEL GPS
+    //---------------------------------------------------------
     @SuppressLint("MissingPermission")
     private fun updateGPS() {
         fusedLocationClient.lastLocation
@@ -370,8 +377,7 @@ class Clientes : AppCompatActivity() {
                             //OPCION PARA VERIFICAR LA FIRMA DEL PAGARE
                             if ((cliente.Firmar_pagare_app!!.toInt() == 1 && cliente.Terminos_cliente == "Credito") || (cliente.Terminos_cliente == "Contado")) {
 
-                                /* 
-                                 * CÓDIGO ANTERIOR (Comentado para comparación):
+                                /*
                                  * clienteController.verificarPagareObligatorio(
                                  *    this@Clientes, cliente.Id!!, cliente.Cliente!!, cliente.Codigo!!, visita
                                  * )
@@ -394,9 +400,7 @@ class Clientes : AppCompatActivity() {
                             }
                         } else {
                             //SIN VERIFICACION DE LA FIRMA DEL PAGARE
-                            
-                            /* 
-                             * CÓDIGO ANTERIOR:
+                            /*
                              * clienteController.verificarPagareObligatorio(...)
                              */
                             

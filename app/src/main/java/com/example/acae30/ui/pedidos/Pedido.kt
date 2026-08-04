@@ -224,7 +224,9 @@ class Pedido : AppCompatActivity() {
             }
         }
 
+        //---------------------------------------------------------
         // Observar estado de la sincronización
+        //---------------------------------------------------------
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.syncStatus.collect { status ->
@@ -235,7 +237,9 @@ class Pedido : AppCompatActivity() {
             }
         }
 
+        //---------------------------------------------------------
         // REFACTORIZACIÓN MVVM: Observar estado de la generación de reporte PDF
+        //---------------------------------------------------------
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.reportStatus.collect { status ->
@@ -247,7 +251,9 @@ class Pedido : AppCompatActivity() {
         }
     }
 
+    //---------------------------------------------------------
     //Funcion para el Manejo de Estado de Generación del Reporte
+    //---------------------------------------------------------
     private fun manejarEstadoReporte(status: ObtenerDatosReporteUseCase.ReportStatus) {
         when (status) {
             is ObtenerDatosReporteUseCase.ReportStatus.Iniciando -> {
@@ -287,12 +293,16 @@ class Pedido : AppCompatActivity() {
         }
     }
 
+    //---------------------------------------------------------
     //Funcion para mostrar el listado de pedidos
+    //---------------------------------------------------------
     private fun mostrarListado(list: ArrayList<Pedidos>) {
         adapter.submitList(list)
     }
 
+    //---------------------------------------------------------
     //Funcion para manejar los estados de la Sincronización
+    //---------------------------------------------------------
     private fun manejarEstadoSincronizacion(status: SincronizarPedidosUseCase.SyncProgress) {
         val esSegundoPlano = viewModel.esSegundoPlano.value
 
@@ -338,7 +348,9 @@ class Pedido : AppCompatActivity() {
     }
 
 
+    //---------------------------------------------------------
     //Configurando el RecyvlerView
+    //---------------------------------------------------------
     private fun setupRecyclerView() {
         adapter = PedidosAdapter(this@Pedido) { position ->
             val data = adapter.currentList[position]
@@ -377,7 +389,9 @@ class Pedido : AppCompatActivity() {
         )
     }
 
+    //---------------------------------------------------------
     //Funcion para mostrar la alerta de tener activo el GPS
+    //---------------------------------------------------------
     private fun alertaGPS() {
         val dialogo = Dialog(this@Pedido)
         dialogo.setContentView(R.layout.alerta_gps)

@@ -303,7 +303,6 @@ class Detallepedido : AppCompatActivity() {
             val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
             try {
                 /*
-                 * CÓDIGO ANTERIOR (Comentado para comparación):
                  * El INNER JOIN obligaba a que existiera una visita. Si idvisita era 0 (Local), no devolvía nada.
                  * 
                  * val sql = "select c.codigo as codigo, c.cliente as nombre, c.id as idcliente, v.id as idvisita, v.enviado as visita_enviada, ... " +
@@ -311,11 +310,6 @@ class Detallepedido : AppCompatActivity() {
                  *           "where p.id = ${idpedido}"
                  */
 
-                /*
-                 * NUEVO CÓDIGO:
-                 * Usamos LEFT JOIN en la tabla visitas. Esto permite cargar el pedido y el cliente
-                 * incluso si la visita no existe (idvisita = 0), que es lo que sucede en VENTAS LOCALES.
-                 */
                 val sql = "select c.codigo as codigo, " +
                         "c.cliente as nombre, " +
                         "c.id as idcliente, " +
@@ -325,7 +319,7 @@ class Detallepedido : AppCompatActivity() {
                         "from pedidos p " +
                         "inner join clientes c " +
                         "on p.Id_cliente = c.Id " +
-                        "left join visitas v on p.idvisita = v.id " + // <--- CAMBIO CLAVE: LEFT JOIN
+                        "left join visitas v on p.idvisita = v.id " +
                         "where p.id = ${idpedido}"
 
                 val cursor = base.query(sql)
@@ -341,21 +335,18 @@ class Detallepedido : AppCompatActivity() {
                         visita_enviada = (cursor.getIntOrNull(4) ?: 0) == 1
                         
                         binding.fechaCreacion.text = cursor.getString(5)
-                        binding.txtCliente.setText(nombre) // Aseguramos que el nombre se vea en la UI
+                        binding.txtCliente.setText(nombre)
                     } else {
                         throw Exception("Error al obtener código de cliente")
                     }
                 }
             } catch (e: Exception) {
-                println("ERROR AL OBTENER INFORMACION DE LA VISITA DEL CLIENTE -> " + e.message)
+                Timber.e(e,"[DETALLEPEDIDO] ERROR AL OBTENER INFORMACION DE LA VISITA DEL CLIENTE")
             }
         }
 
         binding.imbtnatras.setOnClickListener {
-            val intento = Intent(this, Pedido::class.java)
-            startActivity(intento)
-            finish()
-
+            menuPedidos()
         } //regresa al menu principal
 
         binding.imgbtnadd.setOnClickListener {
@@ -411,14 +402,14 @@ class Detallepedido : AppCompatActivity() {
                 try {
                     deshabilitarOpciones()
 
-                    // Mostramos el diálogo de carga para indicar que estamos verificando datos en la nube.
+                    // Mostramos el diálogo de carga para indicar que se está obteniedo el balance del cliente
                     alerta!!.Cargando()
                     alerta!!.changeText("Verificando saldo real en el servidor...")
 
                     // Consultamos el balance y límite de crédito actualizados directamente desde la API.
                     val balanceFresh = clientesController.obtenerBalacenClientePorId(this@Detallepedido, idcliente)
 
-                    // Actualizamos nuestras variables locales con la respuesta "fresca" del servidor.
+                    // Actualizamos nuestras variables locales con la respuesta
                     balanceActual = balanceFresh.balance
                     limiteCredito = balanceFresh.limiteCredito
 
@@ -436,11 +427,10 @@ class Detallepedido : AppCompatActivity() {
                     // Si el crédito es suficiente, cerramos el diálogo de verificación y seguimos.
                     alerta!!.dismisss()
 
-                    // --- INICIO DEL FLUJO DE ENVÍO ORIGINAL ---
                     if (cantidadItemsPedido <= limiteItemPedido) {
                         if (codigo == "01") {
                             nombre = binding.txtCliente.text.toString()
-                            // Actualizamos el nombre en la BD local de forma asíncrona
+                            // Actualizamos el nombre en la BD local
                             withContext(Dispatchers.IO) {
                                 pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
                             }
@@ -469,16 +459,15 @@ class Detallepedido : AppCompatActivity() {
                         habilitarOpciones()
                         Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido", Toast.LENGTH_SHORT).show()
                     }
-                    // --- FIN DEL FLUJO DE ENVÍO ORIGINAL ---
 
                 } catch (e: Exception) {
-                    // En caso de error de red o de la API, detenemos el proceso por seguridad.
+                    // En caso de error de red o de la API
                     alerta!!.dismisss()
                     habilitarOpciones()
                     funciones.mostrarAlerta("ERROR AL VERIFICAR SALDO ACTUALIZADO: ${e.message}",
                         this@Detallepedido, binding.lienzo)
 
-                    Timber.e("ERROR AL VERIFICAR SALDO ACTUALIZADO: ${e.message}")
+                    Timber.e(e,"[DETALLEPEDIDO] ERROR AL VERIFICAR SALDO ACTUALIZADO")
                 }
             }
         }
@@ -655,6 +644,12 @@ class Detallepedido : AppCompatActivity() {
             agregarComentarioAlPedido()
         }
 
+    }
+
+    private fun menuPedidos(){
+        val intento = Intent(this, Pedido::class.java)
+        startActivity(intento)
+        finish()
     }
 
     //FUNCION PARA AGREGAR COMENTARIO AL PEDIDO
@@ -863,24 +858,10 @@ class Detallepedido : AppCompatActivity() {
 
     //FUNCION PARA FINALIZAR EL ENVIO DEL PEDIDO
     private fun pedidoEnviado(){
-        /*
-         * CÓDIGO ANTERIOR (Comentado para comparación):
-         * El uso de '!!' causaba un crash en VENTAS LOCALES porque no existe visita (idvisita = 0).
-         * 
-         * val visita = visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido)
-         * if(visita!!.Abierta){ ... }
-         */
-
-        /*
-         * NUEVO CÓDIGO:
-         * Implementamos una navegación segura. 
-         * 1. Si idvisita es 0 (Modo Local), vamos directo al listado de pedidos.
-         * 2. Si hay una visita real, validamos si está abierta antes de redirigir.
-         */
         val visita = if (idvisita > 0) visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido) else null
         
         if(visita != null && visita.Abierta){
-            // FLUJO EXTERNO: Regresamos a la visita para que el vendedor la finalice o continúe
+            // PROCESO EXTERNO: Regresamos a la visita para que el vendedor la finalice o continúe
             val intento = Intent(this@Detallepedido, Visita::class.java)
             intento.putExtra("idcliente", idcliente)
             intento.putExtra("nombrecliente", nombre)
@@ -891,10 +872,8 @@ class Detallepedido : AppCompatActivity() {
             startActivity(intento)
             finish()
         }else{
-            // FLUJO LOCAL o VISITA CERRADA: Vamos directo al listado general de pedidos
-            val intento = Intent(this@Detallepedido, Pedido::class.java)
-            startActivity(intento)
-            finish()
+            // PROCESO LOCAL o VISITA CERRADA: Vamos directo al listado general de pedidos
+            menuPedidos()
         }
     }
 
@@ -1372,14 +1351,11 @@ class Detallepedido : AppCompatActivity() {
                 try {
                     EliminarPedido(idpedido)
 
-                    val intento = Intent(this@Detallepedido, Visita::class.java)
-                    intento.putExtra("idcliente", idcliente)
-                    intento.putExtra("nombrecliente", nombre)
-                    intento.putExtra("visitaid", idvisita)
-                    intento.putExtra("codigo", codigo)
-                    intento.putExtra("idapi", idapi)
-                    startActivity(intento)
-                    finish()
+                    if(idvisita > 0){
+                        regresarVisita()
+                    }else{
+                        menuPedidos()
+                    }
 
                     habilitarOpciones()
 
@@ -1406,6 +1382,16 @@ class Detallepedido : AppCompatActivity() {
         }//boton eliminar
     } //muestra la alerta para eliminar
 
+    private fun regresarVisita(){
+        val intento = Intent(this@Detallepedido, Visita::class.java)
+        intento.putExtra("idcliente", idcliente)
+        intento.putExtra("nombrecliente", nombre)
+        intento.putExtra("visitaid", idvisita)
+        intento.putExtra("codigo", codigo)
+        intento.putExtra("idapi", idapi)
+        startActivity(intento)
+        finish()
+    }
     private fun EliminarPedido(idpedido: Int) {
         val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {

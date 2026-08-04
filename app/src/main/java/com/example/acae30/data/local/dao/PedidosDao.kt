@@ -20,8 +20,9 @@ interface PedidosDao {
             "WHERE Enviado=1 AND pedido_dte=0 AND Tipo_documento != 'RC'")
     fun obtenerListadoPedidosNoTransmitidos() : Flow<List<PedidosNoTransmitidosModel>>
 
-    // REFACTORIZACIÓN MVVM: Obtener todos los pedidos para la lista principal (Observado)
-    // Se incluye el formateo de fecha para mantener compatibilidad con el adaptador anterior
+    //-------------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: Obtener todos los pedidos para la lista principal
+    //-------------------------------------------------------------
     @Query("""
         SELECT *, strftime('%d/%m/%Y %H:%M', fecha_creado) as Fecha_creado 
         FROM pedidos ORDER BY Id DESC
@@ -61,7 +62,9 @@ interface PedidosDao {
         idDocTransmitido: Int
     )
 
+    //-------------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Obtener lista síncrona para proceso de sincronización
+    //-------------------------------------------------------------
     @Query("""
         SELECT * FROM pedidos 
         WHERE (Enviado = 0 OR pedido_dte = 0) 
@@ -69,26 +72,36 @@ interface PedidosDao {
     """)
     suspend fun obtenerListaPedidosNoTransmitidos(): List<PedidosEntity>
 
+    //-------------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Eliminar detalles de pedidos antiguos
+    //-------------------------------------------------------------
     @Query("DELETE FROM detalle_pedidos WHERE Id_pedido IN (SELECT Id FROM pedidos WHERE Fecha != :fechaActual)")
     suspend fun eliminarDetallesAntiguos(fechaActual: String)
 
+    //-------------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Eliminar detalles de pedidos transmitidos hoy
+    //-------------------------------------------------------------
     @Query("""
         DELETE FROM detalle_pedidos 
         WHERE Id_pedido IN (SELECT Id FROM pedidos WHERE Fecha = :fechaActual AND Enviado = 1 AND pedido_dte = 1)
     """)
     suspend fun eliminarDetallesTransmitidosDelDia(fechaActual: String)
 
+    //-------------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Eliminar pedidos antiguos (no del día actual)
+    //-------------------------------------------------------------
     @Query("DELETE FROM pedidos WHERE Fecha != :fechaActual")
     suspend fun eliminarPedidosAntiguos(fechaActual: String)
 
+    //-------------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Eliminar pedidos del día que ya fueron transmitidos y tienen DTE
+    //-------------------------------------------------------------
     @Query("DELETE FROM pedidos WHERE Fecha = :fechaActual AND Enviado = 1 AND pedido_dte = 1")
     suspend fun eliminarPedidosTransmitidosDelDia(fechaActual: String)
 
+    //-------------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Eliminar detalles de pedidos que ya no existen
+    //-------------------------------------------------------------
     @Query("DELETE FROM detalle_pedidos WHERE Id_pedido NOT IN (SELECT Id FROM pedidos)")
     suspend fun limpiarDetallesHuerfanos()
 

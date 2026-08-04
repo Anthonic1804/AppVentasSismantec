@@ -24,10 +24,6 @@ class PedidosRepository(
     // REFACTORIZACIÓN MVVM: MÉTODOS DE CREACIÓN DE PEDIDO
     //---------------------------------------------------------
 
-    /**
-     * Crea un nuevo pedido en la base de datos local (Room).
-     * Migrado desde PedidosController para cumplir con Clean Architecture.
-     */
     suspend fun crearNuevoPedidoLocal(
         idCliente: Int,
         nombreCliente: String,
@@ -112,13 +108,19 @@ class PedidosRepository(
         return dao.insertarPedido(pedido).toInt()
     }
 
+    //---------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Flujo para la lista de la UI (Todos los pedidos)
+    //---------------------------------------------------------
     fun obtenerTodosLosPedidosFlow() = dao.obtenerTodosLosPedidosFlow()
 
+    //---------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Lista síncrona para el proceso de sincronización
+    //---------------------------------------------------------
     suspend fun obtenerPedidosNoTransmitidosLocal() = dao.obtenerListaPedidosNoTransmitidos()
 
+    //---------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Consulta remota al servidor vía Retrofit
+    //---------------------------------------------------------
     suspend fun obtenerPedidoTransmitidoRemote(idPedidoApp: String, context: Context): PedidoTransmitidoDTO? {
         val preferencias = context.getSharedPreferences("CONFIG_SERVIDOR", Context.MODE_PRIVATE)
         val ip = preferencias.getString("ip", "") ?: ""
@@ -141,7 +143,9 @@ class PedidosRepository(
         }
     }
 
+    //---------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Actualización en BD local (Room)
+    //---------------------------------------------------------
     suspend fun actualizarInformacionPedido(
         idPedido: Int, pedidoDTE: Int, pedidoDteError: Int,
         dteAmbiente: String, dteCodigoGeneracion: String,
@@ -152,11 +156,15 @@ class PedidosRepository(
         dteCodigoGeneracion, dteSelloRecibido, dteNumeroControl, idDocTransmitido
     )
 
+    //---------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Marcar pedido como enviado y cerrar
+    //---------------------------------------------------------
     suspend fun actualizarEstadoPedidoEnviado(idServidor: Int, idPedido: Int) =
         dao.actualizarIdServidorConfirmandoPedido(idServidor, idPedido)
 
+    //---------------------------------------------------------
     // REFACTORIZACIÓN MVVM: Limpieza de pedidos antiguos o ya procesados
+    //---------------------------------------------------------
     suspend fun eliminarPedidos(fechaActual: String, eliminarCompletos: Boolean) {
         
         // Eliminamos los detalles
@@ -205,7 +213,9 @@ class PedidosRepository(
         }
     }
 
+    //---------------------------------------------------------
     //INSERTAR PEDOS EN LA TBL REPORTETMP
+    //---------------------------------------------------------
     suspend fun actualizarTablaReporteLocal(datos: List<ReportePedidoDTO>) {
         reporteDao.limpiarTabla()
         val entidades = datos.map { dto ->
@@ -219,6 +229,8 @@ class PedidosRepository(
         reporteDao.insertarLista(entidades)
     }
 
+    //---------------------------------------------------------
     //OBTENIENDO LOS PEDIDOS DEL REPORTE
+    //---------------------------------------------------------
     suspend fun obtenerDatosReporteLocal() = reporteDao.obtenerTodos()
 }
