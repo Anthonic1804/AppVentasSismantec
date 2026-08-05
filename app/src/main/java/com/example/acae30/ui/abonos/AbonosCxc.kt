@@ -15,7 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.acae30.AlertDialogo
-import com.example.acae30.ui.clientes.Cuentas_list
+import com.example.acae30.ui.cuentas.Cuentas_list
 import com.example.acae30.Funciones
 import com.example.acae30.Inicio
 import com.example.acae30.R

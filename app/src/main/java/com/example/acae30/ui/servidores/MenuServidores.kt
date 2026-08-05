@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.acae30.Configuracion
+import com.example.acae30.ui.configuracion.Configuracion
 import com.example.acae30.MainActivity
 import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.repository.ServidoresRepository
@@ -22,7 +22,7 @@ class MenuServidores : AppCompatActivity() {
     private lateinit var binding: ActivityMenuServidoresBinding
     private var menu: String = ""
     private lateinit var adapter: ServidoresAdapter
-    // REFACTORIZACIÓN: Se introduce el ViewModel para manejar los datos
+    // Se introduce el ViewModel para manejar los datos
     private lateinit var viewModel: ServidoresViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,8 +36,7 @@ class MenuServidores : AppCompatActivity() {
             binding.btnConectarServidor.visibility = View.GONE
         }
 
-        // REFACTORIZACIÓN MVVM/ROOM: Inicialización del repositorio y ViewModel
-        // El DAO se obtiene de la base de datos Room única de la app.
+        // Inicialización del repositorio y ViewModel
         val dao = AppDatabase.getInstance(this).servidoresDao()
         val repository = ServidoresRepository(dao)
         val factory = ServidoresViewModelFactory(repository)
@@ -45,8 +44,7 @@ class MenuServidores : AppCompatActivity() {
 
         setupRecyclerView()
         
-        // REFACTORIZACIÓN REACTIVA: Observamos el Flow de servidores.
-        // Cada vez que se registre o elimine un servidor, la lista se actualizará sola.
+        // Observamos Viewmodel servidores.
         observarViewModel()
     }
 
@@ -67,12 +65,11 @@ class MenuServidores : AppCompatActivity() {
         binding.listadoServidores.adapter = adapter
     }
 
-    // Observa el flujo de datos proveniente de Room a través del ViewModel
+    // Observa el flujo de datos a través del ViewModel
     private fun observarViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.servidores.collect { lista ->
-                    // ListAdapter se encarga de calcular las diferencias (DiffUtil) eficientemente
                     adapter.submitList(lista)
                 }
             }

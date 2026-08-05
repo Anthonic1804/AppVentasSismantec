@@ -10,7 +10,7 @@ class ClientesRepository(
 ) {
 
     //--------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Obtener un cliente por su ID desde Room
+    // Obtener un cliente por su ID desde Room
     //--------------------------------------------------------
     suspend fun obtenerClientePorId(idCliente: Int): ClientesEntity? {
         return dao.obtenerClientePorId(idCliente)

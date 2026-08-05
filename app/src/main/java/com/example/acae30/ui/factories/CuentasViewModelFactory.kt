@@ -5,11 +5,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.acae30.data.repository.CuentasRepository
 import com.example.acae30.domain.usecase.cuentas.ObtenerClientesConCuentasUseCase
 import com.example.acae30.domain.usecase.cuentas.ObtenerDetalleCuentasUseCase
-import com.example.acae30.ui.clientes.CuentasViewModel
+import com.example.acae30.ui.cuentas.CuentasViewModel
 
-/**
- * REFACTORIZACIÓN MVVM: Fábrica para instanciar CuentasViewModel con sus dependencias inyectadas.
- */
 class CuentasViewModelFactory(
     private val repository: CuentasRepository
 ) : ViewModelProvider.Factory {

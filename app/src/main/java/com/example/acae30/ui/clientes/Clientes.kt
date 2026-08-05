@@ -47,6 +47,7 @@ import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class Clientes : AppCompatActivity() {
     private var recicle: RecyclerView? = null
@@ -74,11 +75,7 @@ class Clientes : AppCompatActivity() {
 
     private var clienteController = ClientesController()
     private var funciones = Funciones()
-
     private lateinit var binding : ActivityClientesBinding
-
-    // REFACTORIZACIÓN MVVM: Declaración de ViewModel
-    private lateinit var viewModel: ClientesViewModel
     private var tipoVentaLocal = false
 
     //VARIABLES PARA LA CAPTURA DE LA GEOLOCALIZACION
@@ -91,6 +88,9 @@ class Clientes : AppCompatActivity() {
 
     //Variable para controlar el Mantenimiento de Clientes
     private var P_Mantto_Clientes: Boolean = false
+
+    // Declaración de ViewModel
+    private lateinit var viewModel: ClientesViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -111,7 +111,7 @@ class Clientes : AppCompatActivity() {
         P_Mantto_Clientes = preferences!!.getBoolean("P_Mantto_Clientes", false)
         tipoVentaLocal = preferences!!.getBoolean("tipoVentaLocal", false)
 
-        // REFACTORIZACIÓN MVVM: Inicialización de la arquitectura
+        // Inicialización
         val db = AppDatabase.getInstance(this)
         val clientesDao = db.clienteDao()
         val pedidosDao = db.pedidosDao()
@@ -183,7 +183,7 @@ class Clientes : AppCompatActivity() {
     }
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Observar eventos de navegación
+    // Observar eventos de navegación
     //---------------------------------------------------------
     private fun observarViewModel() {
         lifecycleScope.launch {
@@ -225,10 +225,8 @@ class Clientes : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permiso concedido, obtener la ubicación
                 updateGPS()
             } else {
-                // Permiso denegado, mostrar un mensaje o realizar otra acción
                 Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
             }
         }
@@ -376,17 +374,6 @@ class Clientes : AppCompatActivity() {
                         if (pagare) {
                             //OPCION PARA VERIFICAR LA FIRMA DEL PAGARE
                             if ((cliente.Firmar_pagare_app!!.toInt() == 1 && cliente.Terminos_cliente == "Credito") || (cliente.Terminos_cliente == "Contado")) {
-
-                                /*
-                                 * clienteController.verificarPagareObligatorio(
-                                 *    this@Clientes, cliente.Id!!, cliente.Cliente!!, cliente.Codigo!!, visita
-                                 * )
-                                 */
-
-                                /* 
-                                 * NUEVO CÓDIGO (Refactorización MVVM):
-                                 * El ViewModel decide si crear pedido directo (Local) o ir a Visita (Externa).
-                                 */
                                 viewModel.seleccionarCliente(
                                     cliente.Id!!,
                                     cliente.Cliente!!,
@@ -400,11 +387,6 @@ class Clientes : AppCompatActivity() {
                             }
                         } else {
                             //SIN VERIFICACION DE LA FIRMA DEL PAGARE
-                            /*
-                             * clienteController.verificarPagareObligatorio(...)
-                             */
-                            
-                            // NUEVO CÓDIGO:
                             viewModel.seleccionarCliente(
                                 cliente.Id!!,
                                 cliente.Cliente!!,
@@ -436,6 +418,7 @@ class Clientes : AppCompatActivity() {
         } catch (e: Exception) {
             //alert!!.dismisss()
             Toast.makeText(this@Clientes, e.message, Toast.LENGTH_LONG).show()
+            Timber.e(e,"[CLIENTE] ERROR AL MOSTRAR EL LISTADO DE CLIENTES")
         }
     }
 

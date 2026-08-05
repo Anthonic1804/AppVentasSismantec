@@ -10,16 +10,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// REFACTORIZACIÓN MVVM: El ViewModel actúa como puente entre la UI y el Repositorio.
 class ServidoresViewModel(
     private val repository: ServidoresRepository
 ) : ViewModel() {
 
-    // REFACTORIZACIÓN ROOM: Obtenemos el listado como un Flow directamente desde el repositorio.
-    // Esto permite que la UI se actualice automáticamente cuando cambien los datos en la BD.
+    // Obtenemos el listado como un Flow directamente desde el repositorio.
     val servidores = repository.obtenerServidores()
 
-    // Manejo de estado para el resultado de la conexión (Éxito o Error)
+    // Manejo de estado para el resultado de la conexión
     private val _resultadoConexion = MutableStateFlow("")
     val resultadoConexion = _resultadoConexion.asStateFlow()
 
@@ -31,10 +29,8 @@ class ServidoresViewModel(
     private val _updateInfo = MutableStateFlow<UpdateAppDto?>(null)
     val updateInfo = _updateInfo.asStateFlow()
 
-    // ARQUITECTURA LIMPIA: La lógica de red se delega al repositorio.
+    // La lógica de red se delega al repositorio.
     fun verificarConexion(ip: String, puerto: String, sslActivo: Int, context: Context){
-        // BUG FIX: Reseteamos el valor a vacío antes de iniciar.
-        // Esto asegura que el StateFlow detecte un cambio incluso si el resultado es el mismo que el anterior.
         _resultadoConexion.value = ""
 
         viewModelScope.launch {
@@ -44,8 +40,6 @@ class ServidoresViewModel(
 
     // Nueva función para buscar actualización de la App
     fun buscarActualizacion(baseUrl: String, context: Context) {
-        // BUG FIX: Reseteamos a null para que el StateFlow detecte el cambio 
-        // cuando se vuelva a asignar el mismo DTO de actualización.
         _updateInfo.value = null
 
         viewModelScope.launch {
@@ -53,7 +47,7 @@ class ServidoresViewModel(
         }
     }
 
-    // CRUD: Registro de servidor usando la entidad de Room
+    // Registro de servidor
     fun registrarServidor(nombre: String, ip: String, puerto: String, ssl: Int) {
         viewModelScope.launch {
             val entity = ServidoresEntity(0, nombre, ip, puerto, ssl)
@@ -62,7 +56,7 @@ class ServidoresViewModel(
         }
     }
 
-    // CRUD: Actualización de servidor
+    // Actualización de servidor
     fun actualizarServidor(id: Int, nombre: String, ip: String, puerto: String, ssl: Int) {
         viewModelScope.launch {
             val entity = ServidoresEntity(id, nombre, ip, puerto, ssl)
@@ -71,7 +65,7 @@ class ServidoresViewModel(
         }
     }
 
-    // CRUD: Eliminación de servidor
+    // Eliminación de servidor
     fun eliminarServidor(id: Int) {
         viewModelScope.launch {
             repository.eliminarServidor(id)
@@ -79,7 +73,7 @@ class ServidoresViewModel(
         }
     }
 
-    // Función para resetear el estado de la operación y evitar ejecuciones repetidas en la UI
+    // Función para resetear el estado de la operación
     fun resetOperacion() {
         _operacionExitosa.value = false
     }

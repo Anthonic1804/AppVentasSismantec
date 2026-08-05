@@ -21,7 +21,7 @@ interface PedidosDao {
     fun obtenerListadoPedidosNoTransmitidos() : Flow<List<PedidosNoTransmitidosModel>>
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Obtener todos los pedidos para la lista principal
+    // Obtener todos los pedidos para la lista principal
     //-------------------------------------------------------------
     @Query("""
         SELECT *, strftime('%d/%m/%Y %H:%M', fecha_creado) as Fecha_creado 
@@ -63,7 +63,7 @@ interface PedidosDao {
     )
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Obtener lista síncrona para proceso de sincronización
+    // Obtener lista síncrona para proceso de sincronización
     //-------------------------------------------------------------
     @Query("""
         SELECT * FROM pedidos 
@@ -73,13 +73,13 @@ interface PedidosDao {
     suspend fun obtenerListaPedidosNoTransmitidos(): List<PedidosEntity>
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Eliminar detalles de pedidos antiguos
+    // Eliminar detalles de pedidos antiguos
     //-------------------------------------------------------------
     @Query("DELETE FROM detalle_pedidos WHERE Id_pedido IN (SELECT Id FROM pedidos WHERE Fecha != :fechaActual)")
     suspend fun eliminarDetallesAntiguos(fechaActual: String)
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Eliminar detalles de pedidos transmitidos hoy
+    // Eliminar detalles de pedidos transmitidos hoy
     //-------------------------------------------------------------
     @Query("""
         DELETE FROM detalle_pedidos 
@@ -88,25 +88,25 @@ interface PedidosDao {
     suspend fun eliminarDetallesTransmitidosDelDia(fechaActual: String)
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Eliminar pedidos antiguos (no del día actual)
+    // Eliminar pedidos antiguos (no del día actual)
     //-------------------------------------------------------------
     @Query("DELETE FROM pedidos WHERE Fecha != :fechaActual")
     suspend fun eliminarPedidosAntiguos(fechaActual: String)
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Eliminar pedidos del día que ya fueron transmitidos y tienen DTE
+    // Eliminar pedidos del día que ya fueron transmitidos y tienen DTE
     //-------------------------------------------------------------
     @Query("DELETE FROM pedidos WHERE Fecha = :fechaActual AND Enviado = 1 AND pedido_dte = 1")
     suspend fun eliminarPedidosTransmitidosDelDia(fechaActual: String)
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Eliminar detalles de pedidos que ya no existen
+    // Eliminar detalles de pedidos que ya no existen
     //-------------------------------------------------------------
     @Query("DELETE FROM detalle_pedidos WHERE Id_pedido NOT IN (SELECT Id FROM pedidos)")
     suspend fun limpiarDetallesHuerfanos()
 
     //-------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Insertar un nuevo pedido en Room
+    // Insertar un nuevo pedido en Room
     //-------------------------------------------------------
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarPedido(pedido: PedidosEntity): Long

@@ -1,4 +1,4 @@
-package com.example.acae30.ui.clientes
+package com.example.acae30.ui.cuentas
 
 import android.content.Intent
 import android.content.SharedPreferences
@@ -40,7 +40,7 @@ class Cuentas_list : AppCompatActivity() {
         preferences = getSharedPreferences(instancia, MODE_PRIVATE)
         vista = preferences!!.getString("vista", "").toString()
 
-        // REFACTORIZACIÓN MVVM: Inicialización de Arquitectura Limpia
+        // Inicialización
         val dao = AppDatabase.getInstance(this).cuentasDao()
         val repository = CuentasRepository(dao)
         val factory = CuentasViewModelFactory(repository)
@@ -51,7 +51,7 @@ class Cuentas_list : AppCompatActivity() {
     }
 
     //-------------------------------------------------------------
-    // Configuración inicial de vistas y eventos de clic.
+    // Configuración inicial de vistas
     //-------------------------------------------------------------
     private fun configuracionInicial() {
         when(vista){
@@ -71,13 +71,12 @@ class Cuentas_list : AppCompatActivity() {
     }
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Observar los cambios de datos en el ViewModel de forma reactiva.
+    // Observar los cambios de datos en el ViewModel
     //-------------------------------------------------------------
 
     private fun observarViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Observar lista de clientes con deudas
                 viewModel.clientesConCuentas.collect { lista ->
                     if (lista.isNotEmpty()) {
                         mostrarLista(ArrayList(lista))
@@ -96,7 +95,7 @@ class Cuentas_list : AppCompatActivity() {
         }
 
         //-------------------------------------------------------------
-        // REFACTORIZACIÓN MVVM: Disparar la carga de datos inicial
+        // Inicia la carga de datos
         //-------------------------------------------------------------
         viewModel.cargarClientesConCuentas(busquedaCliente ?: "")
     }
@@ -149,7 +148,6 @@ class Cuentas_list : AppCompatActivity() {
             }
 
             override fun onQueryTextChange(texto: String): Boolean {
-                // REFACTORIZACIÓN MVVM: ejecutar la búsqueda en el ViewModel
                 viewModel.cargarClientesConCuentas(texto)
                 return false
             }
@@ -166,8 +164,6 @@ class Cuentas_list : AppCompatActivity() {
                 val adapter =
                     ClienteAdapter(list, this@Cuentas_list, this@Cuentas_list, 0) { position ->
                         val cliente = list[position]
-
-                        // REFACTORIZACIÓN MVVM: El proceso de navegación se decide aquí de forma limpia
                         irADetalle(cliente)
                     }
                 binding.lista.adapter = adapter

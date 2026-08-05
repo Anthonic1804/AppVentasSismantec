@@ -16,18 +16,18 @@ class PedidosViewModel(
     private val obtenerReporteUseCase: ObtenerDatosReporteUseCase
 ) : ViewModel() {
 
-    // REFACTORIZACIÓN MVVM: Lista de pedidos observada directamente desde Room
+    // Lista de pedidos observada directamente desde Room
     val pedidos = repository.obtenerTodosLosPedidosFlow()
 
-    // Estado de la sincronización expuesto a la UI
+    // Estado de la sincronización en la vista
     private val _syncStatus = MutableStateFlow<SincronizarPedidosUseCase.SyncProgress?>(null)
     val syncStatus = _syncStatus.asStateFlow()
 
-    // Variable para controlar si el proceso es visible o silencioso (segundo plano)
+    // Variable para controlar si el proceso es visible o segundo plano
     private val _esSegundoPlano = MutableStateFlow(false)
     val esSegundoPlano = _esSegundoPlano.asStateFlow()
 
-    // REFACTORIZACIÓN MVVM: Estado de generación del reporte PDF
+    // Estado de generación del reporte PDF
     private val _reportStatus = MutableStateFlow<ObtenerDatosReporteUseCase.ReportStatus?>(null)
     val reportStatus = _reportStatus.asStateFlow()
 
@@ -57,7 +57,7 @@ class PedidosViewModel(
         }
     }
 
-     //Limpia el estado de sincronización después de procesarlo en la UI.
+     //Limpia el estado de sincronización después de procesarlo en la vista.
     fun resetSyncStatus() {
         _syncStatus.value = null
     }

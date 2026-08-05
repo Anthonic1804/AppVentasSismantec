@@ -16,7 +16,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.acae30.ui.clientes.Cuentas_list
+import com.example.acae30.ui.cuentas.Cuentas_list
 import com.example.acae30.Funciones
 import com.example.acae30.controllers.AbonosController
 import com.example.acae30.controllers.ClientesController

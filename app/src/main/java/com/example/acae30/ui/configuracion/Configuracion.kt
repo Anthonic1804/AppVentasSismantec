@@ -1,22 +1,21 @@
-package com.example.acae30
+package com.example.acae30.ui.configuracion
 
 import android.Manifest
+import android.R
 import android.app.Dialog
-import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
-import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -26,16 +25,18 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.dcastalia.localappupdate.DownloadApk
-import com.example.acae30.Utilidades.AgregarHeaders
-import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.AlertDialogo
+import com.example.acae30.Funciones
+import com.example.acae30.Inicio
+import com.example.acae30.controllers.ConfigController
 import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.local.appDatabase.LimpiarBD
 import com.example.acae30.data.local.entity.ServidoresEntity
-import com.example.acae30.data.repository.ServidoresRepository
-import com.example.acae30.controllers.ConfigController
 import com.example.acae30.data.remote.dto.UpdateAppDto
+import com.example.acae30.data.repository.BluetoothRepository
+import com.example.acae30.data.repository.ServidoresRepository
 import com.example.acae30.databinding.ActivityConfiguracionBinding
-import com.example.acae30.modelos.Impresor.DispositivoBT
+import com.example.acae30.ui.factories.ConfiguracionViewModelFactory
 import com.example.acae30.ui.factories.ServidoresViewModelFactory
 import com.example.acae30.ui.servidores.MenuServidores
 import com.example.acae30.ui.servidores.ServidoresViewModel
@@ -45,15 +46,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.HttpsURLConnection
-
 
 class Configuracion : AppCompatActivity() {
     private lateinit var tvUpdate : TextView
@@ -62,7 +56,6 @@ class Configuracion : AppCompatActivity() {
     private val instancia = "CONFIG_SERVIDOR"
     private var preferencias: SharedPreferences? = null
     private var alerta: AlertDialogo? = null
-
     private var configController = ConfigController()
     private var funciones = Funciones()
     private var servidor: String = ""
@@ -72,16 +65,18 @@ class Configuracion : AppCompatActivity() {
     private var puntoVenta: String = ""
     private var idServidorActivo: Int = 0
     private var sslActivo: Int = 0
-
-    // REFACTORIZACIÓN: Lista local de servidores para facilitar búsquedas por nombre
-    private var listaServidoresEntity: List<ServidoresEntity> = emptyList()
-    // REFACTORIZACIÓN: Se reemplaza ConexionController por ServidoresViewModel
-    private lateinit var servidoresViewModel: ServidoresViewModel
+    private var impresoraSeleccionada: String = ""
     private var limpiarBD = LimpiarBD()
     private var isProcessing = false
     private var listaNumeroCaja = mutableListOf<Int>()
     private var numeroCaja = 0
     private lateinit var binding : ActivityConfiguracionBinding
+    // Lista local de servidores
+    private var listaServidoresEntity: List<ServidoresEntity> = emptyList()
+    // ViewModel para Servidores
+    private lateinit var servidoresViewModel: ServidoresViewModel
+    // ViewModel para configuraciones y Bluetooth
+    private lateinit var configuracionViewModel: ConfiguracionViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,51 +86,45 @@ class Configuracion : AppCompatActivity() {
         preferencias = getSharedPreferences(instancia, MODE_PRIVATE)
         alerta = AlertDialogo(this, this)
 
-        // INICIALIZACIÓN MVVM
+        // Servidores ViewModel
         val dao = AppDatabase.getInstance(this).servidoresDao()
         val repository = ServidoresRepository(dao)
         val factory = ServidoresViewModelFactory(repository)
         servidoresViewModel = ViewModelProvider(this, factory)[ServidoresViewModel::class.java]
 
-        observarViewModel()
+        // Configuracion ViewModel
+        val bluetoothRepository = BluetoothRepository()
+        val configFactory = ConfiguracionViewModelFactory(bluetoothRepository)
+        configuracionViewModel = ViewModelProvider(this, configFactory)[ConfiguracionViewModel::class.java]
 
+        observarViewModel()
+        observarBluetoothViewModel()
+
+        // SETEANDO SHARED PREFERENCES
         nombreServidor = preferencias!!.getString("nombreServidor", "").toString()
         ipServidor = preferencias!!.getString("ip", "").toString()
         puertoServidor = preferencias!!.getInt("puerto", 0).toString()
         puntoVenta = preferencias!!.getString("puntoVenta", "").toString()
-
         idServidorActivo = preferencias!!.getInt("idServidorActivo", 0)
         sslActivo = preferencias!!.getInt("sslActivo", 0)
-
         numeroCaja = preferencias!!.getInt("numeroCaja", 0)
 
-        //FUNCIONES AGRAGADAS PARA LOS CONTROLES DE VISTA DE INVENTARIO
+        // REFACTORIZACIÓN: Verificar permisos de Bluetooth antes de cargar
+        verificarPermisosBluetooth()
 
-        binding.swSinExistencias.isEnabled = false
-
+        //LISTADO PARA EL NUMERO DE CAJA
         cargarNumeroCaja()
 
         //ACTUALIZAR CONFIG PARA PEDIDOS SIN EXISTENCIAS
+        binding.swSinExistencias.isEnabled = false
         binding.swSinExistencias.isChecked = preferencias!!.getString("pedidos_sin_existencia", "") == "S"
 
-
+        //FUNCIONES AGRAGADAS PARA LOS CONTROLES DE VISTA DE INVENTARIO
         // 2 -> LISTADO
         // 1 -> VISTA MINIATURA
         binding.swlista.isChecked = preferencias!!.getInt("vistaInventario", 0) == 2
         binding.swminiatura.isChecked = preferencias!!.getInt("vistaInventario", 0) == 1
 
-        //ACTIVANDO SWITCH DE IMRPESORES
-        binding.swBluetooth.isChecked = preferencias!!.getString("tipoImpresora", "") == "BT"
-        binding.swIntegrada.isChecked = preferencias!!.getString("tipoImpresora", "") == "INT"
-
-        if(preferencias!!.getString("tipoImpresora", "") == "BT"){
-            binding.lyImpresor.visibility = View.GONE
-        }
-
-        binding.txtImpresor.setText(preferencias!!.getString("impresorIntegrado", ""))
-
-        versionActualApp()
-        binding.tvVersionActualApp.text = "ACAE APP Ver. $versionActual"
 
         binding.swlista.setOnCheckedChangeListener { _, isChecked ->
             preferencias!!.edit {
@@ -161,6 +150,14 @@ class Configuracion : AppCompatActivity() {
                     putInt("vistaInventario", 2)
                 }
             }
+        }
+
+        //ACTIVANDO SWITCH DE IMRPESORES
+        binding.swBluetooth.isChecked = preferencias!!.getString("tipoImpresora", "") == "BT"
+        binding.swIntegrada.isChecked = preferencias!!.getString("tipoImpresora", "") == "INT"
+
+        if(preferencias!!.getString("tipoImpresora", "") == "BT"){
+            binding.lyImpresor.visibility = View.GONE
         }
 
         //ACTIVANDO LOGICA DE SWITCH DE IMPRESORES
@@ -199,18 +196,34 @@ class Configuracion : AppCompatActivity() {
         }
 
         binding.btnImpresor.setOnClickListener {
+            val impresor = impresoraSeleccionada
 
-            val impresor = binding.txtImpresor.text
+            if (impresor.isNotEmpty() && impresor != "-- NO SE ENCONTRARON IMPRESORAS --") {
+                preferencias!!.edit{
+                    remove("impresorIntegrado")
+                    putString("impresorIntegrado", impresor)
+                }
 
-            preferencias!!.edit{
-                remove("impresorIntegrado")
-                putString("impresorIntegrado", impresor.toString())
+                Toast.makeText(this@Configuracion, "IMPRESOR CONFIGURADO: $impresor", Toast.LENGTH_SHORT)
+                    .show()
+            } else {
+                Toast.makeText(this@Configuracion, "ERROR: SELECCIONE UNA IMPRESORA VÁLIDA", Toast.LENGTH_SHORT).show()
             }
-
-            Toast.makeText(this@Configuracion, "IMPRESOR CONFIGURADO", Toast.LENGTH_SHORT)
-                .show()
         }
 
+        binding.spImpresorasVinculadas.onItemSelectedListener = object :
+            AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                impresoraSeleccionada = parent?.getItemAtPosition(position).toString()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        //OBTENIENDO LA VERSION ACTUAL DE LA APP
+        versionActualApp()
+        binding.tvVersionActualApp.text = "ACAE APP Ver. $versionActual"
+
+        //BUSCAR NUEVA ACTUALIZACION
         binding.btnBuscarUpdate.setOnClickListener {
 
             if(isProcessing) return@setOnClickListener
@@ -244,10 +257,10 @@ class Configuracion : AppCompatActivity() {
             binding.imgLogoEmpresa.setImageDrawable(drawable)
         }
 
-        verificarModoDesarrollo()
+        //verificarModoDesarrollo()
 
 
-    } //funcion que inicializa las variables
+    }
 
     override fun onStart() {
         super.onStart()
@@ -282,7 +295,7 @@ class Configuracion : AppCompatActivity() {
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
+                    withContext(Dispatchers.Main) {
                         alerta!!.changeText("CARGANDO CONFIGURACIONES INICIALES")
                     }
 
@@ -294,14 +307,14 @@ class Configuracion : AppCompatActivity() {
 
                     delay(1000)
 
-                    withContext(Dispatchers.Main){
+                    withContext(Dispatchers.Main) {
                         alerta!!.changeText("CONFIGURACIONES INICIALES CARGADAS CORRECTAMENTE")
                     }
 
                     //FIN DA LA CARGA DE DATOS
                     delay(1500)
 
-                    withContext(Dispatchers.Main){
+                    withContext(Dispatchers.Main) {
 
                         habilitarOpcion()
 
@@ -310,9 +323,9 @@ class Configuracion : AppCompatActivity() {
                         //AGREGAR CONDICION PARA CERRAR LA APP SI MODO DESARROLLO ESTÁ ACTIVO
                         //PARA PODER ACTIVAR KOTZILLA
                         val modoDesarrollo = preferencias!!.getBoolean("modoDesarrollo", false)
-                        if(modoDesarrollo){
+                        if (modoDesarrollo) {
                             mensajeConfirmacion()
-                        }else{
+                        } else {
                             regresarMenuPrincipal()
                         }
                     }
@@ -345,7 +358,7 @@ class Configuracion : AppCompatActivity() {
             }
         }
 
-        binding.spServidor.onItemSelectedListener = object : OnItemSelectedListener {
+        binding.spServidor.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?,
                 view: View?,
@@ -379,7 +392,7 @@ class Configuracion : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        binding.spNumeroCaja.onItemSelectedListener = object : OnItemSelectedListener {
+        binding.spNumeroCaja.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?,
                 view: View?,
@@ -417,11 +430,11 @@ class Configuracion : AppCompatActivity() {
 
         val adapterCaja = ArrayAdapter(
             this,
-            android.R.layout.simple_spinner_item,
+            R.layout.simple_spinner_item,
             listaNumeroCaja
         )
 
-        adapterCaja.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        adapterCaja.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
 
         binding.spNumeroCaja.adapter = adapterCaja
 
@@ -463,7 +476,7 @@ class Configuracion : AppCompatActivity() {
     }
 
     //FUNCION PARA AVERIFICAR SI ESTA EN MODO DESARROLLO
-    private fun verificarModoDesarrollo(){
+   /* private fun verificarModoDesarrollo(){
         val modoDesarrollo = preferencias!!.getBoolean("modoDesarrollo", false)
         if(modoDesarrollo){
             binding.apply {
@@ -480,7 +493,7 @@ class Configuracion : AppCompatActivity() {
                 //btnActualizarServidor.visibility = View.GONE
             }
         }
-    }
+    }*/
 
     //CAMBIAR DATOS DEL SERVIDOR
     private fun actualizarConexionServidor(ip: String, puerto: Int, puntoVenta: String, nombreServidor: String){
@@ -504,9 +517,8 @@ class Configuracion : AppCompatActivity() {
         }
     }
 
-
     //-----------------------------------
-    // REFACTORIZACIÓN MVVM: Observar cambios en el ViewModel
+    // Observar cambios en el ViewModel
     //-----------------------------------
     private fun observarViewModel() {
         // Observar listado de servidores para el Spinner
@@ -542,11 +554,77 @@ class Configuracion : AppCompatActivity() {
         }
     }
 
+    //-----------------------------------
+    // Observar cambios en el ViewModel Bluetooth
+    //-----------------------------------
+    private fun observarBluetoothViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                configuracionViewModel.listaImpresoras.collect { lista ->
+                    actualizarSpinnerImpresoras(lista)
+                }
+            }
+        }
+    }
+
+    //-----------------------------------
+    //Llena el Spinner con las impresoras vinculadas y autoselecciona la guardada.
+    //-----------------------------------
+    private fun actualizarSpinnerImpresoras(lista: List<String>) {
+        val displayList = if (lista.isEmpty()) {
+            listOf("-- NO SE ENCONTRARON IMPRESORAS --")
+        } else {
+            lista
+        }
+
+        val adapter = ArrayAdapter(this, R.layout.simple_spinner_item, displayList)
+        adapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
+        binding.spImpresorasVinculadas.adapter = adapter
+
+        // Autoseleccionar la impresora guardada en preferencias
+        val guardada = preferencias!!.getString("impresorIntegrado", "")
+        if (!guardada.isNullOrEmpty() && lista.contains(guardada)) {
+            val position = lista.indexOf(guardada)
+            binding.spImpresorasVinculadas.setSelection(position)
+        }
+    }
+
+    //-----------------------------------
+    // Manejo de permisos para Android 12+.
+    //-----------------------------------
+    private fun verificarPermisosBluetooth() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ requiere BLUETOOTH_CONNECT
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                != PackageManager.PERMISSION_GRANTED) {
+
+                requestBluetoothPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+            } else {
+                configuracionViewModel.cargarImpresoras()
+            }
+        } else {
+            // Versiones anteriores solo requieren BLUETOOTH
+            configuracionViewModel.cargarImpresoras()
+        }
+    }
+
+    private val requestBluetoothPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                configuracionViewModel.cargarImpresoras()
+            } else {
+                Toast.makeText(this, "PERMISO DE BLUETOOTH DENEGADO", Toast.LENGTH_LONG).show()
+            }
+        }
+
+    //-----------------------------------
+    // Actualizar lista de servidores en el spinner
+    //-----------------------------------
     private fun actualizarSpinnerServidores(lista: List<ServidoresEntity>) {
         val nombres = mutableListOf("-- SELECCIONE --")
         nombres.addAll(lista.map { it.nombre })
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombres)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val adapter = ArrayAdapter(this, R.layout.simple_spinner_item, nombres)
+        adapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
         binding.spServidor.adapter = adapter
     }
 
@@ -642,16 +720,22 @@ class Configuracion : AppCompatActivity() {
         }
     }
 
-    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
+    @Deprecated("This method has been deprecated in favor of using the\n      " +
+            "{@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      " +
+            "The OnBackPressedDispatcher controls how back button events are dispatched\n     " +
+            " to one or more {@link OnBackPressedCallback} objects.")
     override fun onBackPressed() {
         //super.onBackPressed();
 
     }//anula el boton atras
 
+    //-----------------------------------
+    // Buscar Actualizaciones de la app
+    //-----------------------------------
     private fun obtenerNuevaVersionApp(){
         alerta!!.Cargando()
-        
-        // REFACTORIZACIÓN: Usar ViewModel para buscar actualización
+
+        // Usar ViewModel para buscar actualización
         val servidorUrl = funciones.getServidor(binding.txtip.text.toString(), binding.txtpuerto.text.toString(), this@Configuracion)
         servidoresViewModel.buscarActualizacion(servidorUrl, this@Configuracion)
 
@@ -671,12 +755,12 @@ class Configuracion : AppCompatActivity() {
 
         //Timber.e("[CONFIGURACION] VALOR DE BORRARBD -> $eliminarBDInterna")
 
-        val updateDialog = Dialog(this, R.style.Theme_Dialog)
+        val updateDialog = Dialog(this, com.example.acae30.R.style.Theme_Dialog)
         updateDialog.setCancelable(false)
 
-        updateDialog.setContentView(R.layout.dialog_update)
-        tvUpdate = updateDialog.findViewById(R.id.tvUpdate)
-        tvCancel = updateDialog.findViewById(R.id.tvCancel)
+        updateDialog.setContentView(com.example.acae30.R.layout.dialog_update)
+        tvUpdate = updateDialog.findViewById(com.example.acae30.R.id.tvUpdate)
+        tvCancel = updateDialog.findViewById(com.example.acae30.R.id.tvCancel)
 
 
         tvUpdate.setOnClickListener {
@@ -689,7 +773,7 @@ class Configuracion : AppCompatActivity() {
                 lifecycleScope.launch(Dispatchers.IO) {
 
                     limpiarBD.limpiarBdAlActualizar(this@Configuracion)
-                    withContext(Dispatchers.Main){
+                    withContext(Dispatchers.Main) {
                         descargarVersionApp(urlServer, "UpdateApp_$versionServer")
                     }
                 }
@@ -708,14 +792,14 @@ class Configuracion : AppCompatActivity() {
 
     private fun ShowAlert(mensaje: String) {
         val alert: Snackbar = Snackbar.make(binding.vistaalerta, mensaje, Snackbar.LENGTH_LONG)
-        alert.view.setBackgroundColor(ContextCompat.getColor(this@Configuracion, R.color.moderado))
+        alert.view.setBackgroundColor(ContextCompat.getColor(this@Configuracion, com.example.acae30.R.color.moderado))
         alert.show()
     }
 
     //FUNCION PARA ACTUALIZAR LA VERSION ACTUAL DE LA APP
     private fun versionActualApp(){
         val versionName = try{
-            val packageInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
             } else {
                 packageManager.getPackageInfo(packageName, 0)
@@ -745,7 +829,7 @@ class Configuracion : AppCompatActivity() {
                 restartApp(this@Configuracion)
             }
             .setCancelable(false)
-            .setIcon(R.drawable.ic_information)
+            .setIcon(com.example.acae30.R.drawable.ic_information)
             .create()
 
         dialog.show()

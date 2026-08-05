@@ -13,7 +13,7 @@ class CrearPedidoDirectoUseCase(
         val cliente = clientesRepository.obtenerClientePorId(idCliente)
             ?: throw Exception("Cliente no encontrado")
 
-        // Determinamos el tipo de documento (Lógica de negocio migrada)
+        // Determinamos el tipo de documento
         var tipoDocumento = "FC"
         val nrc = cliente.nrc ?: ""
         if (nrc.length > 2 && nrc.isNotBlank()) {

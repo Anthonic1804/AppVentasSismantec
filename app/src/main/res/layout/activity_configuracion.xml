@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/recicler"
-    tools:context=".Configuracion">
+    tools:context=".ui.configuracion.Configuracion">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView3"
@@ -240,6 +240,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 app:startIconDrawable="@drawable/ic_computer"
+                                android:enabled="false"
                                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                                 android:hint="@string/server">
 
@@ -285,6 +286,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:hint="@string/puerto"
+                                android:enabled="false"
                                 app:startIconDrawable="@drawable/ic_network"
                                 android:layout_marginEnd="@dimen/margin_4dp">
 
@@ -303,6 +305,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:hint="@string/punto_de_venta"
+                                android:enabled="false"
                                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                                 app:startIconDrawable="@drawable/ic_pventa"
                                 android:layout_marginStart="@dimen/margin_4dp">
@@ -586,6 +589,7 @@
                                 android:layout_height="wrap_content"
                                 android:orientation="vertical">
 
+                                <!--
                                 <com.google.android.material.textfield.TextInputLayout
                                     android:id="@+id/lyNombreImpresor"
                                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -605,6 +609,31 @@
                                         android:textColor="@color/colorHint"
                                         android:textSize="18sp" />
                                 </com.google.android.material.textfield.TextInputLayout>
+                                -->
+
+                                <TextView
+                                    android:id="@+id/tvSelecImpresora"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="16dp"
+                                    android:layout_marginTop="8dp"
+                                    android:text="SELECCIONAR IMPRESORA INTEGRADA"
+                                    android:textColor="@color/colorPrimaryDark"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+
+                                <LinearLayout
+                                    android:id="@+id/lySpinnerImpresor"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_margin="16dp"
+                                    android:background="@drawable/spinner_bg">
+
+                                    <Spinner
+                                        android:id="@+id/spImpresorasVinculadas"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="55dp" />
+                                </LinearLayout>
 
                                 <Button
                                     android:id="@+id/btnImpresor"
@@ -739,7 +768,8 @@
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/btnBuscarUpdate" />
+                    app:layout_constraintTop_toBottomOf="@+id/btnBuscarUpdate"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
                 <view
                     android:id="@+id/vistaalerta"

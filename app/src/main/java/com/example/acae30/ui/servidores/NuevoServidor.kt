@@ -24,7 +24,6 @@ import kotlinx.coroutines.withContext
 class NuevoServidor : AppCompatActivity() {
 
     private lateinit var binding: ActivityNuevoServidorBinding
-    // REFACTORIZACIÓN: Se elimina ConexionController y se usa ServidoresViewModel
     private lateinit var viewModel: ServidoresViewModel
     private val funciones = Funciones()
     private var procesando = false
@@ -54,13 +53,13 @@ class NuevoServidor : AppCompatActivity() {
 
         preferencias = getSharedPreferences(instancia, MODE_PRIVATE)
 
-        // INICIALIZACIÓN MVVM: Configuración del ViewModel con su Factory
+        // Configuración del ViewModel
         val dao = AppDatabase.getInstance(this).servidoresDao()
         val repository = ServidoresRepository(dao)
         val factory = ServidoresViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[ServidoresViewModel::class.java]
 
-        // REFACTORIZACIÓN: Observamos los cambios del ViewModel de forma reactiva
+        // Observamos los cambios del ViewModel
         observarViewModel()
 
         if (proceso.contains("editar")){
@@ -74,12 +73,9 @@ class NuevoServidor : AppCompatActivity() {
         }
     }
 
-    // REFACTORIZACIÓN: Los flujos (Flows) del ViewModel se observan aquí. 
-    // Esto centraliza la lógica de respuesta a eventos de la base de datos o red.
     private fun observarViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Escucha el resultado de la prueba de conexión
                 viewModel.resultadoConexion.collect { respuesta ->
                     if (respuesta.isNotEmpty()) {
                         manejarRespuestaConexion(respuesta)
@@ -90,7 +86,6 @@ class NuevoServidor : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Escucha si la operación CRUD terminó exitosamente
                 viewModel.operacionExitosa.collect { exitosa ->
                     if (exitosa) {
                         viewModel.resetOperacion()
@@ -107,7 +102,6 @@ class NuevoServidor : AppCompatActivity() {
             val puerto = binding.txtpuerto.text.toString().trim()
             val nombre = binding.txtNombreServidor.text.toString().trim()
 
-            // REFACTORIZACIÓN: Las llamadas a la base de datos ahora pasan por el ViewModel
             if (proceso.contains("editar")) {
                 viewModel.actualizarServidor(idServidor, nombre, ip, puerto, sslActivo)
                 Toast.makeText(this, "SE ACTUALIZO CORRECTAMENTE EL SERVIDOR", Toast.LENGTH_SHORT).show()
@@ -182,7 +176,6 @@ class NuevoServidor : AppCompatActivity() {
                         if(idServidorActivo == idServidor){
                             Toast.makeText(this, "NO SE PUEDE ELIMINAR EL SERVIDOR ACTIVO", Toast.LENGTH_SHORT).show()
                         }else{
-                            // REFACTORIZACIÓN: Eliminación delegada al ViewModel
                             viewModel.eliminarServidor(idServidor)
                             view.dismiss()
                         }
@@ -225,7 +218,6 @@ class NuevoServidor : AppCompatActivity() {
         binding.lyPuerto.isEnabled = false
         binding.progressBar.visibility = View.VISIBLE
 
-        // REFACTORIZACIÓN: La lógica de red se dispara desde el ViewModel
         lifecycleScope.launch {
             val hayInternet = withContext(Dispatchers.IO) { funciones.isInternetAvailable(this@NuevoServidor) }
             if (hayInternet) {

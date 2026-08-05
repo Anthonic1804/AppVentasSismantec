@@ -1,4 +1,4 @@
-package com.example.acae30.ui.clientes
+package com.example.acae30.ui.cuentas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,10 +9,8 @@ import com.example.acae30.modelos.Cuenta
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
-/**
- * REFACTORIZACIÓN MVVM: ViewModel para gestionar el listado y detalle de Cuentas por Cobrar.
- */
 class CuentasViewModel(
     private val obtenerClientesUseCase: ObtenerClientesConCuentasUseCase,
     private val obtenerDetalleUseCase: ObtenerDetalleCuentasUseCase
@@ -30,9 +28,9 @@ class CuentasViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    /**
-     * Carga o busca clientes que tienen facturas pendientes.
-     */
+    //--------------------------------------------------------
+    //Carga o busca clientes que tienen facturas pendientes.
+    //--------------------------------------------------------
     fun cargarClientesConCuentas(nombre: String = "") {
         viewModelScope.launch {
             _isLoading.value = true
@@ -40,16 +38,16 @@ class CuentasViewModel(
                 val listado = obtenerClientesUseCase.ejecutar(nombre)
                 _clientesConCuentas.value = listado
             } catch (e: Exception) {
-                // Manejar error si es necesario
+                Timber.e(e,"[CUENTAS_VIEWMODEL] ERROR AL CARGAR TODAS LAS CUENTAS PENDIENTES")
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    /**
-     * Carga el detalle de facturas de un cliente según el filtro.
-     */
+    //--------------------------------------------------------
+    // Carga el detalle de facturas de un cliente según el filtro.
+    //--------------------------------------------------------
     fun cargarDetalleCuentas(idCliente: Int, filtro: String = "Todas") {
         viewModelScope.launch {
             _isLoading.value = true
@@ -57,7 +55,7 @@ class CuentasViewModel(
                 val detalle = obtenerDetalleUseCase.ejecutar(idCliente, filtro)
                 _detalleCuentas.value = detalle
             } catch (e: Exception) {
-                // Manejar error
+                Timber.e(e,"[CUENTAS_VIEWMODEL] ERROR AL MOSTRAR EL DETALLE DE FATURAS POR CLIENTE")
             } finally {
                 _isLoading.value = false
             }

@@ -1,4 +1,4 @@
-package com.example.acae30.ui.clientes
+package com.example.acae30.ui.cuentas
 
 import android.content.Intent
 import android.os.Bundle
@@ -35,7 +35,7 @@ class CuentasDetalle : AppCompatActivity() {
         idcliente = intent.getIntExtra("idcliente", 0)
         nombrecliente = intent.getStringExtra("nombrecliente").toString()
 
-        // REFACTORIZACIÓN MVVM: Inicialización de Arquitectura Limpia
+        // Inicialización
         val dao = AppDatabase.getInstance(this).cuentasDao()
         val repository = CuentasRepository(dao)
         val factory = CuentasViewModelFactory(repository)
@@ -61,7 +61,6 @@ class CuentasDetalle : AppCompatActivity() {
 
         binding.btnVencidas.setOnClickListener {
             binding.tvEncabezadoCuentas.text = getString(R.string.detalle_de_cuentas_vencidas)
-            // REFACTORIZACIÓN MVVM: Delegar carga al ViewModel
             viewModel.cargarDetalleCuentas(idcliente, "Vencidas")
         }
 
@@ -77,7 +76,7 @@ class CuentasDetalle : AppCompatActivity() {
     }
 
     //-------------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Observar reactivamente los datos del detalle.
+    // Observar cambios en el viewmodel
     //-------------------------------------------------------------
     private fun observarViewModel() {
         lifecycleScope.launch {
@@ -97,7 +96,7 @@ class CuentasDetalle : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        // REFACTORIZACIÓN MVVM: Carga inicial
+        // Carga inicial
         viewModel.cargarDetalleCuentas(idcliente, "Todas")
     }
 

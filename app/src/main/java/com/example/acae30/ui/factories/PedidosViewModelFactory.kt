@@ -7,9 +7,6 @@ import com.example.acae30.domain.usecase.ObtenerDatosReporteUseCase
 import com.example.acae30.domain.usecase.SincronizarPedidosUseCase
 import com.example.acae30.ui.pedidos.PedidosViewModel
 
-/**
- * REFACTORIZACIÓN MVVM: Fábrica para instanciar el PedidosViewModel con sus dependencias.
- */
 class PedidosViewModelFactory(
     private val repository: PedidosRepository,
     private val sincronizarUseCase: SincronizarPedidosUseCase,

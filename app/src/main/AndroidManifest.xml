@@ -137,8 +137,8 @@
             android:name=".ui.clientes.firmarPagare"
             android:exported="false" />
         <activity android:name=".ui.pedidos.Visita" />
-        <activity android:name=".ui.clientes.CuentasDetalle" />
-        <activity android:name=".ui.clientes.Cuentas_list" />
+        <activity android:name=".ui.cuentas.CuentasDetalle" />
+        <activity android:name=".ui.cuentas.Cuentas_list" />
         <activity android:name=".ui.inventario.Inventariodetalle" />
         <activity
             android:name=".ui.clientes.ClientesDetalle"
@@ -156,7 +156,7 @@
             android:name=".ui.inventario.Inventario"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".ui.clientes.Clientes" />
-        <activity android:name=".Configuracion" />
+        <activity android:name=".ui.configuracion.Configuracion" />
         <activity android:name=".carga_datos" />
         <activity android:name=".Inicio" />
         <activity android:name=".Login" />

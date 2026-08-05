@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.StrictMode
 import android.view.MenuItem
 import android.widget.Button
-import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -26,7 +25,8 @@ import com.example.acae30.databinding.ActivityInicioBinding
 import com.example.acae30.ui.abonos.AbonosCxc
 import com.example.acae30.ui.averias.MenuAverias
 import com.example.acae30.ui.clientes.Clientes
-import com.example.acae30.ui.clientes.Cuentas_list
+import com.example.acae30.ui.cuentas.Cuentas_list
+import com.example.acae30.ui.configuracion.Configuracion
 import com.example.acae30.ui.devoluciones.MenuDevoluciones
 import com.example.acae30.ui.gastos.MenuGasto
 import com.example.acae30.ui.historico.HistoricoPedidos
@@ -38,9 +38,7 @@ import com.example.acae30.ui.solicitudes.SolicitudCargaMenu
 import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject

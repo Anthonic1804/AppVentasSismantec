@@ -1693,16 +1693,7 @@ class Detallepedido : AppCompatActivity() {
         val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
         try {
             /*
-             * CÓDIGO ANTERIOR (Comentado para comparación):
-             * El INNER JOIN impedía obtener el JSON si no había visita (Modo Local).
-             * 
              * val sql = "select v.Idvisita from visitas v inner join pedidos p on v.id = p.idvisita where p.id = ${idpedido_param}"
-             */
-
-            /*
-             * NUEVO CÓDIGO:
-             * Cambiamos a LEFT JOIN para que, si el pedido se creó sin visita (idvisita = 0),
-             * la consulta no falle y nos permita enviar el pedido al servidor con ID de visita 0.
              */
             val sql = "select v.Idvisita from pedidos p " +
                     "left join visitas v on p.idvisita = v.id " +

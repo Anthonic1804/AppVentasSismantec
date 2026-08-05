@@ -41,7 +41,7 @@ class ServidoresRepository(
         }
     }
 
-    // ARQUITECTURA LIMPIA: Nueva función para obtener la actualización de la App
+    // Nueva función para obtener la actualización de la App
     suspend fun obtenerActualizacionApp(baseUrl: String, context: Context): UpdateAppDto? {
         val api = RetrofitCliente.obtenerApi<ConexionApi>(baseUrl, context)
         return try {

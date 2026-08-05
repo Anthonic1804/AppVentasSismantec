@@ -59,7 +59,7 @@ class Pedido : AppCompatActivity() {
     private lateinit var lblMensaje: TextView
     private lateinit var lblTitulo: TextView
 
-    // REFACTORIZACIÓN MVVM: Declaración del ViewModel y el Adaptador
+    // Declaración del ViewModel y el Adaptador
     private lateinit var viewModel: PedidosViewModel
     private lateinit var adapter: PedidosAdapter
 
@@ -90,7 +90,7 @@ class Pedido : AppCompatActivity() {
         eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
         tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
-        // REFACTORIZACIÓN MVVM: Inicialización de Arquitectura Limpia
+        // Inicialización de Viewmodel
         val db = AppDatabase.getInstance(this)
         val pedidosDao = db.pedidosDao()
         val reporteDao = db.reporteDao()
@@ -107,7 +107,7 @@ class Pedido : AppCompatActivity() {
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
 
-        // REFACTORIZACIÓN MVVM: Inicialización única del Adaptador
+        // Inicialización única del Adaptador
         setupRecyclerView()
 
         binding.nuevoPedido.setOnClickListener { view ->
@@ -160,7 +160,7 @@ class Pedido : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         
-        // REFACTORIZACIÓN MVVM: Refrescar preferencias para asegurar valores actualizados
+        // Refrescar preferencias para asegurar valores actualizados
         inventarioTiempoReal = preferencias.getBoolean("inventarioTiempoReal", false)
         eliminarPedidosAutomaticos = preferencias.getBoolean("eliminarPedidosAutomaticos", false)
         tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
@@ -178,14 +178,14 @@ class Pedido : AppCompatActivity() {
     }
 
     //-----------------------------------
-    // REFACTORIZACIÓN MVVM: Observar cambios en el ViewModel
+    // Observar cambios en el ViewModel
     //-----------------------------------
     private fun observarViewModel() {
         // Observar listado de pedidos para el RecyclerView
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.pedidos.collect { listaEntities ->
-                    // Mapear de PedidosEntity (Room) al modelo Pedidos (Adapter)
+                    // Mapear de PedidosEntity  al modelo Pedidos Adapter
                     val listaPedidos = ArrayList<Pedidos>()
                     listaEntities.forEach { entity ->
                         listaPedidos.add(
@@ -238,7 +238,7 @@ class Pedido : AppCompatActivity() {
         }
 
         //---------------------------------------------------------
-        // REFACTORIZACIÓN MVVM: Observar estado de la generación de reporte PDF
+        // Observar estado de la generación de reporte PDF
         //---------------------------------------------------------
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

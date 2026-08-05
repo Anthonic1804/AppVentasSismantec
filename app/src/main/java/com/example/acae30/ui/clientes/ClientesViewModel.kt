@@ -14,7 +14,7 @@ class ClientesViewModel(
     private val crearPedidoDirectoUseCase: CrearPedidoDirectoUseCase
 ) : ViewModel() {
 
-    // Eventos de navegación para que la Actividad reaccione
+    // Eventos de navegación
     sealed class Navegacion {
         data class IrADetallePedido(val idCliente: Int, val nombre: String, val codigo: String, val idPedido: Int) : Navegacion()
         data class IrAVisita(val idCliente: Int, val nombre: String, val codigo: String) : Navegacion()
@@ -24,7 +24,7 @@ class ClientesViewModel(
     val eventoNavegacion = _eventoNavegacion.asStateFlow()
 
     //-------------------------------------------------------------
-    // Procesa la selección de un cliente y decide el flujo según el tipo de venta.
+    // Procesa la selección de un cliente y procesa según el tipo de venta.
     //-------------------------------------------------------------
     fun seleccionarCliente(
         idCliente: Int,

@@ -157,13 +157,13 @@ class PedidosRepository(
     )
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Marcar pedido como enviado y cerrar
+    // Marcar pedido como enviado y cerrar
     //---------------------------------------------------------
     suspend fun actualizarEstadoPedidoEnviado(idServidor: Int, idPedido: Int) =
         dao.actualizarIdServidorConfirmandoPedido(idServidor, idPedido)
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Limpieza de pedidos antiguos o ya procesados
+    // Limpieza de pedidos antiguos o ya procesados
     //---------------------------------------------------------
     suspend fun eliminarPedidos(fechaActual: String, eliminarCompletos: Boolean) {
         
@@ -186,7 +186,7 @@ class PedidosRepository(
     }
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: MÉTODOS PARA REPORTE PDF
+    // MÉTODOS PARA REPORTE PDF
     //---------------------------------------------------------
 
     //OBTENER PEDIDOS ENVIADOS
