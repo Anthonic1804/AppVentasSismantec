@@ -42,6 +42,8 @@ import com.example.acae30.ui.historico.HistoricoPedidos
 import com.example.acae30.ui.pedidos.Detallepedido
 import com.example.acae30.ui.pedidos.Pedido
 import com.example.acae30.ui.pedidos.Visita
+import com.example.acae30.ui.clientes.firmarPagare
+import com.example.acae30.ui.clientes.verPagare
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
@@ -50,12 +52,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class Clientes : AppCompatActivity() {
-    private var recicle: RecyclerView? = null
     private var alert: AlertDialogo? = null
-    private var busqueda: SearchView? = null
     private var busquedaPedido: Boolean = false
-    private var lienzo: ConstraintLayout? = null
-    private var atras : ImageButton? = null
     private var visita = false
     private var cuentas = false
 
@@ -64,19 +62,20 @@ class Clientes : AppCompatActivity() {
     private lateinit var tvMsj : TextView
     private lateinit var tvTitulo : TextView
 
-    private lateinit var tvListadoClientes: TextView
-
     private var preferences: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
     private var dSearch : String? = null
 
     private var clienteHistorio : Boolean = false
-    private var pagare: Boolean = false
+    private var pagare : Boolean = false
 
-    private var clienteController = ClientesController()
+    // private var clienteController = ClientesController()
     private var funciones = Funciones()
     private lateinit var binding : ActivityClientesBinding
     private var tipoVentaLocal = false
+
+    // Declaración de ViewModel
+    private lateinit var viewModel: ClientesViewModel
 
     //VARIABLES PARA LA CAPTURA DE LA GEOLOCALIZACION
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -85,12 +84,7 @@ class Clientes : AppCompatActivity() {
     private var longitud = "0"
 
     private var cargarClientesPorRuta = ""
-
-    //Variable para controlar el Mantenimiento de Clientes
     private var P_Mantto_Clientes: Boolean = false
-
-    // Declaración de ViewModel
-    private lateinit var viewModel: ClientesViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -126,48 +120,20 @@ class Clientes : AppCompatActivity() {
         val factory = ClientesViewModelFactory(clientesRepository, pedidosRepository)
         viewModel = ViewModelProvider(this, factory)[ClientesViewModel::class.java]
 
+        setupUI()
         observarViewModel()
-
-        alert = AlertDialogo(this, this)
-        busqueda = findViewById(R.id.busquedainv)
-        atras = findViewById(R.id.imageButton)
-
-        recicle = findViewById(R.id.lista)
-        lienzo = findViewById(R.id.lienzo)
-        tvListadoClientes = findViewById(R.id.tvListadoClientes)
-
-        if(visita){
-            binding.nuevoCliente.visibility = View.GONE
-        }
-
-        if(!P_Mantto_Clientes){
-            binding.nuevoCliente.visibility = View.GONE
-        }
-
     }
 
-    override fun onStart() {
-        super.onStart()
-        //SETEA LA BUSQUEDA DEL SEARCHVIEW
-        //SI HAY DATO ALMACENADO EN ESTE
-
-        dSearch = preferences!!.getString("clienteBusqueda", "")
-        if(dSearch != ""){
-            busqueda!!.setQuery("$dSearch", true)
+    private fun setupUI() {
+        alert = AlertDialogo(this, this)
+        
+        if(visita || !P_Mantto_Clientes){
+            binding.nuevoCliente.visibility = View.GONE
         }
 
-        if(visita){
-            tvListadoClientes.text = getString(R.string.listado_de_clientes_nuevo_pedido)
-        }else{
-            tvListadoClientes.text = getString(R.string.listado_de_clientes)
-        }
-
-        atras!!.setOnClickListener {
+        binding.imageButton.setOnClickListener {
             Atras(it)
         }
-
-        mostrarClientes()
-        Busqueda()
 
         binding.nuevoCliente.setOnClickListener {
             val intent = Intent(this@Clientes, NuevoCliente::class.java)
@@ -177,17 +143,49 @@ class Clientes : AppCompatActivity() {
             finish()
         }
 
+        setupBusqueda()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        
+        dSearch = preferences!!.getString("clienteBusqueda", "")
+        if(dSearch != ""){
+            binding.busquedainv.setQuery("$dSearch", true)
+        }
+
+        if(visita){
+            binding.tvListadoClientes.text = getString(R.string.listado_de_clientes_nuevo_pedido)
+        }else{
+            binding.tvListadoClientes.text = getString(R.string.listado_de_clientes)
+        }
+
+        // Carga inicial de datos
+        viewModel.cargarClientes(dSearch ?: "", 0)
+
         // OBTERNIENDO UBICACIÓN
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         capturarLocalizacion()
     }
 
-    //---------------------------------------------------------
-    // Observar eventos de navegación
-    //---------------------------------------------------------
+    //-----------------------------------
+    // Observar cambios en el ViewModel
+    //-----------------------------------
     private fun observarViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar la lista de clientes
+                viewModel.listaClientes.collect { lista ->
+                    if (lista.isNotEmpty()) {
+                        mostrarLista(ArrayList(lista))
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Manejar la navegación condicional (Pedido, Pagaré, Histórico, etc.)
                 viewModel.eventoNavegacion.collect { destino ->
                     when (destino) {
                         is ClientesViewModel.Navegacion.IrADetallePedido -> {
@@ -196,8 +194,8 @@ class Clientes : AppCompatActivity() {
                             intento.putExtra("nombrecliente", destino.nombre)
                             intento.putExtra("codigo", destino.codigo)
                             intento.putExtra("idpedido", destino.idPedido)
-                            intento.putExtra("visitaid", 0) // Para local es 0
-                            intento.putExtra("idapi", 0)    // Para local es 0
+                            intento.putExtra("visitaid", 0)
+                            intento.putExtra("idapi", 0)
                             intento.putExtra("from", "visita")
                             startActivity(intento)
                             finish()
@@ -208,6 +206,27 @@ class Clientes : AppCompatActivity() {
                             intento.putExtra("nombrecliente", destino.nombre)
                             intento.putExtra("codigo", destino.codigo)
                             startActivity(intento)
+                            finish()
+                        }
+                        is ClientesViewModel.Navegacion.IrAFirmarPagare -> {
+                            /* 
+                             * Mostramos el mensaje de confirmación antes de la lectura.
+                             */
+                            mensajeDialogo(destino)
+                        }
+                        is ClientesViewModel.Navegacion.IrAHistorico -> {
+                            val intento = Intent(this@Clientes, HistoricoPedidos::class.java)
+                            intento.putExtra("idCliente", destino.idCliente)
+                            intento.putExtra("nombreCliente", destino.nombre)
+                            startActivity(intento)
+                            finish()
+                        }
+                        is ClientesViewModel.Navegacion.IrADetalleCliente -> {
+                            busquedaCliente(binding.busquedainv.query.toString())
+                            val intento = Intent(this@Clientes, ClientesDetalle::class.java)
+                            intento.putExtra("idcliente", destino.idCliente)
+                            startActivity(intento)
+                            finish()
                         }
                         null -> {}
                     }
@@ -217,10 +236,21 @@ class Clientes : AppCompatActivity() {
         }
     }
 
-    //---------------------------------------------------------
-    // Manejar el resultado de la solicitud de permisos
-    //---------------------------------------------------------
+    private fun setupBusqueda() {
+        binding.busquedainv.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(p0: String?): Boolean {
+                return false
+            }
 
+            override fun onQueryTextChange(texto: String): Boolean {
+                // Búsqueda ViewModel
+                viewModel.cargarClientes(texto.uppercase(), 0)
+                return false
+            }
+        })
+    }
+
+    // Manejar el resultado de la solicitud de permisos
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
@@ -232,70 +262,31 @@ class Clientes : AppCompatActivity() {
         }
     }
 
-    //---------------------------------------------------------
-    //FUNCION PARA CAPTURAR LA GEOLOCALIZACION
-    //---------------------------------------------------------
     private fun capturarLocalizacion() {
-        // Verificar permisos de ubicación
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Si no hay permiso, solicitarlo
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
         } else {
-            // Si ya hay permiso, obtener la ubicación
             updateGPS()
         }
     }
 
-    //---------------------------------------------------------
-    // HACER PETICIÓN DE POSICIÓN ACTUAL DEL GPS
-    //---------------------------------------------------------
     @SuppressLint("MissingPermission")
     private fun updateGPS() {
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
-                // OBTENIENDO LA UBICACION ACTUAL
                 location?.let {
                     latitud = location.latitude.toString()
                     longitud = location.longitude.toString()
                 } ?: run {
-                    latitud = 0.toString()
-                    longitud = 0.toString()
+                    latitud = "0"
+                    longitud = "0"
                 }
             }
             .addOnFailureListener { e ->
-                // ERROR AL NO OBTENER LA UBICACION
                 Toast.makeText(this, "Error al obtener la ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun mostrarClientes() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val list: ArrayList<Cliente> = clienteController.obtenerListaClientes(this@Clientes, dSearch!!, cargarClientesPorRuta)
-                if(list.size > 0){
-                    runOnUiThread {
-                        MostrarLista(list)
-                    }
-                }
-            }catch (e: Exception){
-                runOnUiThread {
-                    funciones.mostrarAlerta("ERROR: NO SE LOGRO CARGAR EL LISTADO DE CLIENTES", this@Clientes, lienzo!!)
-                }
-            }
-        }
-
-    }
-
-    //FUNCION PARA ELIMINAR LAS SHARED PREFERENCES CREADAS
-    //13/01/2024
     private fun sharedPreferencesFinalizarVisita(){
         preferences!!.edit {
             remove("visita")
@@ -306,25 +297,19 @@ class Clientes : AppCompatActivity() {
     fun Atras(view: View) {
         if (busquedaPedido) {
             if (visita) {
-
                 eliminarBusqueda()
                 sharedPreferencesFinalizarVisita()
-
                 val intento = Intent(this, Pedido::class.java)
                 startActivity(intento)
                 finish()
             } else {
-
                 eliminarBusqueda()
-
                 val intento = Intent(this, Detallepedido::class.java)
                 startActivity(intento)
                 finish()
             }
         } else {
-
             eliminarBusqueda()
-
             val intento = Intent(this, Inicio::class.java)
             startActivity(intento)
             finish()
@@ -337,120 +322,49 @@ class Clientes : AppCompatActivity() {
         }
     }
 
-    private fun Busqueda() {
-        busqueda!!.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(p0: String?): Boolean {
-                return false
-            }
-
-            //BUSQUEDA DE CLIENTES DINAMICA
-            //MODIFICACION PARA LA LIBRERIA DM
-            //22-08-2022
-
-            override fun onQueryTextChange(texto: String): Boolean {
-                val dSearch = clienteController.obtenerListaClientes(this@Clientes ,texto.uppercase(), cargarClientesPorRuta)
-                this@Clientes.MostrarLista(dSearch)
-                return false
-            }
-
-        })
-    }
-    private fun MostrarLista(list: ArrayList<Cliente>?) {
+    private fun mostrarLista(list: ArrayList<Cliente>?) {
         try {
             if (list!!.isNotEmpty()) {
-                val mLayoutManager =
-                    LinearLayoutManager(this@Clientes, LinearLayoutManager.VERTICAL, false)
-                recicle!!.layoutManager = mLayoutManager
+                val mLayoutManager = LinearLayoutManager(this@Clientes, LinearLayoutManager.VERTICAL, false)
+                binding.lista.layoutManager = mLayoutManager
                 val adapter = ClienteAdapter(list, this@Clientes, this@Clientes, 0) { position ->
                     val cliente = list[position]
-                    if (busquedaPedido) {
-                        //REALIZANDO UN NUEVO PEDIDO
-                        /*val pagareFirmado = clienteController.obtenerInformacionCliente(this@Clientes, cliente.Id!!)?.Firmar_pagare_app!!.toInt()
-                        val terminosCliente = clienteController.obtenerInformacionCliente(this@Clientes, cliente.Id!!)?.Terminos_cliente.toString()
-                        val idCiente = cliente.Id!!
-                        val nomCliente = cliente.Cliente
-                        val codCliente = cliente.Codigo*/
 
-                        if (pagare) {
-                            //OPCION PARA VERIFICAR LA FIRMA DEL PAGARE
-                            if ((cliente.Firmar_pagare_app!!.toInt() == 1 && cliente.Terminos_cliente == "Credito") || (cliente.Terminos_cliente == "Contado")) {
-                                viewModel.seleccionarCliente(
-                                    cliente.Id!!,
-                                    cliente.Cliente!!,
-                                    cliente.Codigo!!,
-                                    tipoVentaLocal
-                                )
-
-                            } else {
-                                //OPCION PARA OBLIGAR LA FIRMA DEL PAGARE
-                                mensajeDialogo(cliente.Id!!)
-                            }
-                        } else {
-                            //SIN VERIFICACION DE LA FIRMA DEL PAGARE
-                            viewModel.seleccionarCliente(
-                                cliente.Id!!,
-                                cliente.Cliente!!,
-                                cliente.Codigo!!,
-                                tipoVentaLocal
-                            )
-                        }
-                    } else {
-                        //VERIFICANDO EL HISTORICO O LOS DATOS DEL CLIENTE
-                        if (clienteHistorio) {
-                            val intento = Intent(this@Clientes, HistoricoPedidos::class.java)
-                            intento.putExtra("idCliente", cliente.Id!!)
-                            intento.putExtra("nombreCliente", cliente.Cliente)
-                            startActivity(intento)
-                            finish()
-                        } else {
-                            busquedaCliente(busqueda!!.query.toString())
-
-                            val intento = Intent(this@Clientes, ClientesDetalle::class.java)
-                            intento.putExtra("idcliente", cliente.Id)
-                            startActivity(intento)
-                            finish()
-                        }
-                    }
+                    viewModel.seleccionarCliente(
+                        cliente = cliente,
+                        busquedaPedido = busquedaPedido,
+                        tipoVentaLocal = tipoVentaLocal,
+                        pagareObligatorio = pagare,
+                        historico = clienteHistorio
+                    )
                 }
-                recicle!!.adapter = adapter
-                //alert!!.dismisss()
+                binding.lista.adapter = adapter
             }
         } catch (e: Exception) {
-            //alert!!.dismisss()
-            Toast.makeText(this@Clientes, e.message, Toast.LENGTH_LONG).show()
+            Toast.makeText(this@Clientes, "Error al mostrar lista: ${e.message}", Toast.LENGTH_LONG).show()
             Timber.e(e,"[CLIENTE] ERROR AL MOSTRAR EL LISTADO DE CLIENTES")
         }
     }
 
     private fun busquedaCliente(busqueda : String){
-        //ALAMACENADO EN MEMORIA LA BUSQUEDA DEL CLIENTE
-        preferences!!.edit {
-            putString("clienteBusqueda", busqueda)
-        }
+        preferences!!.edit { putString("clienteBusqueda", busqueda) }
     }
 
-    //FUNCION PARA ELIMINA DE MEMORIA LA BUSQUEDA DEL CLIENTE
     private fun eliminarBusqueda(){
         val dSearch = preferences?.getString("clienteBusqueda", "")
-        if(dSearch != null){
-            preferences?.edit {
-                this!!.remove("clienteBusqueda")
-            }
+        if(dSearch != null && dSearch != ""){
+            preferences?.edit { remove("clienteBusqueda") }
         }
     }
 
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        //super.onBackPressed();
+    override fun onBackPressed() {}
 
-    }//anula el boton atras
-
-    private fun mensajeDialogo(idCliente: Int){
-
+    private fun mensajeDialogo(destino: ClientesViewModel.Navegacion.IrAFirmarPagare){
         val msjDialog = Dialog(this, R.style.Theme_Dialog)
         msjDialog.setCancelable(false)
-
         msjDialog.setContentView(R.layout.dialog_cancelar)
+        
         tvUpdate = msjDialog.findViewById(R.id.tvUpdate)
         tvCancel = msjDialog.findViewById(R.id.tvCancel)
         tvMsj = msjDialog.findViewById(R.id.tvMensaje)
@@ -462,21 +376,21 @@ class Clientes : AppCompatActivity() {
         tvCancel.text = getString(R.string.cancelar)
 
         tvUpdate.setOnClickListener {
-            val intento = Intent(this@Clientes, ClientesDetalle::class.java)
-            intento.putExtra("idcliente", idCliente)
+
+            val intento = Intent(this@Clientes, verPagare::class.java)
+            intento.putExtra("idcliente", destino.idCliente)
+            intento.putExtra("nombreCliente", destino.nombre)
+            intento.putExtra("direccionCliente", destino.direccion)
+            intento.putExtra("duiCliente", destino.dui)
+            intento.putExtra("limiteCredito", destino.limiteCredito)
+            intento.putExtra("plazoCredito", destino.plazo)
             startActivity(intento)
             finish()
-
+            
             msjDialog.dismiss()
         }
 
-        tvCancel.setOnClickListener {
-            msjDialog.dismiss()
-        }
-
+        tvCancel.setOnClickListener { msjDialog.dismiss() }
         msjDialog.show()
-
     }
-
-
 }

@@ -16,6 +16,16 @@ import com.example.acae30.Funciones
 import com.example.acae30.R
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.databinding.ActivityFirmarPagareBinding
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.Lifecycle
+import kotlinx.coroutines.launch
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.clientes.ClientesApi
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
+import com.example.acae30.data.repository.ClientesRepository
+import com.example.acae30.ui.factories.FirmarPagareViewModelFactory
 import com.itextpdf.text.BaseColor
 import com.itextpdf.text.Document
 import com.itextpdf.text.DocumentException
@@ -62,8 +72,10 @@ class firmarPagare : AppCompatActivity() {
 
     private var clienteController = ClientesController()
     private var funciones = Funciones()
-
     private lateinit var binding : ActivityFirmarPagareBinding
+
+    // Declaración de ViewModel
+    private lateinit var viewModel: FirmarPagareViewModel
 
     //private val tituloText = "PAGARÉ SIN PROTESTO"
     private val tituloText = ""
@@ -75,6 +87,26 @@ class firmarPagare : AppCompatActivity() {
         binding = ActivityFirmarPagareBinding.inflate(layoutInflater)
         setContentView(binding.root)
         idcliente = intent.getIntExtra("idcliente", 0)
+
+        // Inicialización de la arquitectura
+        val db = AppDatabase.getInstance(this)
+        val dao = db.clienteDao()
+        
+        // Configuramos el servidor para Retrofit
+        val servidorUrl = funciones.getServidor(
+            getSharedPreferences("CONFIG_SERVIDOR", MODE_PRIVATE).getString("ip", ""), 
+            getSharedPreferences("CONFIG_SERVIDOR", MODE_PRIVATE).getInt("puerto", 0).toString(), 
+            this
+        )
+        val api = RetrofitCliente.obtenerApi<ClientesApi>(servidorUrl, this)
+        
+        // Inyectamos dependencias en el ViewModel
+        val repository = ClientesRepository(dao, api)
+        val factory = FirmarPagareViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, factory)[FirmarPagareViewModel::class.java]
+
+        // Iniciamos ViewModel
+        observarViewModel()
 
         val datosCliente = clienteController.obtenerInformacionCliente(this@firmarPagare, idcliente)
         /*
@@ -262,7 +294,8 @@ class firmarPagare : AppCompatActivity() {
 
             documento.close()
 
-            mensaje("Firmado")
+            // Confirmar la firma vía ViewModel
+            viewModel.confirmarFirma(idcliente)
 
         }catch (e: FileNotFoundException){
             e.printStackTrace()
@@ -347,6 +380,30 @@ class firmarPagare : AppCompatActivity() {
     }
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        //super.onBackPressed();
+        super.onBackPressed()
+    }
+
+    //--------------------------------------------------------------
+    // Observar el proceso de guardado y sincronización.
+    //--------------------------------------------------------------
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.saveStatus.collect { status ->
+                    when (status) {
+                        is FirmarPagareViewModel.SaveStatus.Guardando -> {
+                            // mostrar un diálogo de carga
+                        }
+                        is FirmarPagareViewModel.SaveStatus.Exito -> {
+                            mensaje("Firmado")
+                        }
+                        is FirmarPagareViewModel.SaveStatus.Error -> {
+                            Toast.makeText(this@firmarPagare, status.mensaje, Toast.LENGTH_LONG).show()
+                        }
+                        null -> {}
+                    }
+                }
+            }
+        }
     }
 }

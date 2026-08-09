@@ -5,8 +5,11 @@ import com.example.acae30.data.remote.dto.ClienteSucursalDto
 import com.example.acae30.data.remote.dto.ClientesDto
 import com.example.acae30.data.remote.dto.ClientesPreciosDto
 import com.example.acae30.data.remote.dto.CxCDto
+import com.example.acae30.modelos.JSONmodels.ActualizarPagareFirmadoCliente
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface ClientesApi {
@@ -70,4 +73,12 @@ interface ClientesApi {
     suspend fun obtenerBalancePorIdCliente(
         @Path("idCliente") idCliente: Int
     ) : Response<BalanceClienteDTO>
+
+    //------------------------------------------------------
+    // Notificar al servidor que el cliente ya firmó el pagaré
+    //------------------------------------------------------
+    @POST("clientes/actualizarPagare")
+    suspend fun actualizarEstadoPagare(
+        @Body datos: ActualizarPagareFirmadoCliente
+    ) : Response<Void>
 }

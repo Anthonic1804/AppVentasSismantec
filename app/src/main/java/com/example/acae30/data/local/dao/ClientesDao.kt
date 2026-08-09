@@ -92,4 +92,20 @@ interface ClientesDao {
     @Query("SELECT * FROM clientes WHERE Id = :idCliente")
     suspend fun obtenerClientePorId(idCliente: Int): ClientesEntity?
 
+    //------------------------------------------------------
+    // Actualizar el estado del pagaré firmado localmente
+    //------------------------------------------------------
+    @Query("UPDATE clientes SET Firmar_pagare_app = 1 WHERE Id = :idCliente")
+    suspend fun actualizarEstadoPagareFirmado(idCliente: Int)
+
+    //------------------------------------------------------
+    // Listado de clientes dinámico
+    //------------------------------------------------------
+    @Query("""
+        SELECT * FROM clientes 
+        WHERE (cliente LIKE '%' || :filtro || '%' OR codigo LIKE '%' || :filtro || '%')
+        AND (:idRuta = 0 OR id_ruta = :idRuta)
+        ORDER BY cliente ASC
+    """)
+    suspend fun obtenerListaClientes(filtro: String, idRuta: Int): List<ClientesEntity>
 }
