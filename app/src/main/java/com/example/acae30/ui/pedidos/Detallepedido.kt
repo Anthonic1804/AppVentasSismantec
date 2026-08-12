@@ -30,6 +30,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.database.getFloatOrNull
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
@@ -858,6 +859,7 @@ class Detallepedido : AppCompatActivity() {
 
     //FUNCION PARA FINALIZAR EL ENVIO DEL PEDIDO
     private fun pedidoEnviado(){
+
         val visita = if (idvisita > 0) visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido) else null
         
         if(visita != null && visita.Abierta){
@@ -873,6 +875,7 @@ class Detallepedido : AppCompatActivity() {
             finish()
         }else{
             // PROCESO LOCAL o VISITA CERRADA: Vamos directo al listado general de pedidos
+            updateSharedPreferencesFinalizarVisita()
             menuPedidos()
         }
     }
@@ -1354,6 +1357,7 @@ class Detallepedido : AppCompatActivity() {
                     if(idvisita > 0){
                         regresarVisita()
                     }else{
+                        updateSharedPreferencesFinalizarVisita()
                         menuPedidos()
                     }
 
@@ -1381,6 +1385,14 @@ class Detallepedido : AppCompatActivity() {
             dialogo.dismiss()
         }//boton eliminar
     } //muestra la alerta para eliminar
+
+    //Funcion para finalizar la visita cuando VentaLocal esta True
+    private fun updateSharedPreferencesFinalizarVisita(){
+        preferencias.edit {
+            remove("visita")
+            remove("busqueda")
+        }
+    }
 
     private fun regresarVisita(){
         val intento = Intent(this@Detallepedido, Visita::class.java)

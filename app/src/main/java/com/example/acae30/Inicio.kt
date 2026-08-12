@@ -42,6 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -509,7 +510,8 @@ class Inicio : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListe
                 }
             }
         } catch (e: Exception) {
-            throw Exception(e.message)
+            Timber.e(e,"[INICIO] ERROR AL ACTUALIZAR LA SESION EN EL SERVIDOR AL CERRAR SESION")
+            //throw Exception(e.message)
         }
     } // CAMBIAR ESTADO EN EL SERVIDOR PARA CERRAR SESION
 
