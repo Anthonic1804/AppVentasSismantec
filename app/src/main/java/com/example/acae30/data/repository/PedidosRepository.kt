@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.acae30.Funciones
 import com.example.acae30.data.local.dao.PedidosDao
 import com.example.acae30.data.local.dao.ReporteDao
+import com.example.acae30.data.local.entity.PedidoDetalleEntity
 import com.example.acae30.data.local.entity.PedidosEntity
 import com.example.acae30.data.local.entity.ReporteTempEntity
 import com.example.acae30.data.remote.api.pedidos.PedidosApi
@@ -21,7 +22,7 @@ class PedidosRepository(
     private val funciones = Funciones()
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: MÉTODOS DE CREACIÓN DE PEDIDO
+    // CREACIÓN DE PEDIDO
     //---------------------------------------------------------
 
     suspend fun crearNuevoPedidoLocal(
@@ -109,17 +110,17 @@ class PedidosRepository(
     }
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Flujo para la lista de la UI (Todos los pedidos)
+    // Flujo para la lista de la UI (Todos los pedidos)
     //---------------------------------------------------------
     fun obtenerTodosLosPedidosFlow() = dao.obtenerTodosLosPedidosFlow()
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Lista síncrona para el proceso de sincronización
+    // Lista síncrona para el proceso de sincronización
     //---------------------------------------------------------
     suspend fun obtenerPedidosNoTransmitidosLocal() = dao.obtenerListaPedidosNoTransmitidos()
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Consulta remota al servidor vía Retrofit
+    // Consulta remota al servidor vía Retrofit
     //---------------------------------------------------------
     suspend fun obtenerPedidoTransmitidoRemote(idPedidoApp: String, context: Context): PedidoTransmitidoDTO? {
         val preferencias = context.getSharedPreferences("CONFIG_SERVIDOR", Context.MODE_PRIVATE)
@@ -144,7 +145,7 @@ class PedidosRepository(
     }
 
     //---------------------------------------------------------
-    // REFACTORIZACIÓN MVVM: Actualización en BD local (Room)
+    // Actualización en BD local (Room)
     //---------------------------------------------------------
     suspend fun actualizarInformacionPedido(
         idPedido: Int, pedidoDTE: Int, pedidoDteError: Int,
@@ -233,4 +234,22 @@ class PedidosRepository(
     //OBTENIENDO LOS PEDIDOS DEL REPORTE
     //---------------------------------------------------------
     suspend fun obtenerDatosReporteLocal() = reporteDao.obtenerTodos()
+
+    //---------------------------------------------------------
+    // MÉTODOS DE DETALLE DE PEDIDO
+    //---------------------------------------------------------
+
+    suspend fun insertarDetallePedido(detalle: PedidoDetalleEntity) = dao.insertarDetallePedido(detalle)
+
+    suspend fun eliminarDetallePedido(idDetalle: Int) = dao.eliminarDetallePedido(idDetalle)
+
+    suspend fun obtenerDetallePedidoPorId(idDetalle: Int) = dao.obtenerDetallePedidoPorId(idDetalle)
+
+    suspend fun buscarProductoEnDetalle(idPedido: Int, idProducto: Int, unidad: String) = 
+        dao.buscarProductoEnDetalle(idPedido, idProducto, unidad)
+
+    suspend fun recalcularTotalPedido(idPedido: Int) {
+        val suma = dao.obtenerSumaTotalPedido(idPedido) ?: 0.0
+        dao.actualizarTotalCabeceraPedido(idPedido, suma)
+    }
 }

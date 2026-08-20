@@ -57,4 +57,16 @@ class ClientesRepository(
         }
     }
 
+    //---------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: MÉTODOS DE PRECIO Y BONIFICACIÓN
+    //---------------------------------------------------------
+
+    // Obtiene el precio personalizado del cliente para un producto.
+    suspend fun obtenerPrecioPersonalizado(idCliente: Int, idProducto: Int) = 
+        dao.obtenerPrecioPersonalizadoCliente(idCliente, idProducto)
+
+    // Obtiene la bonificación (regalía) configurada para el cliente.
+    suspend fun obtenerBonificacionCliente(idCliente: Int, idProducto: Int) = 
+        dao.obtenerCantidadBonificadoClientePorIdProducto(idCliente, idProducto)
+
 }

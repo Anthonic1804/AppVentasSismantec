@@ -2,10 +2,8 @@ package com.example.acae30.ui.pedidos
 
 import android.R
 import android.app.Dialog
-import android.content.ContentValues
 import android.content.Intent
 import android.content.SharedPreferences
-import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
@@ -16,47 +14,38 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
-import androidx.core.database.getIntOrNull
-import androidx.core.database.getStringOrNull
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.acae30.Funciones
-import com.example.acae30.ui.inventario.InventarioTiempoReal
-import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
-import com.example.acae30.controllers.PedidosController
-import com.example.acae30.databinding.ActivityProductoAgregarBinding
-import com.example.acae30.modelos.DetallePedido
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.local.models.Inventario
+import com.example.acae30.data.remote.api.clientes.ClientesApi
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
+import com.example.acae30.data.repository.ClientesRepository
+import com.example.acae30.data.repository.InventarioRepository
+import com.example.acae30.data.repository.PedidosRepository
+import com.example.acae30.databinding.ActivityProductoAgregarBinding
 import com.example.acae30.modelos.InventarioLotesModel
 import com.example.acae30.modelos.InventarioPrecios
-import com.example.acae30.modelos.JSONmodels.ActualizarPrecioPersonalizadoJSON
+import com.example.acae30.ui.factories.ProductoAgregarViewModelFactory
+import com.example.acae30.ui.inventario.InventarioTiempoReal
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.json.JSONObject
+import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.io.Reader
-import java.net.HttpURLConnection
-import java.net.URL
-import java.nio.charset.StandardCharsets
 import java.text.DecimalFormatSymbols
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.HttpsURLConnection
-import kotlin.text.format
+import java.util.Locale
 
 class Producto_agregar : AppCompatActivity() {
     private var idproducto: Int? = 0
     private var precio_iva: Float = 0.toFloat()
-    private var precio : Float = 0f
+    //private var precio : Float = 0f
     private var cantidad: Float = 0.toFloat()
     private var idpedido: Int = 0
     private var idcliente: Int? = 0
@@ -68,29 +57,26 @@ class Producto_agregar : AppCompatActivity() {
     private var listPrecios: ArrayList<InventarioPrecios>? = null
     private var datosProducto: Inventario? = null
     private var proviene: String? = ""
-    private var total_param: Float? = null
+    //private var total_param: Float? = null
     private var precioEditado: Float = 0.toFloat()
     private var existenciaProducto: Float = 0f
     private var getSucursalPosition: Int? = null
     private var codEmpleado: Int = 0
-    private var url: String? = null
+    //private var url: String? = null
     private var codigoProducto: String = ""
     private var clienteMayorista = "N"
 
+    // REFACTORIZACIÓN MVVM: Variables de Arquitectura
+    private lateinit var viewModel: ProductoAgregarViewModel
+    private lateinit var binding : ActivityProductoAgregarBinding
+    private var decPrecios: Int = 2
+    private var decTotales: Int = 2
 
     //---------
     //VARIABLES PARA CONTROLAR LA ESCALA SELECCIONADA
     //---------
     private var cantidadEscala = 0f
     private var idEscala: Int = 0
-
-    //---------
-    //VARIABLES DE LOS CONTROLES DEL MENSAJE FLOTANTE
-    //---------
-    private lateinit var tvUpdate : TextView
-    private lateinit var tvCancel : TextView
-    private lateinit var tvTitulo : TextView
-    private lateinit var tvMensaje : TextView
 
     //---------
     //VARIABLES PARA LOS CONTROLADORES Y FUNCIONES
@@ -100,12 +86,6 @@ class Producto_agregar : AppCompatActivity() {
     private var clientesController = ClientesController()
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
-    //private val pedidosController = PedidosController()
-
-    //---------
-    //VARIABLES PARA EL USO DE CONTROLES
-    //---------
-    private lateinit var binding : ActivityProductoAgregarBinding
 
     //---------
     //VARIABLES DE CONTROL
@@ -114,9 +94,9 @@ class Producto_agregar : AppCompatActivity() {
     private var precioAutorizadoUtilizado: Int = 0
     private var precioAutorizado: Float = 0f
     private var modificarPrecio : Boolean = false
-    private var precioIvaPersonalizado : Float = 0f
+    //private var precioIvaPersonalizado : Float = 0f
     private var bonificacion : Float = 0f
-    private var mostrarPrecioApp : Int = 0 //MOSTRARA EL PRECIO CONFIGURADO EN LA BD DEL SERVIDOR
+    private var mostrarPrecioApp : Int = 0 
 
     private var unidadActual: String = "UNI"
     private var idUnidad = 0
@@ -124,13 +104,9 @@ class Producto_agregar : AppCompatActivity() {
     private var equivaleFra: Float = 0f
     private var uniEquivale: String? = null
 
-    private var condicionMercado = ""
+    //private var condicionMercado = ""
 
-    private var decPrecios: Int = 0
-    private var decTotales: Int = 0
-
-    private val utilidades = CrearSslNoSeguro()
-
+    //private val utilidades = CrearSslNoSeguro()
     private var inventarioTiempoReal : Boolean = false
 
     private lateinit var listadoLotes : ArrayList<InventarioLotesModel>
@@ -140,7 +116,6 @@ class Producto_agregar : AppCompatActivity() {
     private var idLoteSeleccionado : Int? = null
     private var unidadesLote : Float = 0f
     private var fraccionesLote : Float = 0f
-    //private var detallePedido : DetallePedido? = null
 
     private var tipoBonificacion: String = ""
 
@@ -149,6 +124,26 @@ class Producto_agregar : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityProductoAgregarBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Inicialización de la arquitectura
+        val db = AppDatabase.getInstance(this)
+        val inventarioRepo = InventarioRepository(db.inventarioDao())
+        
+        // Configuramos el servidor para Retrofit
+        val servidorUrl = funciones.getServidor(
+            getSharedPreferences("CONFIG_SERVIDOR", MODE_PRIVATE).getString("ip", ""), 
+            getSharedPreferences("CONFIG_SERVIDOR", MODE_PRIVATE).getInt("puerto", 0).toString(), 
+            this
+        )
+        val clientesApi = RetrofitCliente.obtenerApi<ClientesApi>(servidorUrl, this)
+        
+        val clientesRepo = ClientesRepository(db.clienteDao(), clientesApi)
+        val pedidosRepo = PedidosRepository(db.pedidosDao(), db.reporteDao())
+        
+        val factory = ProductoAgregarViewModelFactory(inventarioRepo, clientesRepo, pedidosRepo, servidorUrl, this)
+        viewModel = ViewModelProvider(this, factory)[ProductoAgregarViewModel::class.java]
+
+        observarViewModel()
 
         //-----------
         //SETEANDO LAS SHARED PREFERENCES
@@ -169,18 +164,204 @@ class Producto_agregar : AppCompatActivity() {
         idproducto = intent.getIntExtra("idproducto", 0)
         idpedido = intent.getIntExtra("idpedido", 0)
         idcliente = intent.getIntExtra("idcliente", 0)
-
         idpedidodetalle = intent.getIntExtra("idpedidodetalle", 0)
-
         nombrecliente = intent.getStringExtra("nombrecliente")
         idvisita = intent.getIntExtra("visitaid", 0)
         codigo = intent.getStringExtra("codigo").toString()
         idapi = intent.getIntExtra("idapi", 0)
         getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
         proviene = intent.getStringExtra("proviene")
-        total_param = intent.getFloatExtra("total_param", 0.toFloat())
+
+        // Carga inicial del producto
+        viewModel.cargarProducto(idproducto!!, idcliente!!, unidadActual)
+
+        // Si estamos en modo edición, cargamos el detalle desde el ViewModel
+        if (proviene == "editar" && idpedidodetalle != null && idpedidodetalle!! > 0) {
+            viewModel.cargarDetallePedido(idpedidodetalle!!)
+        }
 
         cargarOpcionesGenerales()
+    }
+
+    //------------------------------------------------------------------------
+     // Observar los estados del ViewModel.
+     //-----------------------------------------------------------------------
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar cambios en el precio final calculado
+                viewModel.precioFinal.collect { p ->
+                    precio_iva = p
+                    // Si el precio cambia, actualizamos el texto personalizado si está visible.
+                    if (binding.tvPrecioPersonalizado.visibility == View.VISIBLE) {
+                        binding.tvPrecioPersonalizado.text = String.format(Locale.getDefault(), "%.${decPrecios}f", p)
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar el total de la línea
+                viewModel.totalLinea.collect { total ->
+                    binding.txttotal.text = String.format(Locale.getDefault(), "%.${decTotales}f", total)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar la bonificación calculada
+                viewModel.bonificado.collect { regalias ->
+                    binding.txtBonificados.text = regalias.toString()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar Stock Desglosado (UNI) - Puede ser entero o decimal
+                viewModel.stockUni.collect { uni ->
+                    binding.txtexistencia.text = uni
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar Stock Desglosado (FRA)
+                viewModel.stockFra.collect { fra ->
+                    binding.txtExistenciasFra.text = fra
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Actualizar valor de validación de existencia
+                viewModel.stockTotalValidacion.collect { totalFracciones ->
+                    existenciaProducto = totalFracciones
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar respuesta de Token de Autorización
+                viewModel.precioAutorizado.collect { precio ->
+                    if (precio != null) {
+                        precioAutorizado = precio
+                        AlertaPrecio(this@Producto_agregar)
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar Detalle del Pedido (Modo Edición)
+                viewModel.detallePedido.collect { detalle ->
+                    if (detalle != null && proviene == "editar") {
+                        // Configuramos la UI con los datos del producto ya guardado
+                        configurarModoEdicion(detalle)
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar si el precio es personalizado para bloquear la UI
+                viewModel.esPrecioPersonalizado.collect { esEspecial ->
+                    binding.apply {
+                        if (esEspecial) {
+                            tvPrecioPersonalizado.visibility = View.VISIBLE
+                            spprecio.visibility = View.GONE
+                            btneditarprecio.visibility = View.GONE
+                            tvPrecioPersonalizado.text = String.format(Locale.getDefault(), "%.${decPrecios}f", precio_iva)
+                        } else {
+                            tvPrecioPersonalizado.visibility = View.GONE
+                            spprecio.visibility = View.VISIBLE
+                            // Solo mostramos editar si no es modo edición
+                            if (proviene != "editar") {
+                                btneditarprecio.visibility = View.VISIBLE
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar Info del Producto
+                viewModel.producto.collect { p ->
+                    if (p != null) {
+                        datosProducto = p
+                        binding.txtcodigo.text = p.Codigo
+                        binding.txtdescripcion.text = p.descripcion
+                        codigoProducto = p.Codigo.toString()
+                        
+                        // Si no estamos en edición, inicializamos con precio base
+                        if (proviene != "editar") {
+                            precio_iva = p.Precio_iva ?: 0f
+                            Totalizar(1f)
+                        }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observar Lotes
+                viewModel.listaLotes.collect { lotes ->
+                    if (lotes.isNotEmpty()) {
+                        binding.lyLote.visibility = View.VISIBLE
+                        if(proviene == "editar"){
+                            binding.spLotesAgregarProducto.visibility = View.GONE
+                            binding.etLoteSeleccionado.visibility = View.VISIBLE
+                        } else {
+                            binding.spLotesAgregarProducto.visibility = View.VISIBLE
+                            binding.etLoteSeleccionado.visibility = View.GONE
+                        }
+                        lotesActivos = 1
+                        
+                        // Mapear a modelo anterior para compatibilidad con funciones existentes
+                        listadoLotes = ArrayList(lotes.map { 
+                            InventarioLotesModel(it.id, it.idProducto, it.codigoProducto, it.lote, it.fechaVencimiento, it.unidades, it.fracciones) 
+                        })
+                        cargarLotes()
+
+                        // Si estamos en edición, una vez cargada la lista de lotes,
+                        // intentamos refrescar la info del lote seleccionado.
+                        if (proviene == "editar") {
+                            viewModel.detallePedido.value?.lote?.let { 
+                                cargarInfoLoteSeleccionado(it)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Manejar eventos de navegación y errores
+                viewModel.uiEvent.collect { event ->
+                    when (event) {
+                        is ProductoAgregarViewModel.UIEvent.ProductoGuardado -> {
+                            provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
+                        }
+                        is ProductoAgregarViewModel.UIEvent.Error -> {
+                            funciones.mostrarAlerta(event.mensaje, this@Producto_agregar, binding.lienzo)
+                        }
+                        null -> {}
+                    }
+                    if (event != null) viewModel.resetEvents()
+                }
+            }
+        }
     }
 
     override fun onStart() {
@@ -261,32 +442,36 @@ class Producto_agregar : AppCompatActivity() {
                 }
             }
 
-        } // boton que lleva atras en el activity
+        }
 
         binding.btnagregar.setOnClickListener {
-            //VERIFICANDO SI MODIFICAR PRECIO ES TRUE DESDE SQLSERVER
-            if(modificarPrecio){
+            /*
+             * CÓDIGO ANTERIOR (Comentado):
+             * if(modificarPrecio){ agregarProducto() } else { ... confirmarToken ... }
+             */
+
+            // NUEVO CÓDIGO: Delegamos la lógica de autorización al ViewModel
+            if (modificarPrecio) {
                 agregarProducto()
-            }else{
-                // VERIFICANDO SI MOD PRECIO ES FALSE Y LUEGO COMPROBAR QUE EL TOKEN HAYA SIDO UTILIZADO
-                if(precioAutorizadoUtilizado == 1){
-                    confirmarToken(codEmpleado, codigoProducto)
-                }else{
+            } else {
+                if (precioAutorizadoUtilizado == 1) {
+                    // Si se usó un precio autorizado, confirmamos el token en el servidor antes de guardar.
+                    prepararYConfirmarToken()
+                } else {
                     agregarProducto()
                 }
             }
-        }//AGREGANDO EL PRODUCTO AL PEDIDO
+        }
 
         binding.btneliminar.setOnClickListener {
-            try {
-                CoroutineScope(Dispatchers.IO).launch {
-                    deleteDetalle(idpedidodetalle!!)
-                }
+            /*
+             * CÓDIGO ANTERIOR (Comentado):
+             * CoroutineScope(Dispatchers.IO).launch { deleteDetalle(idpedidodetalle!!) }
+             */
 
-                provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
-
-            }catch (e: Exception){
-                funciones.mostrarAlerta("ERROR AL ELIMINAR EL PRODUCTO", this@Producto_agregar, binding.lienzo)
+            // NUEVO CÓDIGO: Delegamos la eliminación al ViewModel
+            if (idpedidodetalle != null && idpedidodetalle!! > 0) {
+                viewModel.eliminarProducto(idpedidodetalle!!, idpedido)
             }
         }
 
@@ -294,72 +479,57 @@ class Producto_agregar : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int,
                                         id: Long) {
-                when(binding.spunidad.selectedItem.toString()){
+                val itemSeleccionado = binding.spunidad.selectedItem.toString()
+                
+                // 1. Reiniciamos equivalencias para evitar usar datos de la unidad anterior
+                equivaleUni = 0f
+                equivaleFra = 0f
+
+                when(itemSeleccionado){
                     "UNIDAD" -> {
                         unidadActual = "UNI"
-                        calcularExitenciaSegunUnidadSeleccionada(unidadActual)
-                        equivaleUni = 0f
-                        equivaleFra = 0f
+                        uniEquivale = "UNI"
+                        validarCantidad(binding.txtcantidad.text.toString())
                     }
                     "FRACCION" -> {
                         unidadActual = "FRA"
-                        calcularExitenciaSegunUnidadSeleccionada(unidadActual)
-                        equivaleUni = 0f
-                        equivaleFra = 0f
+                        uniEquivale = "FRA"
+                        validarCantidad(binding.txtcantidad.text.toString())
                     }
                     else -> {
-                        unidadActual = binding.spunidad.selectedItem.toString()
-                    }
-                }
-                cargarListadoPrecios(unidadActual)
-
-                verificarBonificados(unidadActual)
-
-                if(unidadActual != "UNI" || unidadActual != "FRA"){
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        val unidadMedida = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
-
-                        if(unidadMedida != null){
-                            idUnidad = unidadMedida.id ?: 0
-
-                            uniEquivale = unidadMedida.unidades
-
-                            when(uniEquivale){
-                                "UNI" -> {
-                                    equivaleUni = unidadMedida.equivale
-                                    calcularExitenciaSegunUnidadSeleccionada(uniEquivale!!)
+                        unidadActual = itemSeleccionado
+                        // 2. Buscamos la equivalencia en segundo plano
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            val unidadMedida = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
+                            withContext(Dispatchers.Main) {
+                                if(unidadMedida != null){
+                                    idUnidad = unidadMedida.id ?: 0
+                                    uniEquivale = unidadMedida.unidades
+                                    if (uniEquivale == "UNI") equivaleUni = unidadMedida.equivale else equivaleFra = unidadMedida.equivale
                                 }
-                                "FRA" -> {
-                                    equivaleFra = unidadMedida.equivale
-                                    calcularExitenciaSegunUnidadSeleccionada(uniEquivale!!)
-                                }
-                                else -> {
-                                    equivaleUni = 0f
-                                    equivaleFra = 0f
-                                }
+                                // 3. Validamos SOLO cuando ya tenemos los factores de conversión actualizados
+                                validarCantidad(binding.txtcantidad.text.toString())
                             }
-
-                            /*equivaleUni = when(uniEquivale){
-                                "UNI" -> {unidadMedida.equivale}
-                                else -> {0f}
-                            }
-
-                            equivaleFra = when(uniEquivale){
-                                "FRA" -> {unidadMedida.equivale}
-                                else -> {0f}
-                            }*/
                         }
                     }
                 }
-
+                
+                cargarListadoPrecios(unidadActual)
+                verificarBonificados(unidadActual)
             }
         }
 
         binding.btneditarprecio.setOnClickListener {
+            /*
+             * CÓDIGO ANTERIOR (Comentado):
+             * if(modificarPrecio){ AlertaPrecio(...) } else { verificarPrecioAutorizado(...) }
+             */
+             
+            // NUEVO CÓDIGO: Delegamos la consulta de autorización al ViewModel
             if(modificarPrecio){
                 AlertaPrecio(this@Producto_agregar)
             }else{
-                verificarPrecioAutorizado(codEmpleado, codigoProducto)
+                viewModel.buscarTokenAutorizacion(codEmpleado, codigoProducto)
             }
         }
 
@@ -402,212 +572,59 @@ class Producto_agregar : AppCompatActivity() {
         CambioCantidad()
     }
 
-    //FUNCION PARA VALIDAR LA CANTIDAD
-    private fun calcularExitenciaSegunUnidadSeleccionada(unidadMedida: String){
-        val datos = datosProducto
-
-        val fraccion = datos!!.Fraccion
-        val existencia = if(lotesActivos == 1) unidadesLote else datos.Existencia
-        val existenciaU = if(lotesActivos == 1) fraccionesLote else datos.Existencia_u
-
-        existenciaProducto = if(unidadMedida == "FRA" && fraccion!! > 1f){
-
-            (existencia!! * fraccion) + existenciaU
-
-        }else{
-            if(lotesActivos == 1) unidadesLote else datos.Existencia!!
-        }
-    }
-
     private fun cargarOpcionesGenerales(){
         this@Producto_agregar.lifecycleScope.launch {
 
-            //---------
-            //LA UNIDADES SE GENERAN AUTOMATICAS SI EL PRODUCTO LAS TIENE CONFIGURADAS
-            //---------
-            datosProducto = inventarioController.obtenerInformacionProductoPorId(this@Producto_agregar, idproducto!!)
-
-            //Timber.e("[PRODUCTO SELECCIONADO] PRUEBA DE PRODUCTO SELECCIONADO: -> ${datosProducto!!.descripcion}")
-
-            //-----------------------------------------------------------------
-            //OBTENIENDO EL LISTADO DE LOTES DEL PRODUCTO
-            //-----------------------------------------------------------------
-            listadoLotes = inventarioController.obtenerLotesPorProducto(this@Producto_agregar, idproducto!!)
-            if(listadoLotes.isNotEmpty()){
-                binding.lyLote.visibility = View.VISIBLE
-
-                if(proviene == "editar"){
-                    binding.tvLoteSeleccionado.text = "LOTE"
-                    binding.spLotesAgregarProducto.visibility = View.GONE
-                    binding.etLoteSeleccionado.visibility = View.VISIBLE
-                }else{
-                    binding.spLotesAgregarProducto.visibility = View.VISIBLE
-                    binding.etLoteSeleccionado.visibility = View.GONE
-                }
-
-                lotesActivos = 1
-                cargarLotes()
+            // 1. Obtener información del cliente (Solo para saber si es Mayorista)
+            val cliente = clientesController.obtenerInformacionCliente(this@Producto_agregar, idcliente!!)
+            if (cliente != null) {
+                clienteMayorista = cliente.Mayorista.toString().trim()
             }
 
-            //--------
-            // ASIGNADO DATOS DEL CLIENTE
-            //--------
-            clienteMayorista = clientesController.obtenerInformacionCliente(this@Producto_agregar, idcliente!!)!!.Mayorista.toString().trim()
+            // 2. Determinar la Escala inicial
+            cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar, idproducto!!, precio_iva, unidadActual)
 
-            //SELECCIONANDO CONDICION DE MERCADO DEL PRODUCTO
-            condicionMercado = datosProducto!!.condicionMercado.toString()
-
-            //DESHABILITANDO EL PRECIO PERSONALIZADO
-            binding.tvPrecioPersonalizado.visibility = View.GONE
-
-            //OBTENIENDO EL PRECIO PERSONALIZADO POR CLIENTE
-            /*precioIvaPersonalizado = clientesController.obtenerPrecioPersoCliente(idcliente!!,
-                idproducto!!, this@Producto_agregar, false)
-
-            if(precioIvaPersonalizado > 0){
-                binding.apply {
-                    tvPrecioPersonalizado.visibility = View.VISIBLE
-                    spprecio.visibility = View.GONE
-                    btneditarprecio.visibility = View.GONE
-
-                    tvPrecioPersonalizado.text = "${String.format("%.${decPrecios}f".format(precioIvaPersonalizado))}"
-                }
-            }*/
-            val precioPersonalizado = clientesController.obtenerPrecioPersonalizadoCliente(idcliente!!, idproducto!!, this@Producto_agregar) ?: 0f
-
-            if(precioPersonalizado > 0){
-                runOnUiThread {
-
-                    precioIvaPersonalizado = precioPersonalizado
-
-                    binding.apply {
-                        tvPrecioPersonalizado.visibility = View.VISIBLE
-                        spprecio.visibility = View.GONE
-                        btneditarprecio.visibility = View.GONE
-
-                        tvPrecioPersonalizado.text = "${String.format("%.${decPrecios}f".format(precioIvaPersonalizado))}"
-                    }
-                }
-            }
-
-            verificarBonificados(unidadActual)
-
-            //TOMANDO LA CANTIDAD DE LAS ESCALA SELECCIONADA.
-            //09/01/2024
-            //cantidadEscala = seleccionarCantidadenEscala(idpedido, idproducto!!)
-            cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar,
-                idproducto!!, precio_iva, unidadActual)
-
-            //HABILITAR BTN ELIMINAR
+            // 3. Configurar visibilidad de botones
             if (idpedidodetalle!! > 0) {
                 binding.btneliminar.visibility = View.VISIBLE
             } else {
                 binding.btneliminar.visibility = View.GONE
             }
 
+            // REFACTORIZACIÓN MVVM: Eliminamos toda la lógica manual de precios y visibilidad de aquí.
+            // Ahora confiamos plenamente en observarViewModel() para que pinte la UI.
+            
             runOnUiThread {
                 cargarUnidadesMedida()
-
                 cargarListadoPrecios(unidadActual)
-
-                //SE BUSCA EL DETALLE DEL PEDIDO
-                if (idproducto!! > 0) {
-                    val detalle = getPedidodetalle(idpedidodetalle!!)
-                    this@Producto_agregar.lifecycleScope.launch {
-                        try {
-                            val datos = datosProducto
-
-                            if (datos != null) {
-
-                                binding.txtcodigo.text = datos.Codigo
-                                binding.txtdescripcion.text = datos.descripcion
-                                codigoProducto = datos.Codigo.toString()
-
-                                precio_iva = datos.Precio_iva!!
-                                precio = datos.Precio!!
-                                Totalizar(cantidad)
-                                binding.txtexistencia.text = "${if(lotesActivos == 1) unidadesLote else datos.Existencia}"
-                                binding.txtExistenciasFra.text = "${if(lotesActivos == 1) fraccionesLote else datos.Existencia_u}"
-
-
-                                //VALIDANDO PARA VENTA DE FACCIONES
-                                //existenciaProducto = datos.Existencia!!.toFloat()
-
-                                calcularExitenciaSegunUnidadSeleccionada(unidadActual)
-
-
-                                // Agregar precios a lista
-
-                                val precioss = ArrayList<String>()
-
-                                var seleccionado = false
-
-                                if (proviene == "editar") {
-                                    binding.btnagregar.text = "ACTUALIZAR PRODUCTO";
-                                    binding.txttituloproducto.text = "ACTUALIZAR PRODUCTO";
-                                    binding.btneditarprecio.visibility = View.INVISIBLE;
-
-                                    //-----------------------------------------------
-                                    // SETEANDO LOTE AL EDITAR EL PRODUCTO
-                                    //-----------------------------------------------
-                                    binding.etLoteSeleccionado.setText(detalle?.Lote)
-                                    cargarInfoLoteSeleccionado(detalle?.Lote!!)
-
-                                    var cantidad_provisional = detalle!!.Cantidad
-                                    var precio_provisional = detalle!!.Precio_venta //EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
-                                    precioEditado = precio_provisional!!
-
-                                    //var precio_provisional = total_param!! / cantidad_provisional
-                                    cantidad = cantidad_provisional!!
-                                    precio_iva = detalle?.Precio_venta!! // EDITADO PARA QUE TOME EL VALOR SELECCIONADO PARA LA VENTA
-
-                                    binding.txtcantidad.setText("${String.format("%.0f".format(cantidad) )}")
-
-                                    if ("${String.format("%.2f".format(precio_provisional) )}" == "${String.format("%.2f".format(precio_iva) )}")
-                                    {
-                                        if (detalle?.Precio_editado == "*") {
-                                            // precio = detalle.Precio_venta!!
-                                            precioss.add("${String.format("%.2f".format(precio_iva) )}" + "*")
-                                        } else {
-                                            // precio = detalle.Precio_venta!!
-                                            precioss.add("${String.format("%.2f".format(precio_iva) )}")
-                                        }
-                                        seleccionado = true
-                                    }
-
-                                    if (!seleccionado) {
-                                        if (detalle?.Precio_editado == "*") {
-                                            precioss.add("${String.format("%.2f".format(precio_provisional) )}" + "*")
-                                        } else {
-                                            precioss.add("${String.format("%.2f".format(precio_provisional) )}")//EDITADO
-                                        }
-
-                                    }
-
-                                    precioss.add("${String.format("%.2f".format(datos.Precio_iva) )}")
-                                } else {
-                                    // precio vi;eta debe ir
-                                    precioss.add("${String.format("%.2f".format(datos.Precio_iva) )}")
-                                }
-
-                                Totalizar(cantidad)
-
-                            } else {
-                                println("No se Han encontrado los datos")
-                            }
-                        } catch (e: Exception) {
-                            /*  runOnUiThread {
-                                  alert!!.dismisss()
-                                  Toast.makeText(this@Producto_agregar, e.message, Toast.LENGTH_LONG).show()
-                              }*/
-                        }
-
-                    }
-
-                } else {
-
-                }
             }
+        }
+    }
+
+    //---------------------------------------------------------------------------------
+    //Configura la interfaz cuando se entra en modo edición.
+    //---------------------------------------------------------------------------------
+    private fun configurarModoEdicion(detalle: com.example.acae30.data.local.entity.PedidoDetalleEntity) {
+        binding.apply {
+            btnagregar.text = "ACTUALIZAR PRODUCTO"
+            txttituloproducto.text = "ACTUALIZAR PRODUCTO"
+            btneditarprecio.visibility = View.INVISIBLE
+
+            // Lote
+            etLoteSeleccionado.setText(detalle.lote)
+            // Solo intentamos cargar info del lote si la lista ya está inicializada
+            if (::listadoLotes.isInitialized) {
+                detalle.lote?.let { cargarInfoLoteSeleccionado(it) }
+            }
+
+            // Cantidad y Precio
+            cantidad = detalle.cantidad.toFloat()
+            precio_iva = detalle.precioIva.toFloat()
+            precioEditado = if (detalle.precioEditado == "*") precio_iva else 0f
+
+            txtcantidad.setText(String.format(Locale.getDefault(), "%.0f", cantidad))
+            
+            Totalizar(cantidad)
         }
     }
 
@@ -632,33 +649,30 @@ class Producto_agregar : AppCompatActivity() {
     //-----------------------------------------
     private fun cargarInfoLoteSeleccionado(lote: String){
         if(lote != "-- SELECCIONE --"){
-
             loteSeleccionado = lote.substringBefore(" |")
 
-            val loteEnSeleccion = listadoLotes.filter {
-                it.lote == loteSeleccionado
+            // Verificamos que la lista de lotes esté cargada antes de filtrar.
+            if (::listadoLotes.isInitialized) {
+                val loteEnSeleccion = listadoLotes.filter { it.lote == loteSeleccionado }
+                for(item in loteEnSeleccion){
+                    fechaVencimientoLote = item.fechaVencimiento
+                    idLoteSeleccionado = item.id
+                    unidadesLote = item.unidades
+                    fraccionesLote = item.fracciones
+                }
             }
-
-            for(item in loteEnSeleccion){
-                fechaVencimientoLote = item.fechaVencimiento
-                idLoteSeleccionado = item.id
-                unidadesLote = item.unidades
-                fraccionesLote = item.fracciones
-            }
-
         }else{
             loteSeleccionado = null
             fechaVencimientoLote = null
             idLoteSeleccionado = null
             unidadesLote = 0f
             fraccionesLote = 0f
-
         }
 
-        binding.txtexistencia.text = "$unidadesLote"
-        binding.txtExistenciasFra.text = "$fraccionesLote"
-
-        calcularExitenciaSegunUnidadSeleccionada(unidadActual)
+        // Actualizamos el stock en el ViewModel enviando los valores del lote.
+        datosProducto?.let {
+            viewModel.actualizarStock(it, unidadesLote, fraccionesLote)
+        }
     }
 
     //FUNCION PARA OBTENER LA BONIFICACION POR PRODUCTO O CLIENTE
@@ -693,46 +707,31 @@ class Producto_agregar : AppCompatActivity() {
     private fun cargarUnidadesMedida(){
         this@Producto_agregar.lifecycleScope.launch {
             try {
+                val hojaCarga = preferencias!!.getBoolean("Hoja_carga_inventario_app", false)
+                val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
+                val adapter = ArrayAdapter<String>(this@Producto_agregar, R.layout.simple_spinner_dropdown_item)
 
-                if(proviene == "editar"){
-                    val hojaCarga = preferencias!!.getBoolean("Hoja_carga_inventario_app", false)
-                    val producto = getPedidodetalle(idpedidodetalle!!)
+                val detalle = viewModel.detallePedido.value
+                if(proviene == "editar" && detalle != null){
+                    val unidadSeleccionada = detalle.unidad?.trim() ?: ""
+                    idUnidad = detalle.idUnidad
+                    equivaleFra = detalle.equivaleFra.toFloat()
+                    equivaleUni = detalle.equivaleUni.toFloat()
+                    uniEquivale = detalle.uniEquivale
 
-                    val unidadSelecciona = producto!!.Unidad!!.trim().toString()
-                    idUnidad = producto.Idunidad!!
-                    equivaleFra = producto.EquivaleFra
-                    equivaleUni = producto.EquivaleUni
-                    uniEquivale = producto.UniEquivale
-
-                    val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
-                    val unidadesMedida = ArrayAdapter<String>(
-                        this@Producto_agregar,
-                        R.layout.simple_spinner_dropdown_item
-                    )
-
-                    unidadesMedida.add(unidadSelecciona)
-                    unidadActual = when(unidadSelecciona){
-                        "UNIDAD" -> { "UNI" }
-                        "FRACCION" -> { "FRAC" }
-                        else -> { unidadSelecciona }
+                    adapter.add(unidadSeleccionada)
+                    unidadActual = when(unidadSeleccionada){
+                        "UNIDAD" -> "UNI"
+                        "FRACCION" -> "FRAC"
+                        else -> unidadSeleccionada
                     }
-
-                    unidadesMedida.addAll(unidades)
-                    binding.spunidad.adapter = unidadesMedida
-                }else{
-                    val hojaCarga = preferencias!!.getBoolean("Hoja_carga_inventario_app", false)
-                    val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
-                    val unidadesMedida = ArrayAdapter<String>(
-                        this@Producto_agregar,
-                        R.layout.simple_spinner_dropdown_item
-                    )
-                    unidadesMedida.addAll(unidades)
-                    binding.spunidad.adapter = unidadesMedida
                 }
-
+                
+                adapter.addAll(unidades)
+                binding.spunidad.adapter = adapter
 
             }catch (e:Exception){
-                println("ERROR AL CARGAR LAS UNIDADESD DE MEDIDA -> "  + e.message)
+                Timber.e(e, "[PRODUCTO_AGREGAR] ERROR AL CARGAR LAS UNIDADES DE MEDIDA")
             }
         }
     }
@@ -742,45 +741,37 @@ class Producto_agregar : AppCompatActivity() {
             listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false, unidadMedida)
             val precioss = ArrayList<String>()
 
-            if(proviene == "editar"){
-                val producto = getPedidodetalle(idpedidodetalle!!)
-                val precioSeleccionado = producto!!.Precio_venta
-                precioss.add("${String.format("%.${decPrecios}f".format(precioSeleccionado))}")
+            // Usamos el estado del ViewModel para evitar consultas SQL manuales.
+            val detalle = viewModel.detallePedido.value
+            if(proviene == "editar" && detalle != null){
+                val precioSeleccionado = detalle.precioIva
+                precioss.add("${String.format("%.${decPrecios}f", precioSeleccionado)}")
             }
 
             //-----------------------
             //Agregado el precio asignado en la ficha del producto para las unidades
             //-----------------------
-            if(unidadMedida == "UNI"){
-                precioss.add("${String.format("%.${decPrecios}f".format(datosProducto!!.Precio_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
+            val p = viewModel.producto.value
+            if(unidadMedida == "UNI" && p != null){
+                precioss.add("${String.format("%.${decPrecios}f", p.Precio_iva)}") 
             }
-
 
             //------------------------
             //Agregando el precio asignado en la ficha del producto para las fracciones.
             //------------------------
-            if(unidadMedida == "FRA"){
-                precioss.add("${String.format("%.${decPrecios}f".format(datosProducto!!.Precio_u_iva))}") //PRECIO AGREGADO DEL PRODUCTO DE LA TABLA INVENTARIO
+            if(unidadMedida == "FRA" && p != null){
+                precioss.add("${String.format("%.${decPrecios}f", p.Precio_u_iva)}") 
             }
-
 
             listPrecios!!.forEach {
-                val unidad_cantidad = " (" + "${String.format("%.0f".format(it.Cantidad))}" + " ${it.Unidad} )"
-                precioss.add("${String.format("%.${decPrecios}f".format(it.Precio_iva))}" + " ${it.Nombre}" + unidad_cantidad
-                )
+                val unidad_cantidad = " (" + "${String.format("%.0f", it.Cantidad)}" + " ${it.Unidad} )"
+                precioss.add("${String.format("%.${decPrecios}f", it.Precio_iva)}" + " ${it.Nombre}" + unidad_cantidad)
             }
 
-            var adapterPrecios = ArrayAdapter(
-                this@Producto_agregar, R.layout.simple_spinner_item,
-                precioss
-            )
-
+            val adapterPrecios = ArrayAdapter(this@Producto_agregar, R.layout.simple_spinner_item, precioss)
             adapterPrecios.setDropDownViewResource(com.example.acae30.R.layout.support_simple_spinner_dropdown_item)
             binding.spprecio.adapter = adapterPrecios
 
-
-            //FUNCION PARA MOSTRAR EL PRECIO POR DEFECTO EN EL LISTADO DEL PRODUCTO
-            //SOLO CUANDO SE AGREGA EL PRODUCTO POR PRIMERA VEZ
             if(proviene != "editar"){
                 val totalIndices = binding.spprecio.adapter?.count ?: 0
                 if(mostrarPrecioApp in 0 until totalIndices){
@@ -789,7 +780,6 @@ class Producto_agregar : AppCompatActivity() {
                     binding.spprecio.setSelection(0, true)
                 }
             }
-
         }
     }
 
@@ -809,40 +799,60 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     //FUNCION PARA VALIDAD CANTIDAD PARA ESCARRSA
-    private fun validarCantidad(cantidadIngresada: String){
+    private fun validarCantidad(cantidadIngresada: String) {
         lifecycleScope.launch {
-            if(cantidadIngresada.isNotEmpty()){
+            if (cantidadIngresada.isNotEmpty()) {
                 cantidad = cantidadIngresada.toSafeDecimal()
-                var cantidadVerificar = cantidad
-                if(equivaleUni > 0f){
-                    cantidadVerificar = cantidad.toFloat() * equivaleUni
+
+                // 1. Determinar la capacidad de fracción (si es 0 o 1, lo tratamos como base 1 para no anular valores)
+                val realFraccion = datosProducto?.Fraccion ?: 0f
+                val capacidadParaCalculo = if (realFraccion > 1f) realFraccion else 1f
+
+                // 2. Normalizar la cantidad ingresada a la unidad base de validación (Fracciones o Unidades decimales)
+                var cantidadNormalizada = 0f
+                when (unidadActual) {
+                    "UNI" -> {
+                        cantidadNormalizada = if (realFraccion > 1f) cantidad * capacidadParaCalculo else cantidad
+                    }
+                    "FRA" -> {
+                        cantidadNormalizada = cantidad
+                    }
+                    else -> {
+                        // Unidades especiales (Sixpack, etc.)
+                        if (equivaleUni > 0f) {
+                            cantidadNormalizada = if (realFraccion > 1f) (cantidad * equivaleUni) * capacidadParaCalculo else cantidad * equivaleUni
+                        } else if (equivaleFra > 0f) {
+                            cantidadNormalizada = cantidad * equivaleFra
+                        }
+                    }
                 }
 
-                if(equivaleFra > 0f){
-                    cantidadVerificar = cantidad.toFloat() * equivaleFra
-                }
+                // 3. Determinar el umbral mínimo de la escala seleccionada
+                val umbralEscala = if (realFraccion > 1f) cantidadEscala * capacidadParaCalculo else cantidadEscala
 
-                if((cantidadVerificar > existenciaProducto || cantidadVerificar == 0f)  && sinExistencias == 0){
+                // 4. Validar contra Existencias y Escalas
+                if ((cantidadNormalizada > existenciaProducto || cantidad <= 0f) && sinExistencias == 0) {
                     runOnUiThread {
-                        binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales";
+                        binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales"
                         binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
                         binding.btnagregar.isEnabled = false
                     }
-                }else if(cantidadVerificar < cantidadEscala && clienteMayorista == "N"){ //VALIDADO EL PRECIO SELECCIONADO EN LAS ESCALAS.
+                } else if (cantidadNormalizada < umbralEscala && clienteMayorista == "N") {
                     runOnUiThread {
                         binding.txtcantidad.error = "La cantidad no es válida para el precio seleccionado"
                         binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
                         binding.btnagregar.isEnabled = false
                     }
-                }else{
+                } else {
                     runOnUiThread {
+                        binding.txtcantidad.error = null // LIMPÌAMOS EL ERROR SI TO DO ESTÁ BIEN
                         binding.btnagregar.isEnabled = true
                         Totalizar(cantidad)
                         binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btnenviar)
                     }
                 }
 
-            }else{
+            } else {
                 runOnUiThread {
                     binding.txtcantidad.error = "Campo no puede quedar vacio"
                     binding.btnagregar.isEnabled = false
@@ -857,378 +867,42 @@ class Producto_agregar : AppCompatActivity() {
     //EDITAR CANTIDAD DE PRODUCTO SIN BORRAR
     //23-08-2022
     private fun CambioCantidad() {
-        binding.txtcantidad.setOnFocusChangeListener(View.OnFocusChangeListener { view, hasFocus ->
+        binding.txtcantidad.onFocusChangeListener = View.OnFocusChangeListener { view, hasFocus ->
             if (hasFocus) {
                 binding.txtcantidad.setText("${String.format("", cantidad)}");
             }
-        })
+        }
     }
 
-    //MODIFICANDO LA CANTIDAD DE DECIMALES A 4
-    //PAPELERIA DM
-    //23-08-2022
     private fun Totalizar(cantidad: Float) {
-        var total : Float = 0f
-        total = if(precioIvaPersonalizado > 0){
-            precioIvaPersonalizado * cantidad
-        }else{
-            precio_iva * cantidad
+        // NUEVO CÓDIGO: Delegamos el cálculo al ViewModel.
+        // Determinamos la base y el factor según la unidad seleccionada
+        val (base, factor) = when(unidadActual) {
+            "UNI" -> "UNI" to 1f
+            "FRA" -> "FRA" to 1f
+            else -> {
+                // Unidades adicionales (Sixpack, Cora, etc.)
+                if (equivaleUni > 0f) "UNI" to equivaleUni
+                else if (equivaleFra > 0f) "FRA" to equivaleFra
+                else "UNI" to 1f
+            }
         }
 
-        binding.txttotal.text = "${String.format("%.4f".format(total) )}"
-
-        if(bonificacion > 0 && bonificacion != null && unidadActual == "UNI"){
-            val productosBonificados = cantidad / bonificacion
-            binding.txtBonificados.text = productosBonificados.toInt().toString()
-        }else{
-            binding.txtBonificados.text = 0.toString()
-        }
-
+        viewModel.recalcularValores(
+            idCliente = idcliente!!,
+            idProducto = idproducto!!,
+            cantidad = cantidad,
+            unidad = unidadActual,
+            unidadBase = base,
+            factorEquivalencia = factor,
+            tipoBonif = tipoBonificacion
+        )
     }
-
-    private fun AddDetallePedido(esPrecioEditado: Boolean, bonificado:Int, precioIva: Float): Int {
-        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
-
-        var vPrecio: Float
-        var vPrecio_iva: Float
-
-        //CONFIGURA EL PRECIO PERSONALIZADO DEL CLIENTE
-        if(precioIvaPersonalizado > 0){
-            vPrecio = (precioIvaPersonalizado / 1.13).toFloat()
-            vPrecio_iva = precioIvaPersonalizado
-        }else{
-            vPrecio = precioIva / 1.13f
-            vPrecio_iva = precioIva
-        }
-
-        //CONFIGURA LA DESCRIPCION DEL PRODUCTO DE ACUERDO A LA UNIDAD SELECCIONADA
-        val nombreProducto = binding.txtdescripcion.text.toString()
-        val descripcion = when(binding.spunidad.selectedItem.toString()){
-            "UNIDAD" -> if(datosProducto!!.Unidad_medida.isBlank()) nombreProducto else datosProducto!!.Unidad_medida + " " + nombreProducto
-            "FRACCION" -> datosProducto!!.Nombre_fraccion + ' ' + nombreProducto
-            else -> binding.spunidad.selectedItem.toString().trim() + ' ' + nombreProducto
-        }
-
-
-        //println("TIPO DE PRODUCTO SELECCIONADO -> ${datosProducto!!.Tipo}")
-
-        //TIPO PRODUCTO
-        val tipoProducto = when(datosProducto!!.Tipo!!.trim()){
-            "Producto" -> {
-                "PRD"
-            }
-            else -> {
-                "SVC"
-            }
-        }
-
-        //TIPO FISCAL
-        val tipoFiscal = when(datosProducto!!.TipoFiscal){
-            "Gravado" -> {
-                "G"
-            }
-            "Exento" -> {
-                "E"
-            }
-            else -> {
-                "NS"
-            }
-        }
-
-        //BODEGA
-        val idBodega = preferencias!!.getInt("idBodega", -1)
-        val codBodega = preferencias!!.getString("codBodega", "-1")
-        val bodega = preferencias!!.getString("bodega", "-1")
-
-        val idBodegaFinal = if(idBodega == -1) null else idBodega
-        val codBodegaFinal = if(codBodega == "-1") null else codBodega
-        val bodegaFinal = if(bodega == "-1") null else bodega
-
-        try {
-
-            var ordenDespacho = 0
-            ordenDespacho = inventarioController.obtenerOrdenDespachoLinea(this@Producto_agregar, datosProducto!!.IdLinea)
-
-            base.beginTransaction()
-            val detalle = ContentValues()
-            detalle.put("Id_pedido", idpedido)
-            detalle.put("Id_producto", idproducto)
-            detalle.put("Cantidad", cantidad)
-            detalle.put("Unidad", unidadActual)
-            detalle.put("Descripcion", descripcion)
-            detalle.put("Idunidad", idUnidad)
-            detalle.put("precio", vPrecio)
-            detalle.put("Precio_iva", vPrecio_iva)
-            detalle.put("Precio_oferta", 0.toFloat())
-            detalle.put("Total", (binding.txttotal.text.toString().toFloat()) / 1.13)
-            detalle.put("Total_iva", binding.txttotal.text.toString().toFloat())
-            detalle.put("Descuento", 0.toFloat())
-            detalle.put("Bonificado", bonificado)
-
-            if (esPrecioEditado) {
-                detalle.put("Precio_editado", "*")
-            } else {
-                detalle.put("Precio_editado", "")
-            }
-
-            detalle.put("Id_Inventario_Precios", idEscala)
-            detalle.put("Codigo_de_barra", datosProducto!!.codigo_de_barra)
-            detalle.put("EquivaleUni", equivaleUni)
-            detalle.put("EquivaleFra", equivaleFra)
-            detalle.put("UniEquivale", uniEquivale)
-            detalle.put("Comentario", 0)
-            detalle.put("Tipo", tipoProducto)
-            detalle.put("IdMarca", datosProducto!!.IdMarca)
-            detalle.put("IdSku", datosProducto!!.IdSku)
-            detalle.put("IdLinea", datosProducto!!.IdLinea)
-            detalle.put("IdSubLinea", datosProducto!!.IdSubLinea)
-            detalle.put("IdRubro", datosProducto!!.IdRubro)
-            detalle.put("IdProductor", datosProducto!!.IdProductor)
-            detalle.put("IdProveedor", datosProducto!!.IdProveedor)
-            detalle.put("Metodo_gestion", datosProducto!!.MetodoGestion)
-            detalle.put("Tipo_fiscal", tipoFiscal)
-            detalle.put("IdLote", idLoteSeleccionado)
-            detalle.put("Lote", loteSeleccionado)
-            detalle.put("FechaVencimiento", fechaVencimientoLote)
-            detalle.put("IdBodega", idBodegaFinal)
-            detalle.put("CodBodega", codBodegaFinal)
-            detalle.put("Bodega", bodegaFinal)
-            detalle.put("Orden_despacho", ordenDespacho)
-
-
-            val idpedidodetalle = base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
-
-            val consulta = "SELECT SUM(Total_iva) FROM detalle_pedidos where Id_pedido=$idpedido"
-            val cursor = base.query(consulta)
-            var total = 0.toFloat()
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                total = cursor.getFloat(0)
-                cursor.close()
-                //if(total > 0){
-                val t = ContentValues()
-                t.put("Total", total)
-                base.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?", arrayOf(idpedido.toString()))
-                //}else{
-                //throw Exception("Error en el total")
-                //}
-            } else {
-                throw Exception("No se encontro el pedido asociado")
-            }
-            base.setTransactionSuccessful()
-            return idpedidodetalle.toInt()
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        } finally {
-            base.endTransaction()
-
-            //---------
-            // SE DEBE DE QUITAR ESTA ASIGNACION
-            //---------
-            preferencias!!.edit {
-                putBoolean("precioConIva", true)
-            }
-
-        }
-    } //agrega el producto al pedido y actualiza el total
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        //super.onBackPressed();
-
-    }//anula el boton atras
-
-    private fun getPedidodetalle(id: Int): DetallePedido? {
-        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
-        var detallePedido : DetallePedido? = null
-        try {
-
-            val consulta = "SELECT * FROM detalle_producto where Id=$id"
-            val cursor = base.query(consulta)
-
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-
-                detallePedido = DetallePedido(
-                    cursor.getInt(0),
-                    cursor.getInt(1),
-                    cursor.getInt(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getFloat(5),
-                    cursor.getFloat(6),
-                    cursor.getFloat(7),
-                    cursor.getFloat(8),
-                    cursor.getFloat(9),
-                    cursor.getFloat(10),
-                    cursor.getFloat(11),
-                    cursor.getFloat(12),
-                    cursor.getFloat(13),
-                    cursor.getFloat(14),
-                    cursor.getFloat(15),
-                    cursor.getString(16),
-                    cursor.getInt(17),
-                    cursor.getFloat(18),
-                    cursor.getString(19),
-                    cursor.getInt(20),
-                    cursor.getString(21),
-                    cursor.getFloat(22),
-                    cursor.getFloat(23),
-                    cursor.getString(24),
-                    cursor.getString(25),
-                    cursor.getIntOrNull(26),
-                    cursor.getIntOrNull(27),
-                    cursor.getIntOrNull(28),
-                    cursor.getIntOrNull(29),
-                    cursor.getIntOrNull(30),
-                    cursor.getIntOrNull(31),
-                    cursor.getIntOrNull(32),
-                    cursor.getString(33),
-                    cursor.getString(34),
-                    cursor.getIntOrNull(35),
-                    cursor.getStringOrNull(36),
-                    cursor.getStringOrNull(37),
-                    cursor.getIntOrNull(38),
-                    cursor.getStringOrNull(39),
-                    cursor.getStringOrNull(40),
-                    cursor.getInt(41)
-                )
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            println("ERROR BUSCAR EL DETALLE DEL PEDIDO -> " + e.message)
-        }
-        return detallePedido
-    } //obtiene el detalle del pedido
-
-    private fun updateDetalle(iddetalle: Int?, esPrecioEditado: Boolean, bonificado: Int, precio: Float) {
-        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
-        val precioIva = precio
-        val precioU = precio / 1.13
-
-        //CONFIGURA LA DESCRIPCION DEL PRODUCTO DE ACUERDO A LA UNIDAD SELECCIONADA
-        val nombreProducto = binding.txtdescripcion.text.toString()
-        val descripcion = when(binding.spunidad.selectedItem.toString()){
-            "UNIDAD" -> if(datosProducto!!.Unidad_medida.isBlank()) nombreProducto else datosProducto!!.Unidad_medida + " " + nombreProducto
-            "FRACCION" -> datosProducto!!.Nombre_fraccion + ' ' + nombreProducto
-            else -> binding.spunidad.selectedItem.toString().trim() + ' ' + nombreProducto
-        }
-
-        try {
-            base.beginTransaction()
-            val detalle = ContentValues()
-            detalle.put("Cantidad", cantidad)
-            detalle.put("Bonificado", bonificado)
-            detalle.put("precio", precioU)
-            detalle.put("Precio_iva", precioIva)
-            //detalle.put("Cantidad", binding.spunidad.selectedItem.toString())
-            detalle.put("Total_iva", binding.txttotal.text.toString().toFloat())
-            detalle.put("Descripcion", descripcion)
-            detalle.put("Unidad", unidadActual)
-            detalle.put("Idunidad", idUnidad)
-
-            if (esPrecioEditado) {
-                detalle.put("Precio_editado", "*")
-            } else {
-                detalle.put("Precio_editado", "")
-            }
-
-            detalle.put("EquivaleUni", equivaleUni)
-            detalle.put("EquivaleFra", equivaleFra)
-            detalle.put("UniEquivale", uniEquivale)
-
-
-            val idpedidodetalle = base.update(
-                "detalle_pedidos",
-                SQLiteDatabase.CONFLICT_REPLACE,
-                detalle,
-                "Id=?",
-                arrayOf(iddetalle.toString())
-            )
-
-            val consulta = "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idpedido"
-            val cursor = base.query(consulta)
-
-            var total = 0.toFloat()
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                total = cursor.getFloat(0)
-                cursor.close()
-                //if(total > 0){
-                val t = ContentValues()
-                t.put("Total", total)
-                base.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE,t, "Id=?", arrayOf(idpedido.toString()))
-//                }else{
-//                    throw Exception("Error en el total")
-//                }
-            } else {
-                println("No se encontro el pedido asociado")
-            }
-            cursor.close() // -----> Este no lo habia cerrado 18/09/2025
-            base.setTransactionSuccessful()
-        } catch (e: Exception) {
-            println("ERROR LA ACTUALIZAR EL DETALLE DEL PEDIDO -> " + e.message)
-        } finally {
-            base.endTransaction()
-        }
-    } //ACTUALIZA EL DETALLE DEL PRODUCTO
-
-    private fun deleteDetalle(iddetalle: Int?) {
-        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.writableDatabase
-        try {
-            base.beginTransaction()
-            base.execSQL("DELETE FROM detalle_pedidos where Id=$iddetalle") //elimina
-
-            val consulta = "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idpedido"
-            val cursor = base.query(consulta)
-            var total = 0.toFloat()
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                total = cursor.getFloat(0)
-                cursor.close()
-//                if(total > 0){
-                val t = ContentValues()
-                t.put("Total", total)
-                base.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?", arrayOf(idpedido.toString()))
-//                }else{
-//                    throw Exception("Error en el total")
-//                }
-            } else {
-                println("No se encontro el pedido asociado")
-            }
-            cursor.close() // -----> Este no lo habia cerrado 18/09/2025
-            base.setTransactionSuccessful()
-        } catch (e: Exception) {
-            println("ERROR AL ELIMINAR DEL DETALLE DEL PEDIDO -> " + e.message)
-        } finally {
-            base.endTransaction()
-        }
+        super.onBackPressed()
     }
-
-    private fun validateProduct(idproducto: Int): Int {
-        val base = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
-        var i = 0
-        try {
-
-            val consulta = if(lotesActivos == 1){
-                "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual' AND idLote = $idLoteSeleccionado"
-            }else{
-                "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual'"
-            }
-            //val consulta = "SELECT *  FROM detalle_pedidos where Id_pedido=$idpedido and Id_producto=$idproducto and Unidad = '$unidadActual'"
-            val cursor = base.query(consulta)
-            if (cursor.count > 0) {
-                cursor.moveToFirst()
-                i = cursor.getInt(0)
-                return i
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            println("ERROR AL VALIDAR EL PRODUCTO -> " + e.message)
-        }
-        return 0
-    }//valida si ya existe el producto en el detalle
-
 
     //FUNCION PARA VALIDAD SI EL INGRESO ES NUMERICO DECIMAL
     private fun isNumeric(cadena: String): Boolean {
@@ -1409,7 +1083,7 @@ class Producto_agregar : AppCompatActivity() {
                     e.message.toString(),
                     Snackbar.LENGTH_LONG
                 )
-                alert.view.setBackgroundColor(resources.getColor(com.example.acae30.R.color.moderado))
+                alert.view.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this@Producto_agregar, com.example.acae30.R.color.moderado))
                 alert.show()
             }
 
@@ -1419,291 +1093,101 @@ class Producto_agregar : AppCompatActivity() {
 
     } //muestra la alerta para agregar precio
 
-    //FUNCION PARA OBTENER EL PRECIO AUTORIZADO
-    private fun verificarPrecioAutorizado(id_empleado:Int, cod_producto:String){
+    //---------------------------------------------------------------------------------
+     // Prepara el objeto de detalle del pedido y solicita la confirmación del token al ViewModel.
+    //---------------------------------------------------------------------------------
+    private fun prepararYConfirmarToken() {
+        val bonificados = binding.txtBonificados.text.toString().toInt()
+        val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
+        val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
 
-        preferencias = this@Producto_agregar.getSharedPreferences(instancia, MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferencias!!.getString("ip", ""), preferencias!!.getInt("puerto", 0).toString(), this@Producto_agregar)
+        val detalle = com.example.acae30.data.local.entity.PedidoDetalleEntity(
+            id = idpedidodetalle ?: 0,
+            idPedido = idpedido,
+            idProducto = idproducto!!,
+            descripcion = binding.txtdescripcion.text.toString(),
+            cantidad = cantidad.toDouble(),
+            unidad = unidadActual,
+            idUnidad = idUnidad,
+            precio = (precio_iva / 1.13).toDouble(),
+            precioIva = precio_iva.toDouble(),
+            total = (totalIva / 1.13),
+            totalIva = totalIva,
+            precioOferta = 0.0,
+            bonificado = bonificados,
+            descuento = 0.0,
+            precioEditado = if (precioEditado > 0) "*" else "",
+            idInventarioPrecios = idEscala,
+            codigoBarra = datosProducto?.codigo_de_barra ?: "",
+            equivaleUni = equivaleUni.toDouble(),
+            equivaleFra = equivaleFra.toDouble(),
+            uniEquivale = uniEquivale,
+            comentario = 0,
+            tipo = if (datosProducto?.Tipo?.trim() == "Producto") "PRD" else "SVC",
+            metodoGestion = datosProducto?.MetodoGestion ?: "NINGUNO",
+            tipoFiscal = when (datosProducto?.TipoFiscal) {
+                "Gravado" -> "G"
+                "Exento" -> "E"
+                else -> "NS"
+            },
+            idLote = idLoteSeleccionado,
+            lote = loteSeleccionado,
+            fechaVencimiento = fechaVencimientoLote,
+            ordenDespacho = 0
+        )
 
-        try {
-            val datos = ActualizarPrecioPersonalizadoJSON(
-                id_empleado,
-                cod_producto
-            )
-            val objecto =
-                Gson().toJson(datos)
-            val ruta: String = servidor + "token/search"
-            val url = URL(ruta)
-
-            val sslContext = utilidades.crearSslInseguro()
-
-            with(url.openConnection() as HttpURLConnection) {
-
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier { _, _ -> true }
-                }
-
-                try {
-                    connectTimeout = 20000
-                    setRequestProperty(
-                        "Content-Type",
-                        "application/json;charset=utf-8"
-                    )
-                    requestMethod = "POST"
-                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                    or.write(objecto) //escribo el json
-                    or.flush() //se envia el json
-                    if (responseCode == 201) {
-                        BufferedReader(InputStreamReader(inputStream) as Reader?).use {
-                            try {
-                                val respuesta = StringBuffer()
-                                var inpuline = it.readLine()
-                                while (inpuline != null) {
-                                    respuesta.append(inpuline)
-                                    inpuline = it.readLine()
-                                }
-                                it.close()
-
-                                val res: JSONObject = JSONObject(respuesta.toString())
-                                precioAutorizado = res.getString("precio_asig").toString().toFloat();
-
-                                runOnUiThread {
-                                    AlertaPrecio(this@Producto_agregar)
-                                }
-                            } catch (e: Exception) {
-                                println("ERROR AL VERIFICAR EL PRECIO AUTORIZADO -> " + e.message)
-                            }
-                        }
-                    }else {
-                        runOnUiThread {
-                            mensajeError()
-                        }
-                    }
-                } catch (e: Exception) {
-                    println("error: " + e.message)
-                }
-            }
-        } catch (e: Exception) {
-            println("ERROR AL CARGAR VENTANA DE CAMBIAR PRECIO -> " + e.message)
-        }
+        viewModel.confirmarTokenYGuardar(codEmpleado, codigoProducto, detalle)
     }
 
-    //FUNCION PARA CONFIRMAR LA UTILIZACION DEL TOKEN
-    private fun confirmarToken(id_empleado:Int, cod_producto:String){
+    private fun agregarProducto() {
+        /*
+         * CÓDIGO ANTERIOR (Comentado):
+         * val bonificacion = binding.txtBonificados.text.toString().toInt()
+         * ... validaciones y AddDetallePedido() manual
+         */
 
-        preferencias = this@Producto_agregar.getSharedPreferences(instancia, MODE_PRIVATE)
-        val servidor = funciones.getServidor(preferencias!!.getString("ip", ""), preferencias!!.getInt("puerto", 0).toString(), this@Producto_agregar)
+        // NUEVO CÓDIGO: Construimos la entidad y la enviamos al ViewModel
+        val bonificados = binding.txtBonificados.text.toString().toInt()
+        val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
+        val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
+        
+        val detalle = com.example.acae30.data.local.entity.PedidoDetalleEntity(
+            id = idpedidodetalle ?: 0,
+            idPedido = idpedido,
+            idProducto = idproducto!!,
+            descripcion = binding.txtdescripcion.text.toString(),
+            cantidad = cantidad.toDouble(),
+            unidad = unidadActual,
+            idUnidad = idUnidad,
+            precio = (precio_iva / 1.13).toDouble(),
+            precioIva = precio_iva.toDouble(),
+            total = (totalIva / 1.13),
+            totalIva = totalIva,
+            precioOferta = 0.0,
+            bonificado = bonificados,
+            descuento = 0.0,
+            precioEditado = if (precioEditado > 0) "*" else "",
+            idInventarioPrecios = idEscala,
+            codigoBarra = datosProducto?.codigo_de_barra ?: "",
+            equivaleUni = equivaleUni.toDouble(),
+            equivaleFra = equivaleFra.toDouble(),
+            uniEquivale = uniEquivale,
+            comentario = 0,
+            tipo = if (datosProducto?.Tipo?.trim() == "Producto") "PRD" else "SVC",
+            metodoGestion = datosProducto?.MetodoGestion ?: "NINGUNO",
+            tipoFiscal = when (datosProducto?.TipoFiscal) {
+                "Gravado" -> "G"
+                "Exento" -> "E"
+                else -> "NS"
+            },
+            idLote = idLoteSeleccionado,
+            lote = loteSeleccionado,
+            fechaVencimiento = fechaVencimientoLote,
+            ordenDespacho = 0 
+        )
 
-        try {
-            val datos = ActualizarPrecioPersonalizadoJSON(
-                id_empleado,
-                cod_producto
-            )
-            val objecto =
-                Gson().toJson(datos)
-            val ruta: String = servidor + "token/update"
-            val url = URL(ruta)
-
-            val sslContext = utilidades.crearSslInseguro()
-
-            with(url.openConnection() as HttpURLConnection) {
-
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier { _, _ -> true }
-                }
-
-                try {
-                    connectTimeout = 20000
-                    setRequestProperty(
-                        "Content-Type",
-                        "application/json;charset=utf-8"
-                    )
-                    requestMethod = "POST"
-                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                    or.write(objecto)
-                    or.flush()
-                    if (responseCode == 201) {
-                        agregarProducto()
-                    }else {
-                        runOnUiThread {
-                            mensajeErrorProcesar()
-                        }
-                    }
-                } catch (e: Exception) {
-                    println("error: " + e.message)
-                }
-            }
-        } catch (e: Exception) {
-            println("error: " + e.message)
-        }
+        viewModel.guardarProducto(detalle)
     }
-
-    //MENSAJE DE ERROR
-    private fun mensajeError(){
-
-        val updateDialog = Dialog(this, com.example.acae30.R.style.Theme_Dialog)
-        updateDialog.setCancelable(false)
-
-        updateDialog.setContentView(com.example.acae30.R.layout.dialog_cancelar)
-        tvUpdate = updateDialog.findViewById(com.example.acae30.R.id.tvUpdate)
-        tvCancel = updateDialog.findViewById(com.example.acae30.R.id.tvCancel)
-        tvMensaje = updateDialog.findViewById(com.example.acae30.R.id.tvMensaje)
-        tvTitulo = updateDialog.findViewById(com.example.acae30.R.id.tvTitulo)
-
-        tvTitulo.text = getString(com.example.acae30.R.string.error_titulo)
-        tvMensaje.text = "NO ENCONTRÓ PRECIO AUTORIZADO"
-        tvUpdate.text = getString(com.example.acae30.R.string.error_aceptar)
-
-        tvUpdate.setOnClickListener {
-            updateDialog.dismiss()
-        }
-
-        tvCancel.visibility = View.GONE
-
-        updateDialog.show()
-
-    }
-
-    //MENSAJE DE ERROR
-    private fun mensajeErrorProcesar(){
-
-        val updateDialog = Dialog(this, com.example.acae30.R.style.Theme_Dialog)
-        updateDialog.setCancelable(false)
-
-        updateDialog.setContentView(com.example.acae30.R.layout.dialog_cancelar)
-        tvUpdate = updateDialog.findViewById(com.example.acae30.R.id.tvUpdate)
-        tvCancel = updateDialog.findViewById(com.example.acae30.R.id.tvCancel)
-        tvMensaje = updateDialog.findViewById(com.example.acae30.R.id.tvMensaje)
-        tvTitulo = updateDialog.findViewById(com.example.acae30.R.id.tvTitulo)
-
-        tvTitulo.text = getString(com.example.acae30.R.string.error_titulo)
-        tvMensaje.text = "ERROR AL AGREGAR EL PRODUCTO AL PEDIDO"
-        tvUpdate.text = getString(com.example.acae30.R.string.error_aceptar)
-
-        tvUpdate.setOnClickListener {
-            updateDialog.dismiss()
-        }
-
-        tvCancel.visibility = View.GONE
-
-        updateDialog.show()
-
-    }
-
-    //FUNCION PARA AGREGAR EL PRODUCTO SELECCIONADO AL PEDIDO
-    private fun agregarProducto(){
-
-        val bonificacion = binding.txtBonificados.text.toString().toInt()
-
-        //Obtenemos el valor el valor del Spinner de Escalas
-        val valor = binding.spprecio.selectedItem.toString()
-        var precio: Double = 0.0
-
-        var esPrecioEditado = false
-        if (valor.last() == '*') {
-            esPrecioEditado = true
-            precio = valor.substringBefore('*').toDouble()
-        }else{
-            precio = valor.substringBefore(" ").toDouble()
-        }
-
-        when(clienteMayorista){
-            "S" -> {
-                try {
-                    if (idpedido > 0) {
-                        if (idpedidodetalle!! > 0) {
-                            updateDetalle(idpedidodetalle!!, esPrecioEditado, bonificacion, precio.toFloat())
-                        } else {
-                            val id = validateProduct(idproducto!!)
-                            if (id > 0) {
-                                val data = getPedidodetalle(id)
-                                cantidad += data!!.Cantidad!!
-                                var t =
-                                    ((binding.txttotal.text.toString().toFloat()) + data.Total_iva!!)
-                                binding.txttotal.text = "${String.format("%.${decTotales}f".format(t) )}"
-                                updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
-                            } else {
-                                AddDetallePedido(esPrecioEditado, bonificacion, precio.toFloat())
-                            }
-                        }
-                    }
-                    runOnUiThread {
-                        provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
-                    }
-                } catch (e: Exception) {
-                    runOnUiThread {
-                        funciones.mostrarAlerta("ERROR: ${e.message}", this@Producto_agregar, binding.lienzo)
-                    }
-                }
-            }
-            else -> {
-                // Verificamos que la cantidad si corresponda a la escala seleccionada
-                if (cantidad >= cantidadEscala) { //&& precio > 0
-
-                    try {
-
-                        if (idpedido > 0) {
-                            if (idpedidodetalle!! > 0) {
-                                updateDetalle(idpedidodetalle!!, esPrecioEditado, bonificacion, precio.toFloat())
-                            } else {
-                                val id = validateProduct(idproducto!!)
-                                if (id > 0) {
-                                    val data = getPedidodetalle(id)
-                                    cantidad += data!!.Cantidad!!
-                                    var t =
-                                        ((binding.txttotal.text.toString().toFloat()) + data.Total_iva!!)
-                                    binding.txttotal.text = "${String.format("%.${decTotales}f".format(t) )}"
-                                    updateDetalle(id, esPrecioEditado, bonificacion, precio.toFloat())
-                                } else {
-                                    AddDetallePedido(esPrecioEditado, bonificacion, precio.toFloat())
-                                }
-                            }
-                        }
-                        runOnUiThread {
-                            provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
-                        }
-                    } catch (e: Exception) {
-                        runOnUiThread {
-                            funciones.mostrarAlerta("ERROR: ${e.message}", this@Producto_agregar, binding.lienzo)
-                        }
-                    }
-                }
-                else {
-                    runOnUiThread {
-                        funciones.mostrarAlerta("PRECIO O CANTIDAD SON VALORES INCORRECTOS", this@Producto_agregar, binding.lienzo)
-                    }
-                }
-            }
-        }
-
-    }
-
-    //SELECCIONANDO ESCALA PARA EDITAR PRODUCTO EN DETALL
-    /*private fun seleccionarCantidadenEscala(idPedido: Int, idProducto: Int): Float{
-        val db = funciones.obtenerInstancia(this@Producto_agregar).openHelper.readableDatabase
-        var cantidadEscala = 0f
-        try {
-            val consulta = "SELECT IP.Cantidad FROM detalle_pedidos AS DP " +
-                    "INNER JOIN inventario_precios AS IP " +
-                    "ON DP.Id_Inventario_Precios = IP.Id " +
-                    "WHERE DP.Id_pedido=$idPedido AND DP.Id_producto=$idProducto"
-
-            val cursor = db.query(consulta)
-
-            cantidadEscala = if(cursor.count > 0){
-                cursor.moveToFirst()
-                cursor.getFloat(0)
-            }else{
-                0f
-            }
-            cursor.close()
-        }catch (e: Exception){
-            println("ERROR: AL SELECCIONAR LA ESCALA -> " + e.message)
-        }
-        return cantidadEscala
-    }*/
 
     //FUNCION PARA REGRESAR AL DETALLE DEL PEDIDO
     private fun provieneDetallePedido(idpedido: Int, idcliente: Int?, nombrecliente: String?, idvisita: Int, codigo: String, visita: String,

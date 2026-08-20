@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.example.acae30.data.local.entity.PedidoDetalleEntity
 import com.example.acae30.data.local.entity.PedidosEntity
 import com.example.acae30.data.local.models.PedidosNoTransmitidosModel
 import kotlinx.coroutines.flow.Flow
@@ -111,6 +112,24 @@ interface PedidosDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarPedido(pedido: PedidosEntity): Long
 
+    //-------------------------------------------------------
+    // Gestión de detalle del pedido
+    //-------------------------------------------------------
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarDetallePedido(detalle: PedidoDetalleEntity): Long
 
+    @Query("DELETE FROM detalle_pedidos WHERE Id = :idDetalle")
+    suspend fun eliminarDetallePedido(idDetalle: Int)
 
+    @Query("SELECT * FROM detalle_pedidos WHERE Id = :idDetalle")
+    suspend fun obtenerDetallePedidoPorId(idDetalle: Int): PedidoDetalleEntity?
+
+    @Query("SELECT * FROM detalle_pedidos WHERE Id_pedido = :idPedido AND Id_producto = :idProducto AND Unidad = :unidad")
+    suspend fun buscarProductoEnDetalle(idPedido: Int, idProducto: Int, unidad: String): PedidoDetalleEntity?
+
+    @Query("SELECT SUM(Total_iva) FROM detalle_pedidos WHERE Id_pedido = :idPedido")
+    suspend fun obtenerSumaTotalPedido(idPedido: Int): Double?
+
+    @Query("UPDATE pedidos SET Total = :total WHERE Id = :idPedido")
+    suspend fun actualizarTotalCabeceraPedido(idPedido: Int, total: Double)
 }

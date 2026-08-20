@@ -89,4 +89,20 @@ interface InventarioDao {
         idInventario: Int
     ) : Inventario?
 
+    //-------------------------------------------------------
+    // Obtener escalas de precios por producto y unidad
+    //-------------------------------------------------------
+    @Query("""
+        SELECT * FROM inventario_precios 
+        WHERE id_inventario = :idInventario 
+        AND (unidad = :unidad OR unidad = '')
+        ORDER BY cantidad ASC
+    """)
+    suspend fun obtenerEscalasPrecios(idInventario: Int, unidad: String): List<InventarioPreciosEntity>
+
+    //-------------------------------------------------------
+    // Obtener lotes por producto
+    //-------------------------------------------------------
+    @Query("SELECT * FROM inventario_lotes WHERE idProducto = :idProducto")
+    suspend fun obtenerLotesPorProducto(idProducto: Int): List<InventarioLotesEntity>
 }
