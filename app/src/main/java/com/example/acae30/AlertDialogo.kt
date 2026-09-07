@@ -26,6 +26,16 @@ class AlertDialogo(act: Activity, context: Context) {
         dialogo.show()
     }
 
+    fun Enviando() {
+        val ale: AlertDialog.Builder = AlertDialog.Builder(actividad)
+        val ly: LayoutInflater = actividad.layoutInflater
+        ale.setView(ly.inflate(R.layout.alerta_enviando, null))
+        ale.setCancelable(false)
+        dialogo = ale.create()
+
+        dialogo.show()
+    }
+
     fun pedidoEnviado() {
         val ale: AlertDialog.Builder = AlertDialog.Builder(actividad)
         val ly: LayoutInflater = actividad.layoutInflater

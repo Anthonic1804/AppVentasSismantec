@@ -1731,7 +1731,7 @@ class ClientesController {
     //FUNCION PARA OBTENER EL BALACE ACTUAL Y LIMITE DE CREDITO DE UN CLIENTE POR ID
     //-----------------------------------------------------------------------------------
     suspend fun obtenerBalacenClientePorId(
-        context: Context, idCliente: Int) : BalanceClienteDTO = withContext(Dispatchers.IO){
+        context: Context, idCliente: Int) : BalanceClienteDTO? = withContext(Dispatchers.IO){
 
             inicializarVariables(context)
 
@@ -1743,12 +1743,13 @@ class ClientesController {
                 if(respuesta.isSuccessful){
                     respuesta.body()
                 } else {
-                    Timber.e("[CLIENTE_CONTROLLER] RESPUESTA DEL SERVIDOR VACIA EN BALANCE DEL CLIENTE")
+                    Timber.e("[CLIENTE_CONTROLLER] ERROR EN RESPUESTA DE BALANCE: ${respuesta.code()}")
+                    null
                 }
             }catch (e: Exception){
                 Timber.e(e, "[CLIENTE_CONTROLLER] ERROR AL OBTENER EL BALANCE DEL CLIENTE -> ${e.message}")
-            } as BalanceClienteDTO
-
+                null
+            }
         }
 
     //--------------------------------------------------------------

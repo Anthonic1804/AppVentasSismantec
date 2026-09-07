@@ -12,6 +12,7 @@ import com.example.acae30.data.local.dao.InventarioSolicitudDao
 import com.example.acae30.data.local.dao.PedidosDao
 import com.example.acae30.data.local.dao.ReporteDao
 import com.example.acae30.data.local.dao.ServidoresDao
+import com.example.acae30.data.local.dao.VisitasDao
 import com.example.acae30.data.local.entity.AbonosEntity
 import com.example.acae30.data.local.entity.CatalogoDepartamentoEntity
 import com.example.acae30.data.local.entity.CatalogoDistritoEntity
@@ -88,7 +89,7 @@ import com.example.acae30.data.local.views.DetalleProductoView
     views = [
         DetalleProductoView::class
             ],
-    version = 1,
+    version = 4,
     exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun inventarioDao(): InventarioDao
@@ -98,6 +99,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pedidosDao() : PedidosDao
     abstract fun reporteDao() : ReporteDao
     abstract fun cuentasDao(): CuentasDao
+    abstract fun visitasDao(): VisitasDao
 
     companion object{
 
@@ -111,7 +113,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "Acae.db"
-                ).addCallback(object  : Callback(){
+                ).fallbackToDestructiveMigration()
+                .addCallback(object  : Callback(){
                     override fun onOpen(db: SupportSQLiteDatabase) {
                         super.onOpen(db)
                         db.query("PRAGMA journal_mode=WAL;")

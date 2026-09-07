@@ -6,14 +6,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.R
 import com.example.acae30.modelos.DetallePedido
 
 class PedidoDetalleAdapter(
-    private var list: ArrayList<DetallePedido>, private var context: Context,
+    private var context: Context,
     val itemClick: (Int) -> Unit
-) : RecyclerView.Adapter<PedidoDetalleAdapter.MyViewHolder>() {
+) : ListAdapter<DetallePedido, PedidoDetalleAdapter.MyViewHolder>(DiffCallback()) {
 
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
@@ -33,20 +35,40 @@ class PedidoDetalleAdapter(
     //23-08-2022
     override fun onBindViewHolder(vista: PedidoDetalleAdapter.MyViewHolder, position: Int) {
         preferencias = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val decTotales = preferencias!!.getInt("decTotales",2)
+        val decTotales = preferencias!!.getInt("decTotales", 2)
 
-        var data = list[position]
-        vista.cantidad.text = "${String.format("%.2f", data.Cantidad?.plus(data.Bonificado!!) ?: data.Cantidad)}"
-        vista.descripcion.text = if(data.Lote == null) data.Descripcion else data.Descripcion + " | LOTE: " + data.Lote + " | F. VENCIMIENTO: " + data.FechaVencimiento
-        if (data.Precio_editado == "*") {
-            vista.total.text = "$" + "${String.format("%.${decTotales}f".format(data.Total_iva) )}" + "*"
-        } else {
-            vista.total.text = "$" + "${String.format("%.${decTotales}f".format(data.Total_iva) )}"
-        }
+        val data = getItem(position)
+        
+        // Formatear cantidad de forma segura
+        val cant = data.Cantidad ?: 0f
+        val bonif = (data.Bonificado ?: 0).toFloat()
+        val totalCant = cant + bonif
+        
+        vista.cantidad.text = String.format("%.2f", totalCant)
+        
+        // Formatear descripción de forma segura
+        val desc = data.Descripcion ?: "Sin descripción"
+        val loteInfo = if (data.Lote != null) " | LOTE: ${data.Lote} | F. VENCIMIENTO: ${data.FechaVencimiento ?: "N/A"}" else ""
+        vista.descripcion.text = "$desc$loteInfo"
+        
+        // Formatear total de forma segura
+        val totalIva = data.Total_iva ?: 0f
+        val asterisco = if (data.Precio_editado == "*") "*" else ""
+        vista.total.text = "$${String.format("%.${decTotales}f", totalIva)}$asterisco"
     }
 
     override fun getItemCount(): Int {
-        return list.size
+        return super.getItemCount()
+    }
+
+    class DiffCallback : DiffUtil.ItemCallback<DetallePedido>() {
+        override fun areItemsTheSame(oldItem: DetallePedido, newItem: DetallePedido): Boolean {
+            return oldItem.Id == newItem.Id
+        }
+
+        override fun areContentsTheSame(oldItem: DetallePedido, newItem: DetallePedido): Boolean {
+            return oldItem == newItem
+        }
     }
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

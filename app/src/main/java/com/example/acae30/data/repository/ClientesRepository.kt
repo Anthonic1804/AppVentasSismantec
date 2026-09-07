@@ -69,4 +69,16 @@ class ClientesRepository(
     suspend fun obtenerBonificacionCliente(idCliente: Int, idProducto: Int) = 
         dao.obtenerCantidadBonificadoClientePorIdProducto(idCliente, idProducto)
 
+    //---------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: MÉTODOS DE SUCURSALES
+    //---------------------------------------------------------
+
+    // Obtiene todas las sucursales de un cliente.
+    suspend fun obtenerSucursalesPorCliente(idCliente: Int) = 
+        dao.obtenerSucursalesPorCliente(idCliente)
+
+    // Obtiene una sucursal específica por su nombre.
+    suspend fun obtenerSucursalPorNombre(idCliente: Int, nombreSucursal: String) = 
+        dao.obtenerSucursalPorNombre(idCliente, nombreSucursal)
+
 }

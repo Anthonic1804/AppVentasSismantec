@@ -27,4 +27,11 @@ interface PedidosApi {
         @Body busqueda: BusquedaReporteJSON
     ) : Response<List<ReportePedidoDTO>>
 
+    //------------------------------------------------------
+    // Enviar pedido completo al servidor
+    //------------------------------------------------------
+    @POST("pedido")
+    suspend fun enviarPedido(
+        @Body request: com.example.acae30.data.remote.dto.EnviarPedidoRequestDto
+    ): Response<com.example.acae30.data.remote.dto.VisitaResponseDto>
 }

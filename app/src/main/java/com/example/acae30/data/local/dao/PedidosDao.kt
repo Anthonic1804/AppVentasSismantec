@@ -118,6 +118,12 @@ interface PedidosDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarDetallePedido(detalle: PedidoDetalleEntity): Long
 
+    @Query("DELETE FROM detalle_pedidos WHERE Id_pedido = :idPedido")
+    suspend fun eliminarDetallePorPedido(idPedido: Int)
+
+    @Query("DELETE FROM pedidos WHERE Id = :idPedido")
+    suspend fun eliminarPedidoPorId(idPedido: Int)
+
     @Query("DELETE FROM detalle_pedidos WHERE Id = :idDetalle")
     suspend fun eliminarDetallePedido(idDetalle: Int)
 
@@ -130,6 +136,75 @@ interface PedidosDao {
     @Query("SELECT SUM(Total_iva) FROM detalle_pedidos WHERE Id_pedido = :idPedido")
     suspend fun obtenerSumaTotalPedido(idPedido: Int): Double?
 
+    @Query("SELECT COUNT(*) FROM detalle_pedidos WHERE Id_pedido = :idPedido")
+    suspend fun obtenerCantidadItemsPedido(idPedido: Int): Int
+
     @Query("UPDATE pedidos SET Total = :total WHERE Id = :idPedido")
     suspend fun actualizarTotalCabeceraPedido(idPedido: Int, total: Double)
+
+    //-------------------------------------------------------
+    // Actualizar totales fiscales del pedido
+    //-------------------------------------------------------
+    @Query("""
+        UPDATE pedidos 
+        SET Sumas = :sumas, Iva = :iva, Iva_percibido = :ivaPerci 
+        WHERE Id = :idPedido
+    """)
+    suspend fun actualizarTotalesFiscales(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double)
+
+    //-------------------------------------------------------
+    // Obtener detalle del pedido de forma reactiva (Flow)
+    //-------------------------------------------------------
+    @Query("SELECT * FROM detalle_producto WHERE id_pedido = :idPedido ORDER BY OrdenDespacho")
+    fun obtenerDetallePedidoFlow(idPedido: Int): kotlinx.coroutines.flow.Flow<List<com.example.acae30.data.local.views.DetalleProductoView>>
+
+    //-------------------------------------------------------
+    // Actualizar sucursal del pedido
+    //-------------------------------------------------------
+    @Query("""
+        UPDATE pedidos SET 
+            id_sucursal = :idSucursal,
+            codigo_sucursal = :codigoSucursal,
+            nombre_sucursal = :nombreSucursal,
+            Id_ruta = :idRuta,
+            Ruta = :ruta,
+            DTEDireccion = :dteDireccion,
+            DTECodDepto = :dteCodDepto,
+            DTECodMunicipio = :dteCodMunicipio,
+            DTECodPais = :dteCodPais,
+            DTEPais = :dtePais,
+            DTECorreo = :dteCorreo,
+            DTETelefono = :dteTelefono
+        WHERE Id = :idPedido
+    """)
+    suspend fun actualizarSucursalEnPedido(
+        idPedido: Int,
+        idSucursal: Int,
+        codigoSucursal: String,
+        nombreSucursal: String,
+        idRuta: Int,
+        ruta: String,
+        dteDireccion: String,
+        dteCodDepto: String,
+        dteCodMunicipio: String,
+        dteCodPais: String,
+        dtePais: String,
+        dteCorreo: String,
+        dteTelefono: String
+    )
+
+    // --- Helper Sync Methods for Sending Order ---
+
+    @Query("SELECT * FROM pedidos WHERE Id = :idPedido")
+    suspend fun obtenerPedidoPorIdSync(idPedido: Int): PedidosEntity?
+
+    @Query("SELECT * FROM detalle_producto WHERE id_pedido = :idPedido ORDER BY OrdenDespacho")
+    suspend fun obtenerDetallePedidoListSync(idPedido: Int): List<com.example.acae30.data.local.views.DetalleProductoView>
+
+    @Query("""
+        SELECT v.Idvisita FROM pedidos p 
+        LEFT JOIN visitas v ON p.idvisita = v.id 
+        WHERE p.id = :idPedido
+    """)
+    suspend fun obtenerIdVisitaServidor(idPedido: Int): Int?
 }

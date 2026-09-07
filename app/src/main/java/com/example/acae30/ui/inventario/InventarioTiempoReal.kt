@@ -67,7 +67,7 @@ class InventarioTiempoReal : AppCompatActivity() {
         sinExistencias = if(preferences.getString("pedidos_sin_existencia", "") == "S") 1 else 0
 
         //CAPTURANDO POSICIONES DE LOS SPINNER
-        getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
+        // getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
 
         preferences = getSharedPreferences(instancia, MODE_PRIVATE)
         actualizarListadeInventario(" ")
@@ -87,7 +87,7 @@ class InventarioTiempoReal : AppCompatActivity() {
                 intento.putExtra("codigo", codigo)
                 intento.putExtra("idapi", idapi)
                 intento.putExtra("from", "visita")
-                intento.putExtra("sucursalPosition", getSucursalPosition)
+                // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
                 intento.putExtra("facturaExportacion", FacturaExportacion)
                 startActivity(intento)
                 finish()
@@ -167,7 +167,7 @@ class InventarioTiempoReal : AppCompatActivity() {
                                 intento.putExtra("from", "visita")
                                 intento.putExtra("proviene", "buscar_producto")
                                 intento.putExtra("total_param", 0.toFloat())
-                                intento.putExtra("sucursalPosition", getSucursalPosition)
+                                // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
                                 intento.putExtra("facturaExportacion", FacturaExportacion)
                                 startActivity(intento)
                                 finish()

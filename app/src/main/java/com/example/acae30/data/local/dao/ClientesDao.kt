@@ -108,4 +108,16 @@ interface ClientesDao {
         ORDER BY cliente ASC
     """)
     suspend fun obtenerListaClientes(filtro: String, idRuta: Int): List<ClientesEntity>
+
+    //------------------------------------------------------
+    // Obtener sucursales por ID de cliente
+    //------------------------------------------------------
+    @Query("SELECT * FROM cliente_sucursal WHERE id_cliente = :idCliente")
+    suspend fun obtenerSucursalesPorCliente(idCliente: Int): List<ClienteSucursalEntity>
+
+    //------------------------------------------------------
+    // Obtener información de una sucursal específica por nombre e ID de cliente
+    //------------------------------------------------------
+    @Query("SELECT * FROM cliente_sucursal WHERE id_cliente = :idCliente AND nombre_sucursal = :nombreSucursal LIMIT 1")
+    suspend fun obtenerSucursalPorNombre(idCliente: Int, nombreSucursal: String): ClienteSucursalEntity?
 }

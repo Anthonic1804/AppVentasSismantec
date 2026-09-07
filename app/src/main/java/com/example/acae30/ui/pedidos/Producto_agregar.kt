@@ -169,7 +169,7 @@ class Producto_agregar : AppCompatActivity() {
         idvisita = intent.getIntExtra("visitaid", 0)
         codigo = intent.getStringExtra("codigo").toString()
         idapi = intent.getIntExtra("idapi", 0)
-        getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
+        // getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
         proviene = intent.getStringExtra("proviene")
 
         // Carga inicial del producto
@@ -351,7 +351,8 @@ class Producto_agregar : AppCompatActivity() {
                 viewModel.uiEvent.collect { event ->
                     when (event) {
                         is ProductoAgregarViewModel.UIEvent.ProductoGuardado -> {
-                            provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
+                            provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, null)
+                            // CÓDIGO VIEJO: provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
                         }
                         is ProductoAgregarViewModel.UIEvent.Error -> {
                             funciones.mostrarAlerta(event.mensaje, this@Producto_agregar, binding.lienzo)
@@ -409,7 +410,8 @@ class Producto_agregar : AppCompatActivity() {
         binding.imgbtnatras.setOnClickListener {
             if(proviene == "editar"){
 
-                provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
+                provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, null)
+                // CÓDIGO VIEJO: provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
 
             }else{
                 if(inventarioTiempoReal){
@@ -421,7 +423,7 @@ class Producto_agregar : AppCompatActivity() {
                     intento.putExtra("visitaid", idvisita)
                     intento.putExtra("codigo", codigo)
                     intento.putExtra("idapi", idapi)
-                    intento.putExtra("sucursalPosition", getSucursalPosition)
+                    // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
                     intento.putExtra("facturaExportacion", false)
                     startActivity(intento)
                 }else{
@@ -436,7 +438,7 @@ class Producto_agregar : AppCompatActivity() {
                     intento.putExtra("visitaid", idvisita)
                     intento.putExtra("codigo", codigo)
                     intento.putExtra("idapi", idapi)
-                    intento.putExtra("sucursalPosition", getSucursalPosition)
+                    // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
                     intento.putExtra("facturaExportacion", false)
                     startActivity(intento)
                 }
@@ -1202,7 +1204,7 @@ class Producto_agregar : AppCompatActivity() {
         intento.putExtra("codigo", codigo)
         intento.putExtra("from", visita)
         intento.putExtra("idapi", idapi)
-        intento.putExtra("sucursalPosition", sucursalPosition)
+        // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", sucursalPosition)
         intento.putExtra("facturaExportacion",false)
         startActivity(intento)
         finish()

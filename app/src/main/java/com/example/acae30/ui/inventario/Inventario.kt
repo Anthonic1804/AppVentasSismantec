@@ -140,7 +140,7 @@ class Inventario : AppCompatActivity() {
         }
 
         //CAPTURANDO POSICIONES DE LOS SPINNER
-        getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
+        // getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
 
         btnActualizarInventario.setOnClickListener {
             alertaInventario()
@@ -274,7 +274,7 @@ class Inventario : AppCompatActivity() {
             intento.putExtra("codigo", codigo)
             intento.putExtra("idapi", idapi)
             intento.putExtra("from", "visita")
-            intento.putExtra("sucursalPosition", getSucursalPosition)
+            // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
             intento.putExtra("facturaExportacion", FacturaExportacion)
             startActivity(intento)
             finish()
@@ -330,7 +330,7 @@ class Inventario : AppCompatActivity() {
                                     intento.putExtra("from", "visita")
                                     intento.putExtra("proviene", "buscar_producto")
                                     intento.putExtra("total_param", 0.toFloat())
-                                    intento.putExtra("sucursalPosition", getSucursalPosition)
+                                    // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
                                     intento.putExtra("facturaExportacion", FacturaExportacion)
                                     startActivity(intento)
                                     finish()
@@ -392,7 +392,7 @@ class Inventario : AppCompatActivity() {
                                     intento.putExtra("from", "visita")
                                     intento.putExtra("proviene", "buscar_producto")
                                     intento.putExtra("total_param", 0.toFloat())
-                                    intento.putExtra("sucursalPosition", getSucursalPosition)
+                                    // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
                                     intento.putExtra("facturaExportacion", FacturaExportacion)
                                     startActivity(intento)
                                     finish()

@@ -164,6 +164,14 @@ class PedidosRepository(
         dao.actualizarIdServidorConfirmandoPedido(idServidor, idPedido)
 
     //---------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: ELIMINAR PEDIDO LOCAL
+    //---------------------------------------------------------
+    suspend fun eliminarPedidoLocal(idPedido: Int) {
+        dao.eliminarDetallePorPedido(idPedido)
+        dao.eliminarPedidoPorId(idPedido)
+    }
+
+    //---------------------------------------------------------
     // Limpieza de pedidos antiguos o ya procesados
     //---------------------------------------------------------
     suspend fun eliminarPedidos(fechaActual: String, eliminarCompletos: Boolean) {
@@ -252,4 +260,42 @@ class PedidosRepository(
         val suma = dao.obtenerSumaTotalPedido(idPedido) ?: 0.0
         dao.actualizarTotalCabeceraPedido(idPedido, suma)
     }
+
+    suspend fun obtenerCantidadItemsPedidoLocal(idPedido: Int) = dao.obtenerCantidadItemsPedido(idPedido)
+
+    // --- Helper Sync Methods for Printing and Domain Logic ---
+
+    suspend fun obtenerPedidoPorIdSync(idPedido: Int) = dao.obtenerPedidoPorIdSync(idPedido)
+
+    suspend fun obtenerDetallePedidoListSync(idPedido: Int) = dao.obtenerDetallePedidoListSync(idPedido)
+
+    // --- Totales Fiscales ---
+
+    fun obtenerDetallePedidoFlow(idPedido: Int) = dao.obtenerDetallePedidoFlow(idPedido)
+
+    suspend fun actualizarTotalesFiscalesLocal(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double) =
+        dao.actualizarTotalesFiscales(idPedido, sumas, iva, ivaPerci)
+
+    //---------------------------------------------------------
+    // REFACTORIZACIÓN MVVM: ACTUALIZAR SUCURSAL
+    //---------------------------------------------------------
+    suspend fun actualizarSucursalEnPedido(
+        idPedido: Int,
+        idSucursal: Int,
+        codigoSucursal: String,
+        nombreSucursal: String,
+        idRuta: Int,
+        ruta: String,
+        dteDireccion: String,
+        dteCodDepto: String,
+        dteCodMunicipio: String,
+        dteCodPais: String,
+        dtePais: String,
+        dteCorreo: String,
+        dteTelefono: String
+    ) = dao.actualizarSucursalEnPedido(
+        idPedido, idSucursal, codigoSucursal, nombreSucursal, idRuta, ruta,
+        dteDireccion, dteCodDepto, dteCodMunicipio, dteCodPais, dtePais,
+        dteCorreo, dteTelefono
+    )
 }

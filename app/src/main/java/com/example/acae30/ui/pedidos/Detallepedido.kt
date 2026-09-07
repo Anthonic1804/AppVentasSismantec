@@ -1,7 +1,6 @@
 package com.example.acae30.ui.pedidos
 
 import android.Manifest
-import android.R
 import android.app.Dialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -17,6 +16,7 @@ import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -25,6 +25,7 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -37,6 +38,7 @@ import androidx.core.database.getStringOrNull
 import androidx.core.graphics.scale
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
@@ -44,23 +46,41 @@ import com.dantsu.escposprinter.connection.usb.UsbConnection
 import com.dantsu.escposprinter.textparser.PrinterTextParserImg
 import com.example.acae30.AlertDialogo
 import com.example.acae30.Funciones
+import com.example.acae30.R
 import com.example.acae30.Utilidades.CrearSslNoSeguro
 import com.example.acae30.controllers.ClientesController
 import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.controllers.VisitaController
+import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.remote.api.clientes.ClientesApi
+import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
+import com.example.acae30.data.repository.ClientesRepository
+import com.example.acae30.data.repository.PedidosRepository
+import com.example.acae30.data.repository.SettingsRepository
 import com.example.acae30.databinding.ActivityDetallepedidoBinding
+import com.example.acae30.domain.usecase.ActualizarSucursalPedidoUseCase
+import com.example.acae30.domain.usecase.GetSucursalesUseCase
+import com.example.acae30.domain.usecase.pedidos.ActualizarTotalesFiscalesUseCase
+import com.example.acae30.domain.usecase.pedidos.CalcularTotalesFiscalesUseCase
+import com.example.acae30.domain.usecase.pedidos.EliminarPedidoUseCase
+import com.example.acae30.domain.usecase.pedidos.EnviarPedidoUseCase
+import com.example.acae30.domain.usecase.pedidos.GetDetallePedidoFlowUseCase
+import com.example.acae30.domain.usecase.pedidos.GetTicketDataUseCase
+import com.example.acae30.domain.usecase.pedidos.ObtenerCantidadItemsUseCase
 import com.example.acae30.listas.PedidoDetalleAdapter
+import com.example.acae30.listas.SucursalBusquedaAdapter
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
-import com.example.acae30.modelos.InformacionSucursal
 import com.example.acae30.modelos.JSONmodels.CabezeraPedidoSend
 import com.example.acae30.modelos.Sucursales
 import com.example.acae30.modelos.dataPedidos
+import com.example.acae30.ui.factories.DetallePedidoViewModelFactory
 import com.example.acae30.ui.inventario.Inventario
 import com.example.acae30.ui.inventario.InventarioTiempoReal
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import kotlinx.coroutines.CoroutineScope
@@ -86,94 +106,52 @@ import kotlin.concurrent.schedule
 
 class Detallepedido : AppCompatActivity() {
 
-    //AGREGANDO EL SPINNER DE SUCURSALES
-    private var idSucursal: Int? = null
-    private var codigoSucursal: String? = null
-    private var nombreSucursalPedido: String? = ""
-    private var Id_ruta: Int? = 0
-    private var Ruta: String? = ""
-    private var DTEDireccion: String? = ""
-    private var DTECodDepto: String? = ""
-    private var DTECodMunicipio: String? = ""
-    private var DTECodPais: String? = ""
-    private var DTEPais: String? = ""
-    private var DTECorreo: String? = ""
-    private var DTETelefono: String? = ""
-
-    private var pedidoEnviado: Boolean = false
-    private var getSucursalPosition: Int? = null
-    private var tipoEnvio: Int? = null
-    private var terminosPedidos: String? = null
-
-    private var tipoDocumento: String = ""
-
     private var idcliente: Int = 0
     private var nombre: String? = ""
     private var idpedido = 0
-    private var visita_enviada: Boolean? = null
-    private var from: String? = ""
-    private var idvendedor = 0
     private var idvisita = 0
+    private var codigo = ""
+    private var idapi = 0
+    private var from: String? = ""
+    
+    private var idVendedor = 0
     private var vendedor = ""
     private var ip = ""
     private var puerto = 0
-    private var alerta: AlertDialogo? = null
-    private var codigo = ""
-    private var idapi = 0
+    
     var total = 0f
+    private var tipoDocumento: String = ""
+    private var terminosPedidos: String? = null
+    private var nombreSucursalPedido: String? = ""
 
-    private var envioSelec : String = ""
-    private var documentoSelec : String = ""
-    private var sucursalName: String = ""
-    //private var categoriaCliente: String = ""
-
+    private var alerta: AlertDialogo? = null
     private var funciones = Funciones()
     private var pedidosController = PedidosController()
     private var inventarioController = InventarioController()
-    private var clientesController = ClientesController()
     private var visitaController = VisitaController()
     private lateinit var preferencias: SharedPreferences
 
     private val instancia = "CONFIG_SERVIDOR"
 
-    private lateinit var tvUpdate : TextView
-    private lateinit var tvCancel : TextView
-    private lateinit var tvTitulo : TextView
-    private lateinit var tvMensaje : TextView
+    // REFACTORIZACIÓN MVVM: ViewModel centralizado
+    private lateinit var viewModel: DetallePedidoViewModel
+    private lateinit var adapterDetalle: PedidoDetalleAdapter
+    private var listaSucursalesFull: List<com.example.acae30.data.local.entity.ClienteSucursalEntity> = emptyList()
+
     private var enviandoPedido = false
     private var guardandoPedido = false
-
     private var FacturaExportacion = false
-    private var precioConIVA = true
-
     private var idPedidoServidor = 0
-
-    //private lateinit var infoSucursal : InformacionSucursal
     private var infoCliente : Cliente? = null
 
-    val fecha: String = LocalDate.now()
-        .format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
-
     private lateinit var binding: ActivityDetallepedidoBinding
-    private var clienteMosoro = 0
-
     private var P_Imprimir_TK_Venta: Boolean = false
-
-    //-----------
-    // VARIABLES PARA VALIDACION DE LIMITE DE ITEMS POR DOCUMENTO
-    //-----------
     private var cantidadItemsPedido : Int = 0
     private var limiteItemPedido : Int = 0
-
-    private val utilidades = CrearSslNoSeguro()
     private var isProcessing = false
     private var inventarioTiempoReal: Boolean = false
 
-    private var balanceActual: Float = 0f
-    private var limiteCredito: Float = 0f
-
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         binding = ActivityDetallepedidoBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -189,1910 +167,765 @@ class Detallepedido : AppCompatActivity() {
         from = intento.getStringExtra("from").toString()
         FacturaExportacion = intento.getBooleanExtra("facturaExportacion", false)
 
-        preferencias = getSharedPreferences(instancia, MODE_PRIVATE)
-        idvendedor = preferencias.getInt("Idvendedor", 0)
+        preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        
+        setupViewModel()
+        setupRecyclerView()
+
+        idVendedor = preferencias.getInt("Idvendedor", 0)
         vendedor = preferencias.getString("Vendedor", "").toString()
         ip = preferencias.getString("ip", "").toString()
         puerto = preferencias.getInt("puerto", 0)
-        clienteMosoro = preferencias.getInt("clienteMoroso", 0)
         P_Imprimir_TK_Venta = preferencias.getBoolean("P_Imprimir_TK_Venta", false)
         inventarioTiempoReal = preferencias.getBoolean("inventarioTiempoReal", false)
 
-        //OBTENIENDO BALANCE Y LIMITE DE CREDITO
-        balanceActual = preferencias.getFloat("balanceActual", 0f)
-        limiteCredito = preferencias.getFloat("limiteCredito", 0f)
-
-        visita_enviada = false
-
-        //OBTENIENDO LA CATEGORIA DEL CLIENTE
-        infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
-
-        total = pedidosController.obtenerInformacionPedido(idpedido,this@Detallepedido)?.Total!!
-        actualizarTotales()
-
-        //DESHABILITAMOS LOS TEXTVIEWS DE INFORMACION ENVIADA
+        // CONFIGURACIÓN INICIAL DE UI
         binding.tvDocumentoSeleccionado.visibility = View.GONE
         binding.tvTipoenvio.visibility = View.GONE
         binding.sinSucursal.visibility = View.GONE
 
-        //FUNCION PARA OBTENER LA INFORMACION DEL PEDIDO
-        getTipoEnvio(idpedido)
+        // NUEVO PROCESO: Cargar todo de forma asíncrona mediante el ViewModel
+        setupViewModelObservers()
+        viewModel.cargarSucursales(idcliente)
+        viewModel.cargarInfoPedido(idpedido, idcliente, this)
+        viewModel.observarDetallePedido(idpedido)
+        viewModel.cargarCantidadItems(idpedido)
 
-        //FUNCION PARA CARGAR LAS SUCURSALES AL SPINNER
-        cargarSucursales()
-
-        //FUNCION PARA DESHABILITAR FUNCIONES SEGUN PROCESO
-        validarProcesoPedidos(codigo)
-
-        //COMPLETANDO SPINNER TERMINOS ENVIO
-        terminosDelCliente()
-
-        //CARGANDO LA CANTIDAD DE ITEMS EN EL PEDIDO
-        obtenerCantidadItemsPedido()
-
-        when(terminosPedidos){
-            "Contado" -> {
-                binding.spTipoEnvio.setSelection(0, true)
-                binding.tvTipoenvio.text = "CONTADO"
-            }
-            else -> {
-                binding.spTipoEnvio.setSelection(1, true)
-                binding.tvTipoenvio.text = "CREDITO"
-            }
-        }
-
-        //COMPLETANDO SPINNER DOCUMENTO
-
-        val documentoAutorizados = funciones.documentosDeFacturacion(this@Detallepedido)
-
-        val tipoDocumentoAdaptador =
-            ArrayAdapter<String>(this@Detallepedido, R.layout.simple_spinner_dropdown_item)
-        tipoDocumentoAdaptador.addAll(documentoAutorizados)
-        binding.spDocumento.adapter = tipoDocumentoAdaptador
-
-        //COMPLETANDO TVTIPODOCUMENTO
-        when(tipoDocumento){
-            "FC" -> {
-                binding.tvDocumentoSeleccionado.text = getString(com.example.acae30.R.string.factura)
-                binding.spDocumento.setSelection(0, true)
-                limiteItemPedido = preferencias.getInt("numItemFactura", 0)
-
-                actualizarVistaTotales()
-                actualizarTotales()
-            }
-            "CF" -> {
-                binding.tvDocumentoSeleccionado.text = getString(com.example.acae30.R.string.credito_fiscal)
-                binding.spDocumento.setSelection(1, true)
-                limiteItemPedido = preferencias.getInt("numItemCreFiscal", 0)
-
-                actualizarVistaTotales()
-                actualizarTotales()
-            }
-            "RC" -> {
-                binding.tvDocumentoSeleccionado.text = getString(com.example.acae30.R.string.recibo)
-                binding.spDocumento.setSelection(2, true)
-                limiteItemPedido = preferencias.getInt("numItemRecibo", 0)
-
-                actualizarVistaTotales()
-                actualizarTotales()
-            }
-            "RE" -> {
-                binding.tvDocumentoSeleccionado.text = getString(com.example.acae30.R.string.remisi_n)
-                binding.spDocumento.setSelection(3, true)
-                limiteItemPedido = preferencias.getInt("numItemRemision", 0)
-
-                actualizarVistaTotales()
-                actualizarTotales()
-            }
-//            "FE" -> {
-//                binding.tvDocumentoSeleccionado.text = getString(R.string.factura_exportacion)
-//                binding.spDocumento.setSelection(4, true)
-//                actualizarVistaTotales()
-//                actualizarTotales()
-//            }
-        }
-
-        //CARTURANDO LA SUCURSAL SELECCIONADA
-         getSucursalPosition = intento.getIntExtra("sucursalPosition", 0)
-        //println("Sucursal desde Agregar Producto: $nombreSucursalPedido")
-        if(getSucursalPosition != 0){
-            binding.spSucursal.setSelection(getSucursalPosition!!, true)
-        }
-
-        // Consultar datos de visita
-        if (idpedido > 0) {
-            val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-            try {
-                /*
-                 * El INNER JOIN obligaba a que existiera una visita. Si idvisita era 0 (Local), no devolvía nada.
-                 * 
-                 * val sql = "select c.codigo as codigo, c.cliente as nombre, c.id as idcliente, v.id as idvisita, v.enviado as visita_enviada, ... " +
-                 *           "from pedidos p inner join clientes c on p.Id_cliente = c.Id inner join visitas v on p.idvisita = v.id " +
-                 *           "where p.id = ${idpedido}"
-                 */
-
-                val sql = "select c.codigo as codigo, " +
-                        "c.cliente as nombre, " +
-                        "c.id as idcliente, " +
-                        "v.id as idvisita, " +
-                        "v.enviado as visita_enviada, " +
-                        "strftime('%d/%m/%Y %H:%M', p.fecha_creado) as fecha_creado " +
-                        "from pedidos p " +
-                        "inner join clientes c " +
-                        "on p.Id_cliente = c.Id " +
-                        "left join visitas v on p.idvisita = v.id " +
-                        "where p.id = ${idpedido}"
-
-                val cursor = base.query(sql)
-                cursor.use {
-                    if (cursor.count > 0) {
-                        cursor.moveToFirst()
-                        codigo = cursor.getString(0)
-                        nombre = cursor.getString(1)
-                        idcliente = cursor.getInt(2)
-                        
-                        // Manejamos la visita de forma segura por si es nula (Venta Local)
-                        idvisita = cursor.getIntOrNull(3) ?: 0
-                        visita_enviada = (cursor.getIntOrNull(4) ?: 0) == 1
-                        
-                        binding.fechaCreacion.text = cursor.getString(5)
-                        binding.txtCliente.setText(nombre)
-                    } else {
-                        throw Exception("Error al obtener código de cliente")
-                    }
-                }
-            } catch (e: Exception) {
-                Timber.e(e,"[DETALLEPEDIDO] ERROR AL OBTENER INFORMACION DE LA VISITA DEL CLIENTE")
-            }
-        }
-
-        binding.imbtnatras.setOnClickListener {
-            menuPedidos()
-        } //regresa al menu principal
+        binding.imbtnatras.setOnClickListener { menuPedidos() }
 
         binding.imgbtnadd.setOnClickListener {
             if (cantidadItemsPedido < limiteItemPedido) {
-                if(inventarioTiempoReal){
-                    val intento = Intent(this, InventarioTiempoReal::class.java)
-                    intento.putExtra("idcliente", idcliente)
-                    intento.putExtra("nombrecliente", binding.txtCliente.text.toString())
-                    intento.putExtra("busqueda", true)
-                    intento.putExtra("idpedido", idpedido)
-                    intento.putExtra("visitaid", idvisita)
-                    intento.putExtra("codigo", codigo)
-                    intento.putExtra("idapi", idapi)
-                    intento.putExtra("sucursalPosition", getSucursalPosition)
-                    intento.putExtra("facturaExportacion", FacturaExportacion)
-                    startActivity(intento)
-                    finish()
-                }else{
-                    val intento = Intent(this, Inventario::class.java)
-                    intento.putExtra("idcliente", idcliente)
-                    intento.putExtra("nombrecliente", binding.txtCliente.text.toString())
-                    intento.putExtra("busqueda", true)
-                    intento.putExtra("idpedido", idpedido)
-                    intento.putExtra("visitaid", idvisita)
-                    intento.putExtra("codigo", codigo)
-                    intento.putExtra("idapi", idapi)
-                    intento.putExtra("sucursalPosition", getSucursalPosition)
-                    intento.putExtra("facturaExportacion", FacturaExportacion)
-                    startActivity(intento)
-                    finish()
+                val clase = if(inventarioTiempoReal) InventarioTiempoReal::class.java else Inventario::class.java
+                val intentAdd = Intent(this, clase).apply {
+                    putExtra("idcliente", idcliente)
+                    putExtra("nombrecliente", binding.txtCliente.text.toString())
+                    putExtra("busqueda", true)
+                    putExtra("idpedido", idpedido)
+                    putExtra("visitaid", idvisita)
+                    putExtra("codigo", codigo)
+                    putExtra("idapi", idapi)
+                    putExtra("facturaExportacion", FacturaExportacion)
                 }
-            }else{
-                Toast.makeText(this@Detallepedido, "YA NO PUEDE AGREGAR MAS PRODUCTOS AL PEDIDO",
-                    Toast.LENGTH_SHORT).show()
+                startActivity(intentAdd)
+                finish()
+            } else {
+                Toast.makeText(this, "LIMITE DE ITEMS ALCANZADO", Toast.LENGTH_SHORT).show()
             }
         }
-        //muestra el listado de los productos
+
         binding.btncancelar.setOnClickListener {
-
             if(isProcessing) return@setOnClickListener
-
             deshabilitarOpciones()
-
             AlertaEliminar()
         }
 
-        //EVENTRO CLIC DEL BOTON ENVIAR
         binding.btnenviar.setOnClickListener {
-
             if(isProcessing) return@setOnClickListener
+            deshabilitarOpciones()
+            enviandoPedido = true
+            guardandoPedido = false
+            
+            // Si terminosPedidos está vacío (nuevo pedido sin interacción), intentamos usar el del cliente
+            val terminosAValidar = if (terminosPedidos.isNullOrEmpty()) infoCliente?.Terminos_cliente ?: "Contado" else terminosPedidos
+            
+            // REFACTORIZACIÓN MVVM: Validación de saldo asíncrona en el ViewModel para evitar ANR
+            viewModel.verificarSaldoYProceder(this, idcliente, total, terminosAValidar ?: "")
+        }
 
-            lifecycleScope.launch {
-                try {
-                    deshabilitarOpciones()
+        binding.btnguardar.setOnClickListener {
+            if(isProcessing) return@setOnClickListener
+            deshabilitarOpciones()
+            if(cantidadItemsPedido > 0 && cantidadItemsPedido <= limiteItemPedido){
+                guardandoPedido = true
+                enviandoPedido = false
+                // Al guardar localmente NO validamos crédito con el servidor, 
+                // permitiendo que el vendedor almacene el pedido aunque no tenga señal.
+                alertaPago(total)
+            } else {
+                habilitarOpciones()
+                Toast.makeText(this, "VERIFIQUE LOS PRODUCTOS", Toast.LENGTH_SHORT).show()
+            }
+        }
 
-                    // Mostramos el diálogo de carga para indicar que se está obteniedo el balance del cliente
-                    alerta!!.Cargando()
-                    alerta!!.changeText("Verificando saldo real en el servidor...")
+        binding.btnexportar.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                    viewModel.obtenerDatosImpresion(idpedido)
+                } else { permisosBluetooth() }
+            } else { @Suppress("MissingPermission") viewModel.obtenerDatosImpresion(idpedido) }
+        }
 
-                    // Consultamos el balance y límite de crédito actualizados directamente desde la API.
-                    val balanceFresh = clientesController.obtenerBalacenClientePorId(this@Detallepedido, idcliente)
+        binding.btnInvalidar.setOnClickListener {
+            if(isProcessing) return@setOnClickListener
+            deshabilitarOpciones()
+            mensajeInvalidarDTE(this, "¿Desea Invalidar este Pedido?", idPedidoServidor, idpedido)
+        }
 
-                    // Actualizamos nuestras variables locales con la respuesta
-                    balanceActual = balanceFresh.balance
-                    limiteCredito = balanceFresh.limiteCredito
+        setupSpinners()
+    }
 
-                    // Calculamos el nuevo balance sumando el total del pedido actual.
-                    val nuevoBalanceReal = balanceActual + total
+    private fun setupViewModel() {
+        val db = AppDatabase.getInstance(this)
+        val servidor = funciones.getServidor(preferencias.getString("ip", "") ?: "", preferencias.getInt("puerto", 0).toString(), this)
+        val clientesApi = RetrofitCliente.obtenerApi<ClientesApi>(servidor, this)
+        val clientesRepository = ClientesRepository(db.clienteDao(), clientesApi)
+        val pedidosRepository = PedidosRepository(db.pedidosDao(), db.reporteDao())
+        val settingsRepository = SettingsRepository(this)
+        
+        val factory = DetallePedidoViewModelFactory(
+            GetSucursalesUseCase(clientesRepository), 
+            ActualizarSucursalPedidoUseCase(clientesRepository, pedidosRepository), 
+            ObtenerCantidadItemsUseCase(pedidosRepository),
+            GetDetallePedidoFlowUseCase(pedidosRepository),
+            CalcularTotalesFiscalesUseCase(),
+            ActualizarTotalesFiscalesUseCase(pedidosRepository),
+            EnviarPedidoUseCase(pedidosRepository, this),
+            EliminarPedidoUseCase(pedidosRepository),
+            GetTicketDataUseCase(pedidosRepository, clientesRepository, settingsRepository)
+        )
+        viewModel = androidx.lifecycle.ViewModelProvider(this, factory)[DetallePedidoViewModel::class.java]
+    }
 
-                    // Validamos si el nuevo saldo sobrepasa el límite (solo aplica para términos de "Credito").
-                    if (nuevoBalanceReal > limiteCredito && terminosPedidos == "Credito") {
-                        alerta!!.dismisss()
-                        habilitarOpciones()
-                        funciones.mostrarAlerta("ERROR: EL SALDO REAL ($balanceActual) + ESTE PEDIDO ($total) SOBREPASA EL LÍMITE DE CRÉDITO ($limiteCredito)", this@Detallepedido, binding.lienzo)
-                        return@launch // Detenemos el proceso de envío
-                    }
+    private fun setupRecyclerView() {
+        adapterDetalle = PedidoDetalleAdapter(this) { i ->
+            if (from == "visita") {
+                val data = adapterDetalle.currentList[i]
+                val intentAdd = Intent(this, Producto_agregar::class.java).apply {
+                    putExtra("idpedidodetalle", data.Id)
+                    putExtra("idpedido", idpedido)
+                    putExtra("idcliente", idcliente)
+                    putExtra("nombrecliente", binding.txtCliente.text.toString())
+                    putExtra("idproducto", data.Id_producto)
+                    putExtra("proviene", "editar")
+                    putExtra("total_param", data.Total_iva)
+                    putExtra("facturaExportacion", FacturaExportacion)
+                }
+                startActivity(intentAdd)
+                finish()
+            }
+        }
+        binding.reciclerdetalle.apply {
+            layoutManager = LinearLayoutManager(this@Detallepedido)
+            adapter = adapterDetalle
+        }
+    }
 
-                    // Si el crédito es suficiente, cerramos el diálogo de verificación y seguimos.
-                    alerta!!.dismisss()
+    private fun setupViewModelObservers() {
+        viewModel.sucursales.observe(this) { sucursales ->
+            listaSucursalesFull = sucursales
+            
+            // Si ya hay una sucursal seleccionada en el pedido, la mostramos en el spinner (visual)
+            if (nombreSucursalPedido != null && nombreSucursalPedido != "") {
+                val listVisual = listOf(nombreSucursalPedido!!)
+                val adaptador = ArrayAdapter(this, android.R.layout.simple_spinner_item, listVisual)
+                binding.spSucursal.adapter = adaptador
+                binding.spSucursal.setSelection(0)
+            } else {
+                val listVisual = listOf("-- TOQUE PARA SELECCIONAR SUCURSAL --")
+                val adaptador = ArrayAdapter(this, android.R.layout.simple_spinner_item, listVisual)
+                binding.spSucursal.adapter = adaptador
+            }
 
-                    if (cantidadItemsPedido <= limiteItemPedido) {
-                        if (codigo == "01") {
-                            nombre = binding.txtCliente.text.toString()
-                            // Actualizamos el nombre en la BD local
-                            withContext(Dispatchers.IO) {
-                                pedidosController.actualizarNombreClientePedido(this@Detallepedido, nombre!!, idpedido)
-                            }
-                        }
-
-                        if (ConfirmarDetallePedido() > 0) {
-                            val pedidoInfo = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-                            enviandoPedido = true
-
-                            if (pedidoInfo?.Cerrado == 0 && pedidoInfo.Enviado == 0) {
-                                // MOSTRAR LA VENTA DE PAGO SI ESTÁ ACTIVA
-                                val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
-                                if (!facturacionLocal) {
-                                    alertaPago(binding.txttotal.text.toString().toFloat())
-                                } else {
-                                    envioAlerta()
-                                }
-                            } else {
-                                verificarConexionEnvio()
-                            }
-                        } else {
-                            habilitarOpciones()
-                            funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
-                        }
-                    } else {
-                        habilitarOpciones()
-                        Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido", Toast.LENGTH_SHORT).show()
-                    }
-
-                } catch (e: Exception) {
-                    // En caso de error de red o de la API
-                    alerta!!.dismisss()
-                    habilitarOpciones()
-                    funciones.mostrarAlerta("ERROR AL VERIFICAR SALDO ACTUALIZADO: ${e.message}",
-                        this@Detallepedido, binding.lienzo)
-
-                    Timber.e(e,"[DETALLEPEDIDO] ERROR AL VERIFICAR SALDO ACTUALIZADO")
+            // REFACTORIZACIÓN MVVM: Solo manejamos visibilidad automática si NO estamos consultando un pedido
+            if (from != "ver") {
+                if (sucursales.isEmpty()) {
+                    binding.lySucursal.visibility = View.GONE
+                    binding.tvsucursal.visibility = View.GONE
+                    binding.sinSucursal.visibility = View.GONE
+                } else {
+                    binding.lySucursal.visibility = View.VISIBLE
+                    binding.tvsucursal.visibility = View.VISIBLE
+                    binding.sinSucursal.visibility = View.GONE
                 }
             }
         }
 
-        //EVENTO CLIC DEL BOTON GUARDAR.
-        binding.btnguardar.setOnClickListener {
+        viewModel.cantidadItems.observe(this) { cantidad ->
+            cantidadItemsPedido = cantidad
+            binding.cantidadItems.text = "CANT. ITEMS: $cantidadItemsPedido"
+        }
 
-            if(isProcessing) return@setOnClickListener
+        viewModel.detallePedido.observe(this) { lista ->
+            adapterDetalle.submitList(lista)
+        }
 
-            deshabilitarOpciones()
+        viewModel.totalesFiscales.observe(this) { resultado ->
+            binding.txtSumas.text = String.format("%.2f", resultado.sumas)
+            binding.txtIva.text = String.format("%.2f", resultado.iva)
+            binding.txtIvaPerci.text = String.format("%.2f", resultado.ivaPerci)
+            binding.txttotal.text = String.format("%.2f", resultado.totalFinal)
+            total = resultado.totalFinal.toFloat()
+        }
 
-            if(cantidadItemsPedido <= limiteItemPedido){
-                if (ConfirmarDetallePedido() > 0) {
-                    guardandoPedido = true
-                    alertaPago(binding.txttotal.text.toString().toFloat())
+        viewModel.infoPedido.observe(this) { info ->
+            info?.let {
+                tipoDocumento = it.Tipo_documento ?: "FC"
+                terminosPedidos = it.Terminos ?: ""
+                nombreSucursalPedido = it.Nombre_sucursal ?: ""
+                idPedidoServidor = it.Id_pedido_sistema ?: 0
+                
+                // REFACTORIZACIÓN MVVM: Restauramos la visualización de la fecha de creación
+                if (!it.Fecha_creado.isNullOrEmpty()) {
+                    // Si viene en formato SQLite (yyyy-MM-dd HH:mm:ss), intentamos mostrarlo más amigable
+                    val fechaFormateada = try {
+                        val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                        val outputFormat = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+                        val date = inputFormat.parse(it.Fecha_creado!!)
+                        date?.let { d -> outputFormat.format(d) } ?: it.Fecha_creado
+                    } catch (e: Exception) {
+                        it.Fecha_creado
+                    }
+                    binding.fechaCreacion.text = fechaFormateada
+                }
+
+                validarProcesoPedidosUI(it)
+                actualizarSeleccionesSpinners()
+            }
+        }
+
+        viewModel.infoCliente.observe(this) { info ->
+            infoCliente = info
+            terminosDelCliente(info?.Terminos_cliente ?: "Contado")
+        }
+
+        viewModel.validacionSaldo.observe(this) { resultado ->
+            resultado?.let {
+                if (it.esValido) {
+                    // Solo procedemos al envío, ya que el guardado local no dispara esta validación
+                    procederAlEnvio()
+                } else { 
+                    habilitarOpciones()
+                    funciones.mostrarAlerta(it.mensajeError ?: "ERROR DE SALDO", this, binding.lienzo) 
+                }
+                viewModel.resetValidacionSaldo()
+            }
+        }
+
+        viewModel.envioExitoso.observe(this) { exito ->
+            exito?.let {
+                if (it) { descargarInventario(); pedidoEnviado() } 
+                else { habilitarOpciones(); funciones.mostrarAlerta("ERROR AL ENVIAR EL PEDIDO", this, binding.lienzo) }
+                viewModel.resetEnvioStatus()
+            }
+        }
+
+        viewModel.eliminacionExitosa.observe(this) { exito ->
+            exito?.let {
+                if (it) {
+                    if(idvisita > 0) regresarVisita() else { updateSharedPreferencesFinalizarVisita(); menuPedidos() }
                 } else {
                     habilitarOpciones()
-                    funciones.mostrarAlerta("ERROR: NO HAY PRODUCTOS AGREGADOS AL PEDIDO", this@Detallepedido, binding.lienzo)
+                    funciones.mostrarAlerta("ERROR AL ELIMINAR EL PEDIDO", this, binding.lienzo)
                 }
-            }else{
-                habilitarOpciones()
-                Toast.makeText(this@Detallepedido, "CANTIDAD DE ITEMS PERMITIDOS POR EL TIPO DE DOCUMENTO -> $limiteItemPedido",
-                    Toast.LENGTH_SHORT).show()
+                viewModel.resetEliminacionStatus()
             }
         }
 
-        //BOTON DE EXPORTAR A PDF EL PEDIDO
-        binding.btnexportar.setOnClickListener {
-            imprimirRecibo()
+        viewModel.ticketData.observe(this) { data ->
+            data?.let {
+                imprimirTicketProcesado(it)
+                viewModel.resetTicketData()
+            }
         }
 
-        //BOTON DE INVALIDAR PEDIDO
-        binding.btnInvalidar.setOnClickListener {
-
-            if(isProcessing) return@setOnClickListener
-
-            deshabilitarOpciones()
-
-            mensajeInvalidarDTE(this@Detallepedido, "¿Desea Invalidar este Pedido?", idPedidoServidor, idpedido)
+        viewModel.cargando.observe(this) { cargando ->
+            if (cargando) {
+                if (enviandoPedido) alerta?.Enviando() else alerta?.Cargando()
+            } else {
+                alerta?.dismisss()
+            }
         }
+    }
 
-        //IMPLEMENTANDO LOGICA DE SUCURSAL SELECCIONADA EN SPINNER
-        binding.spSucursal.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                sucursalName = parent?.getItemAtPosition(position).toString()
-
-                validarSelecciones(sucursalName)
-
-                if (sucursalName != "-- SELECCIONE UNA SUCURSAL --") {
-                    getSucursalPosition = binding.spSucursal.selectedItemPosition
-                    updatePedidoSucursal(idcliente, sucursalName, idpedido)
+    private fun procederAlEnvio() {
+        if (cantidadItemsPedido <= limiteItemPedido) {
+            if (codigo == "01") {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    pedidosController.actualizarNombreClientePedido(this@Detallepedido, binding.txtCliente.text.toString(), idpedido)
                 }
             }
+            if (cantidadItemsPedido > 0) {
+                enviandoPedido = true
+                val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
+                if (!facturacionLocal) alertaPago(total) else envioAlerta()
+            }
+        } else { habilitarOpciones(); Toast.makeText(this, "EXCEDE LIMITE DE ITEMS", Toast.LENGTH_SHORT).show() }
+    }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+    private fun setupSpinners() {
+        val documentos = funciones.documentosDeFacturacion(this)
+        val adapterDoc = ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, documentos)
+        binding.spDocumento.adapter = adapterDoc
+
+        // Usar una vista transparente sobre el spinner para capturar el clic de forma confiable
+        binding.spSucursal.isEnabled = false
+        binding.viewSucursalClick.setOnClickListener {
+            if (from == "visita") {
+                mostrarDialogoSucursales()
+            }
         }
 
-        //IMPLEMENTANDO LOGICA DE TIPO ENVIO SELECCIONADA EN SPINNER
         binding.spTipoEnvio.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?,
-                                        view: View?,
-                                        position: Int,
-                                        id: Long) {
-
-                envioSelec = parent?.getItemAtPosition(position).toString()
-
-                when(envioSelec){
-                    "CONTADO" -> {
-                        pedidosController.actualizarTerminosEnvio("Contado", idpedido,this@Detallepedido)
-                        terminosPedidos = "Contado"
-                    }
-                    "CREDITO" -> {
-                        pedidosController.actualizarTerminosEnvio("Credito", idpedido, this@Detallepedido)
-                        terminosPedidos = "Credito"
-                    }
-                }
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                val env = p?.getItemAtPosition(pos).toString()
+                terminosPedidos = if(env == "CONTADO") "Contado" else "Credito"
+                pedidosController.actualizarTerminosEnvio(terminosPedidos!!, idpedido, this@Detallepedido)
             }
-            override fun onNothingSelected(p0: AdapterView<*>?) {}
+            override fun onNothingSelected(p: AdapterView<*>?) {}
         }
 
-        //IMPLEMENTANDO LOGICA DE TIPO DOCUMENTO SELECCIONADA EN SPINNER
         binding.spDocumento.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?,
-                                        view: View?,
-                                        position: Int,
-                                        id: Long) {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                val doc = p?.getItemAtPosition(pos).toString()
+                tipoDocumento = when(doc){
+                    "FACTURA" -> "FC"
+                    "CREDITO FISCAL" -> "CF"
+                    "RECIBO" -> "RC"
+                    "REMISIÓN" -> "RE"
+                    else -> "FC"
+                }
+                limiteItemPedido = preferencias.getInt(when(tipoDocumento){
+                    "FC" -> "numItemFactura"
+                    "CF" -> "numItemCreFiscal"
+                    "RC" -> "numItemRecibo"
+                    "RE" -> "numItemRemision"
+                    else -> "numItemFactura"
+                }, 0)
+                pedidosController.updateTipoDocumento(tipoDocumento, idpedido, this@Detallepedido)
+                pedidosController.actualizarTotalesPedido(this@Detallepedido, idpedido, true)
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+    }
 
-                documentoSelec = parent?.getItemAtPosition(position).toString()
+    private fun actualizarSeleccionesSpinners() {
+        // REFACTORIZACIÓN MVVM: Si el pedido es nuevo y no tiene términos aún, usamos los del cliente
+        val terminosAFijar = if (terminosPedidos.isNullOrEmpty() || terminosPedidos == "") {
+            infoCliente?.Terminos_cliente ?: "Contado"
+        } else {
+            terminosPedidos
+        }
 
-                when(documentoSelec){
-                    "FACTURA" -> {
-                        pedidosController.updateTipoDocumento("FC", idpedido, this@Detallepedido)
-                        tipoDocumento = "FC"
-                        FacturaExportacion = false
-                        precioConIVA = true
+        val sEnv = if (terminosAFijar.contentEquals("Contado", ignoreCase = true)) 0 else 1
+        
+        if (binding.spTipoEnvio.adapter != null && sEnv < binding.spTipoEnvio.adapter.count) {
+            binding.spTipoEnvio.setSelection(sEnv, true)
+        }
+        
+        val sDoc = when(tipoDocumento){
+            "FC" -> 0
+            "CF" -> 1
+            "RC" -> 2
+            "RE" -> 3
+            else -> 0
+        }
+        if (binding.spDocumento.adapter != null && sDoc < binding.spDocumento.adapter.count) {
+            binding.spDocumento.setSelection(sDoc, true)
+        }
+    }
 
-                        limiteItemPedido = preferencias.getInt("numItemFactura", 0)
+    private fun terminosDelCliente(terminos: String){
+        val lista = if(terminos == "Contado") listOf("CONTADO") else listOf("CONTADO", "CREDITO")
+        val adapter = ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, lista)
+        binding.spTipoEnvio.adapter = adapter
+        
+        // Sincronizamos la selección después de cargar el adaptador
+        actualizarSeleccionesSpinners()
+    }
 
-                        pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
-                        actualizarVistaTotales()
+    private fun validarProcesoPedidosUI(pedido: com.example.acae30.modelos.Pedidos) {
+        binding.txtCliente.setText(nombre)
+        
+        // REFACTORIZACIÓN MVVM: Centralización de lógica de visibilidad según estado del pedido
+        when(from) {
+            "ver" -> {
+                // Título descriptivo según el estado
+                binding.tvTituloPedido.text = if (pedido.Enviado == 1) "PEDIDO ENVIADO" else "PEDIDO ALMACENADO"
+                
+                // Mostrar sucursal como texto estilizado
+                if (nombreSucursalPedido.isNullOrEmpty()) {
+                    binding.lySucursal.visibility = View.GONE
+                    binding.tvsucursal.visibility = View.GONE
+                    binding.sinSucursal.visibility = View.GONE
+                } else {
+                    // Mantenemos el contenedor visible para el estilo pero ocultamos interacciones
+                    binding.lySucursal.visibility = View.VISIBLE
+                    binding.tvsucursal.visibility = View.VISIBLE
+                    binding.spSucursal.visibility = View.GONE
+                    binding.viewSucursalClick.visibility = View.GONE
+                    
+                    binding.sinSucursal.visibility = View.VISIBLE
+                    binding.sinSucursal.text = nombreSucursalPedido
+                }
 
-                        actualizarTotales()
+                // Deshabilitar edición general
+                binding.btnAgregarComentario.visibility = View.GONE
+                binding.imgbtnadd.visibility = View.GONE
+                binding.btnguardar.visibility = View.GONE
+                binding.btncancelar.visibility = View.GONE
+                
+                // BLOQUEO DE CONTROLES: Se ocultan los Spinners y se muestran TextViews con la info enviada
+                binding.spDocumento.visibility = View.GONE
+                binding.spTipoEnvio.visibility = View.GONE
+                
+                binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
+                binding.tvTipoenvio.visibility = View.VISIBLE
+                
+                // Seteamos la información con la que se envió/almacenó el pedido
+                binding.tvTipoenvio.text = terminosPedidos?.uppercase()
+                binding.tvDocumentoSeleccionado.text = when(tipoDocumento) {
+                    "FC" -> "FACTURA"
+                    "CF" -> "CREDITO FISCAL"
+                    "RC" -> "RECIBO"
+                    "RE" -> "REMISIÓN"
+                    else -> "FACTURA"
+                }
+
+                binding.imbtnatras.visibility = View.VISIBLE
+
+                // Casos específicos de envío y DTE
+                if (pedido.Enviado == 1) {
+                    binding.btnenviar.visibility = View.GONE
+                    
+                    // Mostrar Invalidar según reglas originales
+                    if (pedido.pedido_dte == 1) {
+                        binding.btnInvalidar.visibility = View.VISIBLE
+                    } else if (pedido.Tipo_documento == "RC") {
+                        binding.btnInvalidar.visibility = View.VISIBLE
+                    } else {
+                        binding.btnInvalidar.visibility = View.GONE
                     }
-                    "CREDITO FISCAL" -> {
-                        pedidosController.updateTipoDocumento("CF", idpedido, this@Detallepedido)
-                        tipoDocumento = "CF"
-                        FacturaExportacion = false
-                        precioConIVA = true
+                    
+                } else if (pedido.Enviado == 0 && pedido.Cerrado == 1) {
+                    // Pedido almacenado localmente pero no enviado
+                    binding.btnenviar.visibility = View.VISIBLE
+                    binding.btnenviar.isEnabled = true
+                    binding.btnenviar.setBackgroundResource(R.drawable.border_btnactualizar)
+                    binding.btnInvalidar.visibility = View.GONE
+                }
 
-                        limiteItemPedido = preferencias.getInt("numItemCreFiscal", 0)
+                // Lógica de Impresión (Exportar)
+                if (P_Imprimir_TK_Venta && pedido.pedido_dte_error != 2) {
+                    binding.btnexportar.visibility = View.VISIBLE
+                } else {
+                    binding.btnexportar.visibility = View.GONE
+                }
 
+                permisosBluetooth()
+            }
+            "visita" -> {
+                // Flujo de creación de nuevo pedido
+                binding.tvTituloPedido.text = "NUEVO PEDIDO"
+                
+                binding.btnAgregarComentario.visibility = View.VISIBLE
+                binding.imgbtnadd.visibility = View.VISIBLE
+                binding.btnguardar.visibility = View.VISIBLE
+                binding.btncancelar.visibility = View.VISIBLE
+                
+                // En modo visita (nuevo), los Spinners están visibles y habilitados
+                // La visibilidad de lySucursal se gestiona dinámicamente en el observador de sucursales
+                binding.spDocumento.visibility = View.VISIBLE
+                binding.spTipoEnvio.visibility = View.VISIBLE
+                binding.sinSucursal.visibility = View.GONE
+                binding.tvDocumentoSeleccionado.visibility = View.GONE
+                binding.tvTipoenvio.visibility = View.GONE
 
-                        pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
-                        actualizarVistaTotales()
+                binding.btnenviar.visibility = View.VISIBLE
+                binding.imbtnatras.visibility = View.VISIBLE 
+                binding.btnexportar.visibility = View.GONE
+                binding.btnInvalidar.visibility = View.GONE
 
-                        actualizarTotales()
-                    }
-                    "FACTURA EXPORTACION" -> {
-//                        Toast.makeText(this@Detallepedido, "OPCION EN REVISION", Toast.LENGTH_SHORT).show()
-
-                        /*pedidosController.updateTipoDocumento("FE", idpedido, this@Detallepedido)
-                        tipoDocumento = "FE"
-                        FacturaExportacion = true
-                        precioConIVA = false
-
-                        pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
-                        actualizarVistaTotales()
-
-                        actualizarTotales()*/
-                    }
-                    "RECIBO" -> {
-                        pedidosController.updateTipoDocumento("RC", idpedido, this@Detallepedido)
-                        tipoDocumento = "RC"
-                        FacturaExportacion = false
-                        precioConIVA = true
-
-                        limiteItemPedido = preferencias.getInt("numItemRecibo", 0)
-
-                        pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
-                        actualizarVistaTotales()
-
-                        actualizarTotales()
-                    }
-                    "REMISIÓN" -> {
-                        pedidosController.updateTipoDocumento("RE", idpedido, this@Detallepedido)
-                        tipoDocumento = "RE"
-                        FacturaExportacion = false
-                        precioConIVA = true
-
-                        limiteItemPedido = preferencias.getInt("numItemRemision", 0)
-
-
-                        pedidosController.actualizarTotalesPedido(this@Detallepedido,idpedido,precioConIVA)
-                        actualizarVistaTotales()
-
-                        actualizarTotales()
-                    }
+                if (codigo == "01") {
+                    binding.txtCliente.isEnabled = true
                 }
             }
-            override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
+    }
 
-        binding.btnAgregarComentario.setOnClickListener {
-
-            if(isProcessing) return@setOnClickListener
-
-            deshabilitarOpciones()
-
-            agregarComentarioAlPedido()
+    private fun AlertaEliminar() {
+        Dialog(this).apply {
+            setCancelable(false)
+            setContentView(R.layout.alert_eliminar)
+            findViewById<Button>(R.id.btneliminar).setOnClickListener {
+                viewModel.eliminarPedido(idpedido)
+                dismiss()
+            }
+            findViewById<Button>(R.id.btncancelar).setOnClickListener { habilitarOpciones(); dismiss() }
+            show()
         }
+    }
 
+    private fun updateSharedPreferencesFinalizarVisita(){
+        preferencias.edit { remove("visita"); remove("busqueda") }
     }
 
     private fun menuPedidos(){
-        val intento = Intent(this, Pedido::class.java)
-        startActivity(intento)
+        startActivity(Intent(this, Pedido::class.java))
         finish()
     }
 
-    //FUNCION PARA AGREGAR COMENTARIO AL PEDIDO
-    private fun agregarComentarioAlPedido(){
-        val dialog = Dialog(this@Detallepedido, com.example.acae30.R.style.Theme_Dialog)
-        dialog.setCancelable(false)
+    private fun regresarVisita(){
+        val intentVisita = Intent(this, Visita::class.java).apply {
+            putExtra("idcliente", idcliente)
+            putExtra("nombrecliente", nombre)
+            putExtra("visitaid", idvisita)
+            putExtra("codigo", codigo)
+            putExtra("idapi", idapi)
+        }
+        startActivity(intentVisita)
+        finish()
+    }
 
-        dialog.setContentView(com.example.acae30.R.layout.comentario_pedidos)
+    private fun alertaPago(total: Float){
+        Dialog(this).apply {
+            setContentView(R.layout.vista_cobro)
+            setCancelable(false)
+            val etTotal = findViewById<TextInputEditText>(R.id.txtTotalPago)
+            etTotal.setText(String.format("$%.2f", total))
+            val etCambio = findViewById<TextInputEditText>(R.id.txtCambioPago)
+            val etPago = findViewById<TextInputEditText>(R.id.txtEfectivoPago)
+            val etOrden = findViewById<TextInputEditText>(R.id.txtNumeroOrden)
+            val spForma = findViewById<Spinner>(R.id.spFormaPago)
 
-        val comentario = dialog.findViewById<TextInputEditText>(com.example.acae30.R.id.txtComentarioPedido)
-        val btnAceptar = dialog.findViewById<Button>(com.example.acae30.R.id.btnAceptarComentario)
-        val btnCancelar = dialog.findViewById<Button>(com.example.acae30.R.id.btnCancelarComentario)
+            // Contenedores opcionales para otros métodos de pago
+            val lyCheque = findViewById<LinearLayout>(R.id.lyContenedorCheque)
+            val lyTarjeta = findViewById<LinearLayout>(R.id.lyContenedorTarjeta)
+            val lyDeposito = findViewById<LinearLayout>(R.id.lyContenedorDeposito)
 
-        btnAceptar.setOnClickListener {
-            if(comentario.text.toString().isNotEmpty()){
+            spForma.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
+                    val seleccion = spForma.selectedItem.toString()
+                    lyCheque.visibility = if (seleccion == "CHEQUE") View.VISIBLE else View.GONE
+                    lyTarjeta.visibility = if (seleccion == "TARJETA") View.VISIBLE else View.GONE
+                    lyDeposito.visibility = if (seleccion == "DEPOSITO") View.VISIBLE else View.GONE
+                }
+                override fun onNothingSelected(p0: AdapterView<*>?) {}
+            }
+            
+            etPago.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+                override fun onTextChanged(pago: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                    val pVal = pago?.toString()?.toFloatOrNull() ?: 0f
+                    etCambio.setText(String.format("%.2f", pVal - total))
+                }
+                override fun afterTextChanged(p0: Editable?) {}
+            })
+
+            findViewById<Button>(R.id.btnaceptar).setOnClickListener {
+                val nOrden = etOrden.text.toString()
+                
+                // REIMPLEMENTACIÓN DE VALIDACIÓN: NRC 1937 o 193-7 requiere Número de Orden
+                if ((infoCliente?.Nrc == "193-7" || infoCliente?.Nrc == "1937") && nOrden.isEmpty()) {
+                    Toast.makeText(this@Detallepedido, "EL NÚMERO DE ORDEN ES OBLIGATORIO", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+
+                val forma = spForma.selectedItem.toString()
+                val pagoMonto = etPago.text.toString().toFloatOrNull() ?: 0f
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    pedidosController.agregarComentarioAlPedido(this@Detallepedido, idpedido, comentario.text.toString().trim())
+                    // Se obtienen los valores de los campos adicionales si existen
+                    val bancoCheque = findViewById<TextInputEditText>(R.id.tvBanco).text.toString()
+                    val cuentaCheque = findViewById<TextInputEditText>(R.id.tvNumCuentaCheque).text.toString()
+                    val numCheque = findViewById<TextInputEditText>(R.id.tvNumCheque).text.toString()
+                    
+                    val tarjeta = findViewById<TextInputEditText>(R.id.tvTarjeta).text.toString()
+                    val nombreTarjeta = findViewById<TextInputEditText>(R.id.tvNombreTarjeta).text.toString()
+                    val numTarjeta = findViewById<TextInputEditText>(R.id.tvNumTarjeta).text.toString()
+                    
+                    val bancoDep = findViewById<TextInputEditText>(R.id.tvDeposito).text.toString()
+                    val cuentaDep = findViewById<TextInputEditText>(R.id.tvNumCuentaDeposito).text.toString()
+                    val numDep = findViewById<TextInputEditText>(R.id.tvNumDeposito).text.toString()
+
+                    pedidosController.actualizarPagoCambioPedido(this@Detallepedido, idpedido, 
+                        pagoMonto, pagoMonto - total,
+                        if(forma == "EFECTIVO") pagoMonto else 0f,
+                        if(forma == "CHEQUE") pagoMonto else 0f,
+                        if(forma == "TARJETA") pagoMonto else 0f,
+                        if(forma == "DEPOSITO") pagoMonto else 0f,
+                        nOrden, 
+                        bancoCheque, cuentaCheque, numCheque,
+                        tarjeta, nombreTarjeta, numTarjeta,
+                        bancoDep, cuentaDep, numDep,
+                        forma)
                 }
-
-                validarProcesoPedidos(codigo)
-
-                habilitarOpciones()
-
-                dialog.dismiss()
-
-            }else{
-                Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR UN COMENTARIO", Toast.LENGTH_SHORT)
-                    .show()
+                dismiss()
+                if(enviandoPedido) envioAlerta() else if(guardandoPedido) guardarPedido()
             }
-        }
-
-        btnCancelar.setOnClickListener {
-
-            habilitarOpciones()
-
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
-
-    //FUNCION PARA OBTENER LA CANTIDAD DE ITEMS Y SETEARLO EN PANTALLA
-    private fun obtenerCantidadItemsPedido(){
-        this@Detallepedido.lifecycleScope.launch {
-            cantidadItemsPedido = pedidosController.obtenerCantidadItemsPedido(this@Detallepedido, idpedido)
-
-            binding.cantidadItems.text = "CANT. ITEMS: $cantidadItemsPedido"
-        }
-    }
-
-    private fun actualizarVistaTotales(){
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-                if(lista.size > 0){
-                    runOnUiThread {
-                        ArmarLista(lista)
-                    }
-                }
-            }catch (e: Exception){
-                runOnUiThread {
-                    funciones.mostrarAlerta("NO SE PUEDO CARGAR EL DETALLE DEL PEDIDO", this@Detallepedido, binding.lienzo)
-                }
-            }
-        }
-    }
-
-    //FUNCION PARA COMPLETAR LOS TERMINOS DEL CLIENTE
-    private fun terminosDelCliente(){
-        val terminosClientes = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)!!.Terminos_cliente
-
-        val listaTipoAdaptador =
-            ArrayAdapter<String>(this@Detallepedido, R.layout.simple_spinner_dropdown_item)
-        if(terminosClientes == "Contado"){
-            listaTipoAdaptador.addAll(listOf("CONTADO"))
-        }else{
-            listaTipoAdaptador.addAll(listOf("CONTADO", "CREDITO"))
-        }
-        binding.spTipoEnvio.adapter = listaTipoAdaptador
-    }
-
-    //FUNCION PARA GUARDAR EL PEDIDO EN EL DISPOSITIVO
-    private fun guardarPedido(){
-        try {
-            //DESCARGANDO INVENTARIO
-            descargarInventario()
-
-            pedidosController.actualizarEstadoAlGuardar(idpedido, this@Detallepedido, binding.lienzo) //FUNCION PARA ACTUALIZAR EL ESTADO
-            alerta!!.pedidoGuardado()
-            alerta!!.changeText("Guardando Pedido")
-
-            Timer().schedule(2300){
-                runOnUiThread {
-                    habilitarOpciones()
-                    alerta!!.dismisss()
-                }
-
-                pedidoEnviado()
-            }
-        } catch (e: Exception) {
-            habilitarOpciones()
-            alerta!!.dismisss()
-            funciones.mostrarAlerta("ERROR: ${e.message}", this@Detallepedido, binding.lienzo)
-        }
-    }
-
-    //FUNCION PARA ACTUALIZAR TOTALES CUANDO ES CREDITO FISCAL
-    private fun actualizarTotales(){
-        if(total > 0){
-            when(tipoDocumento) {
-                "CF","RE" -> {
-                    if(infoCliente!!.Categoria_cliente.toString() == "Gran contribuyente"){
-                        if((total/1.13f) > 100f){
-                            binding.txtSumas.text = "${String.format("%.2f".format((total/1.13)))}"
-                            binding.txtIva.text = "${String.format("%.2f".format(((total/1.13)*0.13)))}"
-                            binding.txtIvaPerci.text = "${String.format("%.2f".format(((total/1.13)*0.01)))}"
-                            binding.txttotal.text = "${String.format("%.2f".format((total - (total/1.13)*0.01)))}"
-                        }else{
-                            binding.txtSumas.text = "${String.format("%.2f".format((total/1.13)))}"
-                            binding.txtIva.text = "${String.format("%.2f".format(((total/1.13)*0.13)))}"
-                            binding.txtIvaPerci.text = "${String.format("%.2f".format(0f))}"
-                            binding.txttotal.text = "${String.format("%.2f".format(total))}"
-                        }
-                    }else{
-                        binding.txtSumas.text = "${String.format("%.2f".format((total/1.13)))}"
-                        binding.txtIva.text = "${String.format("%.2f".format(((total/1.13)*0.13)))}"
-                        binding.txtIvaPerci.text = "${String.format("%.2f".format(0f))}"
-                    }
-                }
-                else -> {
-                    binding.txtSumas.text = "${String.format("%.2f".format(total))}"
-                    binding.txtIva.text = "${String.format("%.2f".format(0f))}"
-                    binding.txtIvaPerci.text = "${String.format("%.2f".format(0f))}"
-                    binding.txttotal.text = "${String.format("%.2f".format(total))}"
-                }
-            }
-        }
-        val sumas = binding.txtSumas.text.toString().toFloat()
-        val iva = binding.txtIva.text.toString().toFloat()
-        val ivaperci = binding.txtIvaPerci.text.toString().toFloat()
-
-        pedidosController.actualizarTotalesFiscales(this@Detallepedido, idpedido,
-            sumas, iva, ivaperci)
-
-    }
-
-    //FUNCION PARA VALIDAR OPCIONES SELECCIONADAS
-    private fun validarSelecciones(sucursalSelec:String){
-        if(sucursalSelec != "-- SELECCIONE UNA SUCURSAL --"){
-            binding.btnguardar.isEnabled = true
-            binding.btnenviar.isEnabled = true
-            binding.btnenviar.setBackgroundResource(com.example.acae30.R.drawable.border_btnactualizar)
-            binding.btnguardar.setBackgroundResource(com.example.acae30.R.drawable.border_btnenviar)
-        }else{
-            binding.btnguardar.isEnabled = false
-            binding.btnenviar.isEnabled = false
-            binding.btnenviar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
-            binding.btnguardar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
-        }
-    }
-
-    //FUNCION PARA ENVIAR EL PEDIDO AL SERVIDOR
-    private suspend fun enviarPedidoaServidor(){
-        try {
-            Timer().schedule(2300){
-                val pedido = getPedidoSend(idpedido) //retorna el pedido
-
-                pedido!!.Idvendedor = idvendedor // ASIGNAMOS EL ID DEL VENDEDOR AL PEDIDO
-
-                pedido.Vendedor = vendedor//agregamos los datos del vendedor
-
-                lifecycleScope.launch {
-                    val enviado = SendPedido(pedido, idpedido)//envia el pedido y actualiza el estado del pedido en el cel
-                    alerta!!.dismisss()
-
-                    if(enviado) {
-                        //SI EL PEDIDO YA HA FUE CERRADO NO REALIZA LA DESCARGA NUEVAMENTE
-                        if (pedido.Cerrado!! == 0) {
-                            //DESCARGANDO INVENTARIO
-                            descargarInventario()
-                        }
-
-                        pedidoEnviado()
-                    }
-//                    }else{
-//                        runOnUiThread {
-//                            habilitarOpciones()
-//                            Toast.makeText(this@Detallepedido,"DESEA ALMACENAR EL PEDIDO PARA LUEGO ENVIARLO", Toast.LENGTH_SHORT).show()
-//                        }
-//                    }
-                }
-            }
-        }catch (e: Exception){
-            withContext(Dispatchers.Main) {
-                habilitarOpciones()
-                alerta!!.dismisss()
-                funciones.mostrarAlerta(
-                    "ERROR AL ENVIAR EL PEDIDO",
-                    this@Detallepedido,
-                    binding.lienzo
-                )
-            }
-        }
-    }
-
-    //FUNCION PARA FINALIZAR EL ENVIO DEL PEDIDO
-    private fun pedidoEnviado(){
-
-        val visita = if (idvisita > 0) visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido) else null
-        
-        if(visita != null && visita.Abierta){
-            // PROCESO EXTERNO: Regresamos a la visita para que el vendedor la finalice o continúe
-            val intento = Intent(this@Detallepedido, Visita::class.java)
-            intento.putExtra("idcliente", idcliente)
-            intento.putExtra("nombrecliente", nombre)
-            intento.putExtra("idpedido", idpedido)
-            intento.putExtra("visitaid", idvisita)
-            intento.putExtra("codigo", codigo)
-            intento.putExtra("idapi", idapi)
-            startActivity(intento)
-            finish()
-        }else{
-            // PROCESO LOCAL o VISITA CERRADA: Vamos directo al listado general de pedidos
-            updateSharedPreferencesFinalizarVisita()
-            menuPedidos()
+            findViewById<Button>(R.id.btncancelar).setOnClickListener { habilitarOpciones(); dismiss() }
+            show()
         }
     }
 
     private fun envioAlerta(){
-        val updateDialog = Dialog(this, com.example.acae30.R.style.Theme_Dialog)
-        updateDialog.setCancelable(false)
-
-        var procesandoEnvio = false
-
-        updateDialog.setContentView(com.example.acae30.R.layout.dialog_cancelar)
-        tvUpdate = updateDialog.findViewById(com.example.acae30.R.id.tvUpdate)
-        tvCancel = updateDialog.findViewById(com.example.acae30.R.id.tvCancel)
-        tvMensaje = updateDialog.findViewById(com.example.acae30.R.id.tvMensaje)
-        tvTitulo = updateDialog.findViewById(com.example.acae30.R.id.tvTitulo)
-
-        tvTitulo.text = "INFORMACIÓN"
-        tvMensaje.text = "¿DESEA ENVIAR EL PEDIDO?"
-        tvUpdate.text = "ACEPTAR"
-
-        tvUpdate.setOnClickListener {
-
-            if (procesandoEnvio) return@setOnClickListener
-
-            procesandoEnvio = true
-
-            tvUpdate.isEnabled = false
-            tvCancel.isEnabled = false
-
-            updateDialog.dismiss()
-            verificarConexionEnvio()
-
-        }
-
-        tvCancel.setOnClickListener {
-            enviandoPedido = false
-            updateDialog.dismiss()
-
-            habilitarOpciones()
-
-        }
-
-        updateDialog.show()
-    }
-
-    //FUNCION DE MENSAJE DE ADVERTENCIA
-    private fun mensajeInvalidarDTE(context: Context, mensaje: String, idPedidoServidor : Int, idPedido: Int){
-        val dialog = AlertDialog.Builder(context)
-            .setTitle("INVALIDAR DTE")
-            .setMessage(mensaje)
-            .setPositiveButton("ACEPTAR") { view, _ ->
-                CoroutineScope(Dispatchers.IO).launch {
-                    pedidosController.obtenerDocumentosTransmitidosInvalidados(idPedidoServidor, context, idPedido)
-                }
-
-                habilitarOpciones()
-
-                view.dismiss()
+        Dialog(this).apply {
+            setCancelable(false)
+            setContentView(R.layout.dialog_cancelar)
+            findViewById<TextView>(R.id.tvTitulo).text = "INFORMACIÓN"
+            findViewById<TextView>(R.id.tvMensaje).text = "¿DESEA ENVIAR EL PEDIDO?"
+            findViewById<TextView>(R.id.tvUpdate).apply {
+                text = "ACEPTAR"
+                setOnClickListener { dismiss(); viewModel.enviarPedido(idpedido) }
             }
-            .setNegativeButton("CANCELAR"){ view, _ ->
-
-                habilitarOpciones()
-
-                view.dismiss()
-            }
-            .setCancelable(false)
-            .setIcon(com.example.acae30.R.drawable.ic_information)
-            .create()
-
-        dialog.show()
-    }
-
-    private fun habilitarOpciones(){
-        isProcessing = false
-        binding.apply {
-            btnenviar.isEnabled = true
-            btncancelar.isEnabled = true
-            btnguardar.isEnabled = true
-            reciclerdetalle.isEnabled = true
-            btnAgregarComentario.isEnabled = true
+            findViewById<TextView>(R.id.tvCancel).setOnClickListener { enviandoPedido = false; habilitarOpciones(); dismiss() }
+            show()
         }
     }
 
-    private fun deshabilitarOpciones(){
-        isProcessing = true
-        binding.apply {
-            btnenviar.isEnabled = false
-            btncancelar.isEnabled = false
-            btnguardar.isEnabled = false
-            reciclerdetalle.isEnabled = false
-            btnAgregarComentario.isEnabled = false
-        }
+    private fun pedidoEnviado(){
+        val visita = if (idvisita > 0) visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido) else null
+        if(visita != null && visita.Abierta) regresarVisita() else { updateSharedPreferencesFinalizarVisita(); menuPedidos() }
     }
 
-    private fun verificarConexionEnvio() {
-        if(funciones.isInternetAvailable(this@Detallepedido)){
-            alerta!!.pedidoEnviado()
-
-            CoroutineScope(Dispatchers.IO).launch {
-                enviarPedidoaServidor()
-            }
-        }else{
-            habilitarOpciones()
-            funciones.mostrarAlerta("ERROR: NO TIENES CONEXION A INTERNET", this@Detallepedido, binding.lienzo)
-        }
+    private fun guardarPedido(){
+        descargarInventario()
+        pedidosController.actualizarEstadoAlGuardar(idpedido, this, binding.lienzo)
+        alerta?.pedidoGuardado()
+        Timer().schedule(2000){ runOnUiThread { habilitarOpciones(); alerta?.dismisss(); pedidoEnviado() } }
     }
 
-    //FUNCION PARA DESCARGAR EL PRODUCTO DE INVENTARIO APP
     private fun descargarInventario(){
-        //REALIZANDO LA DESCAR DE INVENTARIO DE LA APP
-        //SOLO SI SE USA HOJA DE CARGA DE ESCARRSA
-        val hojaCarga = preferencias.getBoolean("Hoja_carga_inventario_app", false)
-        if(hojaCarga){
-            CoroutineScope(Dispatchers.IO).launch {
-                inventarioController.descargarProductosInventario(idpedido, this@Detallepedido)
-            }
+        if(preferencias.getBoolean("Hoja_carga_inventario_app", false)){
+            CoroutineScope(Dispatchers.IO).launch { inventarioController.descargarProductosInventario(idpedido, this@Detallepedido) }
         }
     }
 
-    //OPTENIENDO INFORMACION DEL PEDIDO
-    private fun getTipoEnvio(ipPedido: Int){
-        val dataBase = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        try {
-            val sql = "SELECT Enviado, nombre_sucursal, tipo_envio, tipo_documento, terminos FROM pedidos WHERE id=$ipPedido"
-            val getTipo = dataBase.query(sql)
-            val getPedidoData = ArrayList<dataPedidos>()
-            getTipo.use { c ->
-                if(c.count > 0){
-                    c.moveToFirst()
-                    do {
-                        val data = dataPedidos(
-                            c.getInt(0) == 1,
-                            c.getString(1),
-                            c.getInt(2),
-                            c.getString(3),
-                            c.getString(4)
-                        )
-                        getPedidoData.add(data)
-                    }while (c.moveToNext())
-                }
-            }
-
-            for(data in getPedidoData){
-                pedidoEnviado = data.envioPedido!!
-                nombreSucursalPedido = data.nombreSucursalPedido!!.toString()
-                tipoEnvio = data.tipoPedido!!.toInt()
-                tipoDocumento = data.tipoDocumento!!.toString()
-                terminosPedidos = data.terminosPedido!!.toString()
-            }
-        }catch (e: Exception) {
-            println("ERROR AL OBTENER LA INFORMACION DEL PEDIDO -> " + e.message)
-        }
+    private fun validarSelecciones(sucursalSelec:String){
+        val e = sucursalSelec != "-- SELECCIONE UNA SUCURSAL --" && sucursalSelec != "-- TOQUE PARA SELECCIONAR SUCURSAL --"
+        binding.btnguardar.isEnabled = e
+        binding.btnenviar.isEnabled = e
+        binding.btnenviar.setBackgroundResource(if(e) R.drawable.border_btnactualizar else R.drawable.border_btndisable)
+        binding.btnguardar.setBackgroundResource(if(e) R.drawable.border_btnenviar else R.drawable.border_btndisable)
     }
 
-    //ACTUALIZANDO LA SUCURSAL DEL PEDIDO
-    //CAMBIO EN EL TIPO DE DATO PARA EL CODIGO DE LA SUCURSAL, SE CAMBIO A STRING
-    //09/10/2023
-    private fun updatePedidoSucursal(idCliente:Int, nombreSucursal: String, idpedidos: Int){
-        val db = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        val sucursal = nombreSucursal.replace("'", "''", false)
-        try {
-            val sql = "SELECT Id, id_cliente, codigo_sucursal, nombre_sucursal, direccion_sucursal, " +
-                    "municipio_sucursal, depto_sucursal, telefono_1, correo_sucursal, " +
-                    "Id_ruta, Ruta, DTECodDepto, DTECodMunicipio, DTECodPais, DTEPais  FROM cliente_sucursal " +
-                    "WHERE id_cliente=$idCliente and nombre_sucursal = '$sucursal'"
-
-            val cursor = db.query(sql)
-            //val cursor = db.rawQuery("SELECT * FROM cliente_sucursal WHERE id_cliente=$idCliente and nombre_sucursal like '%$sucursal%'", null)
-            val listaSucursales = ArrayList<InformacionSucursal>()
-            cursor.use { c ->
-                if(c.count > 0){
-                    c.moveToFirst()
-                    do{
-                        val data = InformacionSucursal(
-                            c.getInt(0),
-                            c.getInt(1),
-                            c.getString(2),
-                            c.getString(3),
-                            c.getString(4),
-                            c.getString(5),
-                            c.getString(6),
-                            c.getString(7),
-                            c.getString(8),
-                            c.getInt(9),
-                            c.getString(10),
-                            c.getString(11),
-                            c.getString(12),
-                            c.getString(13),
-                            c.getString(14)
-                        )
-                        listaSucursales.add(data)
-                    }while (c.moveToNext())
-                }
-            }
-
-            for (data in listaSucursales) {
-                idSucursal = data.id
-                codigoSucursal = data.codigoSucursal
-                Id_ruta = data.idRuta
-                Ruta = data.ruta
-                DTEDireccion = data.dteDireccion
-                DTECodDepto = data.dteCodDepto
-                DTECodMunicipio = data.dteCodMunicipio
-                DTECodPais = data.dteCodPais
-                DTEPais = data.dtePais
-                DTECorreo = data.dteCorreo
-                DTETelefono = data.dteTelefono
-            }
-            db.execSQL("UPDATE pedidos set id_sucursal=$idSucursal, " +
-                    "codigo_sucursal='$codigoSucursal', " +
-                    "nombre_sucursal='$sucursal'," +
-                    "Id_ruta = $Id_ruta," +
-                    "Ruta = '$Ruta'," +
-                    "DTEDireccion = '$DTEDireccion'," +
-                    "DTECodDepto = '$DTECodDepto'," +
-                    "DTECodMunicipio = '$DTECodMunicipio'," +
-                    "DTECodPais = '$DTECodPais'," +
-                    "DTEPais = '$DTEPais'," +
-                    "DTECorreo = '$DTECorreo'," +
-                    "DTETelefono = '$DTETelefono' " +
-                    "WHERE id=$idpedidos")
-
-        }catch (e: Exception) {
-            println("ERROR AL ACTUALIZAR LA INFORMACION DE LA SUCURSAL EN EL PEDIDO -> " + e.message)
-        }
-    }
-
-    //CARGANDO EL NOMBRE DE LA SUCURSAL EN EL SPINNER
-    private fun nombreSucursal(): ArrayList<String> {
-        val nombreSucursal = arrayListOf<String>()
-        nombreSucursal.add("-- SELECCIONE UNA SUCURSAL --")
-        try {
-            val list: ArrayList<Sucursales> = getSucursalesNombre(idcliente)
-            if(list.isNotEmpty()){
-                for(data in list){
-                    nombreSucursal.add(data.nombreSucursal)
-                }
-            }
-        } catch (e: Exception) {
-            println("ERROR AL MOSTRAR LA TABLA CONFIG -> " + e.message)
-        }
-        return nombreSucursal
-    }
-
-    //FUNCION PARA CARGAR LAS SUCURSALES AL SPINNER
-    private fun cargarSucursales() {
-        val listSucursal = nombreSucursal().toMutableList()
-
-        val adaptador = ArrayAdapter(this@Detallepedido, R.layout.simple_spinner_item, listSucursal)
-        adaptador.setDropDownViewResource(com.example.acae30.R.layout.support_simple_spinner_dropdown_item)
-        binding.spSucursal.adapter = adaptador
-    }
-
-    //FUNCION PARA OBTENER LAS SUCURSALES POR CLIENTE.
-    //03-02-2023
-    private fun getSucursalesNombre(idCliente:Int): ArrayList<Sucursales> {
-        val db = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        val listaSucursales = ArrayList<Sucursales>()
-        try {
-
-            val sql = "SELECT * FROM cliente_sucursal WHERE id_cliente='$idCliente'"
-            val dataSucursal = db.query(sql)
-            dataSucursal.use {
-                if(dataSucursal.count > 0){
-                    dataSucursal.moveToFirst()
-                    do{
-                        val data = Sucursales(
-                            dataSucursal.getString(0),
-                            dataSucursal.getString(2),
-                            dataSucursal.getString(3)
-                        )
-                        listaSucursales.add(data)
-                    }while (dataSucursal.moveToNext())
-                }else{
-                    binding.spSucursal.visibility = View.GONE
-                    binding.sinSucursal.visibility = View.VISIBLE
-                }
-            }
-        }catch (e: Exception) {
-            println("ERROR AL OBTENER LAS SUCURSALES POR CLIENTE -> " + e.message)
-        }
-        return listaSucursales
-    }
-
-    //FUNCION PARA DESHABILITAR OPCIONES SEGUN VISTA EN PEDIDOS
-    private fun validarProcesoPedidos( codigoCliente: String){
-        binding.txtCliente.setText(nombre)
-        val pedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-        this@Detallepedido.lifecycleScope.launch {
-            try {
-                val lista = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-
-                if(lista.size > 0){
-                    ArmarLista(lista)
-                }
-            }catch (e: Exception){
-                funciones.mostrarAlerta("NO SE PUEDO CARGAR EL DETALLE DEL PEDIDO", this@Detallepedido, binding.lienzo)
-            }
-        }
-        when(from){
-            "ver" -> {
-                //MOSTRANDO EL NOMBRE DE LA SUCURSAL
-                if (nombreSucursalPedido != "") {
-                    binding.sinSucursal.text = nombreSucursalPedido
-                } else {
-                    binding.sinSucursal.text = getString(com.example.acae30.R.string.no_tiene_sucursal_registrada_)
-                }
-
-                if(pedido!!.Enviado == 1 && pedido.pedido_dte == 0){
-
-                    binding.txtCliente.isEnabled = false
-                    binding.imgbtnadd.visibility = View.GONE
-                    binding.btnenviar.visibility = View.GONE
-                    binding.btnguardar.visibility = View.GONE
-                    binding.imbtnatras.visibility = View.VISIBLE
-                    binding.btncancelar.visibility = View.GONE
-                    binding.spDocumento.visibility = View.GONE
-                    binding.spTipoEnvio.visibility = View.GONE
-                    binding.spSucursal.visibility = View.GONE
-                    binding.sinSucursal.visibility = View.VISIBLE
-                    binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
-                    binding.tvTipoenvio.visibility = View.VISIBLE
-                    binding.btnInvalidar.visibility = View.GONE
-
-                    if(pedido.Tipo_documento == "RC"){
-                        binding.btnInvalidar.visibility = View.VISIBLE
-                    }
-
-
-                }else if(pedido.pedido_dte_error == 2){
-
-                    binding.txtCliente.isEnabled = false
-                    binding.imgbtnadd.visibility = View.GONE
-                    binding.btnenviar.visibility = View.GONE
-                    binding.btnguardar.visibility = View.GONE
-                    binding.imbtnatras.visibility = View.VISIBLE
-                    binding.btncancelar.visibility = View.GONE
-                    binding.spDocumento.visibility = View.GONE
-                    binding.spTipoEnvio.visibility = View.GONE
-                    binding.spSucursal.visibility = View.GONE
-                    binding.sinSucursal.visibility = View.VISIBLE
-                    binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
-                    binding.tvTipoenvio.visibility = View.VISIBLE
-                    binding.btnInvalidar.visibility = View.GONE
-
-                }else if(pedido.Enviado == 0 && pedido.Cerrado == 1){
-
-                    binding.txtCliente.isEnabled = false
-                    binding.imgbtnadd.visibility = View.GONE
-                    binding.btnenviar.visibility = View.VISIBLE
-                    binding.btnguardar.visibility = View.GONE
-                    binding.imbtnatras.visibility = View.VISIBLE
-                    binding.btncancelar.visibility = View.GONE
-                    //binding.btnexportar.visibility = View.GONE //VISIBLE
-                    binding.spSucursal.visibility = View.GONE
-                    binding.sinSucursal.visibility = View.VISIBLE
-                    binding.btnInvalidar.visibility = View.GONE
-
-                }else if(pedido.Enviado == 1 && pedido.pedido_dte == 1){
-
-                    binding.txtCliente.isEnabled = false
-                    binding.imgbtnadd.visibility = View.GONE
-                    binding.btnenviar.visibility = View.GONE
-                    binding.btnguardar.visibility = View.GONE
-                    binding.imbtnatras.visibility = View.VISIBLE
-                    binding.btncancelar.visibility = View.GONE
-                    binding.spDocumento.visibility = View.GONE
-                    binding.spTipoEnvio.visibility = View.GONE
-                    binding.spSucursal.visibility = View.GONE
-                    binding.sinSucursal.visibility = View.VISIBLE
-                    binding.tvDocumentoSeleccionado.visibility = View.VISIBLE
-                    binding.tvTipoenvio.visibility = View.VISIBLE
-                    binding.btnInvalidar.visibility = View.VISIBLE //visible
-
-                    idPedidoServidor = pedido.Id_pedido_sistema!!
-                }
-
-                //Que la opcion de imprimir el documento esté siempre habilitada o Deshabilitado
-                //segun condiguracion en servidor
-                if(!P_Imprimir_TK_Venta){
-                    binding.btnexportar.visibility = View.GONE //visible
-                }else{
-                    if(pedido.pedido_dte_error == 2){
-                        binding.btnexportar.visibility = View.GONE //visible
-                    }else{
-                        binding.btnexportar.visibility = View.VISIBLE //visible
-                    }
-                }
-
-                //Deshabilitando el botom de agregar comentario
-                binding.btnAgregarComentario.visibility = View.GONE
-
-                permisosBluetooth()
-
-            }
-            "visita" -> {
-                //RUTINA PARA AGREGAR NUEVO PEDIDO
-
-                binding.imgbtnadd.visibility = View.VISIBLE
-                binding.btnenviar.visibility = View.VISIBLE
-                binding.imbtnatras.visibility = View.VISIBLE
-                binding.btncancelar.visibility = View.VISIBLE
-                binding.btnexportar.visibility = View.GONE
-                binding.imbtnatras.visibility = View.GONE
-                binding.btnInvalidar.visibility = View.GONE
-
-                if(codigoCliente == "01"){
-                    binding.txtCliente.isEnabled = true
-                }
-
-            }
-        }
-    }
-    //MODIFICACION PARA AUMENTAR EL NUMERO DE DECIMALES A 4
-    //MODIFICACION PARA LA PAPELERIA DM
-    //23-08-2022
-    private fun ArmarLista(lista: ArrayList<DetallePedido>) {
-        //var total = 0.toFloat()
-        val pedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-        val mLayoutManager = LinearLayoutManager(
-            this@Detallepedido,
-            LinearLayoutManager.VERTICAL,
-            false
-        )
-        binding.reciclerdetalle.layoutManager = mLayoutManager
-        val adapter = PedidoDetalleAdapter(lista, this@Detallepedido) { i ->
-            if (pedido!!.Enviado != 1 && from == "visita") {
-                val data = lista[i]
-                val intento = Intent(this@Detallepedido, Producto_agregar::class.java)
-
-                intento.putExtra("idpedidodetalle", data.Id)
-                intento.putExtra("idpedido", data.Id_pedido)
-                intento.putExtra("idcliente", idcliente)
-                intento.putExtra("nombrecliente", binding.txtCliente.text.toString())
-                intento.putExtra("idproducto", data.Id_producto)
-                intento.putExtra("proviene", "editar")
-                intento.putExtra("total_param", data.Total_iva)
-                intento.putExtra("sucursalPosition", getSucursalPosition)
-                intento.putExtra("facturaExportacion", FacturaExportacion)
-                startActivity(intento)
-                finish()
-            }
-        }
-        //binding.txttotal.text = "$" + "${String.format("%.4f", total)}"
-        binding.reciclerdetalle.adapter = adapter
-
-    } //muestra el detalle del pedido
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        //super.onBackPressed();
-
-    }//anula el boton atras
-
-    private fun AlertaEliminar() {
-
-        var procesando = false
-
-        val dialogo = Dialog(this)
-        dialogo.setCancelable(false)
-        dialogo.show()
-        dialogo.setContentView(com.example.acae30.R.layout.alert_eliminar)
-
-        val btnAceptarEliminar = dialogo.findViewById<Button>(com.example.acae30.R.id.btneliminar)
-        val btnCancelarEliminar = dialogo.findViewById<Button>(com.example.acae30.R.id.btncancelar)
-
-        btnAceptarEliminar.setOnClickListener {
-
-            if(procesando) return@setOnClickListener
-
-            procesando = true
-
-            btnAceptarEliminar.isEnabled = false
-            btnAceptarEliminar.isEnabled = false
-
-                try {
-                    EliminarPedido(idpedido)
-
-                    if(idvisita > 0){
-                        regresarVisita()
-                    }else{
-                        updateSharedPreferencesFinalizarVisita()
-                        menuPedidos()
-                    }
-
-                    habilitarOpciones()
-
-                    dialogo.dismiss()
-                } catch (e: Exception) {
-
-                    habilitarOpciones()
-
-                    dialogo.dismiss()
-                    val alert: Snackbar = Snackbar.make(
-                        binding.lienzo,
-                        e.message.toString(),
-                        Snackbar.LENGTH_LONG
-                    )
-                    alert.view.setBackgroundColor(resources.getColor(com.example.acae30.R.color.moderado))
-                    alert.show()
-                }
-        }//boton eliminar
-        btnCancelarEliminar.setOnClickListener {
-
-            habilitarOpciones()
-
-            dialogo.dismiss()
-        }//boton eliminar
-    } //muestra la alerta para eliminar
-
-    //Funcion para finalizar la visita cuando VentaLocal esta True
-    private fun updateSharedPreferencesFinalizarVisita(){
-        preferencias.edit {
-            remove("visita")
-            remove("busqueda")
-        }
-    }
-
-    private fun regresarVisita(){
-        val intento = Intent(this@Detallepedido, Visita::class.java)
-        intento.putExtra("idcliente", idcliente)
-        intento.putExtra("nombrecliente", nombre)
-        intento.putExtra("visitaid", idvisita)
-        intento.putExtra("codigo", codigo)
-        intento.putExtra("idapi", idapi)
-        startActivity(intento)
-        finish()
-    }
-    private fun EliminarPedido(idpedido: Int) {
-        val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        try {
-            val sql = "SELECT * FROM pedidos where Id=$idpedido and Enviado=1"
-            val cursor = bd.query(sql)
-            cursor.use {
-                if (cursor.count > 0) {
-                    throw Exception("Este pedido ya fue enviado no se puede eliminar")
-                } else {
-                    bd.execSQL("DELETE FROM detalle_pedidos WHERE Id_pedido=$idpedido")
-                    bd.execSQL("DELETE FROM pedidos where Id=$idpedido")
-                }
-            }
-        } catch (e: Exception) {
-            println("ERROR AL TRATAR DE ELIMINAR EL PEDIDO -> " + e.message)
-        }
-    }
-
-    //AGREGANDO CAMPOS DE SUCURSAL Y TIPO DE ENVIO A LA CABECERA DEL PEDIDO
-    private fun getPedidoSend(idpedido: Int): CabezeraPedidoSend? {
-        val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        try {
-            val sql = "SELECT * FROM pedidos where Id=$idpedido"
-            base.query(sql).use { pedido ->
-                if (pedido.count == 0) return null
-                pedido.moveToFirst()
-
-                val envioLocal = CabezeraPedidoSend(
-                    pedido.getInt(1),//id del cliente
-                    pedido.getString(2), //nombre del cliente
-                    pedido.getFloat(11), //POR EL MOMENTO TIENE EL DATO DEL TOTAL
-                    pedido.getFloat(5),
-                    pedido.getFloat(11),
-                    pedido.getInt(12),
-                    pedido.getInt(16),
-                    pedido.getInt(19),
-                    pedido.getString(20),
-                    pedido.getString(21),
-                    pedido.getInt(23),
-                    pedido.getString(22),
-                    0,
-                    "",
-                    pedido.getString(18),
-                    pedido.getString(24),
-                    pedido.getFloat(25),
-                    pedido.getFloat(26),
-                    pedido.getFloat(27),
-                    pedido.getFloat(28),
-                    pedido.getString(39),
-                    pedido.getString(29),
-                    pedido.getString(30),
-                    pedido.getString(31),
-                    pedido.getString(32),
-                    pedido.getString(33),
-                    pedido.getString(34),
-                    pedido.getString(35),
-                    pedido.getString(36),
-                    pedido.getString(37),
-                    pedido.getString(38),
-                    pedido.getInt(47),
-                    pedido.getString(48),
-                    pedido.getString(49),
-                    pedido.getString(50),
-                    pedido.getString(51),
-                    pedido.getString(52),
-                    pedido.getString(53),
-                    pedido.getString(54),
-                    pedido.getString(55),
-                    pedido.getString(57),
-                    null
-                )
-
-                val consulta = "SELECT * FROM detalle_producto WHERE Id_pedido=$idpedido ORDER BY Orden_despacho"
-                base.query(consulta).use { cdetalle ->
-                    if (cdetalle.count > 0) {
-                        val list = ArrayList<DetallePedido>()
-                        cdetalle.moveToFirst()
-                        do {
-                            val detalle = DetallePedido(
-                                cdetalle.getInt(0),
-                                cdetalle.getInt(1),
-                                cdetalle.getInt(2),
-                                cdetalle.getStringOrNull(3) ?: "",
-                                cdetalle.getString(4),
-                                cdetalle.getFloatOrNull(5) ?: 0f,
-                                cdetalle.getFloatOrNull(6) ?: 0f,
-                                cdetalle.getFloatOrNull(7) ?: 0f,
-                                cdetalle.getFloatOrNull(8) ?: 0f,
-                                cdetalle.getFloatOrNull(9) ?: 0f,
-                                cdetalle.getFloatOrNull(10) ?: 0f,
-                                cdetalle.getFloatOrNull(11) ?: 0f,
-                                cdetalle.getFloatOrNull(12) ?: 0f,
-                                cdetalle.getFloatOrNull(13) ?: 0f,
-                                cdetalle.getFloatOrNull(14) ?: 0f,
-                                cdetalle.getFloatOrNull(15) ?: 0f,
-                                cdetalle.getString(16),
-                                cdetalle.getInt(17),
-                                cdetalle.getFloatOrNull(18) ?: 0f,
-                                cdetalle.getString(19),
-                                cdetalle.getInt(20),
-                                cdetalle.getString(21),
-                                cdetalle.getFloatOrNull(22) ?: 0f,
-                                cdetalle.getFloatOrNull(23) ?: 0f,
-                                cdetalle.getString(24),
-                                cdetalle.getString(25),
-                                cdetalle.getIntOrNull(26),
-                                cdetalle.getIntOrNull(27),
-                                cdetalle.getIntOrNull(28),
-                                cdetalle.getIntOrNull(29),
-                                cdetalle.getIntOrNull(30),
-                                cdetalle.getIntOrNull(31),
-                                cdetalle.getIntOrNull(32),
-                                cdetalle.getString(33),
-                                cdetalle.getString(34),
-                                cdetalle.getIntOrNull(35),
-                                cdetalle.getStringOrNull(36),
-                                cdetalle.getStringOrNull(37),
-                                cdetalle.getIntOrNull(38),
-                                cdetalle.getStringOrNull(39),
-                                cdetalle.getStringOrNull(40),
-                                cdetalle.getInt(41)
-                            )
-                            list.add(detalle)
-                        } while (cdetalle.moveToNext())
-
-                        envioLocal.detalle = list
-                    }
-                }
-
-                return envioLocal
-            }
-        } catch (e: Exception) {
-            throw Exception(e)
-        }
-    }
-
-    private suspend fun SendPedido(pedido: CabezeraPedidoSend, idpedido: Int) : Boolean  {
-        var enviado = false
-        try {
-            val objecto = convertToJson(pedido, idpedido) //convertimos a json el objecto pedido
-            val servidor = funciones.getServidor(ip, puerto.toString(), this@Detallepedido)
-            val ruta: String = servidor + "pedido" //ruta para enviar el pedido
-
-            //println("JSON ENVIADO -> " + objecto )
-
-            val url = URL(ruta)
-
-            val sslContext = utilidades.crearSslInseguro()
-
-            with(withContext(Dispatchers.IO) {
-                url.openConnection()
-            } as HttpURLConnection) {
-
-                if(this is HttpsURLConnection){
-                    sslSocketFactory = sslContext.socketFactory
-                    hostnameVerifier = HostnameVerifier { _, _ -> true }
-                }
-
-                try {
-                    setRequestProperty(
-                        "Content-Type",
-                        "application/json;charset=utf-8"
-                    ) //definimos la cabezera
-                    connectTimeout = 2000
-                    requestMethod = "POST"
-                    val or = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-                    or.write(objecto.toString()) //escribo el json
-                    or.flush() //se envia el json
-
-                    BufferedReader(InputStreamReader(inputStream) as Reader?).use {
-                        try {
-                            val respuesta = StringBuffer()
-                            var inpuline = it.readLine()
-                            while (inpuline != null) {
-                                respuesta.append(inpuline)
-                                inpuline = it.readLine()
-                            }
-                            it.close()
-                            val data: String = respuesta.toString()
-                            if (data.isNotEmpty()) {
-                                val datosservidor = JSONObject(data)
-
-                                if (!datosservidor.isNull("error") && !datosservidor.isNull("response")) {
-                                    when (responseCode) {
-                                        200->{
-                                            enviado = false
-                                            runOnUiThread {
-                                                funciones.mostrarMensaje("PEDIDO YA ENVIADO, SINCRONICE POR FAVOR", this@Detallepedido, binding.lienzo)
-                                            }
-                                        }
-                                        201 -> {
-                                            val idPedidoServidor = datosservidor.getString("error").toInt()
-                                            if (idPedidoServidor > 0) {
-                                                enviado = true
-                                                pedidosController.actualizarEstadoPedidoEnviado(this@Detallepedido, idPedidoServidor, idpedido)
-                                                //ConfirmarPedido(idpedido, idpedidoS)
-                                            } else {
-                                                enviado = false
-                                                funciones.mostrarAlerta("ERROR: AL ENVIAR EL PEDIDO", this@Detallepedido, binding.lienzo)
-                                            }
-                                        }
-                                        400 -> {
-                                            enviado = false
-                                            runOnUiThread {
-                                                funciones.mostrarAlerta("ERROR: AL ENVIAR EL PEDIDO", this@Detallepedido, binding.lienzo)
-                                            }
-                                        }
-                                        500 -> {
-                                            enviado = false
-                                            runOnUiThread {
-                                                funciones.mostrarAlerta("ERROR INTERNO DEL SERVIDOR", this@Detallepedido, binding.lienzo)
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    enviado = false
-                                    runOnUiThread {
-                                        funciones.mostrarAlerta("ERROR RESPUESTA DEL SERVIDOR NULA", this@Detallepedido, binding.lienzo)
-                                    }
-                                }
-                            } else {
-                                enviado = false
-                                runOnUiThread {
-                                    funciones.mostrarAlerta("ERROR AL OBTENER RESPUETA DEL SERVIDOR", this@Detallepedido, binding.lienzo)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            enviado = false
-                            runOnUiThread {
-                                funciones.mostrarAlerta("ERROR AL LEER LA RESPUESTA DEL SERVIDOR", this@Detallepedido, binding.lienzo)
-                            }
-                            Timber.e(e, "[DETALLE_PEDEIDO] ERROR AL LEER LA RESPUESTA DEL SERVIDOR")
-                        }
-                    } //se obtiene la respuesta del servidor
-                } catch (e: Exception) {
-                    enviado = false
-                    runOnUiThread {
-                        funciones.mostrarAlerta("ERROR DE CONEXION CON EL SERVIDOR", this@Detallepedido, binding.lienzo)
-                    }
-                    Timber.e(e,"[DETALLE_PEDIDO] ERROR DE CONEXION CON EL SERVIDOR")
-                }
-
-            }
-        } catch (e: Exception) {
-            enviado = false
-            funciones.mostrarAlerta("ERROR: ENVIO DE PARAMETRO EQUIVOCADOS", this@Detallepedido, binding.lienzo)
-        }
-        return enviado
-    } //funcion que envia el pedido a la bd
-
-    private fun ConfirmarDetallePedido(): Int {
-        val bd = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        var cantidadDetallepedido = 0.toInt()
-        try {
-            val sql = "select count(id_pedido) as cantidad from detalle_pedidos where id_pedido = ${idpedido}"
-            val cursor = bd.query(sql)
-            cursor.use {
-                if (cursor.count > 0) {
-                    cursor.moveToFirst()
-                    cantidadDetallepedido = cursor.getInt(0)
-                } else {
-                    throw Exception("Error al buscar productos del pedidos.")
-                }
-            }
-        } catch (e: Exception) {
-            throw Exception(e.message)
-        }
-        return cantidadDetallepedido
-    } //actualiza el pedido y confirma que se envio
-
-    private fun convertToJson(pedido: CabezeraPedidoSend, idpedido_param: Int): JsonObject {
-
-        var idvisita_v = 0
-        val puntoVenta = preferencias.getString("puntoVenta", "").toString()
-        var idHojaCarga = 0
-        var hojaCarga = 0
-        val multiplesHojaDeCarga = preferencias.getBoolean("multiplesHojaDeCarga", false)
-        val ventaLocal = preferencias.getBoolean("tipoVentaLocal", false)
-        val numeroCaja = preferencias.getInt("numeroCaja", 0)
-
-        //BODEGA
-        val idBodega = preferencias.getInt("idBodega", -1)
-        val codBodega = preferencias.getString("codBodega", "-1")
-        val bodega = preferencias.getString("bodega", "-1")
-
-        val idBodegaFinal = if(idBodega == -1) null else idBodega
-        val codBodegaFinal = if(codBodega == "-1") null else codBodega
-        val bodegaFinal = if(bodega == "-1") null else bodega
-
-        if(!multiplesHojaDeCarga){
-            idHojaCarga = preferencias.getInt("idHojaCarga", 0)
-            hojaCarga = preferencias.getInt("hojaCarga", 0)
-        }
-
-        //val idHojaCargaMaster = preferencias.getInt("idHojaCargaMaster", 0)
-
-        val horaProceso = funciones.getFechaHoraProceso()
-
-        val base = funciones.obtenerInstancia(this@Detallepedido).openHelper.readableDatabase
-        try {
-            /*
-             * val sql = "select v.Idvisita from visitas v inner join pedidos p on v.id = p.idvisita where p.id = ${idpedido_param}"
-             */
-            val sql = "select v.Idvisita from pedidos p " +
-                    "left join visitas v on p.idvisita = v.id " +
-                    "where p.id = ${idpedido_param}"
+    private fun mostrarDialogoSucursales() {
+        val dialog = Dialog(this)
+        val vista = LayoutInflater.from(this).inflate(R.layout.dialog_buscar_sucursal, null)
+        dialog.setContentView(vista)
+        dialog.setCancelable(true)
+        
+        val etBuscar = vista.findViewById<TextInputEditText>(R.id.etBuscarSucursal)
+        val rvSucursales = vista.findViewById<RecyclerView>(R.id.rvSucursales)
+        val btnCancelar = vista.findViewById<Button>(R.id.btnCancelar)
+
+        val adaptador = SucursalBusquedaAdapter(listaSucursalesFull) { sucursal ->
+            nombreSucursalPedido = sucursal.nombreSucursal
+            // Actualizar visualmente el spinner
+            val listVisual = listOf(nombreSucursalPedido!!)
+            val adapterVisual = ArrayAdapter(this, android.R.layout.simple_spinner_item, listVisual)
+            binding.spSucursal.adapter = adapterVisual
+            binding.spSucursal.setSelection(0)
             
-            val cursor = base.query(sql)
-            cursor.use {
-                if (cursor.count > 0) {
-                    cursor.moveToFirst()
-                    // Si Idvisita es NULL (porque no hay visita), asignamos 0
-                    idvisita_v = cursor.getIntOrNull(0) ?: 0
-                } else {
-                    // En modo local es normal no encontrar la visita, así que solo ponemos 0
-                    idvisita_v = 0
-                }
-            }
-        } catch (e: Exception) {
-            // Si hay un error, por seguridad ponemos 0 para no bloquear el envío
-            idvisita_v = 0
-            println("ADVERTENCIA: No se pudo obtener ID de visita del servidor, usando 0 -> ${e.message}")
+            // Persistir selección
+            validarSelecciones(nombreSucursalPedido!!)
+            viewModel.seleccionarSucursal(idpedido, idcliente, nombreSucursalPedido!!)
+            
+            dialog.dismiss()
         }
 
-        val terminosPedidoEnviar = if(ventaLocal){
-            "Contado"
-        }else{
-            pedido.Terminos
-        }
+        rvSucursales.layoutManager = LinearLayoutManager(this)
+        rvSucursales.adapter = adaptador
 
-        val formaPagoEnviar = if(ventaLocal){
-            "Efectivo"
-        }else{
-            pedido.formaPago
-        }
-
-        val json = JsonObject()
-        json.addProperty("Idcliente", pedido.Idcliente)
-        json.addProperty("Cliente", pedido.Cliente)
-        json.addProperty("Subtotal", pedido.Subtotal)
-        json.addProperty("Descuento", pedido.Descuento)
-        json.addProperty("Total", pedido.Total)
-        json.addProperty("Envidado", false)
-        json.addProperty("Cerrado", false)
-        json.addProperty("IdSucursal", pedido.IdSucursal)
-        json.addProperty("CodigoSucursal", pedido.CodigoSucursal)
-        json.addProperty("NombreSucursal", pedido.NombreSucursal)
-        json.addProperty("TipoEnvio", pedido.TipoEnvio)
-        json.addProperty("Tipo_documento_app", pedido.TipoDocumento)
-        json.addProperty("Idvendedor", pedido.Idvendedor)
-        json.addProperty("Vendedor", pedido.Vendedor)
-        json.addProperty("Terminos", terminosPedidoEnviar)
-        json.addProperty("fechaCreado", pedido.fechaCreado) /*ENVIANDO LA FECHA DESDE EL DISPOSITIVO MOVIL*/
-        json.addProperty("HoraProceso", horaProceso)/*ENVIANDO EL TIMESTAMP DE CREACION DEL PEDIDO*/
-        json.addProperty("Idapp", idvisita_v)
-        //AGREGANDO NUEVO PARAMETROS
-        json.addProperty("Id_hoja_de_carga", idHojaCarga)
-        json.addProperty("num_hoja_de_carga", hojaCarga)
-        json.addProperty("punto_venta",puntoVenta)
-
-        //ENVIANDO FORMAS DE PAGO
-        json.addProperty("Forma_pago", formaPagoEnviar)
-        json.addProperty("numero_orden",pedido.numeroOrden!!.toBigDecimal())
-        json.addProperty("Efectivo_pago", pedido.pagoEfectivo)
-        json.addProperty("Tarjeta_pago", pedido.pagoTarjeta)
-        json.addProperty("Tarjeta_banco", pedido.bancoTarjeta)
-        json.addProperty("Tarjeta_nombre", pedido.nombreTarjeta)
-        json.addProperty("Tarjeta_numero", pedido.numTarjeta)
-        json.addProperty("Cheque_pago", pedido.pagoCheque)
-        json.addProperty("Cheque_banco", pedido.bancoCheque)
-        json.addProperty("Cheque_cuenta", pedido.numCuentaCheque)
-        json.addProperty("Cheque_numero", pedido.numCheque)
-        json.addProperty("Deposito_pago", pedido.pagoDeposito)
-        json.addProperty("Deposito_banco", pedido.bancoDeposito)
-        json.addProperty("Deposito_cuenta", pedido.numCuentaDeposito)
-        json.addProperty("Deposito_numero", pedido.numDeposito)
-
-        //AGREGANDO LA INFORMACION DE DTE Y RUTA
-        json.addProperty("Id_ruta", pedido.idRuta)
-        json.addProperty("Ruta", pedido.ruta)
-        json.addProperty("DTEDireccion", pedido.dteDireccion)
-        json.addProperty("DTETelefono", pedido.dteTelefono)
-        json.addProperty("DTECorreo",pedido.dteCorreo )
-        json.addProperty("DTECodDepto", pedido.dteCodDepto)
-        json.addProperty("DTECodMunicipio", pedido.dteCodMunicipio)
-        json.addProperty("DTECodPais", pedido.dteCodPais)
-        json.addProperty("DTEPais", pedido.dtePais)
-        //json.addProperty("DTEGiro", infoCliente!!.dteGiro)
-
-        json.addProperty("id_pedido_app", pedido.id_pedido_app)
-        json.addProperty("numeroCaja", numeroCaja)
-
-        json.addProperty("idBodega", idBodegaFinal)
-        json.addProperty("codBodega", codBodegaFinal)
-        json.addProperty("bodega", bodegaFinal)
-
-        //se ordena la cabezera
-        val detalle = JsonArray()
-        for (i in 0..(pedido.detalle!!.size - 1)) {
-            val data = pedido.detalle!!.get(i)
-            val d = JsonObject()
-
-            d.addProperty("Id", data.Id)
-            d.addProperty("Id_pedido", data.Id_pedido)
-            d.addProperty("Id_producto", data.Id_producto)
-            d.addProperty("Codigo", data.Codigo)
-            d.addProperty("Codigo_de_barra", data.Codigo_de_barra)
-            d.addProperty("Descripcion", data.Descripcion)
-            d.addProperty("Costo", data.Costo)
-            d.addProperty("Costo_iva", data.Costo_iva)
-            d.addProperty("Precio", data.Precio)
-            d.addProperty("Precio_iva", data.Precio_iva)
-            d.addProperty("Precio_u", data.Precio_u)
-            d.addProperty("Precio_u_iva", data.Precio_u_iva)
-            d.addProperty("Cantidad", data.Cantidad)
-            d.addProperty("Precio_venta", data.Precio_venta)
-            d.addProperty("Total", data.Total_iva)
-            d.addProperty("Total_iva", data.Total_iva)
-            d.addProperty("Unidad", data.Unidad)
-            d.addProperty("Bonificado", data.Bonificado!!.toFloat())
-            d.addProperty("Descuento", data.Descuento)
-            d.addProperty("Precio_editado", data.Precio_editado)
-            d.addProperty("Idunidad", data.Idunidad)
-            d.addProperty("EquivaleUni", data.EquivaleUni)
-            d.addProperty("EquivaleFra", data.EquivaleFra)
-            d.addProperty("UniEquivale", data.UniEquivale)
-            d.addProperty("FechaCreado", pedido.fechaCreado) /*ENVIANDO LA MISMA FECHA DEL PEDIDO DESDE EL CEL*/
-
-            //------------------------------------
-            //Nuevos Campos Agregados
-            //------------------------------------
-            d.addProperty("tipo", data.Tipo)
-            d.addProperty("id_marca", data.IdMarca)
-            d.addProperty("id_sku", data.IdSku)
-            d.addProperty("id_linea", data.IdLinea)
-            d.addProperty("id_sublinea", data.IdSubLinea)
-            d.addProperty("id_rubro", data.IdRubro)
-            d.addProperty("id_productor", data.IdProductor)
-            d.addProperty("id_proveedor", data.IdProveedor)
-            d.addProperty("id_ruta", pedido.idRuta)
-            d.addProperty("id_vendedor", pedido.Idvendedor)
-            d.addProperty("metodo_gestion", data.MetodoGestion)
-            d.addProperty("tipo_fiscal", data.TipoFiscal)
-            d.addProperty("departamento", infoCliente!!.Departamento)
-            d.addProperty("idLote", data.IdLote)
-            d.addProperty("lote", data.Lote)
-            d.addProperty("fecha_vencimiento", data.FechaVencimiento)
-            d.addProperty("id_bodega", data.IdBodega)
-            d.addProperty("cod_bodega", data.CodBodega)
-            d.addProperty("bodega", data.Bodega)
-            d.addProperty("orden_despacho", data.OrdenDespacho)
-
-
-            detalle.add(d)
-        }
-        json.add("detalle", detalle)
-        return json
-
-    }
-    //convierte el pedido a json
-
-    //FUNCION PARA MOSTRAR VENTANA DE PAGO
-    private fun alertaPago(total: Float){
-
-        var procesando = false
-
-        val dialogo = Dialog(this@Detallepedido)
-        dialogo.show()
-        dialogo.setContentView(com.example.acae30.R.layout.vista_cobro)
-        dialogo.setCancelable(false)
-
-        val etTotal = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.txtTotalPago)
-        etTotal.setText("$" + "${String.format("%.2f", total)}")
-
-        val etCambio = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.txtCambioPago)
-        var cambio = 0f
-
-        val etPago = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.txtEfectivoPago)
-        var pagoCliente = 0f
-
-        //VARIABLES PARA MOSTRAR Y OCULTAR LOS LAYOUTS
-        val spFormaPago = dialogo.findViewById<Spinner>(com.example.acae30.R.id.spFormaPago)
-        val lyPagoCheque = dialogo.findViewById<LinearLayout>(com.example.acae30.R.id.lyContenedorCheque)
-        val lyPagoTarjeta = dialogo.findViewById<LinearLayout>(com.example.acae30.R.id.lyContenedorTarjeta)
-        val lyPagoDeposito = dialogo.findViewById<LinearLayout>(com.example.acae30.R.id.lyContenedorDeposito)
-        val btnAceptarPago = dialogo.findViewById<Button>(com.example.acae30.R.id.btnaceptar)
-        val btnCancelarPago = dialogo.findViewById<Button>(com.example.acae30.R.id.btncancelar)
-
-        var formaPagoSeleccionada : String = ""
-
-        //VARIABLES PARA ALMACENAR LOS VALORES
-        var pagoEfectivo : Float = 0f
-        var pagoCheque : Float = 0f
-        var pagoTarjeta : Float = 0f
-        var pagoDeposito : Float = 0f
-
-        var numeroOrden : String = ""
-
-        var bancoCheque : String = ""
-        var numCuentaCheque : String = ""
-        var numCheque : String = ""
-
-        var bancoTarjeta : String = ""
-        var nombreTarjeta: String = ""
-        var numTarjeta : String = ""
-
-        var bancoDeposito : String = ""
-        var numCuentaDeposito : String = ""
-        var numDeposito : String = ""
-
-        //IMPLEMENTANDO LOGICA DE TIPO DE PAGO SELECCIONADA EN SPINNER
-        spFormaPago.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?,
-                                        view: View?,
-                                        position: Int,
-                                        id: Long) {
-
-                formaPagoSeleccionada = parent?.getItemAtPosition(position).toString()
-
-                CoroutineScope(Dispatchers.IO).launch {
-                    when(formaPagoSeleccionada){
-                        "TARJETA"->{
-                            runOnUiThread{
-                                lyPagoCheque.visibility = View.GONE
-                                lyPagoDeposito.visibility = View.GONE
-                                lyPagoTarjeta.visibility = View.VISIBLE
-                            }
-                        }
-                        "CHEQUE" -> {
-                            runOnUiThread{
-                                lyPagoCheque.visibility = View.VISIBLE
-                                lyPagoDeposito.visibility = View.GONE
-                                lyPagoTarjeta.visibility = View.GONE
-                            }
-                        }
-                        "DEPOSITO A CUENTA" -> {
-                            runOnUiThread{
-                                lyPagoCheque.visibility = View.GONE
-                                lyPagoDeposito.visibility = View.VISIBLE
-                                lyPagoTarjeta.visibility = View.GONE
-                            }
-                        }
-                        else -> {
-                            runOnUiThread{
-                                lyPagoCheque.visibility = View.GONE
-                                lyPagoDeposito.visibility = View.GONE
-                                lyPagoTarjeta.visibility = View.GONE
-                            }
-                        }
-                    }
-                }
-
+        etBuscar.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                adaptador.filter.filter(s)
             }
-            override fun onNothingSelected(p0: AdapterView<*>?) {}
-        }
-
-        etPago.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                //NADA QUE HACER
-            }
-
-            override fun onTextChanged(pago: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                if(pago.isNullOrEmpty()){
-                    pagoCliente = 0f
-                    cambio = pagoCliente - total
-                    etCambio.setText("${String.format("%.2f", cambio)}")
-                }else{
-                    pagoCliente = pago.toString().toFloat()
-                    cambio = pagoCliente - total
-                    etCambio.setText("${String.format("%.2f", cambio)}")
-                }
-            }
-
-            override fun afterTextChanged(p0: Editable?) {
-                //NADA QUE HACER
-            }
-
+            override fun afterTextChanged(p0: Editable?) {}
         })
 
-        //PROCESO DEL BOTON ACEPTAR
-        btnAceptarPago.setOnClickListener {
-
-            if(procesando) return@setOnClickListener
-
-            procesando = true
-
-            btnAceptarPago.isEnabled = false
-            btnCancelarPago.isEnabled = false
-
-            numeroOrden = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.txtNumeroOrden).text.toString()
-            /*if(terminosPedidos == "Contado" && etPago.text.toString().isEmpty()){
-                Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL PAGO DEL CLIENTE", Toast.LENGTH_SHORT)
-                    .show()
-            }else */
-            if((infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937") && numeroOrden.isEmpty()){
-                Toast.makeText(this@Detallepedido, "DEBE DE INGRESAR EL NUMERO DE ORDEN", Toast.LENGTH_SHORT)
-                    .show()
-
-                procesando = false
-                btnAceptarPago.isEnabled = true
-                btnCancelarPago.isEnabled = true
-            }
-            else{
-
-                when(formaPagoSeleccionada){
-                    "TARJETA"->{
-                        formaPagoSeleccionada = "Tarjeta"
-                        pagoTarjeta = if(etPago.text.toString() == ""){
-                            0f
-                        }else{
-                            etPago.text.toString().toFloat()
-                        }
-                    }
-                    "CHEQUE" -> {
-                        formaPagoSeleccionada = "Cheque"
-                        pagoCheque = if(etPago.text.toString() == ""){
-                            0f
-                        }else{
-                            etPago.text.toString().toFloat()
-                        }
-                    }
-                    "DEPOSITO A CUENTA" -> {
-                        formaPagoSeleccionada = "Depósito a Cta."
-                        pagoDeposito = if(etPago.text.toString() == ""){
-                            0f
-                        }else{
-                            etPago.text.toString().toFloat()
-                        }
-                    }
-                    else -> {
-                        formaPagoSeleccionada = "Efectivo"
-                        pagoEfectivo = if(etPago.text.toString() == ""){
-                            0f
-                        }else{
-                            etPago.text.toString().toFloat()
-                        }
-                    }
-                }
-
-                //numeroOrden = dialogo.findViewById<TextInputEditText>(R1.id.txtNumeroOrden).text.toString()
-
-                bancoCheque = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvBanco).text.toString()
-                numCuentaCheque = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvNumCuentaCheque).text.toString()
-                numCheque = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvNumCheque).text.toString()
-
-                bancoTarjeta = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvTarjeta).text.toString()
-                nombreTarjeta = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvNombreTarjeta).text.toString()
-                numTarjeta = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvNumTarjeta).text.toString()
-
-                bancoDeposito = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvDeposito).text.toString()
-                numCuentaDeposito = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvNumCuentaDeposito).text.toString()
-                numDeposito = dialogo.findViewById<TextInputEditText>(com.example.acae30.R.id.tvNumDeposito).text.toString()
-
-
-
-                CoroutineScope(Dispatchers.IO).launch {
-                    pedidosController.actualizarPagoCambioPedido(this@Detallepedido, idpedido,
-                        pagoCliente, cambio, pagoEfectivo, pagoCheque, pagoTarjeta, pagoDeposito,
-                        numeroOrden, bancoCheque, numCuentaCheque, numCheque, bancoTarjeta, nombreTarjeta,
-                        numTarjeta, bancoDeposito, numCuentaDeposito, numDeposito, formaPagoSeleccionada
-                    )
-                }
-
-                dialogo.dismiss()
-                //imprimirRecibo()
-
-                if(enviandoPedido){
-                    envioAlerta()
-                }
-
-                if(guardandoPedido){
-                    guardarPedido()
-                }
-            }
-        }
-
-        //PROCESO DEL BOTON CANCELAR
-        btnCancelarPago.setOnClickListener {
-            dialogo.dismiss()
-
-            habilitarOpciones()
-        }
-
+        btnCancelar.setOnClickListener { dialog.dismiss() }
+        
+        dialog.show()
+        // Ajustar tamaño del diálogo
+        dialog.window?.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
     }
 
+    private fun habilitarOpciones(){ isProcessing = false; binding.apply { btnenviar.isEnabled = true; btncancelar.isEnabled = true; btnguardar.isEnabled = true } }
+    private fun deshabilitarOpciones(){ isProcessing = true; binding.apply { btnenviar.isEnabled = false; btncancelar.isEnabled = false; btnguardar.isEnabled = false } }
 
+    private fun mensajeInvalidarDTE(context: Context, mensaje: String, idPServidor : Int, idPed: Int){
+        AlertDialog.Builder(context).setTitle("INVALIDAR DTE").setMessage(mensaje)
+            .setPositiveButton("ACEPTAR") { d, _ -> 
+                CoroutineScope(Dispatchers.IO).launch { pedidosController.obtenerDocumentosTransmitidosInvalidados(idPServidor, context, idPed) }
+                habilitarOpciones(); d.dismiss() 
+            }
+            .setNegativeButton("CANCELAR"){ d, _ -> habilitarOpciones(); d.dismiss() }
+            .setCancelable(false).setIcon(R.drawable.ic_information).show()
+    }
 
+    /**
+     * REFACTORIZACIÓN MVVM & CLEAN ARCHITECTURE: Nuevo método de impresión desacoplado.
+     * 1. El ViewModel recolecta datos de Room (GetTicketDataUseCase).
+     * 2. La Activity solo maneja la conexión física y el renderizado final.
+     * 3. Se delega el formato a TicketFormatter de forma dinámica.
+     */
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun imprimirTicketProcesado(data: com.example.acae30.domain.models.TicketData) {
+        try {
+            val settings = SettingsRepository(this)
+            val tipoImpresora = settings.getTipoImpresora()
+            val formatter = com.example.acae30.Utilidades.TicketFormatter()
+            
+            // Preparar Logo
+            val prefs = getSharedPreferences("MisImagenes", MODE_PRIVATE)
+            val filePath = prefs.getString("imagenFile", null)
+            val logoOriginal: Bitmap = if (filePath != null) {
+                val file = File(filePath)
+                if (file.exists()) BitmapFactory.decodeFile(file.absolutePath)
+                else BitmapFactory.decodeResource(resources, R.drawable.nologo)
+            } else {
+                BitmapFactory.decodeResource(resources, R.drawable.nologo)
+            }
 
+            when(tipoImpresora) {
+                "BT" -> {
+                    val btConnection = BluetoothPrintersConnections.selectFirstPaired()
+                    if (btConnection != null) {
+                        // Bluetooth suele soportar 32 caracteres por línea
+                        val printer = EscPosPrinter(btConnection, 160, 48f, 32)
+                        val ticket = formatter.formatTicket(printer, data, logoOriginal, 32)
+                        printer.printFormattedText(ticket)
+                    } else {
+                        Toast.makeText(this, "No se encontró impresora Bluetooth", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                else -> {
+                    // Impresión Integrada
+                    val impresorIntegrado = settings.getImpresorIntegrado()
+                    val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                    val device : BluetoothDevice? = bluetoothAdapter.bondedDevices.firstOrNull { 
+                        it.name.contains(impresorIntegrado) 
+                    }
+
+                    if(device != null) {
+                        val connection = BluetoothConnection(device)
+                        connection.connect()
+                        // Impresoras integradas suelen ser de 58mm (28 caracteres aprox)
+                        val printer = EscPosPrinter(connection, 160, 48f, 28)
+                        val ticket = formatter.formatTicket(printer, data, logoOriginal, 28)
+                        printer.printFormattedText(ticket)
+                    } else {
+                        Toast.makeText(this, "No se encontró impresora Integrada", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "[IMPRESION] ERROR AL IMPRIMIR EL COMPROBANTE ")
+            Toast.makeText(this, "Error al imprimir: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /* 
+     * CÓDIGO ANTIGUO (Restaurado): Se mantiene comentado para referencia y comparación histórica.
+     * Este código utilizaba controladores directos y lógica de formateo mezclada con la UI.
+     * 
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun imprimirRecibo() { ... }
+    ...
+     */
     //FUNCION PARA DETERMINAR LA CONEXION DE LA IMPRESORA
+    /*
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun imprimirRecibo() {
         try {
@@ -2288,9 +1121,9 @@ class Detallepedido : AppCompatActivity() {
                 .append("[C]NIT: $nit\n")
                 .append("[C]NRC: $nrc\n")
                 .append("[C]$giroFormateada\n")
-                .append("[L]------------------------------\n")
+                .append("[L]--------------------------------\n")
                 .append("[C]DATOS DEL CLIENTE\n")
-                .append("[L]------------------------------\n")
+                .append("[L]--------------------------------\n")
                 .append("[L]NOMBRE:\n")
                 .append("[C]${infoCliente!!.Cliente}\n")
                 .append("[L]DOCUMENTO: \n")
@@ -2302,8 +1135,8 @@ class Detallepedido : AppCompatActivity() {
                 .append("[C]${infoPedido.Nombre_sucursal}\n")
                 .append("[L]DIRECCION: \n")
                 .append("[C]$direccionCliente\n")
-                .append("[L]------------------------------\n")
-                .append("[C]DOCUMENTO TRIBUTARIO ELECTRONICO\n")
+                .append("[L]--------------------------------\n")
+                .append("[C]DOCUMENTO ELECTRONICO\n")
                 .append("[L]--------------------------------\n")
                 .append("[L]TIPO DOCUMENTO:\n")
                 .append("[C]$documento \n")
@@ -2407,34 +1240,6 @@ class Detallepedido : AppCompatActivity() {
             inicio += maxLength
         }
         return lineas
-    }
-
-    //Funcion para los permisos Bluetooth
-    private fun permisosBluetooth() {
-        val permissions = when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                arrayOf(
-                    Manifest.permission.BLUETOOTH_CONNECT,
-                    Manifest.permission.BLUETOOTH_SCAN
-                )
-            }
-            else -> {
-                arrayOf(
-                    Manifest.permission.BLUETOOTH,
-                    Manifest.permission.BLUETOOTH_ADMIN
-                )
-            }
-        }
-
-        val deniedPermissions = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (deniedPermissions.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, deniedPermissions.toTypedArray(), 1001)
-        } else {
-            //Toast.makeText(this, "Permisos Bluetooth concedidos ✅", Toast.LENGTH_SHORT).show()
-        }
     }
 
     //FUNCION PARA IMPRIMIR EL RECIBO INTREGRADO
@@ -2717,9 +1522,39 @@ class Detallepedido : AppCompatActivity() {
         resultado = resultado.replace(Regex("[^\\x00-\\x7F]"), "")
         return resultado
     }
+    */
+
+    private fun permisosBluetooth() {
+        val permissions = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                arrayOf(
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.BLUETOOTH_SCAN
+                )
+            }
+            else -> {
+                arrayOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADMIN
+                )
+            }
+        }
+
+        val deniedPermissions = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (deniedPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, deniedPermissions.toTypedArray(), 1001)
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        super.onBackPressed()
+    }
 
     override fun onDestroy() {
         super.onDestroy()
     }
-
 }
