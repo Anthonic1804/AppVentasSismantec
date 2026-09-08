@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.acae30.AlertDialogo
 import com.example.acae30.Inicio
 import com.example.acae30.controllers.InventarioTiempoRealController
 import com.example.acae30.data.remote.dto.InventarioTiempoRealDto
@@ -36,6 +37,7 @@ class InventarioTiempoReal : AppCompatActivity() {
     private var codigo = ""
     private var idapi = 0
 
+    private var alerta: AlertDialogo? = null
     private var FacturaExportacion = false
     private var idvendedor = 0
     private var hojaCarga = 0
@@ -63,6 +65,7 @@ class InventarioTiempoReal : AppCompatActivity() {
 
         idvendedor = preferences.getInt("Idvendedor", 0)
         hojaCarga = preferences.getInt("hojaCarga", 0)
+        alerta = AlertDialogo(this, this)
 
         sinExistencias = if(preferences.getString("pedidos_sin_existencia", "") == "S") 1 else 0
 
@@ -153,62 +156,74 @@ class InventarioTiempoReal : AppCompatActivity() {
                                     Toast.LENGTH_SHORT
                                 ).show()
                             } else {
-
-                                cargarDatosProducto(id)
-
-                                val intento =
-                                    Intent(this@InventarioTiempoReal, Producto_agregar::class.java)
-                                intento.putExtra("idproducto", id)
-                                intento.putExtra("idcliente", idcliente)
-                                intento.putExtra("nombrecliente", nombrecliente)
-                                intento.putExtra("codigo", codigo)
-                                intento.putExtra("idpedido", idpedido)
-                                intento.putExtra("visitaid", idvisita)
-                                intento.putExtra("from", "visita")
-                                intento.putExtra("proviene", "buscar_producto")
-                                intento.putExtra("total_param", 0.toFloat())
-                                // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
-                                intento.putExtra("facturaExportacion", FacturaExportacion)
-                                startActivity(intento)
-                                finish()
+                                // REFACTORIZACIÓN: Indicador de carga y validación de descarga completa
+                                if (descargarYValidarProducto(id)) {
+                                    val intento =
+                                        Intent(this@InventarioTiempoReal, Producto_agregar::class.java)
+                                    intento.putExtra("idproducto", id)
+                                    intento.putExtra("idcliente", idcliente)
+                                    intento.putExtra("nombrecliente", nombrecliente)
+                                    intento.putExtra("codigo", codigo)
+                                    intento.putExtra("idpedido", idpedido)
+                                    intento.putExtra("visitaid", idvisita)
+                                    intento.putExtra("from", "visita")
+                                    intento.putExtra("proviene", "buscar_producto")
+                                    intento.putExtra("total_param", 0.toFloat())
+                                    intento.putExtra("facturaExportacion", FacturaExportacion)
+                                    startActivity(intento)
+                                    finish()
+                                }
                             }
                         } else {
-
-                            cargarDatosProducto(id)
-
-                            runOnUiThread {
-
+                            if (descargarYValidarProducto(id)) {
                                 preferences.edit {
                                     putInt("idProducto", id)
                                 }
-
                                 inventarioDetalle()
                             }
                         }
                     }
                 }
                 binding.listaInventarioReal.adapter = adapter
-            } else {
-                runOnUiThread {
-                    //Toast.makeText(this@Inventario, "NO SE ENCONTRARON DATOS", Toast.LENGTH_SHORT).show()
-                }
             }
         } catch (e: Exception) {
             runOnUiThread {
-                Toast.makeText(this@InventarioTiempoReal, e.message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@InventarioTiempoReal, "Error al mostrar lista: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private suspend fun cargarDatosProducto(id: Int){
+    /**
+     * REFACTORIZACIÓN: Nueva lógica de descarga segura.
+     * Asegura que las 4 peticiones sean exitosas antes de permitir la navegación.
+     * Implementa try-catch-finally para garantizar el cierre del diálogo de carga.
+     */
+    private suspend fun descargarYValidarProducto(id: Int): Boolean {
+        var exito = false
+        runOnUiThread { alerta?.Cargando() }
+        
         try {
-            inventarioReal.obtenerProductoPorId(this@InventarioTiempoReal, id)
-            inventarioReal.obtenerInventarioPreciosPorId(this@InventarioTiempoReal, id)
-            inventarioReal.obtenerInventarioUnidadesPorId(this@InventarioTiempoReal, id)
-            inventarioReal.obtenerInventarioLotesPorId(this@InventarioTiempoReal, id)
-        }catch (e:Exception){
-            println("ERROR AL CARGAR LOS DATOS DEL PRODUCTO -> " + e.message)
+            // Realizamos las 4 peticiones y verificamos que todas devuelvan true
+            val r1 = inventarioReal.obtenerProductoPorId(this, id)
+            val r2 = inventarioReal.obtenerInventarioPreciosPorId(this, id)
+            val r3 = inventarioReal.obtenerInventarioUnidadesPorId(this, id)
+            val r4 = inventarioReal.obtenerInventarioLotesPorId(this, id)
+
+            if (r1 && r2 && r3 && r4) {
+                exito = true
+            } else {
+                runOnUiThread {
+                    Toast.makeText(this, "ERROR DE CONEXIÓN: No se pudieron descargar todos los datos del producto", Toast.LENGTH_LONG).show()
+                }
+            }
+        } catch (e: Exception) {
+            runOnUiThread {
+                Toast.makeText(this, "ERROR INESPERADO: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        } finally {
+            runOnUiThread { alerta?.dismisss() }
         }
+        return exito
     }
 
     private fun regresarInicio(){

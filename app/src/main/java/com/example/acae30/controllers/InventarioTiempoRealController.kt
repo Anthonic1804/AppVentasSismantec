@@ -14,6 +14,7 @@ import com.example.acae30.data.remote.api.inventario.InventarioApi
 import com.example.acae30.data.remote.dto.InventarioTiempoRealDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.time.LocalDate
 
 class InventarioTiempoRealController {
@@ -70,14 +71,13 @@ class InventarioTiempoRealController {
     //------------------------------------------------------------------
     //Funcion para buscar el producto por id
     //------------------------------------------------------------------
-    suspend fun obtenerProductoPorId(context: Context, idProducto: Int){
+    suspend fun obtenerProductoPorId(context: Context, idProducto: Int): Boolean {
 
         withContext(Dispatchers.Main){
             iniciarlizarVariables(context)
         }
 
-        withContext(Dispatchers.IO){
-
+        return withContext(Dispatchers.IO){
             val baseUrl = servidor
             val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
             inventarioDao = base.inventarioDao()
@@ -135,37 +135,36 @@ class InventarioTiempoRealController {
                             tipo_fiscal = it.tipo_fiscal
                         )
                     }
-
                     inventarioDao.insertarTodos(item)
+                    true
+                } else {
+                    Timber.w("Producto no encontrado en el servidor (ID: $idProducto)")
+                    false
                 }
             }catch (e:Exception){
-                println("ERROR AL INSERTAR EL PRODUCTO EN TIEMPO REAL -> " + e.message)
+                Timber.e(e, "ERROR AL OBTENER PRODUCTO POR ID")
+                false
             }
         }
-
     }
 
     //-------------------------------------------
     //Funcion para obtener Inventario Precios por Id
     //-------------------------------------------
-    suspend fun obtenerInventarioPreciosPorId(context: Context, idProducto: Int) {
+    suspend fun obtenerInventarioPreciosPorId(context: Context, idProducto: Int): Boolean {
 
         withContext(Dispatchers.Main){
             iniciarlizarVariables(context)
         }
 
-        withContext(Dispatchers.IO){
-
+        return withContext(Dispatchers.IO){
             val baseUrl = servidor
             inventarioDao = base.inventarioDao()
             val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             try {
-
                 val respuesta = api.obtenerProductoPreciosPorId(idProducto)
-
                 if (respuesta.isNotEmpty() && respuesta.last().id != 0) {
-
                     val entidades = respuesta.map {
                         InventarioPreciosEntity(
                             id = it.id,
@@ -182,36 +181,32 @@ class InventarioTiempoRealController {
                             id_inventario_unidad = it.id_inventario_unidad ?: 0
                         )
                     }
-
                     inventarioDao.insertarEscalas(entidades)
-
                 }
-
+                true // Retornar true aunque esté vacío (no es error de conexión)
             }catch (e:Exception){
-                println("Error de Escalas General: ${e.message}")
+                Timber.e(e, "Error al obtener escalas")
+                false
             }
-
         }
     }
 
     //------------------------------------------
     //Funcion para cargar Lotes por Id
     //------------------------------------------
-    suspend fun obtenerInventarioLotesPorId(context: Context, idProducto: Int){
+    suspend fun obtenerInventarioLotesPorId(context: Context, idProducto: Int): Boolean {
 
         withContext(Dispatchers.Main){
             iniciarlizarVariables(context)
         }
 
-        withContext(Dispatchers.IO){
+        return withContext(Dispatchers.IO){
             val baseUrl: String = servidor
             inventarioDao = base.inventarioDao()
             val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             try {
-
                 val respuesta = api.obtenerProductoLotesPorId(idProducto)
-
                 if(respuesta.isNotEmpty() && respuesta.last().id != 0){
                     val entidades = respuesta.map {
                         InventarioLotesEntity(
@@ -224,37 +219,32 @@ class InventarioTiempoRealController {
                             fracciones = it.fracciones ?: 0f
                         )
                     }
-
                     inventarioDao.insertarLotes(entidades)
-
                 }
+                true // Retornar true aunque esté vacío
             }catch (e:Exception){
-                println("ERROR AL OBTENER INVENTARIO LOTES GENERAL: ${e.message}")
+                Timber.e(e, "Error al obtener lotes")
+                false
             }
         }
-
     }
 
     //---------------------------------------------
     //Funcion para cargar las unidades de medida por Id
     //---------------------------------------------
-    suspend fun obtenerInventarioUnidadesPorId( context: Context, idProducto: Int){
+    suspend fun obtenerInventarioUnidadesPorId( context: Context, idProducto: Int): Boolean {
 
         withContext(Dispatchers.Main){
             iniciarlizarVariables(context)
         }
 
-        withContext(Dispatchers.IO){
+        return withContext(Dispatchers.IO){
             val baseUrl = servidor
-
             inventarioDao = base.inventarioDao()
-
             val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             try {
-
                 val respuesta = api.obtenerProductoUnidadesPorId(idProducto)
-
                 if(respuesta.isNotEmpty() && respuesta.last().id != 0){
                     val entidades = respuesta.map {
                         InventarioUnidadesEntity(
@@ -265,14 +255,13 @@ class InventarioTiempoRealController {
                             Unidades = it.unidades ?: ""
                         )
                     }
-
                     inventarioDao.insertarUnidades(entidades)
                 }
-
+                true // Retornar true aunque esté vacío
             }catch (e:Exception){
-                println("ERROR GENERAL DE INVENTARIO UNIDADES -> ${e.message}")
+                Timber.e(e, "Error al obtener unidades")
+                false
             }
-
         }
     }
 
