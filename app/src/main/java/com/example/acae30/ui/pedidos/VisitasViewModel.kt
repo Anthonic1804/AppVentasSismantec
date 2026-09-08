@@ -90,25 +90,35 @@ class VisitasViewModel(
     fun iniciarVisita(idCliente: Int, nombreCliente: String, idVendedor: Int, gps: String) {
         viewModelScope.launch {
             _cargando.value = true
-            val fecha = funciones.getFechaHoraProceso() ?: ""
-            val idLocal = iniciarVisitaUseCase(idCliente, nombreCliente, idVendedor, gps, fecha)
-            
-            val visita = visitasRepository.obtenerVisitaLocalPorId(idLocal.toInt())
-            _estadoVisita.value = EstadoVisita.Activa(idLocal.toInt(), visita?.idVisita ?: 0)
-            _cargando.value = false
-            _mensaje.value = "Visita Iniciada"
+            try {
+                val fecha = funciones.getFechaHoraProceso() ?: ""
+                val idLocal = iniciarVisitaUseCase(idCliente, nombreCliente, idVendedor, gps, fecha)
+                
+                val visita = visitasRepository.obtenerVisitaLocalPorId(idLocal.toInt())
+                _estadoVisita.value = EstadoVisita.Activa(idLocal.toInt(), visita?.idVisita ?: 0)
+                _mensaje.value = "Visita Iniciada"
+            } catch (e: Exception) {
+                _mensaje.value = "Error al iniciar visita: ${e.message}"
+            } finally {
+                _cargando.value = false
+            }
         }
     }
 
     fun finalizarVisita(idLocal: Int, idVendedor: Int, gps: String) {
         viewModelScope.launch {
             _cargando.value = true
-            val fecha = funciones.getFechaHoraProceso() ?: ""
-            finalizarVisitaUseCase(idLocal, idVendedor, gps, fecha)
-            _estadoVisita.value = EstadoVisita.Finalizada
-            _cargando.value = false
-            _mensaje.value = "Visita Finalizada"
-            _navegacion.value = EventoNavegacion.IrAPedidoPrincipal
+            try {
+                val fecha = funciones.getFechaHoraProceso() ?: ""
+                finalizarVisitaUseCase(idLocal, idVendedor, gps, fecha)
+                _estadoVisita.value = EstadoVisita.Finalizada
+                _mensaje.value = "Visita Finalizada"
+                _navegacion.value = EventoNavegacion.IrAPedidoPrincipal
+            } catch (e: Exception) {
+                _mensaje.value = "Error al finalizar visita: ${e.message}"
+            } finally {
+                _cargando.value = false
+            }
         }
     }
 

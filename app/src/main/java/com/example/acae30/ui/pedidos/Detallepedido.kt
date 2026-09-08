@@ -221,6 +221,13 @@ class Detallepedido : AppCompatActivity() {
 
         binding.btnenviar.setOnClickListener {
             if(isProcessing) return@setOnClickListener
+
+            // VALIDACIÓN: El pedido debe tener al menos un producto para ser enviado
+            if (cantidadItemsPedido <= 0) {
+                Toast.makeText(this, "NO PUEDE ENVIAR UN PEDIDO SIN PRODUCTOS REGISTRADOS", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             deshabilitarOpciones()
             enviandoPedido = true
             guardandoPedido = false
@@ -234,8 +241,15 @@ class Detallepedido : AppCompatActivity() {
 
         binding.btnguardar.setOnClickListener {
             if(isProcessing) return@setOnClickListener
+
+            // VALIDACIÓN: El pedido debe tener al menos un producto para ser guardado
+            if (cantidadItemsPedido <= 0) {
+                Toast.makeText(this, "NO PUEDE GUARDAR UN PEDIDO SIN PRODUCTOS REGISTRADOS", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             deshabilitarOpciones()
-            if(cantidadItemsPedido > 0 && cantidadItemsPedido <= limiteItemPedido){
+            if(cantidadItemsPedido <= limiteItemPedido){
                 guardandoPedido = true
                 enviandoPedido = false
                 // Al guardar localmente NO validamos crédito con el servidor, 
@@ -243,7 +257,7 @@ class Detallepedido : AppCompatActivity() {
                 alertaPago(total)
             } else {
                 habilitarOpciones()
-                Toast.makeText(this, "VERIFIQUE LOS PRODUCTOS", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "EXCEDE EL LIMITE DE ITEMS", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -337,6 +351,7 @@ class Detallepedido : AppCompatActivity() {
                     binding.tvsucursal.visibility = View.VISIBLE
                     binding.sinSucursal.visibility = View.GONE
                 }
+                validarSelecciones()
             }
         }
 
@@ -380,6 +395,7 @@ class Detallepedido : AppCompatActivity() {
 
                 validarProcesoPedidosUI(it)
                 actualizarSeleccionesSpinners()
+                if (from == "visita") validarSelecciones()
             }
         }
 
@@ -631,7 +647,8 @@ class Detallepedido : AppCompatActivity() {
                 binding.tvTipoenvio.visibility = View.GONE
 
                 binding.btnenviar.visibility = View.VISIBLE
-                binding.imbtnatras.visibility = View.VISIBLE 
+                // REFACTORIZACIÓN: Se oculta el botón atrás para obligar a usar Eliminar Pedido
+                binding.imbtnatras.visibility = View.GONE 
                 binding.btnexportar.visibility = View.GONE
                 binding.btnInvalidar.visibility = View.GONE
 
@@ -790,8 +807,16 @@ class Detallepedido : AppCompatActivity() {
         }
     }
 
-    private fun validarSelecciones(sucursalSelec:String){
-        val e = sucursalSelec != "-- SELECCIONE UNA SUCURSAL --" && sucursalSelec != "-- TOQUE PARA SELECCIONAR SUCURSAL --"
+    private fun validarSelecciones(){
+        // Si el cliente tiene sucursales registradas, es obligatorio seleccionar una.
+        // Si no tiene sucursales, permitimos continuar.
+        val tieneSucursales = listaSucursalesFull.isNotEmpty()
+        val sucursalSeleccionada = !nombreSucursalPedido.isNullOrEmpty() && 
+                                  nombreSucursalPedido != "-- SELECCIONE UNA SUCURSAL --" && 
+                                  nombreSucursalPedido != "-- TOQUE PARA SELECCIONAR SUCURSAL --"
+        
+        val e = if (tieneSucursales) sucursalSeleccionada else true
+        
         binding.btnguardar.isEnabled = e
         binding.btnenviar.isEnabled = e
         binding.btnenviar.setBackgroundResource(if(e) R.drawable.border_btnactualizar else R.drawable.border_btndisable)
@@ -816,8 +841,8 @@ class Detallepedido : AppCompatActivity() {
             binding.spSucursal.adapter = adapterVisual
             binding.spSucursal.setSelection(0)
             
-            // Persistir selección
-            validarSelecciones(nombreSucursalPedido!!)
+            // Persistir selección y validar botones
+            validarSelecciones()
             viewModel.seleccionarSucursal(idpedido, idcliente, nombreSucursalPedido!!)
             
             dialog.dismiss()

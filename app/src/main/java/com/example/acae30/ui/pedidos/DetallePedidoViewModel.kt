@@ -242,15 +242,22 @@ class DetallePedidoViewModel(
 
     /**
      * Envia el pedido al servidor de forma asíncrona.
+     * REFACTORIZACIÓN: Refuerzo de seguridad con try-catch-finally para asegurar cierre de diálogos.
      */
     fun enviarPedido(idPedido: Int) {
         viewModelScope.launch {
             _cargando.value = true
-            val éxito = enviarPedidoUseCase(idPedido)
-            // REFACTORIZACIÓN: Mantener la animación de envío por al menos 3 segundos si fue exitoso
-            if (éxito) delay(3000)
-            _envioExitoso.value = éxito
-            _cargando.value = false
+            try {
+                val éxito = enviarPedidoUseCase(idPedido)
+                // Mantener la animación de envío por al menos 3 segundos si fue exitoso
+                if (éxito) delay(3000)
+                _envioExitoso.value = éxito
+            } catch (e: Exception) {
+                Timber.e(e, "Error inesperado al enviar pedido")
+                _envioExitoso.value = false
+            } finally {
+                _cargando.value = false
+            }
         }
     }
 
@@ -286,9 +293,14 @@ class DetallePedidoViewModel(
     fun obtenerDatosImpresion(idPedido: Int) {
         viewModelScope.launch {
             _cargando.value = true
-            val data = getTicketDataUseCase(idPedido)
-            _ticketData.value = data
-            _cargando.value = false
+            try {
+                val data = getTicketDataUseCase(idPedido)
+                _ticketData.value = data
+            } catch (e: Exception) {
+                Timber.e(e, "Error al obtener datos de impresión")
+            } finally {
+                _cargando.value = false
+            }
         }
     }
 
