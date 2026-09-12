@@ -17,6 +17,7 @@ class AlertDialogo(act: Activity, context: Context) {
     }
 
     fun Cargando() {
+        dismisss() // Cerrar cualquier diálogo previo para evitar fugas de memoria o bloqueos visuales
         val ale: AlertDialog.Builder = AlertDialog.Builder(actividad)
         val ly: LayoutInflater = actividad.layoutInflater
         ale.setView(ly.inflate(R.layout.alerta_carga, null))
@@ -27,6 +28,7 @@ class AlertDialogo(act: Activity, context: Context) {
     }
 
     fun Enviando() {
+        dismisss() // Cerrar previo
         val ale: AlertDialog.Builder = AlertDialog.Builder(actividad)
         val ly: LayoutInflater = actividad.layoutInflater
         ale.setView(ly.inflate(R.layout.alerta_enviando, null))
@@ -37,6 +39,7 @@ class AlertDialogo(act: Activity, context: Context) {
     }
 
     fun pedidoEnviado() {
+        dismisss() // Cerrar previo
         val ale: AlertDialog.Builder = AlertDialog.Builder(actividad)
         val ly: LayoutInflater = actividad.layoutInflater
         ale.setView(ly.inflate(R.layout.alerta_enviado, null))
@@ -47,6 +50,7 @@ class AlertDialogo(act: Activity, context: Context) {
     }
 
     fun pedidoGuardado() {
+        dismisss() // Cerrar previo
         val ale: AlertDialog.Builder = AlertDialog.Builder(actividad)
         val ly: LayoutInflater = actividad.layoutInflater
         ale.setView(ly.inflate(R.layout.alerta_guardado, null))

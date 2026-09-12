@@ -193,6 +193,7 @@ class Visita : AppCompatActivity() {
                             putExtra("visitaid", it.idVisita)
                             putExtra("idapi", it.idApi)
                             putExtra("from", "visita")
+                            putExtra("gps", "$latitud,$longitud")
                         }
                         startActivity(intento)
                         finish()

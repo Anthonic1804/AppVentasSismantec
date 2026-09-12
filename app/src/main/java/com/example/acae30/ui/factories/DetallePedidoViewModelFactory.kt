@@ -4,13 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.acae30.domain.usecase.ActualizarSucursalPedidoUseCase
 import com.example.acae30.domain.usecase.GetSucursalesUseCase
-import com.example.acae30.domain.usecase.pedidos.ActualizarTotalesFiscalesUseCase
-import com.example.acae30.domain.usecase.pedidos.CalcularTotalesFiscalesUseCase
-import com.example.acae30.domain.usecase.pedidos.EliminarPedidoUseCase
-import com.example.acae30.domain.usecase.pedidos.EnviarPedidoUseCase
-import com.example.acae30.domain.usecase.pedidos.GetDetallePedidoFlowUseCase
-import com.example.acae30.domain.usecase.pedidos.GetTicketDataUseCase
-import com.example.acae30.domain.usecase.pedidos.ObtenerCantidadItemsUseCase
+import com.example.acae30.domain.usecase.pedidos.*
 import com.example.acae30.ui.pedidos.DetallePedidoViewModel
 
 class DetallePedidoViewModelFactory(
@@ -22,7 +16,10 @@ class DetallePedidoViewModelFactory(
     private val actualizarTotalesFiscalesUseCase: ActualizarTotalesFiscalesUseCase,
     private val enviarPedidoUseCase: EnviarPedidoUseCase,
     private val eliminarPedidoUseCase: EliminarPedidoUseCase,
-    private val getTicketDataUseCase: GetTicketDataUseCase
+    private val getTicketDataUseCase: GetTicketDataUseCase,
+    private val getPedidosBorradoresUseCase: GetPedidosBorradoresUseCase,
+    private val crearPedidoUseCase: CrearPedidoUseCase,
+    private val actualizarNombreClienteUseCase: ActualizarNombreClienteUseCase
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -37,7 +34,10 @@ class DetallePedidoViewModelFactory(
                 actualizarTotalesFiscalesUseCase,
                 enviarPedidoUseCase,
                 eliminarPedidoUseCase,
-                getTicketDataUseCase
+                getTicketDataUseCase,
+                getPedidosBorradoresUseCase,
+                crearPedidoUseCase,
+                actualizarNombreClienteUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

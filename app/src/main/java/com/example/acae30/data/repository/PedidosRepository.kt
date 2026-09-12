@@ -115,6 +115,11 @@ class PedidosRepository(
     fun obtenerTodosLosPedidosFlow() = dao.obtenerTodosLosPedidosFlow()
 
     //---------------------------------------------------------
+    // REFACTORIZACIÓN MULTIPLES PEDIDOS: Borradores globales
+    //---------------------------------------------------------
+    fun obtenerTodosLosPedidosBorradores() = dao.obtenerTodosLosPedidosBorradores()
+
+    //---------------------------------------------------------
     // Lista síncrona para el proceso de sincronización
     //---------------------------------------------------------
     suspend fun obtenerPedidosNoTransmitidosLocal() = dao.obtenerListaPedidosNoTransmitidos()
@@ -261,6 +266,8 @@ class PedidosRepository(
         dao.actualizarTotalCabeceraPedido(idPedido, suma)
     }
 
+    suspend fun actualizarNombreClienteLocal(idPedido: Int, nombre: String) = dao.actualizarNombreCliente(idPedido, nombre)
+
     suspend fun obtenerCantidadItemsPedidoLocal(idPedido: Int) = dao.obtenerCantidadItemsPedido(idPedido)
 
     // --- Helper Sync Methods for Printing and Domain Logic ---
@@ -273,8 +280,8 @@ class PedidosRepository(
 
     fun obtenerDetallePedidoFlow(idPedido: Int) = dao.obtenerDetallePedidoFlow(idPedido)
 
-    suspend fun actualizarTotalesFiscalesLocal(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double) =
-        dao.actualizarTotalesFiscales(idPedido, sumas, iva, ivaPerci)
+    suspend fun actualizarTotalesFiscalesLocal(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double, totalFinal: Double) =
+        dao.actualizarTotalesFiscales(idPedido, sumas, iva, ivaPerci, totalFinal)
 
     //---------------------------------------------------------
     // REFACTORIZACIÓN MVVM: ACTUALIZAR SUCURSAL

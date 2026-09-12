@@ -42,6 +42,15 @@
                 android:textSize="18sp"
                 android:textStyle="bold"/>
 
+            <ImageButton
+                android:id="@+id/btnGestionPedidos"
+                android:layout_width="45dp"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_file"
+                app:tint="@color/colorAccent"
+                android:contentDescription="Gestionar Pedidos" />
+
             <Button
                 android:id="@+id/btnAgregarComentario"
                 android:layout_width="150dp"

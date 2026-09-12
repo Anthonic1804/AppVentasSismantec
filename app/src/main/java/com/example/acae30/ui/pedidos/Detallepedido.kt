@@ -53,6 +53,8 @@ import com.example.acae30.controllers.InventarioController
 import com.example.acae30.controllers.PedidosController
 import com.example.acae30.controllers.VisitaController
 import com.example.acae30.data.local.appDatabase.AppDatabase
+import com.example.acae30.data.local.entity.ClienteSucursalEntity
+import com.example.acae30.data.local.entity.PedidosEntity
 import com.example.acae30.data.remote.api.clientes.ClientesApi
 import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
 import com.example.acae30.data.repository.ClientesRepository
@@ -61,20 +63,25 @@ import com.example.acae30.data.repository.SettingsRepository
 import com.example.acae30.databinding.ActivityDetallepedidoBinding
 import com.example.acae30.domain.usecase.ActualizarSucursalPedidoUseCase
 import com.example.acae30.domain.usecase.GetSucursalesUseCase
+import com.example.acae30.domain.usecase.pedidos.ActualizarNombreClienteUseCase
 import com.example.acae30.domain.usecase.pedidos.ActualizarTotalesFiscalesUseCase
 import com.example.acae30.domain.usecase.pedidos.CalcularTotalesFiscalesUseCase
+import com.example.acae30.domain.usecase.pedidos.CrearPedidoUseCase
 import com.example.acae30.domain.usecase.pedidos.EliminarPedidoUseCase
 import com.example.acae30.domain.usecase.pedidos.EnviarPedidoUseCase
 import com.example.acae30.domain.usecase.pedidos.GetDetallePedidoFlowUseCase
 import com.example.acae30.domain.usecase.pedidos.GetTicketDataUseCase
+import com.example.acae30.domain.usecase.pedidos.GetPedidosBorradoresUseCase
 import com.example.acae30.domain.usecase.pedidos.ObtenerCantidadItemsUseCase
 import com.example.acae30.listas.PedidoDetalleAdapter
+import com.example.acae30.listas.PedidosBorradoresAdapter
 import com.example.acae30.listas.SucursalBusquedaAdapter
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.JSONmodels.CabezeraPedidoSend
 import com.example.acae30.modelos.Sucursales
 import com.example.acae30.modelos.dataPedidos
+import com.example.acae30.ui.clientes.Clientes
 import com.example.acae30.ui.factories.DetallePedidoViewModelFactory
 import com.example.acae30.ui.inventario.Inventario
 import com.example.acae30.ui.inventario.InventarioTiempoReal
@@ -123,6 +130,8 @@ class Detallepedido : AppCompatActivity() {
     private var tipoDocumento: String = ""
     private var terminosPedidos: String? = null
     private var nombreSucursalPedido: String? = ""
+    private var latitud = "0"
+    private var longitud = "0"
 
     private var alerta: AlertDialogo? = null
     private var funciones = Funciones()
@@ -136,7 +145,7 @@ class Detallepedido : AppCompatActivity() {
     // REFACTORIZACIÓN MVVM: ViewModel centralizado
     private lateinit var viewModel: DetallePedidoViewModel
     private lateinit var adapterDetalle: PedidoDetalleAdapter
-    private var listaSucursalesFull: List<com.example.acae30.data.local.entity.ClienteSucursalEntity> = emptyList()
+    private var listaSucursalesFull: List<ClienteSucursalEntity> = emptyList()
 
     private var enviandoPedido = false
     private var guardandoPedido = false
@@ -166,6 +175,13 @@ class Detallepedido : AppCompatActivity() {
         idapi = intento.getIntExtra("idapi", 0)
         from = intento.getStringExtra("from").toString()
         FacturaExportacion = intento.getBooleanExtra("facturaExportacion", false)
+        
+        // GPS
+        val gpsParam = intento.getStringExtra("gps") ?: "0,0"
+        if (gpsParam.contains(",")) {
+            latitud = gpsParam.split(",")[0]
+            longitud = gpsParam.split(",")[1]
+        }
 
         preferencias = getSharedPreferences(instancia, Context.MODE_PRIVATE)
         
@@ -178,11 +194,15 @@ class Detallepedido : AppCompatActivity() {
         puerto = preferencias.getInt("puerto", 0)
         P_Imprimir_TK_Venta = preferencias.getBoolean("P_Imprimir_TK_Venta", false)
         inventarioTiempoReal = preferencias.getBoolean("inventarioTiempoReal", false)
+        val tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
 
         // CONFIGURACIÓN INICIAL DE UI
         binding.tvDocumentoSeleccionado.visibility = View.GONE
         binding.tvTipoenvio.visibility = View.GONE
         binding.sinSucursal.visibility = View.GONE
+        
+        // MULTIPLES PEDIDOS: Solo visible si tipoVentaLocal es true
+        binding.btnGestionPedidos.visibility = if (tipoVentaLocal) View.VISIBLE else View.GONE
 
         // NUEVO PROCESO: Cargar todo de forma asíncrona mediante el ViewModel
         setupViewModelObservers()
@@ -190,11 +210,22 @@ class Detallepedido : AppCompatActivity() {
         viewModel.cargarInfoPedido(idpedido, idcliente, this)
         viewModel.observarDetallePedido(idpedido)
         viewModel.cargarCantidadItems(idpedido)
+        viewModel.observarBorradores()
 
         binding.imbtnatras.setOnClickListener { menuPedidos() }
+        
+        binding.btnGestionPedidos.setOnClickListener {
+            if (from == "visita") {
+                actualizarNombreSiProcede()
+                mostrarDialogoPedidosAbiertos()
+            } else {
+                Toast.makeText(this, "OPCIÓN DISPONIBLE SOLO EN NUEVO PEDIDO", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         binding.imgbtnadd.setOnClickListener {
             if (cantidadItemsPedido < limiteItemPedido) {
+                actualizarNombreSiProcede()
                 val clase = if(inventarioTiempoReal) InventarioTiempoReal::class.java else Inventario::class.java
                 val intentAdd = Intent(this, clase).apply {
                     putExtra("idcliente", idcliente)
@@ -250,6 +281,7 @@ class Detallepedido : AppCompatActivity() {
 
             deshabilitarOpciones()
             if(cantidadItemsPedido <= limiteItemPedido){
+                actualizarNombreSiProcede()
                 guardandoPedido = true
                 enviandoPedido = false
                 // Al guardar localmente NO validamos crédito con el servidor, 
@@ -295,7 +327,10 @@ class Detallepedido : AppCompatActivity() {
             ActualizarTotalesFiscalesUseCase(pedidosRepository),
             EnviarPedidoUseCase(pedidosRepository, this),
             EliminarPedidoUseCase(pedidosRepository),
-            GetTicketDataUseCase(pedidosRepository, clientesRepository, settingsRepository)
+            GetTicketDataUseCase(pedidosRepository, clientesRepository, settingsRepository),
+            GetPedidosBorradoresUseCase(pedidosRepository),
+            CrearPedidoUseCase(pedidosRepository, clientesRepository),
+            ActualizarNombreClienteUseCase(pedidosRepository)
         )
         viewModel = androidx.lifecycle.ViewModelProvider(this, factory)[DetallePedidoViewModel::class.java]
     }
@@ -401,7 +436,15 @@ class Detallepedido : AppCompatActivity() {
 
         viewModel.infoCliente.observe(this) { info ->
             infoCliente = info
+            codigo = info?.Codigo ?: ""
             terminosDelCliente(info?.Terminos_cliente ?: "Contado")
+            
+            // REFACTORIZACIÓN MULTIPLES PEDIDOS: Si el código es 01, permitimos editar el nombre
+            if (from == "visita" && codigo == "01") {
+                binding.txtCliente.isEnabled = true
+            } else if (from != "ver") {
+                binding.txtCliente.isEnabled = false
+            }
         }
 
         viewModel.validacionSaldo.observe(this) { resultado ->
@@ -419,7 +462,11 @@ class Detallepedido : AppCompatActivity() {
 
         viewModel.envioExitoso.observe(this) { exito ->
             exito?.let {
-                if (it) { descargarInventario(); pedidoEnviado() } 
+                if (it) { 
+                    descargarInventario()
+                    Toast.makeText(this, "PEDIDO ENVIADO EXITOSAMENTE", Toast.LENGTH_SHORT).show()
+                    pedidoEnviado() 
+                } 
                 else { habilitarOpciones(); funciones.mostrarAlerta("ERROR AL ENVIAR EL PEDIDO", this, binding.lienzo) }
                 viewModel.resetEnvioStatus()
             }
@@ -428,7 +475,20 @@ class Detallepedido : AppCompatActivity() {
         viewModel.eliminacionExitosa.observe(this) { exito ->
             exito?.let {
                 if (it) {
-                    if(idvisita > 0) regresarVisita() else { updateSharedPreferencesFinalizarVisita(); menuPedidos() }
+                    val tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
+                    // MULTIPLES PEDIDOS: Si hay más borradores y estamos en modo local, cambiamos al siguiente
+                    val listaBorradores = viewModel.pedidosBorradores.value ?: emptyList()
+                    val siguiente = listaBorradores.firstOrNull { p -> p.id != idpedido }
+                    
+                    if (tipoVentaLocal && siguiente != null) {
+                        enviandoPedido = false // Asegurar que no se muestre animación de envío
+                        viewModel.cambiarPedidoActivo(siguiente, this)
+                        Toast.makeText(this, "PEDIDO ELIMINADO, MOSTRANDO SIGUIENTE", Toast.LENGTH_SHORT).show()
+                        habilitarOpciones()
+                    } else {
+                        // Era el último/único o no estamos en modo local, salimos
+                        finalizarVistaActual()
+                    }
                 } else {
                     habilitarOpciones()
                     funciones.mostrarAlerta("ERROR AL ELIMINAR EL PEDIDO", this, binding.lienzo)
@@ -444,10 +504,31 @@ class Detallepedido : AppCompatActivity() {
             }
         }
 
+        viewModel.pedidosBorradores.observe(this) { lista ->
+            // Se actualiza la lista en memoria para el diálogo si estuviera abierto
+            actualizarListaBorradoresDialogo(lista)
+        }
+
+        viewModel.pedidoCambiadoContexto.observe(this) { pedido ->
+            pedido?.let {
+                idpedido = it.id
+                idcliente = it.idCliente
+                nombre = it.nombreCliente
+                codigo = "" // El código se suele usar en la búsqueda, aquí ya tenemos el nombre e ID
+                
+                // Actualizar UI
+                binding.txtCliente.setText(it.nombreCliente)
+                Toast.makeText(this, "CAMBIADO A: ${it.nombreCliente}", Toast.LENGTH_SHORT).show()
+                
+                viewModel.resetPedidoCambiadoContexto()
+            }
+        }
+
         viewModel.cargando.observe(this) { cargando ->
             if (cargando) {
                 if (enviandoPedido) alerta?.Enviando() else alerta?.Cargando()
             } else {
+                // MULTIPLES PEDIDOS: Aseguramos que el diálogo se oculte ANTES de cualquier cambio de pedido
                 alerta?.dismisss()
             }
         }
@@ -455,17 +536,23 @@ class Detallepedido : AppCompatActivity() {
 
     private fun procederAlEnvio() {
         if (cantidadItemsPedido <= limiteItemPedido) {
-            if (codigo == "01") {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    pedidosController.actualizarNombreClientePedido(this@Detallepedido, binding.txtCliente.text.toString(), idpedido)
-                }
-            }
             if (cantidadItemsPedido > 0) {
+                actualizarNombreSiProcede()
                 enviandoPedido = true
                 val facturacionLocal = preferencias.getBoolean("tipoVentaLocal", false)
                 if (!facturacionLocal) alertaPago(total) else envioAlerta()
             }
         } else { habilitarOpciones(); Toast.makeText(this, "EXCEDE LIMITE DE ITEMS", Toast.LENGTH_SHORT).show() }
+    }
+
+    private fun actualizarNombreSiProcede() {
+        if (codigo == "01") {
+            val nombreIngresado = binding.txtCliente.text.toString()
+            if (nombreIngresado.isNotEmpty()) {
+                viewModel.actualizarNombreCliente(idpedido, nombreIngresado)
+                nombre = nombreIngresado // Actualizar variable local también
+            }
+        }
     }
 
     private fun setupSpinners() {
@@ -633,7 +720,10 @@ class Detallepedido : AppCompatActivity() {
                 // Flujo de creación de nuevo pedido
                 binding.tvTituloPedido.text = "NUEVO PEDIDO"
                 
-                binding.btnAgregarComentario.visibility = View.VISIBLE
+                // MULTIPLES PEDIDOS: Ocultar comentario si es venta local
+                val tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
+                binding.btnAgregarComentario.visibility = if (tipoVentaLocal) View.GONE else View.VISIBLE
+                
                 binding.imgbtnadd.visibility = View.VISIBLE
                 binding.btnguardar.visibility = View.VISIBLE
                 binding.btncancelar.visibility = View.VISIBLE
@@ -741,6 +831,11 @@ class Detallepedido : AppCompatActivity() {
                 val pagoMonto = etPago.text.toString().toFloatOrNull() ?: 0f
 
                 CoroutineScope(Dispatchers.IO).launch {
+                    // REFACTORIZACIÓN MULTIPLES PEDIDOS: Si el código es 01, guardamos el nombre ingresado
+                    if (codigo == "01") {
+                        pedidosController.actualizarNombreClientePedido(this@Detallepedido, binding.txtCliente.text.toString(), idpedido)
+                    }
+
                     // Se obtienen los valores de los campos adicionales si existen
                     val bancoCheque = findViewById<TextInputEditText>(R.id.tvBanco).text.toString()
                     val cuentaCheque = findViewById<TextInputEditText>(R.id.tvNumCuentaCheque).text.toString()
@@ -790,6 +885,22 @@ class Detallepedido : AppCompatActivity() {
     }
 
     private fun pedidoEnviado(){
+        val tipoVentaLocal = preferencias.getBoolean("tipoVentaLocal", false)
+        val listaBorradores = viewModel.pedidosBorradores.value ?: emptyList()
+        val siguiente = listaBorradores.firstOrNull { p -> p.id != idpedido }
+
+        // Resetear flag de envío para que el siguiente pedido muestre cargando normal si fuera necesario
+        enviandoPedido = false
+
+        if (tipoVentaLocal && siguiente != null) {
+            viewModel.cambiarPedidoActivo(siguiente, this)
+            habilitarOpciones()
+        } else {
+            finalizarVistaActual()
+        }
+    }
+
+    private fun finalizarVistaActual() {
         val visita = if (idvisita > 0) visitaController.obtenerVisitaPorID(idvisita, this@Detallepedido) else null
         if(visita != null && visita.Abierta) regresarVisita() else { updateSharedPreferencesFinalizarVisita(); menuPedidos() }
     }
@@ -821,6 +932,46 @@ class Detallepedido : AppCompatActivity() {
         binding.btnenviar.isEnabled = e
         binding.btnenviar.setBackgroundResource(if(e) R.drawable.border_btnactualizar else R.drawable.border_btndisable)
         binding.btnguardar.setBackgroundResource(if(e) R.drawable.border_btnenviar else R.drawable.border_btndisable)
+    }
+
+    private var adapterBorradores: PedidosBorradoresAdapter? = null
+    
+    private fun mostrarDialogoPedidosAbiertos() {
+        val dialog = Dialog(this)
+        val vista = LayoutInflater.from(this).inflate(R.layout.dialog_pedidos_abiertos, null)
+        dialog.setContentView(vista)
+        dialog.setCancelable(true)
+
+        val rv = vista.findViewById<RecyclerView>(R.id.rvPedidosBorradores)
+        val btnNuevo = vista.findViewById<Button>(R.id.btnNuevoPedido)
+        val btnCerrar = vista.findViewById<Button>(R.id.btnCerrar)
+
+        adapterBorradores = PedidosBorradoresAdapter(idpedido) { seleccionado ->
+            viewModel.cambiarPedidoActivo(seleccionado, this)
+            dialog.dismiss()
+        }
+
+        rv.layoutManager = LinearLayoutManager(this)
+        rv.adapter = adapterBorradores
+        
+        // Cargar lista inicial
+        viewModel.pedidosBorradores.value?.let { adapterBorradores?.submitList(it) }
+
+        btnNuevo.setOnClickListener {
+            val intentSeleccion = Intent(this@Detallepedido, Clientes::class.java)
+            startActivity(intentSeleccion)
+            finish()
+            dialog.dismiss()
+        }
+
+        btnCerrar.setOnClickListener { dialog.dismiss() }
+
+        dialog.show()
+        dialog.window?.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+    }
+
+    private fun actualizarListaBorradoresDialogo(lista: List<PedidosEntity>) {
+        adapterBorradores?.submitList(lista)
     }
 
     private fun mostrarDialogoSucursales() {

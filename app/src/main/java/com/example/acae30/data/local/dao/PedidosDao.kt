@@ -30,6 +30,12 @@ interface PedidosDao {
     """)
     fun obtenerTodosLosPedidosFlow(): Flow<List<PedidosEntity>>
 
+    //-------------------------------------------------------------
+    // REFACTORIZACIÓN MULTIPLES PEDIDOS: Obtener borradores globales
+    //-------------------------------------------------------------
+    @Query("SELECT * FROM pedidos WHERE Cerrado = 0 AND Enviado = 0 ORDER BY Id DESC")
+    fun obtenerTodosLosPedidosBorradores(): Flow<List<PedidosEntity>>
+
     //--------------------------------------------------------------
     // Confirmando el Envio del Pedido, Actualizadno el IdServidor en ROOM
     //--------------------------------------------------------------
@@ -142,15 +148,18 @@ interface PedidosDao {
     @Query("UPDATE pedidos SET Total = :total WHERE Id = :idPedido")
     suspend fun actualizarTotalCabeceraPedido(idPedido: Int, total: Double)
 
+    @Query("UPDATE pedidos SET Nombre_cliente = :nombre WHERE Id = :idPedido")
+    suspend fun actualizarNombreCliente(idPedido: Int, nombre: String)
+
     //-------------------------------------------------------
     // Actualizar totales fiscales del pedido
     //-------------------------------------------------------
     @Query("""
         UPDATE pedidos 
-        SET Sumas = :sumas, Iva = :iva, Iva_percibido = :ivaPerci 
+        SET Sumas = :sumas, Iva = :iva, Iva_percibido = :ivaPerci, Total = :totalFinal
         WHERE Id = :idPedido
     """)
-    suspend fun actualizarTotalesFiscales(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double)
+    suspend fun actualizarTotalesFiscales(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double, totalFinal: Double)
 
     //-------------------------------------------------------
     // Obtener detalle del pedido de forma reactiva (Flow)
