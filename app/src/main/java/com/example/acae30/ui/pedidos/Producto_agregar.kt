@@ -195,6 +195,9 @@ class Producto_agregar : AppCompatActivity() {
                     if (binding.tvPrecioPersonalizado.visibility == View.VISIBLE) {
                         binding.tvPrecioPersonalizado.text = String.format(Locale.getDefault(), "%.${decPrecios}f", p)
                     }
+
+                    // REFACTORIZACIÓN: Forzamos la validación al cambiar el precio para habilitar/deshabilitar el botón
+                    validarCantidad(binding.txtcantidad.text.toString())
                 }
             }
         }
@@ -379,8 +382,9 @@ class Producto_agregar : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
-                //MUESTRA EL VALOR SELECCIONADO EN EL PRECIO
-                //Toast.makeText(applicationContext, "Valor: "+parent!!.getItemAtPosition(position).toString(), Toast.LENGTH_LONG).show()
+                // REFACTORIZACIÓN: Si el precio es personalizado, ignoramos los cambios del Spinner
+                // para evitar que el precio de lista sobreescriba el convenio al cargar el adaptador.
+                if (viewModel.esPrecioPersonalizado.value) return
 
                 val nuevaCadena = parent!!.getItemAtPosition(position).toString()
 
@@ -400,7 +404,9 @@ class Producto_agregar : AppCompatActivity() {
                     idproducto!!, precio_iva, unidadActual)
 
                 Totalizar(cantidad)
-
+                
+                // REFACTORIZACIÓN: Validamos de nuevo al cambiar el precio en el spinner para habilitar/deshabilitar botón
+                validarCantidad(binding.txtcantidad.text.toString())
             }
         }
 
@@ -813,7 +819,7 @@ class Producto_agregar : AppCompatActivity() {
                 // 3. Determinar el umbral mínimo de la escala seleccionada
                 val umbralEscala = if (realFraccion > 1f) cantidadEscala * capacidadParaCalculo else cantidadEscala
 
-                // 4. Validar contra Existencias y Escalas
+                // 4. Validar contra Existencias, Escalas y Precio mayor a 0
                 if ((cantidadNormalizada > existenciaProducto || cantidad <= 0f) && sinExistencias == 0) {
                     runOnUiThread {
                         binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales"
@@ -826,9 +832,15 @@ class Producto_agregar : AppCompatActivity() {
                         binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
                         binding.btnagregar.isEnabled = false
                     }
+                } else if (precio_iva <= 0f) {
+                    runOnUiThread {
+                        // Si el precio es 0, deshabilitamos el botón para evitar errores en la venta
+                        binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
+                        binding.btnagregar.isEnabled = false
+                    }
                 } else {
                     runOnUiThread {
-                        binding.txtcantidad.error = null // LIMPÌAMOS EL ERROR SI TO DO ESTÁ BIEN
+                        binding.txtcantidad.error = null // LIMPÌAMOS EL ERROR SI TODO ESTÁ BIEN
                         binding.btnagregar.isEnabled = true
                         Totalizar(cantidad)
                         binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btnenviar)
@@ -1084,6 +1096,9 @@ class Producto_agregar : AppCompatActivity() {
         val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
         val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
 
+        // REFACTORIZACIÓN: Usamos el precio final validado por el ViewModel como fuente de verdad única.
+        val precioFinalVm = viewModel.precioFinal.value
+
         val detalle = com.example.acae30.data.local.entity.PedidoDetalleEntity(
             id = idpedidodetalle ?: 0,
             idPedido = idpedido,
@@ -1092,8 +1107,8 @@ class Producto_agregar : AppCompatActivity() {
             cantidad = cantidad.toDouble(),
             unidad = unidadActual,
             idUnidad = idUnidad,
-            precio = (precio_iva / 1.13).toDouble(),
-            precioIva = precio_iva.toDouble(),
+            precio = (precioFinalVm / 1.13),
+            precioIva = precioFinalVm.toDouble(),
             total = (totalIva / 1.13),
             totalIva = totalIva,
             precioOferta = 0.0,
@@ -1119,6 +1134,7 @@ class Producto_agregar : AppCompatActivity() {
             ordenDespacho = 0
         )
 
+        Timber.d("[PRODUCTO_AGREGAR] GUARDANDO CON TOKEN - Precio: $precioFinalVm | Total: $totalIva")
         viewModel.confirmarTokenYGuardar(codEmpleado, codigoProducto, detalle)
     }
 
@@ -1127,6 +1143,9 @@ class Producto_agregar : AppCompatActivity() {
         val bonificados = binding.txtBonificados.text.toString().toInt()
         val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
         val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
+
+        // REFACTORIZACIÓN: Usamos el precio final validado por el ViewModel como fuente de verdad única.
+        val precioFinalVm = viewModel.precioFinal.value
         
         val detalle = com.example.acae30.data.local.entity.PedidoDetalleEntity(
             id = idpedidodetalle ?: 0,
@@ -1136,8 +1155,8 @@ class Producto_agregar : AppCompatActivity() {
             cantidad = cantidad.toDouble(),
             unidad = unidadActual,
             idUnidad = idUnidad,
-            precio = (precio_iva / 1.13).toDouble(),
-            precioIva = precio_iva.toDouble(),
+            precio = (precioFinalVm / 1.13),
+            precioIva = precioFinalVm.toDouble(),
             total = (totalIva / 1.13),
             totalIva = totalIva,
             precioOferta = 0.0,
@@ -1163,6 +1182,7 @@ class Producto_agregar : AppCompatActivity() {
             ordenDespacho = 0 
         )
 
+        Timber.d("[PRODUCTO_AGREGAR] GUARDANDO PRODUCTO - Precio: $precioFinalVm | Total: $totalIva")
         viewModel.guardarProducto(detalle)
     }
 

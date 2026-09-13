@@ -41,7 +41,8 @@ Este documento sirve como registro centralizado de la refactorización a MVVM, C
 
 ### 🛒 Venta y Precios
 1. **Precio Personalizado:** Tiene prioridad absoluta sobre escalas y viñeta. **Solo aplica si la unidad es UNI**.
-2. **Bonificaciones:** 
+2. **Validación de Precio:** No se permite agregar productos con precio de $0.00. El botón de acción se deshabilita automáticamente.
+3. **Bonificaciones:** 
    - **T (Todos):** Prioridad Cliente, si no hay, usa Producto.
    - **BC (Cliente):** Solo tabla `cliente_precios`.
    - **BP (Producto):** Solo tabla `inventario`.
