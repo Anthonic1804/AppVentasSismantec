@@ -63,7 +63,6 @@ class Producto_agregar : AppCompatActivity() {
     private var codEmpleado: Int = 0
     //private var url: String? = null
     private var codigoProducto: String = ""
-    private var clienteMayorista = "N"
 
     // Variables de Arquitectura
     private lateinit var viewModel: ProductoAgregarViewModel
@@ -195,9 +194,9 @@ class Producto_agregar : AppCompatActivity() {
                     if (binding.tvPrecioPersonalizado.visibility == View.VISIBLE) {
                         binding.tvPrecioPersonalizado.text = String.format(Locale.getDefault(), "%.${decPrecios}f", p)
                     }
-
-                    // REFACTORIZACIÓN: Forzamos la validación al cambiar el precio para habilitar/deshabilitar el botón
-                    validarCantidad(binding.txtcantidad.text.toString())
+                    
+                    // REFACTORIZACIÓN: Eliminamos la llamada a Totalizar() aquí para romper el bucle infinito
+                    // El ViewModel ya calculó el total y la validación en el paso anterior.
                 }
             }
         }
@@ -249,6 +248,16 @@ class Producto_agregar : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // REFACTORIZACIÓN: Observar la cantidad mínima de la escala para validar el botón
+                viewModel.cantidadMinimaEscala.collect { min ->
+                    cantidadEscala = min
+                    // Eliminamos el llamado a validarCantidad() local
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 // Observar respuesta de Token de Autorización
                 viewModel.precioAutorizado.collect { precio ->
                     if (precio != null) {
@@ -266,6 +275,11 @@ class Producto_agregar : AppCompatActivity() {
                     if (detalle != null && proviene == "editar") {
                         // Configuramos la UI con los datos del producto ya guardado
                         configurarModoEdicion(detalle)
+                        
+                        // Mostramos el botón eliminar solo en edición
+                        binding.btneliminar.visibility = View.VISIBLE
+                    } else if (proviene != "editar") {
+                        binding.btneliminar.visibility = View.GONE
                     }
                 }
             }
@@ -304,6 +318,9 @@ class Producto_agregar : AppCompatActivity() {
                         binding.txtdescripcion.text = p.descripcion
                         codigoProducto = p.Codigo.toString()
                         
+                        // REFACTORIZACIÓN: Cargamos el listado de precios una vez que confirmamos que el producto existe
+                        cargarListadoPrecios(unidadActual)
+
                         // Si no estamos en edición, inicializamos con precio base
                         if (proviene != "editar") {
                             precio_iva = p.Precio_iva ?: 0f
@@ -349,12 +366,45 @@ class Producto_agregar : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // REFACTORIZACIÓN: Observar el ID de la escala seleccionada
+                viewModel.idEscalaSeleccionada.collect { id ->
+                    idEscala = id
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // REFACTORIZACIÓN: Observar el resultado de la validación integral (Único punto de control)
+                viewModel.validationResult.collect { result ->
+                    binding.apply {
+                        if (result.isValid) {
+                            txtcantidad.error = null
+                            btnagregar.isEnabled = true
+                            btnagregar.isClickable = true
+                            btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btnenviar)
+                            Timber.d("[UI_VALIDATION] BOTÓN AGREGAR HABILITADO")
+                        } else {
+                            if (txtcantidad.text.toString().isNotEmpty()) {
+                                txtcantidad.error = result.error
+                            }
+                            btnagregar.isEnabled = false
+                            btnagregar.isClickable = false
+                            btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
+                            Timber.d("[UI_VALIDATION] BOTÓN AGREGAR BLOQUEADO - Motivo: ${result.error}")
+                        }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 // Manejar eventos de navegación y errores
                 viewModel.uiEvent.collect { event ->
                     when (event) {
                         is ProductoAgregarViewModel.UIEvent.ProductoGuardado -> {
                             provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, null)
-                            // CÓDIGO VIEJO: provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
                         }
                         is ProductoAgregarViewModel.UIEvent.Error -> {
                             funciones.mostrarAlerta(event.mensaje, this@Producto_agregar, binding.lienzo)
@@ -372,41 +422,21 @@ class Producto_agregar : AppCompatActivity() {
 
         // Actualizar el total cuando cambie el precio
         binding.spprecio.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) {
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
 
-            }
-
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                // REFACTORIZACIÓN: Si el precio es personalizado, ignoramos los cambios del Spinner
-                // para evitar que el precio de lista sobreescriba el convenio al cargar el adaptador.
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 if (viewModel.esPrecioPersonalizado.value) return
 
                 val nuevaCadena = parent!!.getItemAtPosition(position).toString()
-
                 val valor = nuevaCadena.substringBefore(" ").toDoubleOrNull()
-
-                //MUESTRA EL VALOR SELECCIONADO DEL PRECIO
-                //Toast.makeText(applicationContext, "Valor Seleccionado: "+ valor.toString(), Toast.LENGTH_LONG).show()
 
                 if (nuevaCadena.last() == '*') {
                     precio_iva = precioEditado
                 } else {
-                    val nuevoValor = precioFromList(valor.toString())
-                    precio_iva = nuevoValor
+                    precio_iva = precioFromList(valor.toString())
                 }
 
-                cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar,
-                    idproducto!!, precio_iva, unidadActual)
-
                 Totalizar(cantidad)
-                
-                // REFACTORIZACIÓN: Validamos de nuevo al cambiar el precio en el spinner para habilitar/deshabilitar botón
-                validarCantidad(binding.txtcantidad.text.toString())
             }
         }
 
@@ -478,7 +508,7 @@ class Producto_agregar : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int,
                                         id: Long) {
                 val itemSeleccionado = binding.spunidad.selectedItem.toString()
-                
+
                 // Reiniciamos equivalencias para evitar usar datos de la unidad anterior
                 equivaleUni = 0f
                 equivaleFra = 0f
@@ -487,26 +517,30 @@ class Producto_agregar : AppCompatActivity() {
                     "UNIDAD" -> {
                         unidadActual = "UNI"
                         uniEquivale = "UNI"
-                        validarCantidad(binding.txtcantidad.text.toString())
+                        Totalizar(binding.txtcantidad.text.toString().toSafeDecimal())
                     }
                     "FRACCION" -> {
                         unidadActual = "FRA"
                         uniEquivale = "FRA"
-                        validarCantidad(binding.txtcantidad.text.toString())
+                        Totalizar(binding.txtcantidad.text.toString().toSafeDecimal())
                     }
                     else -> {
                         unidadActual = itemSeleccionado
-                        // Buscamos la equivalencia en segundo plano
+                        // 2. Buscamos la equivalencia en segundo plano
                         lifecycleScope.launch(Dispatchers.IO) {
                             val unidadMedida = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
                             withContext(Dispatchers.Main) {
                                 if(unidadMedida != null){
                                     idUnidad = unidadMedida.id ?: 0
                                     uniEquivale = unidadMedida.unidades
-                                    if (uniEquivale == "UNI") equivaleUni = unidadMedida.equivale else equivaleFra = unidadMedida.equivale
+                                    if (uniEquivale == "UNI") {
+                                        equivaleUni = unidadMedida.equivale
+                                    } else {
+                                        equivaleFra = unidadMedida.equivale
+                                    }
                                 }
                                 // Validamos SOLO cuando ya tenemos los factores de conversión actualizados
-                                validarCantidad(binding.txtcantidad.text.toString())
+                                Totalizar(binding.txtcantidad.text.toString().toSafeDecimal())
                             }
                         }
                     }
@@ -533,12 +567,16 @@ class Producto_agregar : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
 
             }
-            override fun afterTextChanged(cantidad: Editable) {
-                if(cantidad.toString() == "."){
+            override fun afterTextChanged(s: Editable) {
+                val input = s.toString()
+                if(input == "."){
                     binding.txtcantidad.setText("0.")
                     binding.txtcantidad.setSelection(binding.txtcantidad.text.length)
+                    return
                 }
-                validarCantidad(cantidad.toString())
+                val newVal = input.toSafeDecimal()
+                cantidad = newVal // Sincronizamos la variable global
+                Totalizar(newVal)
             }
         })
 
@@ -568,15 +606,10 @@ class Producto_agregar : AppCompatActivity() {
     private fun cargarOpcionesGenerales(){
         this@Producto_agregar.lifecycleScope.launch {
 
-            //  Obtener información del cliente (Solo para saber si es Mayorista)
-            val cliente = clientesController.obtenerInformacionCliente(this@Producto_agregar, idcliente!!)
-            if (cliente != null) {
-                clienteMayorista = cliente.Mayorista.toString().trim()
-            }
-
-            // Determinar la Escala inicial
-            cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar, idproducto!!, precio_iva, unidadActual)
-
+            // REFACTORIZACIÓN: La información del cliente (incluyendo si es Mayorista) 
+            // ahora la gestiona directamente el ViewModel para asegurar que las validaciones 
+            // de escalas sean infalibles.
+            
             // Configurar visibilidad de botones
             if (idpedidodetalle!! > 0) {
                 binding.btneliminar.visibility = View.VISIBLE
@@ -585,7 +618,9 @@ class Producto_agregar : AppCompatActivity() {
             }
             runOnUiThread {
                 cargarUnidadesMedida()
-                cargarListadoPrecios(unidadActual)
+                
+                // Forzamos una totalización inicial para que el VM valide el estado inicial (ej. cantidad 1 vs escala)
+                Totalizar(cantidad)
             }
         }
     }
@@ -772,117 +807,20 @@ class Producto_agregar : AppCompatActivity() {
         }
     }
 
-    //---------------------------------------
-    //Funcion utilitaria para utilizar '.' al inicio de la cantidad
-    //12-03-2026
-    //---------------------------------------
-    private fun String.toSafeDecimal(): Float {
-
-        var value = this.trim()
-
-        if (value.startsWith(".")) {
-            value = "0$value"
-        }
-
-        return value.toFloat()
-    }
-
-    //FUNCION PARA VALIDAD CANTIDAD PARA ESCARRSA
-    private fun validarCantidad(cantidadIngresada: String) {
-        lifecycleScope.launch {
-            if (cantidadIngresada.isNotEmpty()) {
-                cantidad = cantidadIngresada.toSafeDecimal()
-
-                // 1. Determinar la capacidad de fracción (si es 0 o 1, lo tratamos como base 1 para no anular valores)
-                val realFraccion = datosProducto?.Fraccion ?: 0f
-                val capacidadParaCalculo = if (realFraccion > 1f) realFraccion else 1f
-
-                // 2. Normalizar la cantidad ingresada a la unidad base de validación (Fracciones o Unidades decimales)
-                var cantidadNormalizada = 0f
-                when (unidadActual) {
-                    "UNI" -> {
-                        cantidadNormalizada = if (realFraccion > 1f) cantidad * capacidadParaCalculo else cantidad
-                    }
-                    "FRA" -> {
-                        cantidadNormalizada = cantidad
-                    }
-                    else -> {
-                        // Unidades especiales (Sixpack, etc.)
-                        if (equivaleUni > 0f) {
-                            cantidadNormalizada = if (realFraccion > 1f) (cantidad * equivaleUni) * capacidadParaCalculo else cantidad * equivaleUni
-                        } else if (equivaleFra > 0f) {
-                            cantidadNormalizada = cantidad * equivaleFra
-                        }
-                    }
-                }
-
-                // 3. Determinar el umbral mínimo de la escala seleccionada
-                val umbralEscala = if (realFraccion > 1f) cantidadEscala * capacidadParaCalculo else cantidadEscala
-
-                // 4. Validar contra Existencias, Escalas y Precio mayor a 0
-                if ((cantidadNormalizada > existenciaProducto || cantidad <= 0f) && sinExistencias == 0) {
-                    runOnUiThread {
-                        binding.txtcantidad.error = "No puede Agregar una cantidad mayor a las existencias actuales"
-                        binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
-                        binding.btnagregar.isEnabled = false
-                    }
-                } else if (cantidadNormalizada < umbralEscala && clienteMayorista == "N") {
-                    runOnUiThread {
-                        binding.txtcantidad.error = "La cantidad no es válida para el precio seleccionado"
-                        binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
-                        binding.btnagregar.isEnabled = false
-                    }
-                } else if (precio_iva <= 0f) {
-                    runOnUiThread {
-                        // Si el precio es 0, deshabilitamos el botón para evitar errores en la venta
-                        binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btndisable)
-                        binding.btnagregar.isEnabled = false
-                    }
-                } else {
-                    runOnUiThread {
-                        binding.txtcantidad.error = null // LIMPÌAMOS EL ERROR SI TODO ESTÁ BIEN
-                        binding.btnagregar.isEnabled = true
-                        Totalizar(cantidad)
-                        binding.btnagregar.setBackgroundResource(com.example.acae30.R.drawable.border_btnenviar)
-                    }
-                }
-
-            } else {
-                runOnUiThread {
-                    binding.txtcantidad.error = "Campo no puede quedar vacio"
-                    binding.btnagregar.isEnabled = false
-                    cantidad = 0.toFloat()
-                    Totalizar(cantidad)
-                }
-            }
-        }
-    }
-
-    //MODIFICACION PARA LA PAPELERIA DM
-    //EDITAR CANTIDAD DE PRODUCTO SIN BORRAR
-    //23-08-2022
-    private fun CambioCantidad() {
-        binding.txtcantidad.onFocusChangeListener = View.OnFocusChangeListener { view, hasFocus ->
-            if (hasFocus) {
-                binding.txtcantidad.setText("${String.format("", cantidad)}");
-            }
-        }
-    }
-
     private fun Totalizar(cantidad: Float) {
-        // NUEVO CÓDIGO: Delegamos el cálculo al ViewModel.
-        // Determinamos la base y el factor según la unidad seleccionada
+        // NUEVO CÓDIGO: Delegamos el cálculo y la validación al ViewModel.
         val (base, factor) = when(unidadActual) {
             "UNI" -> "UNI" to 1f
             "FRA" -> "FRA" to 1f
             else -> {
-                // Unidades adicionales (Sixpack, Cora, etc.)
                 if (equivaleUni > 0f) "UNI" to equivaleUni
                 else if (equivaleFra > 0f) "FRA" to equivaleFra
                 else "UNI" to 1f
             }
         }
 
+        // REFACTORIZACIÓN: Aseguramos que sinExistencias se pase correctamente para que el 
+        // ViewModel siempre tenga los parámetros de validación frescos.
         viewModel.recalcularValores(
             idCliente = idcliente!!,
             idProducto = idproducto!!,
@@ -890,8 +828,40 @@ class Producto_agregar : AppCompatActivity() {
             unidad = unidadActual,
             unidadBase = base,
             factorEquivalencia = factor,
-            tipoBonif = tipoBonificacion
+            tipoBonif = tipoBonificacion,
+            precioSeleccionadoUi = precio_iva,
+            sinExistencias = sinExistencias
         )
+    }
+
+    //---------------------------------------
+    //Funcion utilitaria para utilizar '.' al inicio de la cantidad
+    //12-03-2026
+    //---------------------------------------
+    private fun String.toSafeDecimal(): Float {
+        val value = this.trim()
+        if (value.isEmpty() || value == ".") return 0f
+        
+        return try {
+            val formattedValue = if (value.startsWith(".")) "0$value" else value
+            formattedValue.toFloat()
+        } catch (e: Exception) {
+            0f
+        }
+    }
+
+    // MODIFICACION PARA LA PAPELERIA DM
+    // EDITAR CANTIDAD DE PRODUCTO SIN BORRAR
+    // 23-08-2022
+    private fun CambioCantidad() {
+        binding.txtcantidad.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                val currentText = binding.txtcantidad.text.toString()
+                if (currentText == "0" || currentText == "0.00") {
+                    binding.txtcantidad.setText("")
+                }
+            }
+        }
     }
 
     @Deprecated("Deprecated in Java")

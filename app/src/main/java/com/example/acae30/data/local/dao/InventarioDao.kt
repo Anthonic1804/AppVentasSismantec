@@ -90,12 +90,12 @@ interface InventarioDao {
     ) : Inventario?
 
     //-------------------------------------------------------
-    // Obtener escalas de precios por producto y unidad
+    // REFACTORIZACIÓN MVVM: Obtener escalas de precios por producto y unidad (con TRIM para evitar espacios)
     //-------------------------------------------------------
     @Query("""
         SELECT * FROM inventario_precios 
         WHERE id_inventario = :idInventario 
-        AND (unidad = :unidad OR unidad = '')
+        AND (TRIM(unidad) = TRIM(:unidad) OR TRIM(unidad) = '')
         ORDER BY cantidad ASC
     """)
     suspend fun obtenerEscalasPrecios(idInventario: Int, unidad: String): List<InventarioPreciosEntity>

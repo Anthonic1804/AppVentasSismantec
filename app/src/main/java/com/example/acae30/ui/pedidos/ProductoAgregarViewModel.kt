@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.acae30.data.local.entity.InventarioLotesEntity
 import com.example.acae30.data.local.entity.PedidoDetalleEntity
 import com.example.acae30.data.local.models.Inventario
+import com.example.acae30.data.repository.ClientesRepository
 import com.example.acae30.data.repository.InventarioRepository
 import com.example.acae30.domain.usecase.inventario.CalcularBonificacionesUseCase
 import com.example.acae30.domain.usecase.inventario.CalcularPrecioFinalUseCase
@@ -19,6 +20,7 @@ import timber.log.Timber
 
 class ProductoAgregarViewModel(
     private val inventarioRepository: InventarioRepository,
+    private val clientesRepository: ClientesRepository,
     private val gestionarDetalleUseCase: GestionarDetallePedidoUseCase,
     private val calcularPrecioUseCase: CalcularPrecioFinalUseCase,
     private val calcularBonificacionesUseCase: CalcularBonificacionesUseCase,
@@ -30,6 +32,10 @@ class ProductoAgregarViewModel(
     // Información del producto actual
     private val _producto = MutableStateFlow<Inventario?>(null)
     val producto = _producto.asStateFlow()
+
+    // Estado de Mayorista del cliente
+    private val _esMayorista = MutableStateFlow(false)
+    val esMayorista = _esMayorista.asStateFlow()
 
     // Listado de lotes para el producto
     private val _listaLotes = MutableStateFlow<List<InventarioLotesEntity>>(emptyList())
@@ -58,6 +64,10 @@ class ProductoAgregarViewModel(
     private val _precioFinal = MutableStateFlow(0f)
     val precioFinal = _precioFinal.asStateFlow()
 
+    // Cantidad mínima requerida según la escala seleccionada
+    private val _cantidadMinimaEscala = MutableStateFlow(0f)
+    val cantidadMinimaEscala = _cantidadMinimaEscala.asStateFlow()
+
     // Indica si el precio actual viene de la tabla cliente_precios
     private val _esPrecioPersonalizado = MutableStateFlow(false)
     val esPrecioPersonalizado = _esPrecioPersonalizado.asStateFlow()
@@ -69,6 +79,18 @@ class ProductoAgregarViewModel(
     // Total de la línea (Precio * Cantidad)
     private val _totalLinea = MutableStateFlow(0f)
     val totalLinea = _totalLinea.asStateFlow()
+
+    // ID de la escala seleccionada para guardar en el detalle
+    private val _idEscalaSeleccionada = MutableStateFlow(0)
+    val idEscalaSeleccionada = _idEscalaSeleccionada.asStateFlow()
+
+    // Resultado de la validación integral para habilitar el botón
+    data class ValidationResult(
+        val isValid: Boolean,
+        val error: String? = null
+    )
+    private val _validationResult = MutableStateFlow(ValidationResult(false))
+    val validationResult = _validationResult.asStateFlow()
 
     // Estado de la operación (Cerrar pantalla o Error)
     sealed class UIEvent {
@@ -84,22 +106,27 @@ class ProductoAgregarViewModel(
     fun cargarProducto(idProducto: Int, idCliente: Int, unidadInicial: String) {
         viewModelScope.launch {
             try {
-                // Cargar Info Producto
+                // 1. Cargar Info del Cliente primero para asegurar el flag de Mayorista
+                val cliente = clientesRepository.obtenerClientePorId(idCliente)
+                val mayorista = (cliente?.mayorista?.trim()?.uppercase() == "S")
+                _esMayorista.value = mayorista
+
+                // 2. Cargar Info Producto
                 val p = inventarioRepository.obtenerProductoPorId(idProducto)
                 _producto.value = p
                 
-                // Cargar Lotes
+                // 3. Cargar Lotes
                 val lotes = inventarioRepository.obtenerLotesPorProducto(idProducto)
                 _listaLotes.value = lotes
 
                 if (p != null) {
-                    // Calculamos el stock inicial (sin lote específico)
                     actualizarStock(p)
                     
+                    // REFACTORIZACIÓN: Forzamos el recalculo inicial con el flag de mayorista ya cargado
                     recalcularValores(
                         idCliente = idCliente,
                         idProducto = idProducto,
-                        cantidad = 1f,
+                        cantidad = 0f, // Inicializamos en 0 para que la UI pida entrada
                         unidad = unidadInicial,
                         unidadBase = "UNI",
                         factorEquivalencia = 1f,
@@ -143,8 +170,6 @@ class ProductoAgregarViewModel(
     }
 
     //---------------------------------------------------------------------------
-    //Recalcula precio, bonificaciones y totales cada vez que cambia la cantidad o unidad.
-    //---------------------------------------------------------------------------
     fun recalcularValores(
         idCliente: Int,
         idProducto: Int,
@@ -152,33 +177,103 @@ class ProductoAgregarViewModel(
         unidad: String,
         unidadBase: String, // "UNI" o "FRA"
         factorEquivalencia: Float,
-        tipoBonif: String
+        tipoBonif: String,
+        precioSeleccionadoUi: Float? = null,
+        sinExistencias: Int = 0
     ) {
         viewModelScope.launch {
             val p = _producto.value ?: return@launch
             
-            // Obtener el precio base según la unidad (UNI o FRA)
+            // 1. Obtener el precio base según la ficha (UNI o FRA)
             val precioBaseFicha = if (unidad == "FRA") p.Precio_u_iva ?: 0f else p.Precio_iva ?: 0f
 
-            // Obtener el precio final (Prioridad: Personalizado > Lista/Escala)
-            val precioCalculado = calcularPrecioUseCase.ejecutar(idCliente, idProducto, unidad, precioBaseFicha)
+            // 2. Determinar el precio a usar (Prioridad: Personalizado > Selección UI > Ficha)
+            val precioConvenio = calcularPrecioUseCase.ejecutar(idCliente, idProducto, unidad, precioBaseFicha)
+            val esPersonalizado = (precioConvenio != precioBaseFicha && unidad == "UNI")
             
-            // Determinar si el precio es personalizado
-            _esPrecioPersonalizado.value = (precioCalculado != precioBaseFicha && unidad == "UNI")
+            val precioFinalCalculado = if (esPersonalizado) {
+                precioConvenio
+            } else {
+                // Si no hay convenio, respetamos lo que el usuario eligió en el Spinner (escala)
+                precioSeleccionadoUi ?: precioBaseFicha
+            }
 
-            _precioFinal.value = precioCalculado
+            _esPrecioPersonalizado.value = esPersonalizado
+            _precioFinal.value = precioFinalCalculado
 
-            // Calcular Bonificación
+            // 3. Buscar la escala correspondiente para validación e ID
+            val escalas = inventarioRepository.obtenerEscalasPrecios(idProducto, unidad)
+            Timber.d("[ESCALA_DEBUG] Escalas encontradas para unidad '$unidad': ${escalas.size}")
+            
+            // Usamos un margen de error (epsilon) para la comparación de precios de punto flotante
+            val scale = escalas.find { 
+                val diff = Math.abs(it.precio_iva - precioFinalCalculado)
+                diff < 0.001 
+            }
+            
+            val minEscala = scale?.cantidad ?: 0f
+            _idEscalaSeleccionada.value = scale?.id ?: 0
+            _cantidadMinimaEscala.value = minEscala
+
+            // LOG PARA DEPURACIÓN DE ESCALAS
+            Timber.d("[ESCALA_CHECK] Producto: $idProducto | Precio: $precioFinalCalculado | Scale Match: ${scale != null} | Min: $minEscala")
+
+            // 4. Calcular Bonificación
             val regalias = calcularBonificacionesUseCase.ejecutar(
                 idCliente, idProducto, cantidad, unidadBase, factorEquivalencia, tipoBonif, p.Bonificado ?: 0f
             )
             _bonificado.value = regalias
 
-            // Calcular Total con máxima precisión
-            _totalLinea.value = precioCalculado * cantidad
+            // 5. Calcular Total
+            _totalLinea.value = precioFinalCalculado * cantidad
+
+            // 6. VALIDACIÓN INTEGRAL (Stock, Escalas, Precio)
+            validarEstado(cantidad, unidad, p.Fraccion ?: 0f, factorEquivalencia, minEscala, sinExistencias)
             
-            Timber.d("[PRODUCTO_AGREGAR_VM] CALCULO: $precioCalculado * $cantidad = ${_totalLinea.value}")
+            Timber.d("[PRODUCTO_AGREGAR_VM] CALCULO: $precioFinalCalculado (Min: $minEscala) * $cantidad = ${_totalLinea.value}")
         }
+    }
+
+    /**
+     * Realiza la validación de negocio centralizada.
+     */
+    private fun validarEstado(
+        cantidad: Float,
+        unidad: String,
+        realFraccion: Float,
+        factorEquivalencia: Float,
+        minEscala: Float,
+        sinExistencias: Int
+    ) {
+        val capacidadParaCalculo = if (realFraccion > 1f) realFraccion else 1f
+        var cantidadNormalizada = 0f
+        
+        when (unidad) {
+            "UNI" -> cantidadNormalizada = if (realFraccion > 1f) cantidad * capacidadParaCalculo else cantidad
+            "FRA" -> cantidadNormalizada = cantidad
+            else -> {
+                // Unidades especiales
+                cantidadNormalizada = if (realFraccion > 1f) (cantidad * factorEquivalencia) * capacidadParaCalculo else cantidad * factorEquivalencia
+            }
+        }
+
+        val umbralEscala = if (realFraccion > 1f) minEscala * capacidadParaCalculo else minEscala
+        val stockDisponible = _stockTotalValidacion.value
+        val precioActual = _precioFinal.value
+        val esMayorista = _esMayorista.value
+
+        val result = when {
+            cantidad <= 0f -> ValidationResult(false, "CAMPO NO PUEDE QUEDAR VACIO")
+            precioActual <= 0f -> ValidationResult(false, "EL PRECIO DEBE SER MAYOR A 0")
+            (cantidadNormalizada > stockDisponible) && sinExistencias == 0 -> 
+                ValidationResult(false, "NO PUEDE AGREGAR UNA CANTIDAD MAYOR A LAS EXISTENCIAS")
+            // REFACTORIZACIÓN: Si el cliente es Mayorista ("S"), se omite la validación de escalas
+            (cantidadNormalizada < umbralEscala) && !esMayorista -> 
+                ValidationResult(false, "LA CANTIDAD NO ES VÁLIDA PARA EL PRECIO SELECCIONADO")
+            else -> ValidationResult(true)
+        }
+        
+        _validationResult.value = result
     }
 
     //---------------------------------------------------------------------------

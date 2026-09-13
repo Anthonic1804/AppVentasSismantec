@@ -8,10 +8,6 @@ import com.example.acae30.domain.models.TicketData
 import java.time.LocalDate
 import java.util.Locale
 
-/**
- * REFACTORIZACIÓN ARQUITECTURA LIMPIA: Clase de utilidad para formatear tickets de venta.
- * Mantiene el formato original (tags EscPosPrinter) pero desacoplado de la Activity.
- */
 class TicketFormatter {
 
     fun formatTicket(printer: EscPosPrinter, data: TicketData, logo: Bitmap, charsPerLine: Int): String {
@@ -54,83 +50,133 @@ class TicketFormatter {
 
         val detalleBuilder = StringBuilder()
         data.detalle.forEach { item ->
-            val descripcionPartes = if ((item.Bonificado ?: 0) > 0) {
-                if (cliente.Nrc == "193-7" || cliente.Nrc == "1937") {
-                    dividirDescripcion("${item.Codigo_de_barra} - ${item.Cantidad} ${item.Descripcion} - BONIFICADOS: ${item.Bonificado}")
+            try {
+                // REFACTORIZACIÓN: Validación de descripción para evitar saltos de ítems
+                val descBase = item.Descripcion ?: "Cod: ${item.Id_producto}"
+                
+                val descripcionPartes = if ((item.Bonificado ?: 0) > 0) {
+                    if (cliente.Nrc == "193-7" || cliente.Nrc == "1937") {
+                        dividirDescripcion("${item.Codigo_de_barra} - ${item.Cantidad} $descBase - BONIFICADOS: ${item.Bonificado}")
+                    } else {
+                        dividirDescripcion("${item.Cantidad} $descBase - BONIFICADOS: ${item.Bonificado}")
+                    }
                 } else {
-                    dividirDescripcion("${item.Cantidad} ${item.Descripcion} - BONIFICADOS: ${item.Bonificado}")
+                    if (cliente.Nrc == "193-7" || cliente.Nrc == "1937") {
+                        dividirDescripcion("${item.Codigo_de_barra} - ${item.Cantidad} $descBase")
+                    } else {
+                        dividirDescripcion("${item.Cantidad} $descBase")
+                    }
                 }
-            } else {
-                if (cliente.Nrc == "193-7" || cliente.Nrc == "1937") {
-                    dividirDescripcion("${item.Codigo_de_barra} - ${item.Cantidad} ${item.Descripcion}")
-                } else {
-                    dividirDescripcion("${item.Cantidad} ${item.Descripcion}")
-                }
-            }
 
-            val totalVenta = if (documento == "CREDITO FISCAL") {
-                (item.Total_iva ?: 0f).toDouble() / 1.13
-            } else {
-                (item.Total_iva ?: 0f).toDouble()
-            }
-
-            descripcionPartes.forEachIndexed { index, parte ->
-                if (index == 0) {
-                    detalleBuilder.append("[L]- $parte [R]$ ${String.format(Locale.getDefault(), "%.4f", totalVenta)}\n")
+                val totalVenta = if (documento == "CREDITO FISCAL") {
+                    (item.Total_iva ?: 0f).toDouble() / 1.13
                 } else {
-                    detalleBuilder.append("[L]$parte\n")
+                    (item.Total_iva ?: 0f).toDouble()
                 }
+
+                descripcionPartes.forEachIndexed { index, parte ->
+                    if (index == 0) {
+                        detalleBuilder.append("[L]- $parte [R]$ ${String.format(Locale.getDefault(), "%.4f", totalVenta)}\n")
+                    } else {
+                        detalleBuilder.append("[L]$parte\n")
+                    }
+                }
+            } catch (e: Exception) {
+                // Si falla un ítem, registramos pero no detenemos la impresión
+                detalleBuilder.append("[L]** ERROR EN ITEM ID: ${item.Id_producto} **\n")
             }
         }
+        
+        // REFACTORIZACIÓN: Añadimos un salto extra para asegurar que el último ítem 
+        // salga del búfer de la impresora antes del pie del ticket.
+        detalleBuilder.append("\n")
 
         val ticket = StringBuilder()
         if (data.esDte) {
             ticket.append("[C]<img>").append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado)).append("</img>\n")
-                .append("[C]$empresaFormateada\n").append("[C]$direccionFormateada\n")
-                .append("[C]NIT: ${empresa.nit}\n").append("[C]NRC: ${empresa.nrc}\n").append("[C]$giroFormateada\n")
-                .append("[L]------------------------------\n").append("[C]DATOS DEL CLIENTE\n")
-                .append("[L]------------------------------\n").append("[L]NOMBRE:\n").append("[C]${cliente.Cliente}\n")
-                .append("[L]DOCUMENTO: \n").append("[C]${cliente.Nit} / ${cliente.Dui} \n")
-                .append("[L]N.R.C: ${cliente.Nrc} \n").append("[L]ACTIVIDAD ECONOMICA: \n").append("[C]$giroCliente \n")
-                .append("[L]NOMBRE SUCURSAL: \n").append("[C]${pedido.Nombre_sucursal}\n")
-                .append("[L]DIRECCION: \n").append("[C]$direccionCliente\n")
-                .append("[L]------------------------------\n").append("[C]DOCUMENTO TRIBUTARIO ELECTRONICO\n")
-                .append("[L]--------------------------------\n").append("[L]TIPO DOCUMENTO:\n").append("[C]$documento \n")
-                .append("[L]FECHA DE EMISIÓN\n").append("[C]${pedido.Fecha_creado} \n")
-                .append("[L]CODIGO DE GENERACION \n").append("[C]$codigoGeneracion \n")
-                .append("[L]NUMERO DE CONTROL \n").append("[C]$numeroControl \n")
-                .append("[L]SELLO DE RECEPCION\n").append("[C]$selloRecepcion \n")
+                .append("[C]$empresaFormateada\n")
+                .append("[C]$direccionFormateada\n")
+                .append("[C]NIT: ${empresa.nit}\n")
+                .append("[C]NRC: ${empresa.nrc}\n")
+                .append("[C]$giroFormateada\n")
+                .append("[L]------------------------------\n")
+                .append("[C]DATOS DEL CLIENTE\n")
+                .append("[L]------------------------------\n")
+                .append("[L]NOMBRE:\n")
+                .append("[C]${cliente.Cliente}\n")
+                .append("[L]DOCUMENTO: \n")
+                .append("[C]${cliente.Nit} / ${cliente.Dui} \n")
+                .append("[L]N.R.C: ${cliente.Nrc} \n")
+                .append("[L]ACTIVIDAD ECONOMICA: \n")
+                .append("[C]$giroCliente \n")
+                .append("[L]NOMBRE SUCURSAL: \n")
+                .append("[C]${pedido.Nombre_sucursal}\n")
+                .append("[L]DIRECCION: \n")
+                .append("[C]$direccionCliente\n")
+                .append("[L]------------------------------\n")
+                .append("[C]DOCUMENTO TRIBUTARIO ELECTRONICO\n")
+                .append("[L]--------------------------------\n")
+                .append("[L]TIPO DOCUMENTO:\n")
+                .append("[C]$documento \n")
+                .append("[L]FECHA DE EMISIÓN\n")
+                .append("[C]${pedido.Fecha_creado} \n")
+                .append("[L]CODIGO DE GENERACION \n")
+                .append("[C]$codigoGeneracion \n")
+                .append("[L]NUMERO DE CONTROL \n")
+                .append("[C]$numeroControl \n")
+                .append("[L]SELLO DE RECEPCION\n")
+                .append("[C]$selloRecepcion \n")
                 .append("[C]TERMINOS: ${pedido.Terminos}\n")
-                .append("[L]--------------------------------\n").append(qr).append("[L]--------------------------------\n")
-                .append("[C]DETALLE DEL DOCUMENTO\n").append("[L]--------------------------------\n")
-                .append(detalleBuilder.toString()).append("[L]--------------------------------\n")
+                .append("[L]--------------------------------\n")
+                .append(qr)
+                .append("[L]--------------------------------\n")
+                .append("[C]DETALLE DEL DOCUMENTO\n")
+                .append("[L]--------------------------------\n")
+                .append(detalleBuilder.toString())
+                .append("[L]--------------------------------\n")
                 .append("[L]SUB-TOTAL: [R] $ ${String.format(Locale.getDefault(), "%.2f", pedido.Suma)}\n")
                 .append("[L]IVA: [R] $ ${String.format(Locale.getDefault(), "%.2f", pedido.Iva)}\n")
                 .append("[L]IVA RET: [R] $ ${String.format(Locale.getDefault(), "%.2f", pedido.Iva_Percibido)}\n")
                 .append("[L]TOTAL: [R] $ ${String.format(Locale.getDefault(), "%.2f", data.totalFacturado)}\n")
                 .append("[L]VENDIDO POR: ${empresa.vendedor}\n").append("[L]FECHA: ${LocalDate.now()}\n")
-                .append("[C]¡GRACIAS POR SU COMPRA! \n").append("[C]<b>$textoPieFormateado</b>\n")
+                .append("[C]¡GRACIAS POR SU COMPRA! \n")
+                .append("[C]<b>$textoPieFormateado</b>\n")
                 .append(" \n")
         } else {
             ticket.append("[C]<img>").append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado)).append("</img>\n")
-                .append("[C]$empresaFormateada\n").append("[C]$direccionFormateada\n")
-                .append("[C]NIT: ${empresa.nit}\n").append("[C]NRC: ${empresa.nrc}\n").append("[C]$giroFormateada\n")
-                .append("[L]--------------------------------\n").append("[C]DATOS DEL CLIENTE\n")
-                .append("[L]--------------------------------\n").append("[L]NOMBRE:\n").append("[C]${cliente.Cliente}\n")
-                .append("[L]DOCUMENTO: \n").append("[C]${cliente.Nit} / ${cliente.Dui} \n")
-                .append("[L]N.R.C: ${cliente.Nrc} \n").append("[L]ACTIVIDAD ECONOMICA: \n").append("[C]$giroCliente \n")
-                .append("[L]NOMBRE SUCURSAL: \n").append("[C]${pedido.Nombre_sucursal}\n")
-                .append("[L]DIRECCION: \n").append("[C]$direccionCliente\n")
-                .append("[L]TIPO DOCUMENTO:\n").append("[C]$documento \n")
-                .append("[L]--------------------------------\n").append("[C]DETALLE DEL DOCUMENTO\n")
-                .append("[L]--------------------------------\n").append(detalleBuilder.toString())
+                .append("[C]$empresaFormateada\n")
+                .append("[C]$direccionFormateada\n")
+                .append("[C]NIT: ${empresa.nit}\n")
+                .append("[C]NRC: ${empresa.nrc}\n")
+                .append("[C]$giroFormateada\n")
+                .append("[L]--------------------------------\n")
+                .append("[C]DATOS DEL CLIENTE\n")
+                .append("[L]--------------------------------\n")
+                .append("[L]NOMBRE:\n")
+                .append("[C]${cliente.Cliente}\n")
+                .append("[L]DOCUMENTO: \n")
+                .append("[C]${cliente.Nit} / ${cliente.Dui} \n")
+                .append("[L]N.R.C: ${cliente.Nrc} \n")
+                .append("[L]ACTIVIDAD ECONOMICA: \n")
+                .append("[C]$giroCliente \n")
+                .append("[L]NOMBRE SUCURSAL: \n")
+                .append("[C]${pedido.Nombre_sucursal}\n")
+                .append("[L]DIRECCION: \n")
+                .append("[C]$direccionCliente\n")
+                .append("[L]TIPO DOCUMENTO:\n")
+                .append("[C]$documento \n")
+                .append("[L]--------------------------------\n")
+                .append("[C]DETALLE DEL DOCUMENTO\n")
+                .append("[L]--------------------------------\n")
+                .append(detalleBuilder.toString())
                 .append("[L]--------------------------------\n")
                 .append("[L]SUB-TOTAL: [R] $ ${String.format(Locale.getDefault(), "%.2f", pedido.Suma ?: 0f)}\n")
                 .append("[L]IVA: [R] $ ${String.format(Locale.getDefault(), "%.2f", pedido.Iva ?: 0f)}\n")
                 .append("[L]IVA RET: [R] $ ${String.format(Locale.getDefault(), "%.2f", pedido.Iva_Percibido ?: 0f)}\n")
                 .append("[L]TOTAL: [R] $ ${String.format(Locale.getDefault(), "%.2f", data.totalFacturado)}\n")
                 .append("[L]VENDIDO POR: ${empresa.vendedor}\n").append("[L]FECHA: ${LocalDate.now()}\n")
-                .append("[C]¡GRACIAS POR SU COMPRA! \n").append("[C]<b>$textoPieFormateado</b>\n")
+                .append("[C]¡GRACIAS POR SU COMPRA! \n")
+                .append("[C]<b>$textoPieFormateado</b>\n")
                 .append(" \n")
         }
 

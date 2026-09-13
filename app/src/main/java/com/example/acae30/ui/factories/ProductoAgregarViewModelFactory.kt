@@ -42,6 +42,7 @@ class ProductoAgregarViewModelFactory(
             
             return ProductoAgregarViewModel(
                 inventarioRepository,
+                clientesRepository,
                 gestionarDetalleUseCase,
                 calcularPrecioUseCase,
                 calcularBonificacionesUseCase,

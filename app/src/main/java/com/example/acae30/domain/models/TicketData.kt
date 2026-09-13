@@ -7,7 +7,6 @@ import com.example.acae30.modelos.Pedidos
 
 /**
  * Modelo que agrupa todos los datos necesarios para imprimir un ticket.
- * Independiente de la plataforma y de la librería de impresión.
  */
 data class TicketData(
     val empresa: SettingsRepository.CompanySettings,

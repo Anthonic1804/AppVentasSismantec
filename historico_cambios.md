@@ -27,13 +27,15 @@ Este documento sirve como registro centralizado de la refactorización a MVVM, C
 - [x] Caso de Uso: `ObtenerStockDesglosadoUseCase` (Manejo de Unidades y Fracciones sin decimales).
 - [x] Validación de stock contra total en fracciones.
 - [x] Soporte para Unidades de Medida Especiales (Sixpack, 2PACK, etc.).
+- [x] Corrección definitiva de validación de escalas (Match de unidad con TRIM y margen de error en precio).
+- [x] Excepción de validación de escalas para Clientes Mayoristas (Mayorista = 'S').
 
 ### Módulo: Detalle de Pedido
 - [/] Refactorización de `Detallepedido.kt` a MVVM.
 - [x] Implementación de "Escudo de Carga" para Spinners (Evitar sobreescritura accidental).
 - [x] Corrección de límites de ítems independientes por borrador.
 - [x] Gestión de múltiples pedidos borradores en Venta Local.
-- [ ] Corrección de integridad de montos y nombres de campos en envío a API. (En proceso)
+- [x] Corrección de integridad de montos y nombres de campos en envío a API.
 
 ---
 
