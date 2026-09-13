@@ -6,7 +6,7 @@ import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.Pedidos
 
 /**
- * REFACTORIZACIÓN ARQUITECTURA LIMPIA: Modelo de dominio que agrupa todos los datos necesarios para imprimir un ticket.
+ * Modelo que agrupa todos los datos necesarios para imprimir un ticket.
  * Independiente de la plataforma y de la librería de impresión.
  */
 data class TicketData(

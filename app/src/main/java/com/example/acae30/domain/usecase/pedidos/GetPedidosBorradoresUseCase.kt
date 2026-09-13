@@ -5,7 +5,7 @@ import com.example.acae30.data.local.entity.PedidosEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
- * REFACTORIZACIÓN MULTIPLES PEDIDOS: Caso de uso para obtener borradores reactivos de un cliente.
+ * Caso de uso para obtener borradores reactivos de un cliente.
  */
 class GetPedidosBorradoresUseCase(
     private val repository: PedidosRepository

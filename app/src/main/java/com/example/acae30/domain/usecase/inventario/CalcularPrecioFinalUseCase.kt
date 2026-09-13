@@ -4,7 +4,7 @@ import com.example.acae30.data.repository.ClientesRepository
 import com.example.acae30.data.repository.InventarioRepository
 
 /**
- * REFACTORIZACIÓN MVVM: Caso de Uso para determinar el precio final de un producto.
+ * Caso de Uso para determinar el precio final de un producto.
  * Prioriza el precio personalizado del cliente sobre el precio de lista o escalas.
  */
 class CalcularPrecioFinalUseCase(
@@ -18,12 +18,12 @@ class CalcularPrecioFinalUseCase(
         unidadSeleccionada: String,
         precioListaIva: Float
     ): Float {
-        // REGLA DE NEGOCIO: El precio personalizado SOLO aplica para ventas en Unidades (UNI).
+        // El precio personalizado SOLO aplica para ventas en Unidades (UNI).
         if (unidadSeleccionada != "UNI") {
             return precioListaIva
         }
 
-        // 1. Verificamos si el cliente tiene un precio personalizado para este producto
+        // Verificamos si el cliente tiene un precio personalizado para este producto
         val precioPersonalizado = clientesRepository.obtenerPrecioPersonalizado(idCliente, idProducto)
         
         // LOG DE DEPURACIÓN PARA BASE DE DATOS

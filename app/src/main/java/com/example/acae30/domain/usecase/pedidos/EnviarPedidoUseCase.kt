@@ -13,8 +13,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
- * REFACTORIZACIÓN MVVM: Caso de uso para el envío integral de un pedido al servidor.
- * Reemplaza la lógica manual de Detallepedido.kt por Retrofit y hilos de fondo.
+ * Caso de uso para el envío integral de un pedido al servidor.
  */
 class EnviarPedidoUseCase(
     private val repository: PedidosRepository,
@@ -25,14 +24,14 @@ class EnviarPedidoUseCase(
 
     suspend operator fun invoke(idPedido: Int): Boolean = withContext(Dispatchers.IO) {
         try {
-            // 1. Obtener información del pedido (Room)
+            // Obtener información del pedido (Room)
             val pedidoEntity = db.pedidosDao().obtenerPedidoPorIdSync(idPedido) ?: return@withContext false
             val detalleView = db.pedidosDao().obtenerDetallePedidoListSync(idPedido)
             
-            // 2. Obtener ID de visita del servidor
+            // Obtener ID de visita del servidor
             val idVisitaServidor = db.pedidosDao().obtenerIdVisitaServidor(idPedido) ?: 0
 
-            // 3. Obtener preferencias
+            // Obtener preferencias
             val prefs = context.getSharedPreferences("CONFIG_SERVIDOR", Context.MODE_PRIVATE)
             val puntoVenta = prefs.getString("puntoVenta", "") ?: ""
             val idVendedor = prefs.getInt("Idvendedor", 0)
@@ -47,7 +46,7 @@ class EnviarPedidoUseCase(
             val codBodega = prefs.getString("codBodega", "-1").let { if (it == "-1") null else it }
             val bodega = prefs.getString("bodega", "-1").let { if (it == "-1") null else it }
 
-            // 4. Construir DTO de Cabecera
+            // Construir DTO de Cabecera
             val request = EnviarPedidoRequestDto(
                 idCliente = pedidoEntity.idCliente,
                 cliente = pedidoEntity.nombreCliente,
@@ -83,8 +82,8 @@ class EnviarPedidoUseCase(
                 depositoBanco = pedidoEntity.bancoDeposito,
                 depositoCuenta = pedidoEntity.numCuentaDeposito,
                 depositoNumero = pedidoEntity.numDeposito,
-                idRuta = pedidoEntity.idRuta,
-                ruta = pedidoEntity.ruta,
+                idRutaHeader = pedidoEntity.idRuta,
+                rutaHeader = pedidoEntity.ruta,
                 dteDireccion = pedidoEntity.dteDireccion,
                 dteTelefono = pedidoEntity.dteTelefono,
                 dteCorreo = pedidoEntity.dteCorreo,
@@ -105,17 +104,15 @@ class EnviarPedidoUseCase(
                         codigo = d.Codigo,
                         codigoBarra = d.Codigo_de_barra,
                         descripcion = d.Descripcion,
-                        costo = d.Costo ?: 0.0,
-                        costoIva = d.Costo_iva ?: 0.0,
                         precio = d.Precio ?: 0.0,
                         precioIva = d.Precio_iva ?: 0.0,
                         precioU = d.Precio_u ?: 0.0,
                         precioUIva = d.Precio_u_iva ?: 0.0,
-                        cantidad = d.Cantidad ?: 0.0,
                         precioVenta = d.Precio_venta ?: 0.0,
-                        total = d.Total ?: 0.0,
-                        totalIva = d.Total_iva ?: 0.0,
-                        unidad = d.Unidad,
+                        precioOfertado = d.Precio_ofertado ?: 0.0, // Campo incluido
+                        cantidad = d.Cantidad ?: 0.0,
+                        subtotal = d.Total ?: 0.0, // Room.Total -> JSON.subtotal (sin iva)
+                        total = d.Total_iva ?: 0.0, // Room.Total_iva -> JSON.total (con iva)
                         bonificado = (d.Bonificado ?: 0).toDouble(),
                         descuento = d.Descuento ?: 0.0,
                         precioEditado = d.Precio_editado,
@@ -143,12 +140,13 @@ class EnviarPedidoUseCase(
                         idBodega = d.IdBodega,
                         codBodega = d.CodBodega,
                         bodega = d.Bodega,
-                        ordenDespacho = d.OrdenDespacho ?: 0
+                        ordenDespacho = d.OrdenDespacho ?: 0,
+                        unidad = d.Unidad
                     )
                 }
             )
 
-            // 5. Enviar vía Retrofit
+            // Enviar vía Retrofit
             val ip = prefs.getString("ip", "") ?: ""
             val puerto = prefs.getInt("puerto", 0).toString()
             val baseUrl = funciones.getServidor(ip, puerto, context)
@@ -159,7 +157,7 @@ class EnviarPedidoUseCase(
             if (response.isSuccessful && response.body() != null) {
                 val idServidor = response.body()!!.idServidor
                 if (idServidor > 0) {
-                    // 6. Actualizar estado local
+                    // Actualizar estado local
                     repository.actualizarEstadoPedidoEnviado(idServidor, idPedido)
                     return@withContext true
                 }

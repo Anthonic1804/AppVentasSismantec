@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * REFACTORIZACIÓN ARQUITECTURA LIMPIA: Caso de uso para recolectar todos los datos necesarios para un ticket.
+ * Caso de uso para recolectar todos los datos necesarios para un ticket.
  * Combina información del pedido, del cliente y de la configuración de la empresa.
  */
 class GetTicketDataUseCase(
@@ -21,16 +21,16 @@ class GetTicketDataUseCase(
 ) {
     suspend operator fun invoke(idPedido: Int): TicketData? = withContext(Dispatchers.IO) {
         
-        // 1. Obtener Entidad del Pedido
+        // Obtener Entidad del Pedido
         val pedidoEntity = pedidosRepository.obtenerPedidoPorIdSync(idPedido) ?: return@withContext null
         
-        // 2. Obtener Entidad del Cliente
+        // Obtener Entidad del Cliente
         val clienteEntity = clientesRepository.obtenerClientePorId(pedidoEntity.idCliente) ?: return@withContext null
         
-        // 3. Obtener Detalle del Pedido (Vista de Room)
+        // Obtener Detalle del Pedido (Vista de Room)
         val detalleViews = pedidosRepository.obtenerDetallePedidoListSync(idPedido)
         
-        // 4. Mapear a modelos de dominio antiguos para compatibilidad con TicketFormatter
+        // Mapear a modelos de dominio antiguos para compatibilidad con TicketFormatter
         val pedido = Pedidos(
             Id = pedidoEntity.id,
             Id_cliente = pedidoEntity.idCliente,
@@ -154,7 +154,7 @@ class GetTicketDataUseCase(
             )
         }
 
-        // 5. Devolver objeto consolidado
+        // Devolver objeto consolidado
         TicketData(
             empresa = settingsRepository.getEmpresaInfo(),
             dteSettings = settingsRepository.getDteSettings(),

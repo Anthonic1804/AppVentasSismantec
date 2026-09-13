@@ -45,7 +45,6 @@ import java.util.Locale
 class Producto_agregar : AppCompatActivity() {
     private var idproducto: Int? = 0
     private var precio_iva: Float = 0.toFloat()
-    //private var precio : Float = 0f
     private var cantidad: Float = 0.toFloat()
     private var idpedido: Int = 0
     private var idcliente: Int? = 0
@@ -66,7 +65,7 @@ class Producto_agregar : AppCompatActivity() {
     private var codigoProducto: String = ""
     private var clienteMayorista = "N"
 
-    // REFACTORIZACIÓN MVVM: Variables de Arquitectura
+    // Variables de Arquitectura
     private lateinit var viewModel: ProductoAgregarViewModel
     private lateinit var binding : ActivityProductoAgregarBinding
     private var decPrecios: Int = 2
@@ -447,12 +446,8 @@ class Producto_agregar : AppCompatActivity() {
         }
 
         binding.btnagregar.setOnClickListener {
-            /*
-             * CÓDIGO ANTERIOR (Comentado):
-             * if(modificarPrecio){ agregarProducto() } else { ... confirmarToken ... }
-             */
 
-            // NUEVO CÓDIGO: Delegamos la lógica de autorización al ViewModel
+            // NDelegamos la lógica de autorización al ViewModel
             if (modificarPrecio) {
                 agregarProducto()
             } else {
@@ -466,11 +461,6 @@ class Producto_agregar : AppCompatActivity() {
         }
 
         binding.btneliminar.setOnClickListener {
-            /*
-             * CÓDIGO ANTERIOR (Comentado):
-             * CoroutineScope(Dispatchers.IO).launch { deleteDetalle(idpedidodetalle!!) }
-             */
-
             // NUEVO CÓDIGO: Delegamos la eliminación al ViewModel
             if (idpedidodetalle != null && idpedidodetalle!! > 0) {
                 viewModel.eliminarProducto(idpedidodetalle!!, idpedido)
@@ -483,7 +473,7 @@ class Producto_agregar : AppCompatActivity() {
                                         id: Long) {
                 val itemSeleccionado = binding.spunidad.selectedItem.toString()
                 
-                // 1. Reiniciamos equivalencias para evitar usar datos de la unidad anterior
+                // Reiniciamos equivalencias para evitar usar datos de la unidad anterior
                 equivaleUni = 0f
                 equivaleFra = 0f
 
@@ -500,7 +490,7 @@ class Producto_agregar : AppCompatActivity() {
                     }
                     else -> {
                         unidadActual = itemSeleccionado
-                        // 2. Buscamos la equivalencia en segundo plano
+                        // Buscamos la equivalencia en segundo plano
                         lifecycleScope.launch(Dispatchers.IO) {
                             val unidadMedida = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
                             withContext(Dispatchers.Main) {
@@ -509,7 +499,7 @@ class Producto_agregar : AppCompatActivity() {
                                     uniEquivale = unidadMedida.unidades
                                     if (uniEquivale == "UNI") equivaleUni = unidadMedida.equivale else equivaleFra = unidadMedida.equivale
                                 }
-                                // 3. Validamos SOLO cuando ya tenemos los factores de conversión actualizados
+                                // Validamos SOLO cuando ya tenemos los factores de conversión actualizados
                                 validarCantidad(binding.txtcantidad.text.toString())
                             }
                         }
@@ -522,12 +512,7 @@ class Producto_agregar : AppCompatActivity() {
         }
 
         binding.btneditarprecio.setOnClickListener {
-            /*
-             * CÓDIGO ANTERIOR (Comentado):
-             * if(modificarPrecio){ AlertaPrecio(...) } else { verificarPrecioAutorizado(...) }
-             */
-             
-            // NUEVO CÓDIGO: Delegamos la consulta de autorización al ViewModel
+            // Delegamos la consulta de autorización al ViewModel
             if(modificarPrecio){
                 AlertaPrecio(this@Producto_agregar)
             }else{
@@ -577,25 +562,21 @@ class Producto_agregar : AppCompatActivity() {
     private fun cargarOpcionesGenerales(){
         this@Producto_agregar.lifecycleScope.launch {
 
-            // 1. Obtener información del cliente (Solo para saber si es Mayorista)
+            //  Obtener información del cliente (Solo para saber si es Mayorista)
             val cliente = clientesController.obtenerInformacionCliente(this@Producto_agregar, idcliente!!)
             if (cliente != null) {
                 clienteMayorista = cliente.Mayorista.toString().trim()
             }
 
-            // 2. Determinar la Escala inicial
+            // Determinar la Escala inicial
             cantidadEscala = inventarioController.obtenerEscalaSeleccionada(this@Producto_agregar, idproducto!!, precio_iva, unidadActual)
 
-            // 3. Configurar visibilidad de botones
+            // Configurar visibilidad de botones
             if (idpedidodetalle!! > 0) {
                 binding.btneliminar.visibility = View.VISIBLE
             } else {
                 binding.btneliminar.visibility = View.GONE
             }
-
-            // REFACTORIZACIÓN MVVM: Eliminamos toda la lógica manual de precios y visibilidad de aquí.
-            // Ahora confiamos plenamente en observarViewModel() para que pinte la UI.
-            
             runOnUiThread {
                 cargarUnidadesMedida()
                 cargarListadoPrecios(unidadActual)
@@ -1142,13 +1123,7 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     private fun agregarProducto() {
-        /*
-         * CÓDIGO ANTERIOR (Comentado):
-         * val bonificacion = binding.txtBonificados.text.toString().toInt()
-         * ... validaciones y AddDetallePedido() manual
-         */
-
-        // NUEVO CÓDIGO: Construimos la entidad y la enviamos al ViewModel
+        // Construimos la entidad y la enviamos al ViewModel
         val bonificados = binding.txtBonificados.text.toString().toInt()
         val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
         val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
@@ -1204,7 +1179,7 @@ class Producto_agregar : AppCompatActivity() {
         intento.putExtra("codigo", codigo)
         intento.putExtra("from", visita)
         intento.putExtra("idapi", idapi)
-        // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", sucursalPosition)
+        //intento.putExtra("sucursalPosition", sucursalPosition)
         intento.putExtra("facturaExportacion",false)
         startActivity(intento)
         finish()

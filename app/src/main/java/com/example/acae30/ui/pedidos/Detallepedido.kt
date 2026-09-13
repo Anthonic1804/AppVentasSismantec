@@ -142,7 +142,7 @@ class Detallepedido : AppCompatActivity() {
 
     private val instancia = "CONFIG_SERVIDOR"
 
-    // REFACTORIZACIÓN MVVM: ViewModel centralizado
+    //ViewModel centralizado
     private lateinit var viewModel: DetallePedidoViewModel
     private lateinit var adapterDetalle: PedidoDetalleAdapter
     private var listaSucursalesFull: List<ClienteSucursalEntity> = emptyList()
@@ -159,6 +159,9 @@ class Detallepedido : AppCompatActivity() {
     private var limiteItemPedido : Int = 0
     private var isProcessing = false
     private var inventarioTiempoReal: Boolean = false
+    
+    // FLAG DE CONTROL: Evita que cambios programáticos en los spinners corrompan la BD al cambiar de pedido
+    private var ignorarCambioProgramatico = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -204,7 +207,7 @@ class Detallepedido : AppCompatActivity() {
         // MULTIPLES PEDIDOS: Solo visible si tipoVentaLocal es true
         binding.btnGestionPedidos.visibility = if (tipoVentaLocal) View.VISIBLE else View.GONE
 
-        // NUEVO PROCESO: Cargar todo de forma asíncrona mediante el ViewModel
+        // NUEVO PROCESO: Cargar to do de forma asíncrona mediante el ViewModel
         setupViewModelObservers()
         viewModel.cargarSucursales(idcliente)
         viewModel.cargarInfoPedido(idpedido, idcliente, this)
@@ -263,10 +266,10 @@ class Detallepedido : AppCompatActivity() {
             enviandoPedido = true
             guardandoPedido = false
             
-            // Si terminosPedidos está vacío (nuevo pedido sin interacción), intentamos usar el del cliente
+            // Si terminosPedidos está vacío usamos el del cliente
             val terminosAValidar = if (terminosPedidos.isNullOrEmpty()) infoCliente?.Terminos_cliente ?: "Contado" else terminosPedidos
             
-            // REFACTORIZACIÓN MVVM: Validación de saldo asíncrona en el ViewModel para evitar ANR
+            // Validación de saldo asíncrona en el ViewModel para evitar ANR
             viewModel.verificarSaldoYProceder(this, idcliente, total, terminosAValidar ?: "")
         }
 
@@ -363,7 +366,7 @@ class Detallepedido : AppCompatActivity() {
         viewModel.sucursales.observe(this) { sucursales ->
             listaSucursalesFull = sucursales
             
-            // Si ya hay una sucursal seleccionada en el pedido, la mostramos en el spinner (visual)
+            // Si ya hay una sucursal seleccionada en el pedido, la mostramos en el spinner
             if (nombreSucursalPedido != null && nombreSucursalPedido != "") {
                 val listVisual = listOf(nombreSucursalPedido!!)
                 val adaptador = ArrayAdapter(this, android.R.layout.simple_spinner_item, listVisual)
@@ -375,7 +378,7 @@ class Detallepedido : AppCompatActivity() {
                 binding.spSucursal.adapter = adaptador
             }
 
-            // REFACTORIZACIÓN MVVM: Solo manejamos visibilidad automática si NO estamos consultando un pedido
+            // visibilidad automática si NO estamos consultando un pedido
             if (from != "ver") {
                 if (sucursales.isEmpty()) {
                     binding.lySucursal.visibility = View.GONE
@@ -413,10 +416,11 @@ class Detallepedido : AppCompatActivity() {
                 terminosPedidos = it.Terminos ?: ""
                 nombreSucursalPedido = it.Nombre_sucursal ?: ""
                 idPedidoServidor = it.Id_pedido_sistema ?: 0
-                
-                // REFACTORIZACIÓN MVVM: Restauramos la visualización de la fecha de creación
+
+                // REFACTORIZACIÓN: Actualizamos el límite de ítems inmediatamente al cargar el pedido
+                actualizarLimitePorDocumento()
+
                 if (!it.Fecha_creado.isNullOrEmpty()) {
-                    // Si viene en formato SQLite (yyyy-MM-dd HH:mm:ss), intentamos mostrarlo más amigable
                     val fechaFormateada = try {
                         val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
                         val outputFormat = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
@@ -439,7 +443,7 @@ class Detallepedido : AppCompatActivity() {
             codigo = info?.Codigo ?: ""
             terminosDelCliente(info?.Terminos_cliente ?: "Contado")
             
-            // REFACTORIZACIÓN MULTIPLES PEDIDOS: Si el código es 01, permitimos editar el nombre
+            // MULTIPLES PEDIDOS: Si el código es 01, permitimos editar el nombre
             if (from == "visita" && codigo == "01") {
                 binding.txtCliente.isEnabled = true
             } else if (from != "ver") {
@@ -505,7 +509,6 @@ class Detallepedido : AppCompatActivity() {
         }
 
         viewModel.pedidosBorradores.observe(this) { lista ->
-            // Se actualiza la lista en memoria para el diálogo si estuviera abierto
             actualizarListaBorradoresDialogo(lista)
         }
 
@@ -514,7 +517,12 @@ class Detallepedido : AppCompatActivity() {
                 idpedido = it.id
                 idcliente = it.idCliente
                 nombre = it.nombreCliente
-                codigo = "" // El código se suele usar en la búsqueda, aquí ya tenemos el nombre e ID
+                codigo = ""
+                
+                // REFACTORIZACIÓN: Limpiamos el conteo previo para evitar que la validación 
+                // de items use datos del pedido anterior.
+                cantidadItemsPedido = 0
+                binding.cantidadItems.text = "CANT. ITEMS: 0"
                 
                 // Actualizar UI
                 binding.txtCliente.setText(it.nombreCliente)
@@ -570,6 +578,9 @@ class Detallepedido : AppCompatActivity() {
 
         binding.spTipoEnvio.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                // Si el cambio es programático (carga de datos), ignoramos la actualización a la BD
+                if (ignorarCambioProgramatico) return
+                
                 val env = p?.getItemAtPosition(pos).toString()
                 terminosPedidos = if(env == "CONTADO") "Contado" else "Credito"
                 pedidosController.actualizarTerminosEnvio(terminosPedidos!!, idpedido, this@Detallepedido)
@@ -579,6 +590,9 @@ class Detallepedido : AppCompatActivity() {
 
         binding.spDocumento.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                // Si el cambio es programático (carga de datos), ignoramos la actualización a la BD
+                if (ignorarCambioProgramatico) return
+                
                 val doc = p?.getItemAtPosition(pos).toString()
                 tipoDocumento = when(doc){
                     "FACTURA" -> "FC"
@@ -587,13 +601,10 @@ class Detallepedido : AppCompatActivity() {
                     "REMISIÓN" -> "RE"
                     else -> "FC"
                 }
-                limiteItemPedido = preferencias.getInt(when(tipoDocumento){
-                    "FC" -> "numItemFactura"
-                    "CF" -> "numItemCreFiscal"
-                    "RC" -> "numItemRecibo"
-                    "RE" -> "numItemRemision"
-                    else -> "numItemFactura"
-                }, 0)
+                
+                // Actualizamos el límite visual
+                actualizarLimitePorDocumento()
+                
                 pedidosController.updateTipoDocumento(tipoDocumento, idpedido, this@Detallepedido)
                 pedidosController.actualizarTotalesPedido(this@Detallepedido, idpedido, true)
             }
@@ -601,8 +612,27 @@ class Detallepedido : AppCompatActivity() {
         }
     }
 
+    /**
+     * REFACTORIZACIÓN: Actualiza la variable global de límite de ítems basada en el tipo de documento actual.
+     */
+    private fun actualizarLimitePorDocumento() {
+        val key = when(tipoDocumento) {
+            "FC" -> "numItemFactura"
+            "CF" -> "numItemCreFiscal"
+            "RC" -> "numItemRecibo"
+            "RE" -> "numItemRemision"
+            else -> "numItemFactura"
+        }
+        limiteItemPedido = preferencias.getInt(key, 0)
+        
+        // Log para depuración
+        Timber.d("[DETALLE_PEDIDO] Límite actualizado para $tipoDocumento: $limiteItemPedido")
+    }
+
     private fun actualizarSeleccionesSpinners() {
-        // REFACTORIZACIÓN MVVM: Si el pedido es nuevo y no tiene términos aún, usamos los del cliente
+        // Activamos el flag para ignorar los eventos que se dispararán por setSelection
+        ignorarCambioProgramatico = true
+        
         val terminosAFijar = if (terminosPedidos.isNullOrEmpty() || terminosPedidos == "") {
             infoCliente?.Terminos_cliente ?: "Contado"
         } else {
@@ -612,7 +642,7 @@ class Detallepedido : AppCompatActivity() {
         val sEnv = if (terminosAFijar.contentEquals("Contado", ignoreCase = true)) 0 else 1
         
         if (binding.spTipoEnvio.adapter != null && sEnv < binding.spTipoEnvio.adapter.count) {
-            binding.spTipoEnvio.setSelection(sEnv, true)
+            binding.spTipoEnvio.setSelection(sEnv, false)
         }
         
         val sDoc = when(tipoDocumento){
@@ -623,11 +653,20 @@ class Detallepedido : AppCompatActivity() {
             else -> 0
         }
         if (binding.spDocumento.adapter != null && sDoc < binding.spDocumento.adapter.count) {
-            binding.spDocumento.setSelection(sDoc, true)
+            binding.spDocumento.setSelection(sDoc, false)
+        }
+        
+        // Usamos post para asegurar que los eventos onItemSelected lanzados por setSelection 
+        // se procesen antes de volver a permitir actualizaciones manuales.
+        binding.root.post {
+            ignorarCambioProgramatico = false
         }
     }
 
     private fun terminosDelCliente(terminos: String){
+        // Activamos el escudo antes de cambiar el adaptador para evitar disparos accidentales
+        ignorarCambioProgramatico = true
+        
         val lista = if(terminos == "Contado") listOf("CONTADO") else listOf("CONTADO", "CREDITO")
         val adapter = ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, lista)
         binding.spTipoEnvio.adapter = adapter
@@ -638,8 +677,7 @@ class Detallepedido : AppCompatActivity() {
 
     private fun validarProcesoPedidosUI(pedido: com.example.acae30.modelos.Pedidos) {
         binding.txtCliente.setText(nombre)
-        
-        // REFACTORIZACIÓN MVVM: Centralización de lógica de visibilidad según estado del pedido
+
         when(from) {
             "ver" -> {
                 // Título descriptivo según el estado
@@ -690,7 +728,7 @@ class Detallepedido : AppCompatActivity() {
                 if (pedido.Enviado == 1) {
                     binding.btnenviar.visibility = View.GONE
                     
-                    // Mostrar Invalidar según reglas originales
+                    // Mostrar Invalidar
                     if (pedido.pedido_dte == 1) {
                         binding.btnInvalidar.visibility = View.VISIBLE
                     } else if (pedido.Tipo_documento == "RC") {
@@ -737,7 +775,6 @@ class Detallepedido : AppCompatActivity() {
                 binding.tvTipoenvio.visibility = View.GONE
 
                 binding.btnenviar.visibility = View.VISIBLE
-                // REFACTORIZACIÓN: Se oculta el botón atrás para obligar a usar Eliminar Pedido
                 binding.imbtnatras.visibility = View.GONE 
                 binding.btnexportar.visibility = View.GONE
                 binding.btnInvalidar.visibility = View.GONE
@@ -820,8 +857,7 @@ class Detallepedido : AppCompatActivity() {
 
             findViewById<Button>(R.id.btnaceptar).setOnClickListener {
                 val nOrden = etOrden.text.toString()
-                
-                // REIMPLEMENTACIÓN DE VALIDACIÓN: NRC 1937 o 193-7 requiere Número de Orden
+
                 if ((infoCliente?.Nrc == "193-7" || infoCliente?.Nrc == "1937") && nOrden.isEmpty()) {
                     Toast.makeText(this@Detallepedido, "EL NÚMERO DE ORDEN ES OBLIGATORIO", Toast.LENGTH_LONG).show()
                     return@setOnClickListener
@@ -831,7 +867,7 @@ class Detallepedido : AppCompatActivity() {
                 val pagoMonto = etPago.text.toString().toFloatOrNull() ?: 0f
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    // REFACTORIZACIÓN MULTIPLES PEDIDOS: Si el código es 01, guardamos el nombre ingresado
+                    // MULTIPLES PEDIDOS: Si el código es 01, guardamos el nombre ingresado
                     if (codigo == "01") {
                         pedidosController.actualizarNombreClientePedido(this@Detallepedido, binding.txtCliente.text.toString(), idpedido)
                     }
@@ -1031,7 +1067,7 @@ class Detallepedido : AppCompatActivity() {
     }
 
     /**
-     * REFACTORIZACIÓN MVVM & CLEAN ARCHITECTURE: Nuevo método de impresión desacoplado.
+     * Nuevo méto do de impresión desacoplado.
      * 1. El ViewModel recolecta datos de Room (GetTicketDataUseCase).
      * 2. La Activity solo maneja la conexión física y el renderizado final.
      * 3. Se delega el formato a TicketFormatter de forma dinámica.
@@ -1077,7 +1113,6 @@ class Detallepedido : AppCompatActivity() {
                     if(device != null) {
                         val connection = BluetoothConnection(device)
                         connection.connect()
-                        // Impresoras integradas suelen ser de 58mm (28 caracteres aprox)
                         val printer = EscPosPrinter(connection, 160, 48f, 28)
                         val ticket = formatter.formatTicket(printer, data, logoOriginal, 28)
                         printer.printFormattedText(ticket)
@@ -1091,614 +1126,6 @@ class Detallepedido : AppCompatActivity() {
             Toast.makeText(this, "Error al imprimir: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
-
-    /* 
-     * CÓDIGO ANTIGUO (Restaurado): Se mantiene comentado para referencia y comparación histórica.
-     * Este código utilizaba controladores directos y lógica de formateo mezclada con la UI.
-     * 
-    @android.annotation.SuppressLint("MissingPermission")
-    private fun imprimirRecibo() { ... }
-    ...
-     */
-    //FUNCION PARA DETERMINAR LA CONEXION DE LA IMPRESORA
-    /*
-    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    private fun imprimirRecibo() {
-        try {
-            val tipoImpresora = preferencias.getString("tipoImpresora", "")
-            when(tipoImpresora){
-                "BT" -> {
-                    // ===============================
-                    // Si no hay USB, probar Bluetooth
-                    // ===============================
-                    val btConnection = BluetoothPrintersConnections.selectFirstPaired()
-                    if (btConnection != null) {
-                        imprimirTicket(btConnection)
-                    } else {
-                        Toast.makeText(this, "No se encontró impresora USB ni Bluetooth", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                else -> {
-                    // ===============================
-                    // Detectar impresora Integrada
-                    // ===============================
-                    imprimirReciboIntegrado()
-                }
-            }
-        } catch (e: Exception) {
-            //e.printStackTrace()
-            //Toast.makeText(this, "Error al imprimir: ${e.message}", Toast.LENGTH_LONG).show()
-
-            Timber.e(e, "[IMPRESION] ERROR AL IMPRIMIR EL COMPROBANTE ")
-
-            Toast.makeText(
-                this,
-                "${e.javaClass.simpleName}: ${e.message ?: "Sin mensaje"}",
-                Toast.LENGTH_LONG
-            ).show()
-
-        }
-    }
-
-    //FUNCION DEL FORMATO DEL TICKET
-    private fun imprimirTicket(connection: Any) {
-
-
-        val empresa = preferencias.getString("empresa", "").orEmpty()
-        val direccion = preferencias.getString("direccion", "").orEmpty()
-        val nrc = preferencias.getString("nrc", "").orEmpty()
-        val nit = preferencias.getString("nit", "").orEmpty()
-        val giro = preferencias.getString("giro", "").orEmpty()
-        val dteUrlQRHacienda = preferencias.getString("dteUrlQRHacienda", "").orEmpty()
-        val dteUrlQRempresa = preferencias.getString("dteUrlQRempresa", "").orEmpty()
-        val textoPie = "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL"
-
-        val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-        //val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
-
-        val usbManager = getSystemService(USB_SERVICE) as UsbManager
-
-        val printer = when(connection) {
-            is UsbDevice -> EscPosPrinter(UsbConnection(usbManager, connection), 160, 48f, 32)
-            is BluetoothConnection -> EscPosPrinter(connection, 160, 48f, 32)
-            else -> null
-        } ?: return
-
-        // ===============================
-        // Preparar logo y texto
-        // ===============================
-        val prefs = getSharedPreferences("MisImagenes", MODE_PRIVATE)
-        val filePath = prefs.getString("imagenFile", null)
-
-        // Variable para el logo final
-        val logoOriginal: Bitmap = if (filePath != null) {
-            val file = File(filePath)
-            if (file.exists()) {
-                BitmapFactory.decodeFile(file.absolutePath)
-            } else {
-                BitmapFactory.decodeResource(resources, com.example.acae30.R.drawable.nologo)
-            }
-        } else {
-            BitmapFactory.decodeResource(resources, com.example.acae30.R.drawable.nologo)
-        }
-
-        // Redimensionar
-        val logoRedimensionado = redimensionarLogo(logoOriginal, 384)
-
-        val direccionFormateada = dividirEnLineas(direccion, 32)
-        val empresaFormateada = dividirEnLineas(empresa, 32)
-        val giroFormateada = dividirEnLineas(giro, 32)
-        val textoPieFormateado = dividirEnLineas(textoPie, 32)
-        val giroCliente = dividirEnLineas(infoCliente!!.dteGiro!!, 32)
-        val direccionCliente = dividirEnLineas(infoPedido!!.Sucursal_Direccion!!,32)
-
-        // ===============================
-        // Formateando Datos Fiscales DTE
-        // ===============================
-
-        val codigoGeneracion = dividirEnLineas(infoPedido.dteCodigoGeneracion!!, 32)
-        val numeroControl = dividirEnLineas(infoPedido.dteNumeroControl!!, 32)
-        val selloRecepcion = dividirEnLineas(infoPedido.dteSelloRecibido!!, 32)
-
-        val fecha = infoPedido.Fecha_creado?.substring(0, 10).orEmpty()
-        val documento = when(infoPedido.Tipo_documento){
-            "CF" -> "CREDITO FISCAL"
-            "FC" -> "FACTURA"
-            "RE" -> "REMISIÓN"
-            else -> "RECIBO"
-        }
-
-        // ===============================
-        // Configurando la impresion de los Qr
-        // ===============================
-        val qrHacienda = dteUrlQRHacienda + "${infoPedido.dteAmbiente}&codGen=${infoPedido.dteCodigoGeneracion}&fechaEmi=$fecha"
-        val qrEmpresa = dteUrlQRempresa + "${infoPedido.dteCodigoGeneracion}"
-
-        val textoVerificacion = dividirEnLineas("Verificacion con $empresa",32)
-
-            val qr =if(dteUrlQRempresa != "0") {("[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
-                    "[C] Qr Hacienda \n" +
-                    "\n" +
-                    "[C]<qrcode size='30'>$qrEmpresa</qrcode>\n" +
-                    "[C] $textoVerificacion \n")}
-                    else{
-                        "[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
-                                " \n" +
-                                "[C] Qr Hacienda \n"
-                    }
-
-
-        // ===============================
-        // Detalle del pedido desde controlador
-        // ===============================
-        val listaDetalle = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-        //var total = 0f
-        val detalleBuilder = StringBuilder()
-
-        // ===============================
-        // Concatenando a la Descripcion, la Cantidad, Codigo de Barra y Bonificados
-        // ===============================
-        listaDetalle.forEach { item ->
-            val descripcionPartes = if(item.Bonificado!! > 0){
-                if(infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937"){
-                    dividirDescripcion(
-                        (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion + " - BONIFICADOS: " + item.Bonificado) ?: ""
-                    )
-                }else{
-                    dividirDescripcion(
-                        (item.Cantidad.toString() + " " + item.Descripcion + " - BONIFICADOS: " + item.Bonificado) ?: ""
-                    )
-                }
-            }else{
-                if(infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937"){
-                    dividirDescripcion(
-                        (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion) ?: ""
-                    )
-                }else{
-                    dividirDescripcion(
-                        (item.Cantidad.toString() + " " + item.Descripcion) ?: ""
-                    )
-                }
-            }
-
-            // ===============================
-            // Calculo del detalle para mostrar precio sin iva
-            // ===============================
-            val totalVenta = if(documento.contentEquals("CREDITO FISCAL")){
-                item.Total_iva!!.toDouble() / 1.13
-            }else{
-                item.Total_iva
-            }
-
-            //Funcion para cortar la descripcion en varias lineas
-            descripcionPartes.forEachIndexed { index, parte ->
-                if (index == 0) {
-                    detalleBuilder.append("[L]- $parte [R]$ ${String.format("%.4f", totalVenta)}\n")
-                } else {
-                    detalleBuilder.append("[L]$parte\n")
-                }
-            }
-
-            //total += item.Total_iva ?: 0f
-        }
-
-        val totalFacturado = total - infoPedido.Iva_Percibido!!
-
-        if(infoPedido.Enviado == 1 && infoPedido.pedido_dte == 1){
-            // ===============================
-            // Construir ticket completo DTE
-            // ===============================
-            val ticket = StringBuilder()
-                .append("[C]<img>")
-                .append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado))
-                .append("</img>\n")
-                .append("[C]$empresaFormateada\n")
-                .append("[C]$direccionFormateada\n")
-                .append("[C]NIT: $nit\n")
-                .append("[C]NRC: $nrc\n")
-                .append("[C]$giroFormateada\n")
-                .append("[L]--------------------------------\n")
-                .append("[C]DATOS DEL CLIENTE\n")
-                .append("[L]--------------------------------\n")
-                .append("[L]NOMBRE:\n")
-                .append("[C]${infoCliente!!.Cliente}\n")
-                .append("[L]DOCUMENTO: \n")
-                .append("[C]${infoCliente!!.Nit} / ${infoCliente!!.Dui} \n")
-                .append("[L]N.R.C: ${infoCliente!!.Nrc} \n")
-                .append("[L]ACTIVIDAD ECONOMICA: \n")
-                .append("[C]$giroCliente \n")
-                .append("[L]NOMBRE SUCURSAL: \n")
-                .append("[C]${infoPedido.Nombre_sucursal}\n")
-                .append("[L]DIRECCION: \n")
-                .append("[C]$direccionCliente\n")
-                .append("[L]--------------------------------\n")
-                .append("[C]DOCUMENTO ELECTRONICO\n")
-                .append("[L]--------------------------------\n")
-                .append("[L]TIPO DOCUMENTO:\n")
-                .append("[C]$documento \n")
-                .append("[L]FECHA DE EMISIÓN\n")
-                .append("[C]${infoPedido.Fecha_creado} \n")
-                .append("[L]CODIGO DE GENERACION \n")
-                .append("[C]$codigoGeneracion \n")
-                .append("[L]NUMERO DE CONTROL \n")
-                .append("[C]$numeroControl \n")
-                .append("[L]SELLO DE RECEPCION\n")
-                .append("[C]$selloRecepcion \n")
-                .append("[C]TERMINOS: ${infoPedido.Terminos}\n")
-                .append("[L]--------------------------------\n")
-                .append(qr)
-                .append("[L]--------------------------------\n")
-                .append("[C]DETALLE DEL DOCUMENTO\n")
-                .append("[L]--------------------------------\n")
-                .append(detalleBuilder.toString())
-                .append("[L]--------------------------------\n")
-                .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
-                .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
-                .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
-                .append("[L]TOTAL: [R] $ ${String.format("%.2f", totalFacturado)} \n")
-                .append("[L]VENDIDO POR: $vendedor\n")
-                .append("[L]FECHA: $fecha \n")
-                .append("[C]¡GRACIAS POR SU COMPRA! \n")
-                .append("[C]<b>$textoPieFormateado</b>\n")
-                .append(" \n")
-
-            val textoImprmir = normalizarTexto(ticket.toString())
-            printer.printFormattedText(textoImprmir)
-        }else{
-            // ===============================
-            // Construir ticket Normal
-            // ===============================
-            val ticket = StringBuilder()
-                .append("[C]<img>")
-                .append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado))
-                .append("</img>\n")
-                .append("[C]$empresaFormateada\n")
-                .append("[C]$direccionFormateada\n")
-                .append("[C]NIT: $nit\n")
-                .append("[C]NRC: $nrc\n")
-                .append("[C]$giroFormateada\n")
-                .append("[L]--------------------------------\n")
-                .append("[C]DATOS DEL CLIENTE\n")
-                .append("[L]--------------------------------\n")
-                .append("[L]NOMBRE:\n")
-                .append("[C]${infoCliente!!.Cliente}\n")
-                .append("[L]DOCUMENTO: \n")
-                .append("[C]${infoCliente!!.Nit} / ${infoCliente!!.Dui} \n")
-                .append("[L]N.R.C: ${infoCliente!!.Nrc} \n")
-                .append("[L]ACTIVIDAD ECONOMICA: \n")
-                .append("[C]$giroCliente \n")
-                .append("[L]NOMBRE SUCURSAL: \n")
-                .append("[C]${infoPedido.Nombre_sucursal}\n")
-                .append("[L]DIRECCION: \n")
-                .append("[C]$direccionCliente\n")
-                .append("[L]TIPO DOCUMENTO:\n")
-                .append("[C]$documento \n")
-                .append("[L]--------------------------------\n")
-                .append("[C]DETALLE DEL DOCUMENTO\n")
-                .append("[L]--------------------------------\n")
-                .append(detalleBuilder.toString())
-                .append("[L]--------------------------------\n")
-                .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
-                .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
-                .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
-                .append("[L]TOTAL: [R] $ ${String.format("%.2f", totalFacturado)} \n")
-                .append("[L]VENDIDO POR: $vendedor\n")
-                .append("[L]FECHA: $fecha \n")
-                .append("[C]¡GRACIAS POR SU COMPRA! \n")
-                .append("[C]<b>$textoPieFormateado</b>\n")
-                .append(" \n")
-
-            val textoImprmir = normalizarTexto(ticket.toString())
-            printer.printFormattedText(textoImprmir)
-        }
-    }
-
-    //Funcion para redimencionar el logo
-    private fun redimensionarLogo(bitmap: Bitmap, anchoMaximo: Int) : Bitmap {
-        val proporcion = anchoMaximo.toFloat() / bitmap.width
-        val altoNuevo = (bitmap.height * proporcion).toInt()
-
-        return bitmap.scale(anchoMaximo, altoNuevo)
-    }
-
-    //Funcion para dividir en lineas
-    private fun dividirEnLineas(texto: String, maxCaracteres: Int): String {
-        return texto.chunked(maxCaracteres).joinToString("\n[C]")
-    }
-
-    // Función para dividir en varias líneas la descripcion del prducto
-    private fun dividirDescripcion(texto: String, maxLength: Int = 16): List<String> {
-        val lineas = mutableListOf<String>()
-        var inicio = 0
-        while (inicio < texto.length) {
-            val fin = (inicio + maxLength).coerceAtMost(texto.length)
-            lineas.add(texto.substring(inicio, fin))
-            inicio += maxLength
-        }
-        return lineas
-    }
-
-    //FUNCION PARA IMPRIMIR EL RECIBO INTREGRADO
-    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    private fun imprimirReciboIntegrado(){
-        val empresa = preferencias.getString("empresa", "").orEmpty()
-        val direccion = preferencias.getString("direccion", "").orEmpty()
-        val nrc = preferencias.getString("nrc", "").orEmpty()
-        val nit = preferencias.getString("nit", "").orEmpty()
-        val giro = preferencias.getString("giro", "").orEmpty()
-        val dteUrlQRHacienda = preferencias.getString("dteUrlQRHacienda", "").orEmpty()
-        val dteUrlQRempresa = preferencias.getString("dteUrlQRempresa", "").orEmpty()
-        val textoPie = "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL"
-
-        val infoPedido = pedidosController.obtenerInformacionPedido(idpedido, this@Detallepedido)
-        //val infoCliente = clientesController.obtenerInformacionCliente(this@Detallepedido, idcliente)
-
-        //val printManager = getSystemService(PRINT_SERVICE) as PrintManager
-        val impresorIntegrado = preferencias.getString("impresorIntegrado", "sinNombre")
-
-        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        val device : BluetoothDevice? = bluetoothAdapter.bondedDevices.firstOrNull {
-            it.name.contains(impresorIntegrado.toString())
-        }
-
-        if(device != null){
-            val connection = BluetoothConnection(device)
-
-            connection.connect()
-
-            val printer = EscPosPrinter(connection, 160, 48f, 28)
-
-
-            // ===============================
-            // Preparar logo y texto
-            // ===============================
-            val prefs = getSharedPreferences("MisImagenes", MODE_PRIVATE)
-            val filePath = prefs.getString("imagenFile", null)
-
-            // Variable para el logo final
-            val logoOriginal: Bitmap = if (filePath != null) {
-                val file = File(filePath)
-                if (file.exists()) {
-                    BitmapFactory.decodeFile(file.absolutePath)
-                } else {
-                    BitmapFactory.decodeResource(resources, com.example.acae30.R.drawable.nologo)
-                }
-            } else {
-                BitmapFactory.decodeResource(resources, com.example.acae30.R.drawable.nologo)
-            }
-
-            // Redimensionar
-            val logoRedimensionado = redimensionarLogo(logoOriginal, 384)
-
-            val direccionFormateada = dividirEnLineas(direccion, 28)
-            val empresaFormateada = dividirEnLineas(empresa, 28)
-            val giroFormateada = dividirEnLineas(giro, 28)
-            val textoPieFormateado = dividirEnLineas(textoPie, 28)
-            val giroCliente = dividirEnLineas(infoCliente!!.dteGiro!!, 28)
-            val direccionCliente = dividirEnLineas(infoPedido!!.Sucursal_Direccion!!,28)
-
-            // ===============================
-            // Formateando Datos Fiscales DTE
-            // ===============================
-
-            val codigoGeneracion = dividirEnLineas(infoPedido.dteCodigoGeneracion!!, 28)
-            val numeroControl = dividirEnLineas(infoPedido.dteNumeroControl!!, 28)
-            val selloRecepcion = dividirEnLineas(infoPedido.dteSelloRecibido!!, 28)
-
-            val fecha = infoPedido.Fecha_creado?.substring(0, 10).orEmpty()
-            val documento = when(infoPedido.Tipo_documento){
-                "CF" -> "CREDITO FISCAL"
-                "FC" -> "FACTURA"
-                "RE" -> "REMISIÓN"
-                else -> "RECIBO"
-            }
-
-            // ===============================
-            // Configurando la impresion de los Qr
-            // ===============================
-            val qrHacienda = dteUrlQRHacienda + "${infoPedido.dteAmbiente}&codGen=${infoPedido.dteCodigoGeneracion}&fechaEmi=$fecha"
-            val qrEmpresa = dteUrlQRempresa + "${infoPedido.dteCodigoGeneracion}"
-
-            val textoVerificacion = dividirEnLineas("Verificacion con $empresa",28)
-
-            val qr =if(dteUrlQRempresa != "0") {("[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
-                    "[C] Qr Hacienda \n" +
-                    "\n" +
-                    "[C]<qrcode size='30'>$qrEmpresa</qrcode>\n" +
-                    "[C] $textoVerificacion \n")}
-            else{
-                "[C]<qrcode size='30'>$qrHacienda</qrcode>\n" +
-                        " \n" +
-                        "[C] Qr Hacienda \n"
-            }
-
-
-            // ===============================
-            // Detalle del pedido desde controlador
-            // ===============================
-            val listaDetalle = pedidosController.obtenerDetallePedido(idpedido, this@Detallepedido)
-            //var total = 0f
-            val detalleBuilder = StringBuilder()
-
-            // ===============================
-            // Concatenando a la Descripcion, la Cantidad, Codigo de Barra y Bonificados
-            // ===============================
-            listaDetalle.forEach { item ->
-                val descripcionPartes = if(item.Bonificado!! > 0){
-                    if(infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937"){
-                        dividirDescripcion(
-                            (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion + " - BONIFICADOS: " + item.Bonificado) ?: ""
-                        )
-                    }else{
-                        dividirDescripcion(
-                            (item.Cantidad.toString() + " " + item.Descripcion + " - BONIFICADOS: " + item.Bonificado) ?: ""
-                        )
-                    }
-                }else{
-                    if(infoCliente!!.Nrc == "193-7" || infoCliente!!.Nrc == "1937"){
-                        dividirDescripcion(
-                            (item.Codigo_de_barra + " - " + item.Cantidad.toString() + " " + item.Descripcion) ?: ""
-                        )
-                    }else{
-                        dividirDescripcion(
-                            (item.Cantidad.toString() + " " + item.Descripcion) ?: ""
-                        )
-                    }
-                }
-
-                // ===============================
-                // Calculo del detalle para mostrar precio sin iva
-                // ===============================
-                val totalVenta = if(documento.contentEquals("CREDITO FISCAL")){
-                    item.Total_iva!!.toDouble() / 1.13
-                }else{
-                    item.Total_iva
-                }
-
-                //Funcion para cortar la descripcion en varias lineas
-                descripcionPartes.forEachIndexed { index, parte ->
-                    if (index == 0) {
-                        detalleBuilder.append("[L]- $parte [R]$ ${String.format("%.4f", totalVenta)}\n")
-                    } else {
-                        detalleBuilder.append("[L]$parte\n")
-                    }
-                }
-
-                //total += item.Total_iva ?: 0f
-            }
-
-            val totalFacturado = total - infoPedido.Iva_Percibido!!
-
-            if(infoPedido.Enviado == 1 && infoPedido.pedido_dte == 1){
-                // ===============================
-                // Construir ticket completo DTE
-                // ===============================
-                val ticket = StringBuilder()
-                    .append("[C]<img>")
-                    .append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado))
-                    .append("</img>\n")
-                    .append("[C]$empresaFormateada\n")
-                    .append("[C]$direccionFormateada\n")
-                    .append("[C]NIT: $nit\n")
-                    .append("[C]NRC: $nrc\n")
-                    .append("[C]$giroFormateada\n")
-                    .append("[L]------------------------------\n")
-                    .append("[C]DATOS DEL CLIENTE\n")
-                    .append("[L]------------------------------\n")
-                    .append("[L]NOMBRE:\n")
-                    .append("[C]${infoCliente!!.Cliente}\n")
-                    .append("[L]DOCUMENTO: \n")
-                    .append("[C]${infoCliente!!.Nit} / ${infoCliente!!.Dui} \n")
-                    .append("[L]N.R.C: ${infoCliente!!.Nrc} \n")
-                    .append("[L]ACTIVIDAD ECONOMICA: \n")
-                    .append("[C]$giroCliente \n")
-                    .append("[L]NOMBRE SUCURSAL: \n")
-                    .append("[C]${infoPedido.Nombre_sucursal}\n")
-                    .append("[L]DIRECCION: \n")
-                    .append("[C]$direccionCliente\n")
-                    .append("[L]------------------------------\n")
-                    .append("[C]DOCUMENTO ELECTRONICO\n")
-                    .append("[L]------------------------------\n")
-                    .append("[L]TIPO DOCUMENTO:\n")
-                    .append("[C]$documento \n")
-                    .append("[L]FECHA DE EMISIÓN\n")
-                    .append("[C]${infoPedido.Fecha_creado} \n")
-                    .append("[L]CODIGO DE GENERACION \n")
-                    .append("[C]$codigoGeneracion \n")
-                    .append("[L]NUMERO DE CONTROL \n")
-                    .append("[C]$numeroControl \n")
-                    .append("[L]SELLO DE RECEPCION\n")
-                    .append("[C]$selloRecepcion \n")
-                    .append("[C]TERMINOS: ${infoPedido.Terminos}\n")
-                    .append("[L]------------------------------\n")
-                    .append(qr)
-                    .append("[L]------------------------------\n")
-                    .append("[C]DETALLE DEL DOCUMENTO\n")
-                    .append("[L]------------------------------\n")
-                    .append(detalleBuilder.toString())
-                    .append("[L]------------------------------\n")
-                    .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
-                    .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
-                    .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
-                    .append("[L]TOTAL: [R] $ ${String.format("%.2f", totalFacturado)} \n")
-                    .append("[L]VENDIDO POR: $vendedor\n")
-                    .append("[L]FECHA: $fecha \n")
-                    .append("[C]¡GRACIAS POR SU COMPRA! \n")
-                    .append("[C]<b>$textoPieFormateado</b>\n")
-                    .append(" \n")
-
-                val textoImprmir = normalizarTexto(ticket.toString())
-                printer.printFormattedText(textoImprmir)
-            }else{
-                // ===============================
-                // Construir ticket Normal
-                // ===============================
-                val ticket = StringBuilder()
-                    .append("[C]<img>")
-                    .append(PrinterTextParserImg.bitmapToHexadecimalString(printer, logoRedimensionado))
-                    .append("</img>\n")
-                    .append("[C]$empresaFormateada\n")
-                    .append("[C]$direccionFormateada\n")
-                    .append("[C]NIT: $nit\n")
-                    .append("[C]NRC: $nrc\n")
-                    .append("[C]$giroFormateada\n")
-                    .append("[L]------------------------------\n")
-                    .append("[C]DATOS DEL CLIENTE\n")
-                    .append("[L]------------------------------\n")
-                    .append("[L]NOMBRE:\n")
-                    .append("[C]${infoCliente!!.Cliente}\n")
-                    .append("[L]DOCUMENTO: \n")
-                    .append("[C]${infoCliente!!.Nit} / ${infoCliente!!.Dui} \n")
-                    .append("[L]N.R.C: ${infoCliente!!.Nrc} \n")
-                    .append("[L]ACTIVIDAD ECONOMICA: \n")
-                    .append("[C]$giroCliente \n")
-                    .append("[L]NOMBRE SUCURSAL: \n")
-                    .append("[C]${infoPedido.Nombre_sucursal}\n")
-                    .append("[L]DIRECCION: \n")
-                    .append("[C]$direccionCliente\n")
-                    .append("[L]TIPO DOCUMENTO:\n")
-                    .append("[C]$documento \n")
-                    .append("[L]------------------------------\n")
-                    .append("[C]DETALLE DEL DOCUMENTO\n")
-                    .append("[L]------------------------------\n")
-                    .append(detalleBuilder.toString())
-                    .append("[L]------------------------------\n")
-                    .append("[L]SUB-TOTAL: [R] $ ${String.format("%.2f", infoPedido.Suma)} \n")
-                    .append("[L]IVA: [R] $ ${String.format("%.2f", infoPedido.Iva)} \n")
-                    .append("[L]IVA RET: [R] $ ${String.format("%.2f", infoPedido.Iva_Percibido)} \n")
-                    .append("[L]TOTAL: [R] $ ${String.format("%.2f", totalFacturado)} \n")
-                    .append("[L]VENDIDO POR: $vendedor\n")
-                    .append("[L]FECHA: $fecha \n")
-                    .append("[C]¡GRACIAS POR SU COMPRA! \n")
-                    .append("[C]<b>$textoPieFormateado</b>\n")
-                    .append(" \n")
-
-                val textoImprmir = normalizarTexto(ticket.toString())
-                printer.printFormattedText(textoImprmir)
-            }
-
-        }else{
-            Toast.makeText(this@Detallepedido, "NO ENCONTRADO", Toast.LENGTH_SHORT)
-                .show()
-        }
-
-    }
-
-    //Funcion para Normalizar Texo, eliminar tildes, caracteres especiales, etc.
-    private fun normalizarTexto(texto: String): String {
-        val original = "ÁÀÂÄáàâäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖóòôöÚÙÛÜúùûüÑñÇç"
-        val reemplazo = "AAAAaaaaEEEEeeeeIIIIiiiiOOOOooooUUUUuuuuNnCc"
-
-        var resultado = texto
-        for (i in original.indices) {
-            resultado = resultado.replace(original[i], reemplazo[i])
-        }
-
-        // Elimina caracteres no ASCII
-        resultado = resultado.replace(Regex("[^\\x00-\\x7F]"), "")
-        return resultado
-    }
-    */
 
     private fun permisosBluetooth() {
         val permissions = when {

@@ -13,11 +13,6 @@ class ActualizarSucursalPedidoUseCase(
         val sucursal = clientesRepository.obtenerSucursalPorNombre(idCliente, nombreSucursal)
         
         if (sucursal != null) {
-            // Usamos el DAO de pedidos a través del repositorio para actualizar los campos
-            // Nota: El PedidosDao ya tiene el método para actualizar cabecera, pero aquí 
-            // necesitamos actualizar múltiples campos de sucursal.
-            // Por simplicidad en este paso, usaremos una consulta directa si el repo no lo tiene,
-            // pero lo ideal es añadirlo al PedidosDao.
             
             // Actualizamos el pedido en la base de datos local
             pedidosRepository.actualizarSucursalEnPedido(

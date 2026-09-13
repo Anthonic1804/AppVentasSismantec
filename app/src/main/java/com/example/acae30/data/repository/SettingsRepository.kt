@@ -3,10 +3,6 @@ package com.example.acae30.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 
-/**
- * REFACTORIZACIÓN ARQUITECTURA LIMPIA: Repositorio para gestionar la configuración de la aplicación.
- * Centraliza el acceso a SharedPreferences para evitar dependencias directas en la UI.
- */
 class SettingsRepository(private val context: Context) {
 
     private val preferences: SharedPreferences = context.getSharedPreferences("CONFIG_SERVIDOR", Context.MODE_PRIVATE)

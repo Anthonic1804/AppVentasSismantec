@@ -4,7 +4,7 @@ import com.example.acae30.data.repository.ClientesRepository
 import com.example.acae30.data.repository.PedidosRepository
 
 /**
- * REFACTORIZACIÓN MULTIPLES PEDIDOS: Caso de uso centralizado para crear un nuevo pedido.
+ * Caso de uso centralizado para crear un nuevo pedido.
  */
 class CrearPedidoUseCase(
     private val pedidosRepository: PedidosRepository,

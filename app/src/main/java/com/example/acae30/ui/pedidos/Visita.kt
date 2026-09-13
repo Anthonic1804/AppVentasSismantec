@@ -68,7 +68,7 @@ class Visita : AppCompatActivity() {
         idvisitaApi = intent.getIntExtra("idapi", 0)
         idvisitaGLOBAL = intent.getIntExtra("visitaid", 0)
 
-        // REFACTORIZACIÓN MVVM: Inicialización del ViewModel siguiendo el patrón del proyecto
+        // Inicialización del ViewModel siguiendo el patrón del proyecto
         val db = AppDatabase.getInstance(this)
         val servidor = funciones.getServidor(getSharedPreferences(instancia, MODE_PRIVATE).getString("ip", "") ?: "", 
             getSharedPreferences(instancia, MODE_PRIVATE).getInt("puerto", 0).toString(), this)

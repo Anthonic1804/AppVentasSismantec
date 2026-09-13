@@ -13,10 +13,6 @@ import com.example.acae30.domain.usecase.FinalizarVisitaUseCase
 import com.example.acae30.domain.usecase.IniciarVisitaUseCase
 import kotlinx.coroutines.launch
 
-/**
- * REFACTORIZACIÓN MVVM: ViewModel para gestionar la lógica de Visitas.
- * Recibe dependencias por constructor siguiendo el patrón del proyecto.
- */
 class VisitasViewModel(
     private val visitasRepository: VisitasRepository,
     private val pedidosRepository: PedidosRepository,

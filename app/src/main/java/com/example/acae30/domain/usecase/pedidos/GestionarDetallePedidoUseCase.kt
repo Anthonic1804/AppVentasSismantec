@@ -4,7 +4,7 @@ import com.example.acae30.data.local.entity.PedidoDetalleEntity
 import com.example.acae30.data.repository.PedidosRepository
 
 /**
- * REFACTORIZACIÓN MVVM: Caso de Uso para insertar, actualizar o eliminar productos del pedido.
+ * Caso de Uso para insertar, actualizar o eliminar productos del pedido.
  */
 class GestionarDetallePedidoUseCase(
     private val repository: PedidosRepository
@@ -14,11 +14,11 @@ class GestionarDetallePedidoUseCase(
      * Agrega o actualiza un producto en el pedido.
      */
     suspend fun agregarOActualizarProducto(detalle: PedidoDetalleEntity) {
-        // 1. Verificamos si el producto con la misma unidad ya existe en el pedido
+        // Verificamos si el producto con la misma unidad ya existe en el pedido
         val existente = repository.buscarProductoEnDetalle(detalle.idPedido, detalle.idProducto, detalle.unidad ?: "")
 
         if (existente != null && detalle.id == 0) {
-            // REGLA DE NEGOCIO: Si ya existe y estamos agregando uno nuevo, sumamos cantidades
+            // Si ya existe y estamos agregando uno nuevo, sumamos cantidades
             val nuevaCantidad = existente.cantidad + detalle.cantidad
             val nuevoTotalIva = existente.totalIva + detalle.totalIva
             val nuevoTotal = existente.total + detalle.total
@@ -34,7 +34,7 @@ class GestionarDetallePedidoUseCase(
             repository.insertarDetallePedido(detalle)
         }
 
-        // 2. Recalculamos el total de la cabecera del pedido
+        // Recalculamos el total de la cabecera del pedido
         repository.recalcularTotalPedido(detalle.idPedido)
     }
 

@@ -3,22 +3,19 @@ package com.example.acae30.domain.usecase.cuentas
 import com.example.acae30.data.repository.CuentasRepository
 import com.example.acae30.modelos.Cliente
 
-/**
- * REFACTORIZACIÓN MVVM: Caso de Uso para obtener el listado de clientes que poseen deudas.
- */
 class ObtenerClientesConCuentasUseCase(
     private val repository: CuentasRepository
 ) {
 
     suspend fun ejecutar(filtroNombre: String = ""): List<Cliente> {
-        // 1. Obtenemos las entidades desde el repositorio (Room)
+        // Obtenemos las entidades desde el repositorio (Room)
         val entities = if (filtroNombre.isEmpty()) {
             repository.obtenerClientesConCuentasPendientes()
         } else {
             repository.buscarClientesConCuentasPendientes(filtroNombre)
         }
 
-        // 2. Mapeamos de ClientesEntity a el modelo Cliente (UI) para mantener compatibilidad
+        // Mapeamos de ClientesEntity a el modelo Cliente (UI) para mantener compatibilidad
         return entities.map { entity ->
             Cliente(
                 Id = entity.id,

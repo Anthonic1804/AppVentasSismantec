@@ -3,19 +3,15 @@ package com.example.acae30.domain.usecase.clientes
 import com.example.acae30.data.repository.ClientesRepository
 import com.example.acae30.modelos.Cliente
 
-/**
- * REFACTORIZACIÓN MVVM: Caso de Uso para obtener el listado de clientes.
- * Encapsula la lógica de filtrado y mapeo de datos.
- */
 class ObtenerListaClientesUseCase(
     private val repository: ClientesRepository
 ) {
 
     suspend fun ejecutar(filtro: String = "", idRuta: Int = 0): List<Cliente> {
-        // 1. Obtenemos las entidades desde Room
+        // Obtenemos las entidades desde Room
         val entities = repository.obtenerListaClientesLocal(filtro, idRuta)
 
-        // 2. Mapeamos al modelo de la UI (Cliente)
+        // Mapeamos al modelo de la UI (Cliente)
         return entities.map { entity ->
             Cliente(
                 Id = entity.id,

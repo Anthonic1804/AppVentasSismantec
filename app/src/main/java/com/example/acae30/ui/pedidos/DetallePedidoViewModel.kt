@@ -35,12 +35,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.Locale
-
-/**
- * REFACTORIZACIÓN MVVM: ViewModel para Detallepedido.
- * Gestiona sucursales, conteo de items y cálculos fiscales de forma asíncrona.
- * Optimizado para evitar ANR mediante manejo de hilos y reducción de emisiones redundantes.
- */
 class DetallePedidoViewModel(
     private val getSucursalesUseCase: GetSucursalesUseCase,
     private val actualizarSucursalPedidoUseCase: ActualizarSucursalPedidoUseCase,
@@ -123,18 +117,14 @@ class DetallePedidoViewModel(
         }
     }
 
-    /**
-     * Actualiza la sucursal del pedido actual.
-     */
+    //Actualiza la sucursal del pedido actual.
     fun seleccionarSucursal(idPedido: Int, idCliente: Int, nombreSucursal: String) {
         viewModelScope.launch {
             actualizarSucursalPedidoUseCase(idPedido, idCliente, nombreSucursal)
         }
     }
 
-    /**
-     * Obtiene la cantidad de productos en el pedido.
-     */
+    //Obtiene la cantidad de productos en el pedido.
     fun cargarCantidadItems(idPedido: Int) {
         viewModelScope.launch {
             val cantidad = obtenerCantidadItemsUseCase(idPedido)
@@ -142,9 +132,8 @@ class DetallePedidoViewModel(
         }
     }
 
-    /**
-     * Carga la información de cabecera del pedido (vendedor, términos, etc.) de forma asíncrona.
-     */
+
+    //Carga la información de cabecera del pedido de forma asíncrona.
     fun cargarInfoPedido(idPedido: Int, idCliente: Int, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             val pController = PedidosController()
@@ -158,9 +147,7 @@ class DetallePedidoViewModel(
         }
     }
 
-    /**
-     * MULTIPLES PEDIDOS: Inicia la observación de borradores globales.
-     */
+     //MULTIPLES PEDIDOS: Inicia la observación de borradores globales.
     fun observarBorradores() {
         jobBorradores?.cancel()
         jobBorradores = viewModelScope.launch {
@@ -170,27 +157,30 @@ class DetallePedidoViewModel(
         }
     }
 
-    /**
-     * MULTIPLES PEDIDOS: Cambia el pedido activo sin recargar la Activity.
-     */
+
+     //MULTIPLES PEDIDOS: Cambia el pedido activo sin recargar la Activity.
     fun cambiarPedidoActivo(pedido: PedidosEntity, context: Context) {
         viewModelScope.launch {
             _cargando.value = true
             try {
+                // RESET DE CONTEO: Forzamos a la UI a saber que el nuevo pedido empieza de cero
+                // hasta que se cargue su detalle real.
+                _cantidadItems.value = 0
+                
                 // MULTIPLES PEDIDOS: Reset de estados de procesos anteriores para evitar colisiones
                 _envioExitoso.value = null
                 _eliminacionExitosa.value = null
 
-                // 1. Cargar nueva cabecera e info de cliente
+                // Cargar nueva cabecera e info de cliente
                 cargarInfoPedidoSync(pedido.id, pedido.idCliente, context)
-                // 2. Cargar sucursales del nuevo cliente para gestionar visibilidad
+                // Cargar sucursales del nuevo cliente para gestionar visibilidad
                 val listaSucursales = getSucursalesUseCase(pedido.idCliente)
                 _sucursales.value = listaSucursales
-                // 3. Reiniciar observación del detalle de productos
+                // Reiniciar observación del detalle de productos
                 observarDetallePedido(pedido.id)
-                // 4. Actualizar conteo de items
+                // Actualizar conteo de items
                 cargarCantidadItems(pedido.id)
-                // 5. Notificar cambio exitoso
+                // Notificar cambio exitoso
                 _pedidoCambiadoContexto.value = pedido
             } catch (e: Exception) {
                 Timber.e(e, "Error al cambiar pedido")
@@ -215,18 +205,14 @@ class DetallePedidoViewModel(
         _pedidoCambiadoContexto.value = null
     }
 
-    /**
-     * MULTIPLES PEDIDOS: Actualiza el nombre del cliente en el pedido actual (para código 01).
-     */
+     //MULTIPLES PEDIDOS: Actualiza el nombre del cliente en el pedido actual (para código 01).
     fun actualizarNombreCliente(idPedido: Int, nombre: String) {
         viewModelScope.launch {
             actualizarNombreClienteUseCase(idPedido, nombre)
         }
     }
 
-    /**
-     * MULTIPLES PEDIDOS: Crea un nuevo borrador vacío para el cliente actual.
-     */
+     //MULTIPLES PEDIDOS: Crea un nuevo borrador vacío para el cliente actual.
     fun crearNuevoBorrador(idCliente: Int, nombre: String, idVisita: Int, gps: String, context: Context) {
         viewModelScope.launch {
             _cargando.value = true
@@ -248,16 +234,13 @@ class DetallePedidoViewModel(
         }
     }
 
-    /**
-     * Inicia la observación del detalle del pedido.
-     * OPTIMIZACIÓN: Se usa distinctUntilChanged para evitar procesar actualizaciones de stock que no alteran el pedido.
-     */
+     //Inicia la observación del detalle del pedido.
     fun observarDetallePedido(idPedido: Int) {
         jobDetalle?.cancel()
         jobDetalle = viewModelScope.launch {
             getDetallePedidoFlowUseCase(idPedido)
                 .distinctUntilChanged { old, new -> 
-                    // Solo emitimos si cambia la cantidad de items o el ID del detalle (evita ruidos por stock)
+                    // Solo emitimos si cambia la cantidad de items o el ID del detalle
                     old.size == new.size && old.zip(new).all { (o, n) -> o.Id == n.Id && o.Cantidad == n.Cantidad && o.Precio_iva == n.Precio_iva }
                 }
                 .collectLatest { lista ->
@@ -267,10 +250,7 @@ class DetallePedidoViewModel(
         }
     }
 
-    /**
-     * Verifica el saldo del cliente contra el servidor (con fallback local) antes de proceder.
-     * REFACTORIZACIÓN: Implementa fallback a datos locales de Room si falla la conexión.
-     */
+    //Verifica el saldo del cliente contra el servidor (con fallback local) antes de proceder.
     fun verificarSaldoYProceder(context: Context, idCliente: Int, totalPedido: Float, terminos: String) {
         viewModelScope.launch {
             _cargando.value = true
@@ -280,7 +260,7 @@ class DetallePedidoViewModel(
                 var verificadoConServidor = false
 
                 val controller = ClientesController()
-                // 1. Intentar obtener balance fresco del servidor
+                // Intentar obtener balance fresco del servidor
                 val balanceFresh = try {
                     controller.obtenerBalacenClientePorId(context, idCliente)
                 } catch (e: Exception) {
@@ -292,13 +272,13 @@ class DetallePedidoViewModel(
                     limiteCredito = balanceFresh.limiteCredito
                     verificadoConServidor = true
                 } else {
-                    // 2. FALLBACK: Usar datos locales de Room si no hay conexión
+                    // Usar datos locales de Room si no hay conexión
                     val db = AppDatabase.getInstance(context)
                     val clienteLocal = db.clienteDao().obtenerClientePorId(idCliente)
                     if (clienteLocal != null) {
                         balanceActual = clienteLocal.balance?.toFloat() ?: 0f
                         limiteCredito = clienteLocal.limiteCredito?.toFloat() ?: 0f
-                        Timber.w("[VIEWMODEL] USANDO SALDO LOCAL (FALLBACK)")
+                        Timber.w("[VIEWMODEL] USANDO SALDO LOCAL")
                     } else {
                         _validacionSaldo.value = ResultadoValidacionSaldo(false, "NO SE ENCONTRARON DATOS DEL CLIENTE PARA VALIDAR SALDO")
                         return@launch
@@ -332,9 +312,7 @@ class DetallePedidoViewModel(
         _validacionSaldo.value = null
     }
 
-    /**
-     * Calcula y guarda los totales fiscales.
-     */
+     //Calcula y guarda los totales fiscales.
     fun actualizarTotalesFiscales(
         idPedido: Int,
         totalBase: Double,
@@ -344,8 +322,6 @@ class DetallePedidoViewModel(
         viewModelScope.launch {
             val resultado = calcularTotalesFiscalesUseCase(totalBase, tipoDocumento, esGranContribuyente)
             _totalesFiscales.value = resultado
-            
-            // Persistir en la base de datos (en hilo IO) incluyendo el Total Final recalculado
             actualizarTotalesFiscalesUseCase(idPedido, resultado.sumas, resultado.iva, resultado.ivaPerci, resultado.totalFinal)
         }
     }
@@ -362,10 +338,7 @@ class DetallePedidoViewModel(
         actualizarTotalesFiscales(idPedido, totalBase, tipoDoc, esGranContribuyente)
     }
 
-    /**
-     * Envia el pedido al servidor de forma asíncrona.
-     * REFACTORIZACIÓN: Refuerzo de seguridad con try-catch-finally para asegurar cierre de diálogos.
-     */
+     //Envia el pedido al servidor de forma asíncrona.
     fun enviarPedido(idPedido: Int) {
         viewModelScope.launch {
             _cargando.value = true
@@ -386,9 +359,7 @@ class DetallePedidoViewModel(
         _envioExitoso.value = null
     }
 
-    /**
-     * Elimina el pedido y sus detalles de forma local.
-     */
+    //Elimina el pedido y sus detalles de forma local.
     fun eliminarPedido(idPedido: Int) {
         viewModelScope.launch {
             _cargando.value = true
@@ -409,9 +380,7 @@ class DetallePedidoViewModel(
         _eliminacionExitosa.value = null
     }
 
-    /**
-     * REFACTORIZACIÓN MVVM: Recolecta todos los datos necesarios para imprimir un ticket.
-     */
+     //Recolecta todos los datos necesarios para imprimir un ticket.
     fun obtenerDatosImpresion(idPedido: Int) {
         viewModelScope.launch {
             _cargando.value = true
