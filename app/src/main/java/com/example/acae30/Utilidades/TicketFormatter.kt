@@ -51,7 +51,7 @@ class TicketFormatter {
         val detalleBuilder = StringBuilder()
         data.detalle.forEach { item ->
             try {
-                // REFACTORIZACIÓN: Validación de descripción para evitar saltos de ítems
+                // Validación de descripción para evitar saltos de ítems
                 val descBase = item.Descripcion ?: "Cod: ${item.Id_producto}"
                 
                 val descripcionPartes = if ((item.Bonificado ?: 0) > 0) {
@@ -87,8 +87,7 @@ class TicketFormatter {
             }
         }
         
-        // REFACTORIZACIÓN: Añadimos un salto extra para asegurar que el último ítem 
-        // salga del búfer de la impresora antes del pie del ticket.
+        // Añadimos un salto extra para asegurar que el último ítem
         detalleBuilder.append("\n")
 
         val ticket = StringBuilder()

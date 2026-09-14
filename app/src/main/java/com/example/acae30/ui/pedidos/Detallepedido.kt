@@ -417,7 +417,7 @@ class Detallepedido : AppCompatActivity() {
                 nombreSucursalPedido = it.Nombre_sucursal ?: ""
                 idPedidoServidor = it.Id_pedido_sistema ?: 0
 
-                // REFACTORIZACIÓN: Actualizamos el límite de ítems inmediatamente al cargar el pedido
+                // Actualizamos el límite de ítems inmediatamente al cargar el pedido
                 actualizarLimitePorDocumento()
 
                 if (!it.Fecha_creado.isNullOrEmpty()) {
@@ -519,7 +519,7 @@ class Detallepedido : AppCompatActivity() {
                 nombre = it.nombreCliente
                 codigo = ""
                 
-                // REFACTORIZACIÓN: Limpiamos el conteo previo para evitar que la validación 
+                // Limpiamos el conteo previo para evitar que la validación
                 // de items use datos del pedido anterior.
                 cantidadItemsPedido = 0
                 binding.cantidadItems.text = "CANT. ITEMS: 0"

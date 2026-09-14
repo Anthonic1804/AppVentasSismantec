@@ -194,9 +194,6 @@ class Producto_agregar : AppCompatActivity() {
                     if (binding.tvPrecioPersonalizado.visibility == View.VISIBLE) {
                         binding.tvPrecioPersonalizado.text = String.format(Locale.getDefault(), "%.${decPrecios}f", p)
                     }
-                    
-                    // REFACTORIZACIÓN: Eliminamos la llamada a Totalizar() aquí para romper el bucle infinito
-                    // El ViewModel ya calculó el total y la validación en el paso anterior.
                 }
             }
         }
@@ -251,7 +248,6 @@ class Producto_agregar : AppCompatActivity() {
                 // REFACTORIZACIÓN: Observar la cantidad mínima de la escala para validar el botón
                 viewModel.cantidadMinimaEscala.collect { min ->
                     cantidadEscala = min
-                    // Eliminamos el llamado a validarCantidad() local
                 }
             }
         }
@@ -318,7 +314,7 @@ class Producto_agregar : AppCompatActivity() {
                         binding.txtdescripcion.text = p.descripcion
                         codigoProducto = p.Codigo.toString()
                         
-                        // REFACTORIZACIÓN: Cargamos el listado de precios una vez que confirmamos que el producto existe
+                        // Cargamos el listado de precios una vez que confirmamos que el producto existe
                         cargarListadoPrecios(unidadActual)
 
                         // Si no estamos en edición, inicializamos con precio base
@@ -375,7 +371,7 @@ class Producto_agregar : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // REFACTORIZACIÓN: Observar el resultado de la validación integral (Único punto de control)
+                // Observar el resultado de la validación integral
                 viewModel.validationResult.collect { result ->
                     binding.apply {
                         if (result.isValid) {
@@ -446,7 +442,7 @@ class Producto_agregar : AppCompatActivity() {
             if(proviene == "editar"){
 
                 provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, null)
-                // CÓDIGO VIEJO: provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
+                // provieneDetallePedido(idpedido, idcliente, nombrecliente, idvisita, codigo, "visita", idapi, getSucursalPosition)
 
             }else{
                 if(inventarioTiempoReal){
@@ -458,7 +454,7 @@ class Producto_agregar : AppCompatActivity() {
                     intento.putExtra("visitaid", idvisita)
                     intento.putExtra("codigo", codigo)
                     intento.putExtra("idapi", idapi)
-                    // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
+                    // intento.putExtra("sucursalPosition", getSucursalPosition)
                     intento.putExtra("facturaExportacion", false)
                     startActivity(intento)
                 }else{
@@ -473,7 +469,7 @@ class Producto_agregar : AppCompatActivity() {
                     intento.putExtra("visitaid", idvisita)
                     intento.putExtra("codigo", codigo)
                     intento.putExtra("idapi", idapi)
-                    // CÓDIGO VIEJO: intento.putExtra("sucursalPosition", getSucursalPosition)
+                    // intento.putExtra("sucursalPosition", getSucursalPosition)
                     intento.putExtra("facturaExportacion", false)
                     startActivity(intento)
                 }
@@ -497,7 +493,7 @@ class Producto_agregar : AppCompatActivity() {
         }
 
         binding.btneliminar.setOnClickListener {
-            // NUEVO CÓDIGO: Delegamos la eliminación al ViewModel
+            // Delegamos la eliminación al ViewModel
             if (idpedidodetalle != null && idpedidodetalle!! > 0) {
                 viewModel.eliminarProducto(idpedidodetalle!!, idpedido)
             }
@@ -526,7 +522,7 @@ class Producto_agregar : AppCompatActivity() {
                     }
                     else -> {
                         unidadActual = itemSeleccionado
-                        // 2. Buscamos la equivalencia en segundo plano
+                        // Buscamos la equivalencia en segundo plano
                         lifecycleScope.launch(Dispatchers.IO) {
                             val unidadMedida = inventarioController.obtenerIdUnidadMedida(this@Producto_agregar, idproducto!!, unidadActual)
                             withContext(Dispatchers.Main) {
@@ -606,10 +602,6 @@ class Producto_agregar : AppCompatActivity() {
     private fun cargarOpcionesGenerales(){
         this@Producto_agregar.lifecycleScope.launch {
 
-            // REFACTORIZACIÓN: La información del cliente (incluyendo si es Mayorista) 
-            // ahora la gestiona directamente el ViewModel para asegurar que las validaciones 
-            // de escalas sean infalibles.
-            
             // Configurar visibilidad de botones
             if (idpedidodetalle!! > 0) {
                 binding.btneliminar.visibility = View.VISIBLE
@@ -619,7 +611,7 @@ class Producto_agregar : AppCompatActivity() {
             runOnUiThread {
                 cargarUnidadesMedida()
                 
-                // Forzamos una totalización inicial para que el VM valide el estado inicial (ej. cantidad 1 vs escala)
+                // Forzamos una totalización inicial para que el VM valide el estado inicial
                 Totalizar(cantidad)
             }
         }
@@ -808,7 +800,7 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     private fun Totalizar(cantidad: Float) {
-        // NUEVO CÓDIGO: Delegamos el cálculo y la validación al ViewModel.
+        // Delegamos el cálculo y la validación al ViewModel.
         val (base, factor) = when(unidadActual) {
             "UNI" -> "UNI" to 1f
             "FRA" -> "FRA" to 1f
@@ -819,7 +811,7 @@ class Producto_agregar : AppCompatActivity() {
             }
         }
 
-        // REFACTORIZACIÓN: Aseguramos que sinExistencias se pase correctamente para que el 
+        // Aseguramos que sinExistencias se pase correctamente para que el
         // ViewModel siempre tenga los parámetros de validación frescos.
         viewModel.recalcularValores(
             idCliente = idcliente!!,
@@ -1066,7 +1058,7 @@ class Producto_agregar : AppCompatActivity() {
         val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
         val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
 
-        // REFACTORIZACIÓN: Usamos el precio final validado por el ViewModel como fuente de verdad única.
+        // Usamos el precio final validado por el ViewModel
         val precioFinalVm = viewModel.precioFinal.value
 
         val detalle = com.example.acae30.data.local.entity.PedidoDetalleEntity(
@@ -1114,7 +1106,7 @@ class Producto_agregar : AppCompatActivity() {
         val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
         val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
 
-        // REFACTORIZACIÓN: Usamos el precio final validado por el ViewModel como fuente de verdad única.
+        // Usamos el precio final validado por el ViewModel
         val precioFinalVm = viewModel.precioFinal.value
         
         val detalle = com.example.acae30.data.local.entity.PedidoDetalleEntity(
