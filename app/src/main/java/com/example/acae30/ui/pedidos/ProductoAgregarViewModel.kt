@@ -2,6 +2,7 @@ package com.example.acae30.ui.pedidos
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.data.local.entity.InventarioLotesEntity
 import com.example.acae30.data.local.entity.PedidoDetalleEntity
 import com.example.acae30.data.local.models.Inventario
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 class ProductoAgregarViewModel(
     private val inventarioRepository: InventarioRepository,
@@ -49,7 +52,7 @@ class ProductoAgregarViewModel(
     private val _precioAutorizado = MutableStateFlow<Float?>(null)
     val precioAutorizado = _precioAutorizado.asStateFlow()
 
-    // Estados de Stock para la UI (Representados como String para soportar decimales o enteros)
+    // Estados de Stock para la UI
     private val _stockUni = MutableStateFlow("0")
     val stockUni = _stockUni.asStateFlow()
 
@@ -59,6 +62,10 @@ class ProductoAgregarViewModel(
     // Stock total normalizado para validaciones
     private val _stockTotalValidacion = MutableStateFlow(0f)
     val stockTotalValidacion = _stockTotalValidacion.asStateFlow()
+
+    // REFACTORIZACIÓN: Cantidad ya reservada en el pedido actual (normalizada)
+    private val _cantidadYaEnPedidoNormalizada = MutableStateFlow(0.0)
+    val cantidadYaEnPedidoNormalizada = _cantidadYaEnPedidoNormalizada.asStateFlow()
 
     // Precio final calculado (Personalizado o Viñeta)
     private val _precioFinal = MutableStateFlow(0f)
@@ -103,7 +110,7 @@ class ProductoAgregarViewModel(
     //---------------------------------------------------------------------------
     //Carga la información inicial del producto y calcula el precio base y stock.
     //---------------------------------------------------------------------------
-    fun cargarProducto(idProducto: Int, idCliente: Int, unidadInicial: String) {
+    fun cargarProducto(idProducto: Int, idCliente: Int, idPedido: Int, unidadInicial: String) {
         viewModelScope.launch {
             try {
                 // 1. Cargar Info del Cliente primero para asegurar el flag de Mayorista
@@ -122,20 +129,25 @@ class ProductoAgregarViewModel(
                 if (p != null) {
                     actualizarStock(p)
                     
-                    // REFACTORIZACIÓN: Forzamos el recalculo inicial con el flag de mayorista ya cargado
-                    recalcularValores(
-                        idCliente = idCliente,
-                        idProducto = idProducto,
-                        cantidad = 0f, // Inicializamos en 0 para que la UI pida entrada
-                        unidad = unidadInicial,
-                        unidadBase = "UNI",
-                        factorEquivalencia = 1f,
-                        tipoBonif = ""
-                    )
+                    // 4. Calcular ocupación actual en el pedido (Omitimos el item actual si estamos editando)
+                    val idItemEdicion = _detallePedido.value?.id ?: 0
+                    calcularOcupacionEnPedido(idPedido, idProducto, p.Fraccion ?: 0f, idItemEdicion)
                 }
             } catch (e: Exception) {
                 Timber.e(e, "[PRODUCTO_AGREGAR_VM] ERROR CARGANDO PRODUCTO")
             }
+        }
+    }
+
+    /**
+     * Calcula cuántas unidades de este producto ya están en el pedido actual.
+     */
+    private suspend fun calcularOcupacionEnPedido(idPedido: Int, idProducto: Int, realFraccion: Float, idOmitir: Int = 0) {
+        try {
+            val ocupacion = gestionarDetalleUseCase.obtenerOcupacionTotal(idPedido, idProducto, realFraccion, idOmitir)
+            _cantidadYaEnPedidoNormalizada.value = ocupacion
+        } catch (e: Exception) {
+            Timber.e(e, "Error calculando ocupación previa")
         }
     }
 
@@ -175,7 +187,7 @@ class ProductoAgregarViewModel(
         idProducto: Int,
         cantidad: Float,
         unidad: String,
-        unidadBase: String, // "UNI" o "FRA"
+        unidadBase: String, 
         factorEquivalencia: Float,
         tipoBonif: String,
         precioSeleccionadoUi: Float? = null,
@@ -184,28 +196,20 @@ class ProductoAgregarViewModel(
         viewModelScope.launch {
             val p = _producto.value ?: return@launch
             
-            // 1. Obtener el precio base según la ficha (UNI o FRA)
             val precioBaseFicha = if (unidad == "FRA") p.Precio_u_iva ?: 0f else p.Precio_iva ?: 0f
-
-            // 2. Determinar el precio a usar (Prioridad: Personalizado > Selección UI > Ficha)
             val precioConvenio = calcularPrecioUseCase.ejecutar(idCliente, idProducto, unidad, precioBaseFicha)
             val esPersonalizado = (precioConvenio != precioBaseFicha && unidad == "UNI")
             
             val precioFinalCalculado = if (esPersonalizado) {
                 precioConvenio
             } else {
-                // Si no hay convenio, respetamos lo que el usuario eligió en el Spinner (escala)
                 precioSeleccionadoUi ?: precioBaseFicha
             }
 
             _esPrecioPersonalizado.value = esPersonalizado
             _precioFinal.value = precioFinalCalculado
 
-            // 3. Buscar la escala correspondiente para validación e ID
             val escalas = inventarioRepository.obtenerEscalasPrecios(idProducto, unidad)
-            Timber.d("[ESCALA_DEBUG] Escalas encontradas para unidad '$unidad': ${escalas.size}")
-            
-            // Usamos un margen de error (epsilon) para la comparación de precios de punto flotante
             val scale = escalas.find { 
                 val diff = Math.abs(it.precio_iva - precioFinalCalculado)
                 diff < 0.001 
@@ -215,28 +219,16 @@ class ProductoAgregarViewModel(
             _idEscalaSeleccionada.value = scale?.id ?: 0
             _cantidadMinimaEscala.value = minEscala
 
-            // LOG PARA DEPURACIÓN DE ESCALAS
-            Timber.d("[ESCALA_CHECK] Producto: $idProducto | Precio: $precioFinalCalculado | Scale Match: ${scale != null} | Min: $minEscala")
-
-            // 4. Calcular Bonificación
             val regalias = calcularBonificacionesUseCase.ejecutar(
                 idCliente, idProducto, cantidad, unidadBase, factorEquivalencia, tipoBonif, p.Bonificado ?: 0f
             )
             _bonificado.value = regalias
-
-            // 5. Calcular Total
             _totalLinea.value = precioFinalCalculado * cantidad
 
-            // 6. VALIDACIÓN INTEGRAL (Stock, Escalas, Precio)
             validarEstado(cantidad, unidad, p.Fraccion ?: 0f, factorEquivalencia, minEscala, sinExistencias)
-            
-            Timber.d("[PRODUCTO_AGREGAR_VM] CALCULO: $precioFinalCalculado (Min: $minEscala) * $cantidad = ${_totalLinea.value}")
         }
     }
 
-    /**
-     * Realiza la validación de negocio centralizada.
-     */
     private fun validarEstado(
         cantidad: Float,
         unidad: String,
@@ -246,28 +238,30 @@ class ProductoAgregarViewModel(
         sinExistencias: Int
     ) {
         val capacidadParaCalculo = if (realFraccion > 1f) realFraccion else 1f
-        var cantidadNormalizada = 0f
+        var cantidadNormalizada = 0.0
         
         when (unidad) {
-            "UNI" -> cantidadNormalizada = if (realFraccion > 1f) cantidad * capacidadParaCalculo else cantidad
-            "FRA" -> cantidadNormalizada = cantidad
+            "UNI" -> cantidadNormalizada = if (realFraccion > 1f) (cantidad * capacidadParaCalculo).toDouble() else cantidad.toDouble()
+            "FRA" -> cantidadNormalizada = cantidad.toDouble()
             else -> {
-                // Unidades especiales
-                cantidadNormalizada = if (realFraccion > 1f) (cantidad * factorEquivalencia) * capacidadParaCalculo else cantidad * factorEquivalencia
+                cantidadNormalizada = if (realFraccion > 1f) ((cantidad * factorEquivalencia) * capacidadParaCalculo).toDouble() else (cantidad * factorEquivalencia).toDouble()
             }
         }
 
         val umbralEscala = if (realFraccion > 1f) minEscala * capacidadParaCalculo else minEscala
-        val stockDisponible = _stockTotalValidacion.value
+        val stockDisponible = _stockTotalValidacion.value.toDouble()
+        val yaEnPedido = _cantidadYaEnPedidoNormalizada.value
         val precioActual = _precioFinal.value
         val esMayorista = _esMayorista.value
 
         val result = when {
             cantidad <= 0f -> ValidationResult(false, "CAMPO NO PUEDE QUEDAR VACIO")
             precioActual <= 0f -> ValidationResult(false, "EL PRECIO DEBE SER MAYOR A 0")
-            (cantidadNormalizada > stockDisponible) && sinExistencias == 0 -> 
-                ValidationResult(false, "NO PUEDE AGREGAR UNA CANTIDAD MAYOR A LAS EXISTENCIAS")
-            // REFACTORIZACIÓN: Si el cliente es Mayorista ("S"), se omite la validación de escalas
+            (cantidadNormalizada + yaEnPedido > stockDisponible) && sinExistencias == 0 -> {
+                val msg = if (yaEnPedido > 0) "STOCK INSUFICIENTE (Ya tiene ${yaEnPedido.toInt()} reservado en el pedido)" 
+                          else "NO PUEDE AGREGAR UNA CANTIDAD MAYOR A LAS EXISTENCIAS"
+                ValidationResult(false, msg)
+            }
             (cantidadNormalizada < umbralEscala) && !esMayorista -> 
                 ValidationResult(false, "LA CANTIDAD NO ES VÁLIDA PARA EL PRECIO SELECCIONADO")
             else -> ValidationResult(true)
@@ -276,9 +270,6 @@ class ProductoAgregarViewModel(
         _validationResult.value = result
     }
 
-    //---------------------------------------------------------------------------
-    //Consulta el servidor para ver si existe un precio autorizado para este producto.
-    //---------------------------------------------------------------------------
     fun buscarTokenAutorizacion(idVendedor: Int, codProducto: String) {
         viewModelScope.launch {
             val precio = consultarTokenUseCase.ejecutar(idVendedor, codProducto)
@@ -289,9 +280,6 @@ class ProductoAgregarViewModel(
         }
     }
 
-    //---------------------------------------------------------------------------
-    //Confirma el uso del token y luego guarda el producto.
-    //---------------------------------------------------------------------------
     fun confirmarTokenYGuardar(idVendedor: Int, codProducto: String, detalle: PedidoDetalleEntity) {
         viewModelScope.launch {
             val ok = confirmarTokenUseCase.ejecutar(idVendedor, codProducto)
@@ -303,16 +291,24 @@ class ProductoAgregarViewModel(
         }
     }
 
-    //---------------------------------------------------------------------------
-    //Inserta o actualiza el producto en el pedido.
-    //---------------------------------------------------------------------------
     fun guardarProducto(detalle: PedidoDetalleEntity) {
         viewModelScope.launch {
             try {
-                gestionarDetalleUseCase.agregarOActualizarProducto(detalle)
+                val p = _producto.value
+                val stock = _stockTotalValidacion.value
+                
+                // Si llegamos aquí y el botón está habilitado, es porque la validación previa pasó
+                // o estamos permitiendo vender sin existencias (si fuera el caso).
+                // Pero como doble seguridad, el UseCase volverá a verificar la suma total.
+                gestionarDetalleUseCase.agregarOActualizarProducto(
+                    detalle, 
+                    stock, 
+                    p?.Fraccion ?: 0f,
+                    false // Por seguridad, el UseCase siempre valida stock real en esta versión
+                )
                 _uiEvent.value = UIEvent.ProductoGuardado
             } catch (e: Exception) {
-                _uiEvent.value = UIEvent.Error("ERROR AL GUARDAR PRODUCTO: ${e.message}")
+                _uiEvent.value = UIEvent.Error(e.message ?: "ERROR AL GUARDAR PRODUCTO")
             }
         }
     }

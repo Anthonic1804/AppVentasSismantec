@@ -139,6 +139,9 @@ interface PedidosDao {
     @Query("SELECT * FROM detalle_pedidos WHERE Id_pedido = :idPedido AND Id_producto = :idProducto AND Unidad = :unidad")
     suspend fun buscarProductoEnDetalle(idPedido: Int, idProducto: Int, unidad: String): PedidoDetalleEntity?
 
+    @Query("SELECT * FROM detalle_pedidos WHERE Id_pedido = :idPedido AND Id_producto = :idProducto")
+    suspend fun obtenerDetallesDeProductoEnPedido(idPedido: Int, idProducto: Int): List<PedidoDetalleEntity>
+
     @Query("SELECT SUM(Total_iva) FROM detalle_pedidos WHERE Id_pedido = :idPedido")
     suspend fun obtenerSumaTotalPedido(idPedido: Int): Double?
 

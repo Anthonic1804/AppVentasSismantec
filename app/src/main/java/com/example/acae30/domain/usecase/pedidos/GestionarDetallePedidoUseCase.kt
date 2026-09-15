@@ -12,21 +12,64 @@ class GestionarDetallePedidoUseCase(
 
     /**
      * Agrega o actualiza un producto en el pedido.
+     * REFACTORIZACIÓN: Incluye validación de stock integral considerando lo que ya está en el pedido.
      */
-    suspend fun agregarOActualizarProducto(detalle: PedidoDetalleEntity) {
-        // Verificamos si el producto con la misma unidad ya existe en el pedido
-        val existente = repository.buscarProductoEnDetalle(detalle.idPedido, detalle.idProducto, detalle.unidad ?: "")
+    suspend fun agregarOActualizarProducto(
+        detalle: PedidoDetalleEntity, 
+        stockDisponible: Float, 
+        realFraccion: Float,
+        permitirSinExistencia: Boolean = false
+    ) {
+        // 1. Obtener todos los detalles actuales de este producto en el pedido
+        val detallesActuales = repository.obtenerDetallesDeProductoEnPedidoLocal(detalle.idPedido, detalle.idProducto)
+        
+        // 2. Calcular la ocupación actual (normalizada a la unidad base de validación)
+        var ocupacionActual = 0.0
+        val capacidad = if (realFraccion > 1f) realFraccion.toDouble() else 1.0
+        
+        detallesActuales.forEach { item ->
+            // Si estamos EDITANDO un item (id != 0), no sumamos su cantidad vieja al cálculo de ocupación
+            if (item.id != detalle.id) {
+                val cant = item.cantidad
+                val eqUni = item.equivaleUni
+                val eqFra = item.equivaleFra
+                
+                if (realFraccion > 1f) {
+                    ocupacionActual += (cant * eqUni * capacidad) + (cant * eqFra)
+                } else {
+                    ocupacionActual += cant + (cant * eqFra) // En decimales eqUni suele ser 1 o 0
+                }
+            }
+        }
+        
+        // 3. Calcular la ocupación de la nueva cantidad
+        val nuevaOcupacion = if (realFraccion > 1f) {
+            (detalle.cantidad * detalle.equivaleUni * capacidad) + (detalle.cantidad * detalle.equivaleFra)
+        } else {
+            detalle.cantidad + (detalle.cantidad * detalle.equivaleFra)
+        }
+        
+        // 4. VALIDACIÓN FINAL: ¿Suma total excede el stock?
+        if (!permitirSinExistencia && (ocupacionActual + nuevaOcupacion) > stockDisponible.toDouble()) {
+            throw Exception("EXISTENCIAS INSUFICIENTES: Ya tiene reservado lo disponible en otros ítems de este pedido.")
+        }
 
-        if (existente != null && detalle.id == 0) {
-            // Si ya existe y estamos agregando uno nuevo, sumamos cantidades
-            val nuevaCantidad = existente.cantidad + detalle.cantidad
-            val nuevoTotalIva = existente.totalIva + detalle.totalIva
-            val nuevoTotal = existente.total + detalle.total
+        // 5. Lógica de inserción/actualización original
+        // Verificamos si el producto con la misma unidad exacta ya existe para fundirlo
+        val existenteMismaUnidad = repository.buscarProductoEnDetalle(detalle.idPedido, detalle.idProducto, detalle.unidad ?: "")
+
+        if (existenteMismaUnidad != null && detalle.id == 0) {
+            // Si ya existe la misma unidad y estamos agregando uno nuevo (no editando), sumamos cantidades
+            val nuevaCantidad = existenteMismaUnidad.cantidad + detalle.cantidad
+            val nuevoTotalIva = existenteMismaUnidad.totalIva + detalle.totalIva
+            val nuevoTotal = existenteMismaUnidad.total + detalle.total
+            val nuevaBonif = existenteMismaUnidad.bonificado + detalle.bonificado
             
-            val actualizado = existente.copy(
+            val actualizado = existenteMismaUnidad.copy(
                 cantidad = nuevaCantidad,
                 total = nuevoTotal,
-                totalIva = nuevoTotalIva
+                totalIva = nuevoTotalIva,
+                bonificado = nuevaBonif
             )
             repository.insertarDetallePedido(actualizado)
         } else {
@@ -36,6 +79,30 @@ class GestionarDetallePedidoUseCase(
 
         // Recalculamos el total de la cabecera del pedido
         repository.recalcularTotalPedido(detalle.idPedido)
+    }
+
+    /**
+     * Calcula la ocupación total normalizada de un producto en un pedido.
+     */
+    suspend fun obtenerOcupacionTotal(idPedido: Int, idProducto: Int, realFraccion: Float, idOmitir: Int = 0): Double {
+        val detalles = repository.obtenerDetallesDeProductoEnPedidoLocal(idPedido, idProducto)
+        var total = 0.0
+        val capacidad = if (realFraccion > 1f) realFraccion.toDouble() else 1.0
+        
+        detalles.forEach { item ->
+            if (item.id != idOmitir) {
+                val cant = item.cantidad
+                val eqUni = item.equivaleUni
+                val eqFra = item.equivaleFra
+                
+                if (realFraccion > 1f) {
+                    total += (cant * eqUni * capacidad) + (cant * eqFra)
+                } else {
+                    total += cant + (cant * eqFra)
+                }
+            }
+        }
+        return total
     }
 
     /**

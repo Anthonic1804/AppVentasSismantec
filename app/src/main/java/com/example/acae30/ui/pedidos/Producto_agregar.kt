@@ -171,7 +171,7 @@ class Producto_agregar : AppCompatActivity() {
         proviene = intent.getStringExtra("proviene")
 
         // Carga inicial del producto
-        viewModel.cargarProducto(idproducto!!, idcliente!!, unidadActual)
+        viewModel.cargarProducto(idproducto!!, idcliente!!, idpedido, unidadActual)
 
         // Si estamos en modo edición, cargamos el detalle desde el ViewModel
         if (proviene == "editar" && idpedidodetalle != null && idpedidodetalle!! > 0) {
@@ -317,10 +317,14 @@ class Producto_agregar : AppCompatActivity() {
                         // Cargamos el listado de precios una vez que confirmamos que el producto existe
                         cargarListadoPrecios(unidadActual)
 
-                        // Si no estamos en edición, inicializamos con precio base
-                        if (proviene != "editar") {
-                            precio_iva = p.Precio_iva ?: 0f
-                            Totalizar(1f)
+                        // REFACTORIZACIÓN: Disparamos el cálculo con la cantidad actual de la UI 
+                        // (esto captura valores restaurados por Android al volver de 2do plano)
+                        val cantUI = binding.txtcantidad.text.toString().toSafeDecimal()
+                        if (cantUI > 0f) {
+                            Totalizar(cantUI)
+                        } else if (proviene != "editar") {
+                            // Si es un producto nuevo y está en 0, validamos para deshabilitar botón
+                            Totalizar(0f)
                         }
                     }
                 }
@@ -610,9 +614,6 @@ class Producto_agregar : AppCompatActivity() {
             }
             runOnUiThread {
                 cargarUnidadesMedida()
-                
-                // Forzamos una totalización inicial para que el VM valide el estado inicial
-                Totalizar(cantidad)
             }
         }
     }

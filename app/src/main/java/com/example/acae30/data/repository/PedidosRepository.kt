@@ -261,6 +261,9 @@ class PedidosRepository(
     suspend fun buscarProductoEnDetalle(idPedido: Int, idProducto: Int, unidad: String) = 
         dao.buscarProductoEnDetalle(idPedido, idProducto, unidad)
 
+    suspend fun obtenerDetallesDeProductoEnPedidoLocal(idPedido: Int, idProducto: Int) =
+        dao.obtenerDetallesDeProductoEnPedido(idPedido, idProducto)
+
     suspend fun recalcularTotalPedido(idPedido: Int) {
         val suma = dao.obtenerSumaTotalPedido(idPedido) ?: 0.0
         dao.actualizarTotalCabeceraPedido(idPedido, suma)

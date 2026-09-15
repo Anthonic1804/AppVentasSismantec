@@ -29,6 +29,7 @@ Este documento sirve como registro centralizado de la refactorización a MVVM, C
 - [x] Soporte para Unidades de Medida Especiales (Sixpack, 2PACK, etc.).
 - [x] Corrección definitiva de validación de escalas (Match de unidad con TRIM y margen de error en precio).
 - [x] Excepción de validación de escalas para Clientes Mayoristas (Mayorista = 'S').
+- [x] Blindaje de Inventario: Validación de stock considerando duplicados del mismo producto en el pedido (prevención de sobreventa).
 
 ### Módulo: Detalle de Pedido
 - [/] Refactorización de `Detallepedido.kt` a MVVM.
