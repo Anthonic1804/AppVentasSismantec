@@ -31,22 +31,24 @@ class GestionarDetallePedidoUseCase(
             // Si estamos EDITANDO un item (id != 0), no sumamos su cantidad vieja al cálculo de ocupación
             if (item.id != detalle.id) {
                 val cant = item.cantidad
+                val bonif = item.bonificado.toDouble()
                 val eqUni = item.equivaleUni
                 val eqFra = item.equivaleFra
                 
                 if (realFraccion > 1f) {
-                    ocupacionActual += (cant * eqUni * capacidad) + (cant * eqFra)
+                    // Sumamos (Cantidad Vendida + Bonificación) convertido a fracciones + Fracciones sueltas
+                    ocupacionActual += ((cant * eqUni + bonif) * capacidad) + (cant * eqFra)
                 } else {
-                    ocupacionActual += cant + (cant * eqFra) // En decimales eqUni suele ser 1 o 0
+                    ocupacionActual += cant + bonif + (cant * eqFra)
                 }
             }
         }
         
         // 3. Calcular la ocupación de la nueva cantidad
         val nuevaOcupacion = if (realFraccion > 1f) {
-            (detalle.cantidad * detalle.equivaleUni * capacidad) + (detalle.cantidad * detalle.equivaleFra)
+            ((detalle.cantidad * detalle.equivaleUni + detalle.bonificado.toDouble()) * capacidad) + (detalle.cantidad * detalle.equivaleFra)
         } else {
-            detalle.cantidad + (detalle.cantidad * detalle.equivaleFra)
+            detalle.cantidad + detalle.bonificado.toDouble() + (detalle.cantidad * detalle.equivaleFra)
         }
         
         // 4. VALIDACIÓN FINAL: ¿Suma total excede el stock?
@@ -92,13 +94,14 @@ class GestionarDetallePedidoUseCase(
         detalles.forEach { item ->
             if (item.id != idOmitir) {
                 val cant = item.cantidad
+                val bonif = item.bonificado.toDouble()
                 val eqUni = item.equivaleUni
                 val eqFra = item.equivaleFra
                 
                 if (realFraccion > 1f) {
-                    total += (cant * eqUni * capacidad) + (cant * eqFra)
+                    total += ((cant * eqUni + bonif) * capacidad) + (cant * eqFra)
                 } else {
-                    total += cant + (cant * eqFra)
+                    total += cant + bonif + (cant * eqFra)
                 }
             }
         }

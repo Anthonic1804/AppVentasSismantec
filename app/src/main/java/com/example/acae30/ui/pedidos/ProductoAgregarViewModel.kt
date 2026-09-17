@@ -248,6 +248,11 @@ class ProductoAgregarViewModel(
             }
         }
 
+        // MULTIPLES PEDIDOS: Sumar bonificados al consumo de stock (Normalizados a la unidad base)
+        val bonificados = _bonificado.value.toDouble()
+        val bonificadosNormalizados = if (realFraccion > 1f) bonificados * capacidadParaCalculo else bonificados
+        val consumoTotalPropuesto = cantidadNormalizada + bonificadosNormalizados
+
         val umbralEscala = if (realFraccion > 1f) minEscala * capacidadParaCalculo else minEscala
         val stockDisponible = _stockTotalValidacion.value.toDouble()
         val yaEnPedido = _cantidadYaEnPedidoNormalizada.value
@@ -257,9 +262,9 @@ class ProductoAgregarViewModel(
         val result = when {
             cantidad <= 0f -> ValidationResult(false, "CAMPO NO PUEDE QUEDAR VACIO")
             precioActual <= 0f -> ValidationResult(false, "EL PRECIO DEBE SER MAYOR A 0")
-            (cantidadNormalizada + yaEnPedido > stockDisponible) && sinExistencias == 0 -> {
-                val msg = if (yaEnPedido > 0) "STOCK INSUFICIENTE (Ya tiene ${yaEnPedido.toInt()} reservado en el pedido)" 
-                          else "NO PUEDE AGREGAR UNA CANTIDAD MAYOR A LAS EXISTENCIAS"
+            (consumoTotalPropuesto + yaEnPedido > stockDisponible) && sinExistencias == 0 -> {
+                val msg = if (yaEnPedido > 0) "STOCK INSUFICIENTE para cubrir Venta + Regalía (Ya tiene reservado en pedido)" 
+                          else "STOCK INSUFICIENTE para cubrir Venta + Regalía"
                 ValidationResult(false, msg)
             }
             (cantidadNormalizada < umbralEscala) && !esMayorista -> 
