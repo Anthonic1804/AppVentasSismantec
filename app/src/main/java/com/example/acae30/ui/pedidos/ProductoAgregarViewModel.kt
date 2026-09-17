@@ -181,7 +181,6 @@ class ProductoAgregarViewModel(
         _stockTotalValidacion.value = stock.stockTotalValidacion
     }
 
-    //---------------------------------------------------------------------------
     fun recalcularValores(
         idCliente: Int,
         idProducto: Int,

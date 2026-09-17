@@ -694,15 +694,17 @@ class Producto_agregar : AppCompatActivity() {
 
     //FUNCION PARA OBTENER LA BONIFICACION POR PRODUCTO O CLIENTE
     private fun verificarBonificados(unidad: String){
-        //OBTENIENDO LA BONIFICACION PERSONALIZADA POR CLIENTE
+        // Blindaje: Si los datos del producto no se han cargado, no podemos calcular bonificación
+        val p = datosProducto ?: return
 
+        //OBTENIENDO LA BONIFICACION PERSONALIZADA POR CLIENTE
         val clienteBonificado = clientesController.obtenerBonificacionCliente(idcliente!!,
             idproducto!!,this@Producto_agregar)
 
         bonificacion = when(tipoBonificacion){
 
             "T" -> {
-                if(clienteBonificado > 0) clienteBonificado else datosProducto!!.Bonificado!!
+                if(clienteBonificado > 0) clienteBonificado else p.Bonificado ?: 0f
             }
 
             "BC" -> {
@@ -710,7 +712,7 @@ class Producto_agregar : AppCompatActivity() {
             }
 
             "BP" -> {
-                if(unidad == "UNI") datosProducto!!.Bonificado!! else 0f
+                if(unidad == "UNI") p.Bonificado ?: 0f else 0f
             }
 
             else -> {
@@ -755,6 +757,7 @@ class Producto_agregar : AppCompatActivity() {
 
     private fun cargarListadoPrecios(unidadMedida : String){
         this@Producto_agregar.lifecycleScope.launch {
+            val p = viewModel.producto.value ?: return@launch
             listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false, unidadMedida)
             val precioss = ArrayList<String>()
 
@@ -768,7 +771,6 @@ class Producto_agregar : AppCompatActivity() {
             //-----------------------
             //Agregado el precio asignado en la ficha del producto para las unidades
             //-----------------------
-            val p = viewModel.producto.value
             if(unidadMedida == "UNI" && p != null){
                 precioss.add("${String.format("%.${decPrecios}f", p.Precio_iva)}") 
             }
@@ -801,6 +803,9 @@ class Producto_agregar : AppCompatActivity() {
     }
 
     private fun Totalizar(cantidad: Float) {
+        // Blindaje: No realizar cálculos si los datos maestros aún no están listos
+        if (idcliente == null || idcliente == 0 || idproducto == null || idproducto == 0) return
+
         // Delegamos el cálculo y la validación al ViewModel.
         val (base, factor) = when(unidadActual) {
             "UNI" -> "UNI" to 1f
