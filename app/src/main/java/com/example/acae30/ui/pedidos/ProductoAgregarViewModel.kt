@@ -284,18 +284,18 @@ class ProductoAgregarViewModel(
         }
     }
 
-    fun confirmarTokenYGuardar(idVendedor: Int, codProducto: String, detalle: PedidoDetalleEntity) {
+    fun confirmarTokenYGuardar(idVendedor: Int, codProducto: String, detalle: PedidoDetalleEntity, sinExistencias: Int) {
         viewModelScope.launch {
             val ok = confirmarTokenUseCase.ejecutar(idVendedor, codProducto)
             if (ok) {
-                guardarProducto(detalle)
+                guardarProducto(detalle, sinExistencias)
             } else {
                 _uiEvent.value = UIEvent.Error("ERROR AL CONFIRMAR EL TOKEN EN EL SERVIDOR")
             }
         }
     }
 
-    fun guardarProducto(detalle: PedidoDetalleEntity) {
+    fun guardarProducto(detalle: PedidoDetalleEntity, sinExistencias: Int) {
         viewModelScope.launch {
             try {
                 val p = _producto.value
@@ -308,7 +308,7 @@ class ProductoAgregarViewModel(
                     detalle, 
                     stock, 
                     p?.Fraccion ?: 0f,
-                    false // Por seguridad, el UseCase siempre valida stock real en esta versión
+                    sinExistencias // Por seguridad, el UseCase siempre valida stock real en esta versión
                 )
                 _uiEvent.value = UIEvent.ProductoGuardado
             } catch (e: Exception) {

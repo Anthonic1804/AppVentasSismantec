@@ -18,7 +18,7 @@ class GestionarDetallePedidoUseCase(
         detalle: PedidoDetalleEntity, 
         stockDisponible: Float, 
         realFraccion: Float,
-        permitirSinExistencia: Boolean = false
+        permitirSinExistencia: Int = 0
     ) {
         // 1. Obtener todos los detalles actuales de este producto en el pedido
         val detallesActuales = repository.obtenerDetallesDeProductoEnPedidoLocal(detalle.idPedido, detalle.idProducto)
@@ -52,7 +52,7 @@ class GestionarDetallePedidoUseCase(
         }
         
         // 4. VALIDACIÓN FINAL: ¿Suma total excede el stock?
-        if (!permitirSinExistencia && (ocupacionActual + nuevaOcupacion) > stockDisponible.toDouble()) {
+        if (permitirSinExistencia == 0 && (ocupacionActual + nuevaOcupacion) > stockDisponible.toDouble()) {
             throw Exception("EXISTENCIAS INSUFICIENTES: Ya tiene reservado lo disponible en otros ítems de este pedido.")
         }
 

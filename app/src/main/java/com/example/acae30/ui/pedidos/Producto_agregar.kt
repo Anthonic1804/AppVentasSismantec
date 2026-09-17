@@ -1103,7 +1103,7 @@ class Producto_agregar : AppCompatActivity() {
         )
 
         Timber.d("[PRODUCTO_AGREGAR] GUARDANDO CON TOKEN - Precio: $precioFinalVm | Total: $totalIva")
-        viewModel.confirmarTokenYGuardar(codEmpleado, codigoProducto, detalle)
+        viewModel.confirmarTokenYGuardar(codEmpleado, codigoProducto, detalle, sinExistencias)
     }
 
     private fun agregarProducto() {
@@ -1151,7 +1151,7 @@ class Producto_agregar : AppCompatActivity() {
         )
 
         Timber.d("[PRODUCTO_AGREGAR] GUARDANDO PRODUCTO - Precio: $precioFinalVm | Total: $totalIva")
-        viewModel.guardarProducto(detalle)
+        viewModel.guardarProducto(detalle, sinExistencias)
     }
 
     //FUNCION PARA REGRESAR AL DETALLE DEL PEDIDO
