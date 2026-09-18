@@ -641,6 +641,26 @@ class Producto_agregar : AppCompatActivity() {
 
             txtcantidad.setText(String.format(Locale.getDefault(), "%.0f", cantidad))
             
+            // REFACTORIZACIÓN: Sincronizar la unidad seleccionada en el Spinner
+            val unidadGuardada = detalle.unidad?.trim() ?: "UNI"
+            val displayUnit = when(unidadGuardada) {
+                "UNI" -> "UNIDAD"
+                "FRA", "FRAC" -> "FRACCION"
+                else -> unidadGuardada
+            }
+
+            // Buscamos la posición en el adaptador y la seteamos
+            val adapter = spunidad.adapter
+            if (adapter != null) {
+                for (i in 0 until adapter.count) {
+                    if (adapter.getItem(i).toString().uppercase() == displayUnit.uppercase()) {
+                        spunidad.setSelection(i)
+                        unidadActual = unidadGuardada
+                        break
+                    }
+                }
+            }
+
             Totalizar(cantidad)
         }
     }
@@ -730,26 +750,16 @@ class Producto_agregar : AppCompatActivity() {
                 val unidades = inventarioController.listadoUnidadesMedidaProductoById(this@Producto_agregar, idproducto!!, hojaCarga)
                 val adapter = ArrayAdapter<String>(this@Producto_agregar, R.layout.simple_spinner_dropdown_item)
 
-                val detalle = viewModel.detallePedido.value
-                if(proviene == "editar" && detalle != null){
-                    val unidadSeleccionada = detalle.unidad?.trim() ?: ""
-                    idUnidad = detalle.idUnidad
-                    equivaleFra = detalle.equivaleFra.toFloat()
-                    equivaleUni = detalle.equivaleUni.toFloat()
-                    uniEquivale = detalle.uniEquivale
-
-                    adapter.add(unidadSeleccionada)
-                    unidadActual = when(unidadSeleccionada){
-                        "UNIDAD" -> "UNI"
-                        "FRACCION" -> "FRAC"
-                        else -> unidadSeleccionada
-                    }
-                }
-                
                 adapter.addAll(unidades)
                 binding.spunidad.adapter = adapter
 
-            }catch (e:Exception){
+                // REFACTORIZACIÓN: Si estamos en modo edición, forzamos la selección de la unidad 
+                // una vez que el adaptador se ha cargado completamente.
+                if (proviene == "editar") {
+                    viewModel.detallePedido.value?.let { configurarModoEdicion(it) }
+                }
+
+            } catch (e:Exception){
                 Timber.e(e, "[PRODUCTO_AGREGAR] ERROR AL CARGAR LAS UNIDADES DE MEDIDA")
             }
         }

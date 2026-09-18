@@ -91,6 +91,9 @@ class ProductoAgregarViewModel(
     private val _idEscalaSeleccionada = MutableStateFlow(0)
     val idEscalaSeleccionada = _idEscalaSeleccionada.asStateFlow()
 
+    // REFACTORIZACIÓN: Unidad de la escala seleccionada (UNI o FRA)
+    private val _unidadEscalaSeleccionada = MutableStateFlow("")
+
     // Resultado de la validación integral para habilitar el botón
     data class ValidationResult(
         val isValid: Boolean,
@@ -216,6 +219,7 @@ class ProductoAgregarViewModel(
             
             val minEscala = scale?.cantidad ?: 0f
             _idEscalaSeleccionada.value = scale?.id ?: 0
+            _unidadEscalaSeleccionada.value = scale?.unidad?.trim()?.uppercase() ?: ""
             _cantidadMinimaEscala.value = minEscala
 
             val regalias = calcularBonificacionesUseCase.ejecutar(
@@ -252,7 +256,19 @@ class ProductoAgregarViewModel(
         val bonificadosNormalizados = if (realFraccion > 1f) bonificados * capacidadParaCalculo else bonificados
         val consumoTotalPropuesto = cantidadNormalizada + bonificadosNormalizados
 
-        val umbralEscala = if (realFraccion > 1f) minEscala * capacidadParaCalculo else minEscala
+        // REFACTORIZACIÓN: Determinar el umbral de la escala de forma inteligente.
+        val unidadEscala = _unidadEscalaSeleccionada.value
+        
+        val umbralEscala = if (unidad == "FRA" && realFraccion > 1f && minEscala > 0f) {
+            // Si la escala ya es de tipo FRACCIÓN, el mínimo ya está en unidades pequeñas.
+            // Si la escala es de tipo UNIDAD o está vacía, multiplicamos por el factor.
+            if (unidadEscala == "FRA") minEscala else minEscala * realFraccion
+        } else if (realFraccion > 1f && minEscala > 0f) {
+            minEscala * capacidadParaCalculo
+        } else {
+            minEscala
+        }
+
         val stockDisponible = _stockTotalValidacion.value.toDouble()
         val yaEnPedido = _cantidadYaEnPedidoNormalizada.value
         val precioActual = _precioFinal.value
@@ -266,7 +282,8 @@ class ProductoAgregarViewModel(
                           else "STOCK INSUFICIENTE para cubrir Venta + Regalía"
                 ValidationResult(false, msg)
             }
-            (cantidadNormalizada < umbralEscala) && !esMayorista -> 
+            // REFACTORIZACIÓN: Validamos escalas comparando la cantidad normalizada contra el umbral convertido
+            (cantidadNormalizada < umbralEscala.toDouble()) && !esMayorista -> 
                 ValidationResult(false, "LA CANTIDAD NO ES VÁLIDA PARA EL PRECIO SELECCIONADO")
             else -> ValidationResult(true)
         }
