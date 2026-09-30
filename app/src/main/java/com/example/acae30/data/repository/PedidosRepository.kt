@@ -127,7 +127,7 @@ class PedidosRepository(
     //---------------------------------------------------------
     // Consulta remota al servidor vía Retrofit
     //---------------------------------------------------------
-    suspend fun obtenerPedidoTransmitidoRemote(idPedidoApp: String, context: Context): PedidoTransmitidoDTO? {
+    suspend fun obtenerPedidoTransmitidoRemote(idPedidoApp: Int, context: Context): PedidoTransmitidoDTO? {
         val preferencias = context.getSharedPreferences("CONFIG_SERVIDOR", Context.MODE_PRIVATE)
         val ip = preferencias.getString("ip", "") ?: ""
         val puerto = preferencias.getInt("puerto", 0).toString()
@@ -140,11 +140,11 @@ class PedidosRepository(
             if (respuesta.isSuccessful) {
                 respuesta.body()
             } else {
-                Timber.e("[PEIDO_REPOSITORY] Error al obtener pedido remoto: ${respuesta.code()}")
+                Timber.e("[PEIDO_REPOSITORY] EL PEDIDO NO HA SIDO TRANSMITIDO: ${respuesta.code()}")
                 null
             }
         } catch (e: Exception) {
-            Timber.e(e, "[PEIDO_REPOSITORY] Error de conexión al obtener pedido remoto")
+            Timber.e(e, "[PEIDO_REPOSITORY] ERROR DE CONEXION AL PEDIDO REMOTO")
             null
         }
     }

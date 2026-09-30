@@ -16,7 +16,7 @@ interface PedidosApi {
     //------------------------------------------------------
     @GET("pedido/transmitido/{idPedidoApp}")
     suspend fun obtenerPedidoTransmitido(
-        @Path("idPedidoApp") idPedidoApp: String
+        @Path("idPedidoApp") idPedidoApp: Int
     ) : Response<PedidoTransmitidoDTO>
 
     //------------------------------------------------------

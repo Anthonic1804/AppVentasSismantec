@@ -50,8 +50,8 @@ class SincronizarPedidosUseCase(
                     delay(800)
 
                     // Consultar al servidor
-                    val idApp = item.idPedidoApp ?: ""
-                    if (idApp.isNotEmpty()) {
+                    val idApp = item.idPedidoSistema ?: 0
+                    if (idApp > 0) {
                         val pedidoRemoto = repository.obtenerPedidoTransmitidoRemote(idApp, context)
 
                         if (pedidoRemoto != null && pedidoRemoto.encontrado) {

@@ -39,75 +39,41 @@ class InventarioTiempoRealController {
     }
 
     //------------------------------------------------------------------
-    //Funcion para realizar la busqueda en tiempo real por descripcion o codigo
+    //Busqueda en tiempo real: GET inventario/busqueda/inventario?q=...&take=20
+    //El backend acepta q vacio (devuelve los primeros `take` por Id) y
+    //limita take a 1..30. No se traga el error: se propaga para que la
+    //Activity distinga "0 resultados" de "fallo de red".
     //------------------------------------------------------------------
 
     suspend fun obtenerInventarioPorDescripcion(context: Context, busqueda: String, take: Int = 20) : List<InventarioTiempoRealDto>{
-
-        withContext(Dispatchers.Main){
-            iniciarlizarVariables(context)
-        }
-
-        val query = busqueda.trim()
-        if (query.length < 3) return emptyList()
-
-        val listaInventario = mutableListOf<InventarioTiempoRealDto>()
-
-        withContext(Dispatchers.IO){
-            val baseUrl = servidor
-            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
-
-            try {
-                val respuesta = api.obtenerProductoPorString(query, take)
-                listaInventario.clear()
-                listaInventario.addAll(respuesta)
-
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e:Exception){
-                println("ERROR AL OBTENER EL LISTADO DE PRODUCTOS -> " + e.message)
-            }
-
-        }
-
-        return listaInventario
-    }
-
-    //------------------------------------------------------------------
-    //Pagina inicial (cache): primeros N registros sin filtrado.
-    //Se mapea InventarioEntity -> InventarioTiempoRealDto para el adapter.
-    //------------------------------------------------------------------
-
-    suspend fun obtenerPaginaInicial(context: Context, offset: Int = 0, limit: Int = 20) : List<InventarioTiempoRealDto>{
-
-        withContext(Dispatchers.Main){
-            iniciarlizarVariables(context)
-        }
-
         return withContext(Dispatchers.IO){
+            iniciarlizarVariables(context)
             val baseUrl = servidor
             val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
+            val query = busqueda.trim()
+            val takeClamped = take.coerceIn(1, 30)
+
             try {
-                api.obtenerInventario(offset, limit).map {
-                    InventarioTiempoRealDto(
-                        id = it.id,
-                        codigo = it.codigo,
-                        descripcion = it.descripcion,
-                        unidadMedida = it.unidad_medida,
-                        nombreFraccion = it.nombre_fraccion,
-                        existencia = it.existencia,
-                        exitenciaFraccion = it.existencia_u,
-                        precioUiva = it.precio_u_iva
-                    )
-                }
+                api.obtenerProductoPorString(query, takeClamped)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception){
-                println("ERROR AL OBTENER PAGINA INICIAL -> " + e.message)
-                emptyList()
+                Timber.e(e, "ERROR AL OBTENER EL LISTADO DE PRODUCTOS q='$query'")
+                throw e
             }
         }
+    }
+
+    //------------------------------------------------------------------
+    //Pagina inicial (cache): delega al mismo endpoint de busqueda con q="".
+    //Evita el mapeo manual InventarioEntity -> Dto y garantiza misma
+    //proyeccion y orden que la busqueda. `offset` se ignora: el servidor
+    //devuelve los primeros `limit` por Id.
+    //------------------------------------------------------------------
+
+    suspend fun obtenerPaginaInicial(context: Context, offset: Int = 0, limit: Int = 20) : List<InventarioTiempoRealDto>{
+        return obtenerInventarioPorDescripcion(context, "", limit)
     }
 
     //------------------------------------------------------------------

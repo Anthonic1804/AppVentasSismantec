@@ -8,18 +8,32 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.acae30.R
 import com.example.acae30.data.remote.dto.InventarioTiempoRealDto
 
 class InventarioTiempoRealAdapter(
-    private val lista: List<InventarioTiempoRealDto>,
+    private var lista: List<InventarioTiempoRealDto>,
     private val context: Context,
     val itemClick : (Int) -> Unit
 ) : RecyclerView.Adapter<InventarioTiempoRealAdapter.MyViewHolder>() {
 
     private var preferencias: SharedPreferences? = null
     private val instancia = "CONFIG_SERVIDOR"
+
+    fun actualizarDatos(nuevaLista: List<InventarioTiempoRealDto>) {
+        val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = lista.size
+            override fun getNewListSize(): Int = nuevaLista.size
+            override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean =
+                lista[oldPos].id == nuevaLista[newPos].id
+            override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean =
+                lista[oldPos] == nuevaLista[newPos]
+        })
+        lista = nuevaLista
+        diff.dispatchUpdatesTo(this)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
         val vistaHolder = LayoutInflater.from(parent.context).inflate(R.layout.carta_inventario, parent, false)

@@ -808,7 +808,7 @@ class PedidosController {
     // Funcion para obtener los pedidos transmitidos
     //-----------------------------------------------------------
     suspend fun obtenerPedidosTransmitidos(
-        context: Context, idPedidoApp: String
+        context: Context, idPedidoApp: Int
     ) : PedidoTransmitidoDTO = withContext(Dispatchers.IO){
 
         inicializarVariables(context)
