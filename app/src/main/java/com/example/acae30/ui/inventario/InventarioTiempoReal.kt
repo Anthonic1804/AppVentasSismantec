@@ -46,6 +46,16 @@ class InventarioTiempoReal : AppCompatActivity() {
     private var getSucursalPosition: Int? = null
 
     private var job: Job? = null
+    private var searchJob: Job? = null
+    private var ultimoQuery = ""
+    private var searchVersion = 0
+    private var cacheInicial: List<InventarioTiempoRealDto> = emptyList()
+    private var cargandoCache = false
+
+    companion object {
+        private const val MIN_BUSQUEDA = 3
+        private const val HINT_MINIMO = "Escribe al menos 3 letras"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +83,9 @@ class InventarioTiempoReal : AppCompatActivity() {
         // getSucursalPosition = intent.getIntExtra("sucursalPosition", 0)
 
         preferences = getSharedPreferences(instancia, MODE_PRIVATE)
-        actualizarListadeInventario(" ")
+        binding.listaInventarioReal.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        cargarCacheInicial()
 
     }
 
@@ -109,15 +121,27 @@ class InventarioTiempoReal : AppCompatActivity() {
             override fun afterTextChanged(string: Editable) {
 
                 val texto = string.toString().trim()
+                if (texto == ultimoQuery) return
 
                 job?.cancel()
                 job = lifecycleScope.launch {
-                    delay(300) // espera 300ms
-
-                    if (texto.isEmpty()) {
-                        actualizarListadeInventario(" ")
-                    } else {
-                        actualizarListadeInventario(texto)
+                    when {
+                        texto.isEmpty() -> {
+                            ultimoQuery = ""
+                            mostrarCache()
+                        }
+                        texto.length < MIN_BUSQUEDA -> {
+                            ultimoQuery = texto
+                            mostrarCache()
+                            binding.lyBusquedaProducto.helperText = HINT_MINIMO
+                        }
+                        else -> {
+                            delay(300) // debounce solo en rama de red
+                            ultimoQuery = texto
+                            binding.lyBusquedaProducto.helperText = null
+                            val version = ++searchVersion
+                            actualizarListadeInventario(texto, version)
+                        }
                     }
                 }
             }
@@ -126,23 +150,80 @@ class InventarioTiempoReal : AppCompatActivity() {
     }
 
     //FUNCION PARA ACTUALIZAR LA LISTA DEL INVENTARIO
-    private fun actualizarListadeInventario(busqueda: String){
-        this@InventarioTiempoReal.lifecycleScope.launch {
+    //version: token para descartar respuestas viejas que llegan desordenadas
+    private fun actualizarListadeInventario(busqueda: String, version: Int = ++searchVersion){
+        searchJob?.cancel()
+        searchJob = this@InventarioTiempoReal.lifecycleScope.launch {
             try {
                 val lista = inventarioReal.obtenerInventarioPorDescripcion(this@InventarioTiempoReal, busqueda)
+                if (version != searchVersion) return@launch // respuesta obsoleta
                 mostrarLista(lista)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // búsqueda cancelada por tecleo nuevo, no es error
             } catch (e: Exception) {
+                if (version != searchVersion) return@launch
                 println("ERROR LA OBTENER EL INVENTARIO EN TIEMPO REAL -> " + e.message)
+                runOnUiThread {
+                    Toast.makeText(
+                        this@InventarioTiempoReal,
+                        "Sin conexión, mostrando últimos resultados",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                // Se mantiene la lista anterior: no se vacía por fallo de red
             }
         }
+    }
+
+    //Carga una sola vez los primeros 20 para caja vacía / < 3 letras
+    private fun cargarCacheInicial() {
+        if (cargandoCache || cacheInicial.isNotEmpty()) {
+            mostrarLista(cacheInicial)
+            return
+        }
+        cargandoCache = true
+        runOnUiThread { alerta?.Cargando() }
+        lifecycleScope.launch {
+            try {
+                val pagina = inventarioReal.obtenerPaginaInicial(this@InventarioTiempoReal, 0, 20)
+                cacheInicial = pagina
+                // Solo pintar si el usuario no ya escribió una búsqueda válida
+                if (ultimoQuery.length < MIN_BUSQUEDA) mostrarLista(cacheInicial)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                println("ERROR AL CARGAR CACHE INICIAL -> " + e.message)
+                runOnUiThread {
+                    Toast.makeText(
+                        this@InventarioTiempoReal,
+                        "Sin conexión, no se pudo cargar el inventario inicial",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } finally {
+                cargandoCache = false
+                runOnUiThread { alerta?.dismisss() }
+            }
+        }
+    }
+
+    private fun mostrarCache() {
+        binding.lyBusquedaProducto.helperText =
+            if (ultimoQuery.isNotEmpty() && ultimoQuery.length < MIN_BUSQUEDA) HINT_MINIMO else null
+        searchVersion++ // invalida respuestas en vuelo
+        searchJob?.cancel()
+        mostrarLista(cacheInicial)
+        if (cacheInicial.isEmpty() && !cargandoCache) cargarCacheInicial()
+    }
+
+    private fun limpiarLista() {
+        mostrarCache()
     }
 
     //IMPLEMENTADA LA FUNCION DE NO AGREGAR PRODUCTOS SIN EXISTENCIAS
     private fun mostrarLista(list: List<InventarioTiempoRealDto>) {
         try {
             if (list.isNotEmpty()) {
-                val mLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-                binding.listaInventarioReal.layoutManager = mLayoutManager
                 val adapter = InventarioTiempoRealAdapter(list, this) { i ->
                     lifecycleScope.launch {
                         val id = list[i].id
@@ -185,6 +266,8 @@ class InventarioTiempoReal : AppCompatActivity() {
                     }
                 }
                 binding.listaInventarioReal.adapter = adapter
+            } else {
+                binding.listaInventarioReal.adapter = null
             }
         } catch (e: Exception) {
             runOnUiThread {

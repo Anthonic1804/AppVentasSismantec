@@ -42,11 +42,14 @@ class InventarioTiempoRealController {
     //Funcion para realizar la busqueda en tiempo real por descripcion o codigo
     //------------------------------------------------------------------
 
-    suspend fun obtenerInventarioPorDescripcion(context: Context, busqueda: String) : List<InventarioTiempoRealDto>{
+    suspend fun obtenerInventarioPorDescripcion(context: Context, busqueda: String, take: Int = 20) : List<InventarioTiempoRealDto>{
 
         withContext(Dispatchers.Main){
             iniciarlizarVariables(context)
         }
+
+        val query = busqueda.trim()
+        if (query.length < 3) return emptyList()
 
         val listaInventario = mutableListOf<InventarioTiempoRealDto>()
 
@@ -55,17 +58,56 @@ class InventarioTiempoRealController {
             val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
 
             try {
-                val respuesta = api.obtenerProductoPorString(busqueda)
+                val respuesta = api.obtenerProductoPorString(query, take)
                 listaInventario.clear()
                 listaInventario.addAll(respuesta)
 
-            }catch (e:Exception){
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e:Exception){
                 println("ERROR AL OBTENER EL LISTADO DE PRODUCTOS -> " + e.message)
             }
 
         }
 
         return listaInventario
+    }
+
+    //------------------------------------------------------------------
+    //Pagina inicial (cache): primeros N registros sin filtrado.
+    //Se mapea InventarioEntity -> InventarioTiempoRealDto para el adapter.
+    //------------------------------------------------------------------
+
+    suspend fun obtenerPaginaInicial(context: Context, offset: Int = 0, limit: Int = 20) : List<InventarioTiempoRealDto>{
+
+        withContext(Dispatchers.Main){
+            iniciarlizarVariables(context)
+        }
+
+        return withContext(Dispatchers.IO){
+            val baseUrl = servidor
+            val api = RetrofitCliente.obtenerApi<InventarioApi>(baseUrl, context)
+
+            try {
+                api.obtenerInventario(offset, limit).map {
+                    InventarioTiempoRealDto(
+                        id = it.id,
+                        codigo = it.codigo,
+                        descripcion = it.descripcion,
+                        unidadMedida = it.unidad_medida,
+                        nombreFraccion = it.nombre_fraccion,
+                        existencia = it.existencia,
+                        exitenciaFraccion = it.existencia_u,
+                        precioUiva = it.precio_u_iva
+                    )
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception){
+                println("ERROR AL OBTENER PAGINA INICIAL -> " + e.message)
+                emptyList()
+            }
+        }
     }
 
     //------------------------------------------------------------------

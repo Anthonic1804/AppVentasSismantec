@@ -9,6 +9,7 @@ import com.example.acae30.data.remote.dto.InventarioUnidadesDTO
 import com.example.acae30.modelos.reporteUnidadesVendidas.UnidadesVendidasPorProducto
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 import java.time.LocalDate
 
 interface InventarioApi {
@@ -74,10 +75,11 @@ interface InventarioApi {
         @Path("id") id : Int
     ) : List<InventarioEntity>
 
-    //Búsqueda Inventario
-    @GET("inventario/busqueda/inventario/{busqueda}")
+    //Búsqueda Inventario en tiempo real: GET inventario/busqueda/inventario?q=...&take=20
+    @GET("inventario/busqueda/inventario")
     suspend fun obtenerProductoPorString(
-        @Path("busqueda")  busqueda : String
+        @Query("q") busqueda: String,
+        @Query("take") take: Int = 20
     ) : List<InventarioTiempoRealDto>
 
     //Obtener Inventario Precios por IdProducto

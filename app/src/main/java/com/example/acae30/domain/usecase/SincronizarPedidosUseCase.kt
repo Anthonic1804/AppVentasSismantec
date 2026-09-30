@@ -92,7 +92,7 @@ class SincronizarPedidosUseCase(
             }
 
         } catch (e: Exception) {
-            Timber.e(e, "Error durante la ejecución del UseCase de sincronización")
+            Timber.e(e, "[PEDIDO_USECASE] Error durante la ejecución del UseCase de sincronización")
             emit(SyncProgress.Error("ERROR INESPERADO: ${e.message}"))
         } finally {
             emit(SyncProgress.Finalizado)

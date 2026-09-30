@@ -140,11 +140,11 @@ class PedidosRepository(
             if (respuesta.isSuccessful) {
                 respuesta.body()
             } else {
-                Timber.e("Error al obtener pedido remoto: ${respuesta.code()}")
+                Timber.e("[PEIDO_REPOSITORY] Error al obtener pedido remoto: ${respuesta.code()}")
                 null
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error de conexión al obtener pedido remoto")
+            Timber.e(e, "[PEIDO_REPOSITORY] Error de conexión al obtener pedido remoto")
             null
         }
     }
