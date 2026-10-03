@@ -61,17 +61,23 @@ class GestionarDetallePedidoUseCase(
         val existenteMismaUnidad = repository.buscarProductoEnDetalle(detalle.idPedido, detalle.idProducto, detalle.unidad ?: "")
 
         if (existenteMismaUnidad != null && detalle.id == 0) {
-            // Si ya existe la misma unidad y estamos agregando uno nuevo (no editando), sumamos cantidades
+            // Si ya existe la misma unidad y estamos agregando uno nuevo (no editando), sumamos cantidades y actualizamos al nuevo precio pactado
             val nuevaCantidad = existenteMismaUnidad.cantidad + detalle.cantidad
-            val nuevoTotalIva = existenteMismaUnidad.totalIva + detalle.totalIva
-            val nuevoTotal = existenteMismaUnidad.total + detalle.total
+            val nuevoPrecioIva = detalle.precioIva
+            val nuevoPrecio = detalle.precio
+            val nuevoTotalIva = nuevaCantidad * nuevoPrecioIva
+            val nuevoTotal = nuevaCantidad * nuevoPrecio
             val nuevaBonif = existenteMismaUnidad.bonificado + detalle.bonificado
+            val nuevoIdInventarioPrecios = if (detalle.idInventarioPrecios > 0) detalle.idInventarioPrecios else existenteMismaUnidad.idInventarioPrecios
             
             val actualizado = existenteMismaUnidad.copy(
                 cantidad = nuevaCantidad,
+                precio = nuevoPrecio,
+                precioIva = nuevoPrecioIva,
                 total = nuevoTotal,
                 totalIva = nuevoTotalIva,
-                bonificado = nuevaBonif
+                bonificado = nuevaBonif,
+                idInventarioPrecios = nuevoIdInventarioPrecios
             )
             repository.insertarDetallePedido(actualizado)
         } else {
