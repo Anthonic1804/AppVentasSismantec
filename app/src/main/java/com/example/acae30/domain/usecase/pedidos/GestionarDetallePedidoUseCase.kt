@@ -6,6 +6,11 @@ import com.example.acae30.data.repository.PedidosRepository
 /**
  * Caso de Uso para insertar, actualizar o eliminar productos del pedido.
  */
+data class OcupacionDetalle(
+    val ocupacionTotalStock: Double,
+    val ocupacionComprada: Double
+)
+
 class GestionarDetallePedidoUseCase(
     private val repository: PedidosRepository
 ) {
@@ -32,7 +37,7 @@ class GestionarDetallePedidoUseCase(
             if (item.id != detalle.id) {
                 val cant = item.cantidad
                 val bonif = item.bonificado.toDouble()
-                val eqUni = item.equivaleUni
+                val eqUni = if (item.equivaleUni > 0) item.equivaleUni else (if (item.unidad?.trim()?.uppercase() in listOf("UNI", "UNIDAD")) 1.0 else 0.0)
                 val eqFra = item.equivaleFra
                 
                 if (realFraccion > 1f) {
@@ -45,8 +50,9 @@ class GestionarDetallePedidoUseCase(
         }
         
         // 3. Calcular la ocupación de la nueva cantidad
+        val eqUniDetalle = if (detalle.equivaleUni > 0) detalle.equivaleUni else (if (detalle.unidad?.trim()?.uppercase() in listOf("UNI", "UNIDAD")) 1.0 else 0.0)
         val nuevaOcupacion = if (realFraccion > 1f) {
-            ((detalle.cantidad * detalle.equivaleUni + detalle.bonificado.toDouble()) * capacidad) + (detalle.cantidad * detalle.equivaleFra)
+            ((detalle.cantidad * eqUniDetalle + detalle.bonificado.toDouble()) * capacidad) + (detalle.cantidad * detalle.equivaleFra)
         } else {
             detalle.cantidad + detalle.bonificado.toDouble() + (detalle.cantidad * detalle.equivaleFra)
         }
@@ -92,26 +98,29 @@ class GestionarDetallePedidoUseCase(
     /**
      * Calcula la ocupación total normalizada de un producto en un pedido.
      */
-    suspend fun obtenerOcupacionTotal(idPedido: Int, idProducto: Int, realFraccion: Float, idOmitir: Int = 0): Double {
+    suspend fun obtenerOcupacionTotal(idPedido: Int, idProducto: Int, realFraccion: Float, idOmitir: Int = 0): OcupacionDetalle {
         val detalles = repository.obtenerDetallesDeProductoEnPedidoLocal(idPedido, idProducto)
-        var total = 0.0
+        var totalStock = 0.0
+        var totalComprado = 0.0
         val capacidad = if (realFraccion > 1f) realFraccion.toDouble() else 1.0
         
         detalles.forEach { item ->
             if (item.id != idOmitir) {
                 val cant = item.cantidad
                 val bonif = item.bonificado.toDouble()
-                val eqUni = item.equivaleUni
+                val eqUni = if (item.equivaleUni > 0) item.equivaleUni else (if (item.unidad?.trim()?.uppercase() in listOf("UNI", "UNIDAD")) 1.0 else 0.0)
                 val eqFra = item.equivaleFra
                 
                 if (realFraccion > 1f) {
-                    total += ((cant * eqUni + bonif) * capacidad) + (cant * eqFra)
+                    totalStock += ((cant * eqUni + bonif) * capacidad) + (cant * eqFra)
+                    totalComprado += ((cant * eqUni) * capacidad) + (cant * eqFra)
                 } else {
-                    total += cant + bonif + (cant * eqFra)
+                    totalStock += cant + bonif + (cant * eqFra)
+                    totalComprado += cant + (cant * eqFra)
                 }
             }
         }
-        return total
+        return OcupacionDetalle(totalStock, totalComprado)
     }
 
     /**

@@ -63,11 +63,15 @@ class ProductoAgregarViewModel(
     private val _stockTotalValidacion = MutableStateFlow(0f)
     val stockTotalValidacion = _stockTotalValidacion.asStateFlow()
 
-    // REFACTORIZACIÓN: Cantidad ya reservada en el pedido actual (normalizada)
+    // REFACTORIZACIÓN: Cantidad ya reservada en el pedido actual para stock (normalizada)
     private val _cantidadYaEnPedidoNormalizada = MutableStateFlow(0.0)
     val cantidadYaEnPedidoNormalizada = _cantidadYaEnPedidoNormalizada.asStateFlow()
 
-    // Precio final calculado (Personalizado o Viñeta)
+    // REFACTORIZACIÓN: Cantidad ya comprada en el pedido actual para escala de precio (normalizada)
+    private val _cantidadCompradaYaEnPedidoNormalizada = MutableStateFlow(0.0)
+    val cantidadCompradaYaEnPedidoNormalizada = _cantidadCompradaYaEnPedidoNormalizada.asStateFlow()
+
+    // Precio final calculated (Personalizado o Viñeta)
     private val _precioFinal = MutableStateFlow(0f)
     val precioFinal = _precioFinal.asStateFlow()
 
@@ -148,7 +152,8 @@ class ProductoAgregarViewModel(
     private suspend fun calcularOcupacionEnPedido(idPedido: Int, idProducto: Int, realFraccion: Float, idOmitir: Int = 0) {
         try {
             val ocupacion = gestionarDetalleUseCase.obtenerOcupacionTotal(idPedido, idProducto, realFraccion, idOmitir)
-            _cantidadYaEnPedidoNormalizada.value = ocupacion
+            _cantidadYaEnPedidoNormalizada.value = ocupacion.ocupacionTotalStock
+            _cantidadCompradaYaEnPedidoNormalizada.value = ocupacion.ocupacionComprada
         } catch (e: Exception) {
             Timber.e(e, "Error calculando ocupación previa")
         }
@@ -163,7 +168,12 @@ class ProductoAgregarViewModel(
                 Timber.d("[PRODUCTO_AGREGAR_VM] Intentando cargar detalle ID: $idDetalle")
                 val detalle = gestionarDetalleUseCase.obtenerDetallePorId(idDetalle)
                 _detallePedido.value = detalle
-                if (detalle == null) {
+                if (detalle != null) {
+                    val p = _producto.value
+                    if (p != null) {
+                        calcularOcupacionEnPedido(detalle.idPedido, detalle.idProducto, p.Fraccion ?: 0f, idDetalle)
+                    }
+                } else {
                     Timber.e("[PRODUCTO_AGREGAR_VM] No se encontró el detalle con ID: $idDetalle")
                     _uiEvent.value = UIEvent.Error("ERROR AL BUSCAR EN EL DETALLE DEL PEDIDO")
                 }
@@ -270,20 +280,23 @@ class ProductoAgregarViewModel(
         }
 
         val stockDisponible = _stockTotalValidacion.value.toDouble()
-        val yaEnPedido = _cantidadYaEnPedidoNormalizada.value
+        val yaEnPedidoStock = _cantidadYaEnPedidoNormalizada.value
+        val yaEnPedidoComprado = _cantidadCompradaYaEnPedidoNormalizada.value
         val precioActual = _precioFinal.value
         val esMayorista = _esMayorista.value
+
+        val cantidadTotalParaEscala = cantidadNormalizada + yaEnPedidoComprado
 
         val result = when {
             cantidad <= 0f -> ValidationResult(false, "CAMPO NO PUEDE QUEDAR VACIO")
             precioActual <= 0f -> ValidationResult(false, "EL PRECIO DEBE SER MAYOR A 0")
-            (consumoTotalPropuesto + yaEnPedido > stockDisponible) && sinExistencias == 0 -> {
-                val msg = if (yaEnPedido > 0) "STOCK INSUFICIENTE para cubrir Venta + Regalía (Ya tiene reservado en pedido)" 
+            (consumoTotalPropuesto + yaEnPedidoStock > stockDisponible) && sinExistencias == 0 -> {
+                val msg = if (yaEnPedidoStock > 0) "STOCK INSUFICIENTE para cubrir Venta + Regalía (Ya tiene reservado en pedido)" 
                           else "STOCK INSUFICIENTE para cubrir Venta + Regalía"
                 ValidationResult(false, msg)
             }
-            // REFACTORIZACIÓN: Validamos escalas comparando la cantidad normalizada contra el umbral convertido
-            (cantidadNormalizada < umbralEscala.toDouble()) && !esMayorista -> 
+            // REFACTORIZACIÓN: Validamos escalas comparando la cantidad total acumulada (nueva + ya agregada) contra el umbral convertido
+            (cantidadTotalParaEscala < umbralEscala.toDouble()) && !esMayorista -> 
                 ValidationResult(false, "LA CANTIDAD NO ES VÁLIDA PARA EL PRECIO SELECCIONADO")
             else -> ValidationResult(true)
         }
