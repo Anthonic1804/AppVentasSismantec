@@ -2,8 +2,8 @@
 <resources>
     <array name="formaPago">
         <item>EFECTIVO</item>
-        <item>TARJETA</item>
+        <!--<item>TARJETA</item>-->
         <item>CHEQUE</item>
-        <item>DEPOSITO A CUENTA</item>
+        <item>DEPOSITO</item>
     </array>
 </resources>

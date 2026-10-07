@@ -864,6 +864,13 @@ class Detallepedido : AppCompatActivity() {
                 }
 
                 val forma = spForma.selectedItem.toString()
+                val formaPago = when(forma) {
+                    "CHEQUE" -> "Cheque"
+                    "TARJETA" -> "Tarjeta"
+                    "DEPOSITO" -> "Transferencia-Depósito Ba"
+                    else -> "Efectivo"
+
+                }
                 val pagoMonto = etPago.text.toString().toFloatOrNull() ?: 0f
 
                 CoroutineScope(Dispatchers.IO).launch {
@@ -895,7 +902,7 @@ class Detallepedido : AppCompatActivity() {
                         bancoCheque, cuentaCheque, numCheque,
                         tarjeta, nombreTarjeta, numTarjeta,
                         bancoDep, cuentaDep, numDep,
-                        forma)
+                        formaPago)
                 }
                 dismiss()
                 if(enviandoPedido) envioAlerta() else if(guardandoPedido) guardarPedido()
