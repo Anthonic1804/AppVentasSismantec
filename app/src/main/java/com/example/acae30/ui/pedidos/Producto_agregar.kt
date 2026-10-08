@@ -771,6 +771,10 @@ class Producto_agregar : AppCompatActivity() {
             listPrecios = inventarioController.obtenerEscalaPrecios(this@Producto_agregar, idproducto!!, false, unidadMedida)
             val precioss = ArrayList<String>()
 
+            val tipoFiscalProd = p.TipoFiscal?.trim()?.uppercase() ?: "G"
+            val esNoSujeto = (tipoFiscalProd == "NS" || tipoFiscalProd == "NO SUJETO")
+            val esExento = !esNoSujeto && (viewModel.esClienteExento.value || (tipoFiscalProd in listOf("EXENTO", "E")))
+
             // Usamos el estado del ViewModel para evitar consultas SQL manuales.
             val detalle = viewModel.detallePedido.value
             if(proviene == "editar" && detalle != null){
@@ -782,19 +786,22 @@ class Producto_agregar : AppCompatActivity() {
             //Agregado el precio asignado en la ficha del producto para las unidades
             //-----------------------
             if(unidadMedida == "UNI" && p != null){
-                precioss.add("${String.format("%.${decPrecios}f", p.Precio_iva)}") 
+                val precioBase = if (esExento) (p.Precio ?: 0f) else (p.Precio_iva ?: 0f)
+                precioss.add("${String.format("%.${decPrecios}f", precioBase)}") 
             }
 
             //------------------------
             //Agregando el precio asignado en la ficha del producto para las fracciones.
             //------------------------
             if(unidadMedida == "FRA" && p != null){
-                precioss.add("${String.format("%.${decPrecios}f", p.Precio_u_iva)}") 
+                val precioBaseFra = if (esExento) (p.Precio_u ?: 0f) else (p.Precio_u_iva ?: 0f)
+                precioss.add("${String.format("%.${decPrecios}f", precioBaseFra)}") 
             }
 
             listPrecios!!.forEach {
                 val unidad_cantidad = " (" + "${String.format("%.0f", it.Cantidad)}" + " ${it.Unidad} )"
-                precioss.add("${String.format("%.${decPrecios}f", it.Precio_iva)}" + " ${it.Nombre}" + unidad_cantidad)
+                val precioEscala = if (esExento) (it.Precio ?: 0f) else (it.Precio_iva ?: 0f)
+                precioss.add("${String.format("%.${decPrecios}f", precioEscala)}" + " ${it.Nombre}" + unidad_cantidad)
             }
 
             val adapterPrecios = ArrayAdapter(this@Producto_agregar, R.layout.simple_spinner_item, precioss)

@@ -11,22 +11,28 @@ Esta funcionalidad permitirá procesar y facturar correctamente productos **Exen
 
 ---
 
-## Reglas de Negocio a Implementar
+## Reglas de Negocio a Implementar (Normativa 2.0)
 
 ### 1. Pedidos para Clientes Exentos
 - Si la categoría del cliente (`Categoria_cliente` en la ficha del cliente) es `"Exento"` (o contiene `"EXENTO"`):
-  - **Todo el pedido será Exento de IVA**, sea para Factura (FC), Crédito Fiscal (CF) o Recibo (RE).
-  - En lugar de tomar `Precio_iva` / `Precio_u_iva`, se tomará el campo **`Precio` / `Precio_u`** (precio sin IVA).
+  - **Todo el pedido será Exento de IVA**, sea para Factura (FC), Crédito Fiscal (CF) o Recibo (**RC**).
+  - En lugar de tomar `Precio_iva` / `Precio_u_iva`, se tomará el campo **`Precio` / `Precio_u`** (precio sin IVA) de la ficha del producto como base (`precioFinalVm`).
+  - Al registrar en `PedidoDetalleEntity`:
+    - El campo **`Precio_iva`** almacena dicho valor exento (`precioFinalVm`).
+    - El campo **`Precio`** almacena `Precio_iva / 1.13` para mantener la simulación de precio base gravado en el esquema de la base de datos local.
   - No se desglosa IVA para ningún producto del pedido.
 
 ### 2. Productos Exentos (Cliente No Exento)
 - Si el cliente no es Exento, pero el `TipoFiscal` del producto en la tabla `Inventario` es `"Exento"` (o `"E"`):
   - El producto se agregará al pedido sin IVA.
-  - Se tomará el precio del campo **`Precio` / `Precio_u`** (precio sin IVA) de la ficha del producto.
+  - Se tomará el precio del campo **`Precio` / `Precio_u`** (precio sin IVA) de la ficha del producto como base (`precioFinalVm`).
+  - Al registrar en `PedidoDetalleEntity`:
+    - El campo **`Precio_iva`** almacena dicho valor exento (`precioFinalVm`).
+    - El campo **`Precio`** almacena `Precio_iva / 1.13` para simular la base.
 
 ### 3. Productos No Sujetos (NS)
 - Si el `TipoFiscal` del producto en la tabla `Inventario` es `"No Sujeto"` (o `"NS"`):
-  - Aplica para Factura, Crédito Fiscal y Recibo.
+  - Aplica para Factura, Crédito Fiscal y Recibo (RC).
   - **No se desglosa IVA** (el valor no se divide entre 1.13).
   - Se toma como valor base el campo **`Precio_iva` / `Precio_u_iva`** (ejemplo: $25.00).
   - En el cálculo de totales del comprobante, su valor no suma a `Sumas Gravadas` ni a `IVA`, sino a la casilla de **Ventas No Sujetas**.
@@ -58,7 +64,7 @@ Esta funcionalidad permitirá procesar y facturar correctamente productos **Exen
 ### FASE 2: Asignación de Precios y Tipo Fiscal al Agregar Producto
 - `[x]` **Tarea 2.1:** Detectar si la categoría del cliente es Exento (`esClienteExento`) en [ProductoAgregarViewModel.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/ui/pedidos/ProductoAgregarViewModel.kt).
 - `[x]` **Tarea 2.2:** Ajustar la selección y calculo de precio base en [ProductoAgregarViewModel.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/ui/pedidos/ProductoAgregarViewModel.kt) según si es Gravado (`G`), Exento (`E`) o No Sujeto (`NS`).
-- `[x]` **Tarea 2.3:** Guardar en `tipoFiscal` de `PedidoDetalleEntity` en [Producto_agregar.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/ui/pedidos/Producto_agregar.kt) el tipo fiscal exacto de [InventarioEntity.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/data/local/entity/InventarioEntity.kt) (o `"E"` si el cliente es Exento), y guardar precios sin división de IVA cuando sea Exento o No Sujeto.
+- `[x]` **Tarea 2.3:** Guardar en `tipoFiscal` de `PedidoDetalleEntity` en [Producto_agregar.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/ui/pedidos/Producto_agregar.kt) el tipo fiscal exacto de [InventarioEntity.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/data/local/entity/InventarioEntity.kt) (o `"E"` si el cliente es Exento), registrando `Precio_iva` como el precio exento y `Precio` como `Precio_iva / 1.13` para simulación.
 
 ### FASE 3: Caso de Uso y Cálculo de Totales Fiscales
 - `[x]` **Tarea 3.1:** Actualizar [CalcularTotalesFiscalesUseCase.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/domain/usecase/pedidos/CalcularTotalesFiscalesUseCase.kt) para recibir el listado completo de productos del pedido y calcular por separado `sumasGravadas`, `iva`, `ventasExentas`, `ventasNoSujetas`, `ivaPercepcion` y `totalFinal`.
@@ -67,7 +73,7 @@ Esta funcionalidad permitirá procesar y facturar correctamente productos **Exen
 ### FASE 4: Interfaz de Usuario en Detalle del Pedido
 - `[x]` **Tarea 4.1:** Modificar [detalle_pedido.xml](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/res/layout/detalle_pedido.xml) para agregar el campo de **Precio Unitario** (`@+id/txtprecioU`).
 - `[x]` **Tarea 4.2:** Modificar [PedidoDetalleAdapter.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/listas/PedidoDetalleAdapter.kt) para vincular y formatear el Precio Unitario (`Precio_venta`).
-- `[x]` **Tarea 4.3:** Modificar [activity_detallepedido.xml](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/res/layout/activity_detallepedido.xml) para agregar los bloques de **EXENTA** (`txtExenta`) y **NO SUJETA** (`txtNoSujeta`) en la tabla inferior de totales.
+- `[x]` **Tarea 4.3:** Modificar [activity_detallepedido.xml](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/res/layout/activity_detallepedido.xml) para agregar los bloques de **EXENTA** (`txtExenta`) y **NO SUJETA** (`txtNoSujeta`) in la tabla inferior de totales.
 - `[x]` **Tarea 4.4:** Modificar [Detallepedido.kt](file:///C:/DESARROLLO/AppVentasSismantec/app/src/main/java/com/example/acae30/ui/pedidos/Detallepedido.kt) para mostrar los montos desglosados en `txtExenta` y `txtNoSujeta`.
 
 ### FASE 5: Compilación y Verificación
