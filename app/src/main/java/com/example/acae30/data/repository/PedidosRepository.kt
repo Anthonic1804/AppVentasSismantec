@@ -283,8 +283,24 @@ class PedidosRepository(
 
     fun obtenerDetallePedidoFlow(idPedido: Int) = dao.obtenerDetallePedidoFlow(idPedido)
 
+    /* CÓDIGO VIEJO:
     suspend fun actualizarTotalesFiscalesLocal(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double, totalFinal: Double) =
         dao.actualizarTotalesFiscales(idPedido, sumas, iva, ivaPerci, totalFinal)
+    */
+    // CÓDIGO NUEVO: Pasa ventaExenta y ventaNoSujeta al DAO
+    suspend fun actualizarTotalesFiscalesLocal(
+        idPedido: Int, 
+        sumas: Double, 
+        iva: Double, 
+        ventaExenta: Double, 
+        ventaNoSujeta: Double, 
+        ivaPerci: Double, 
+        totalFinal: Double
+    ) = dao.actualizarTotalesFiscales(idPedido, sumas, iva, ventaExenta, ventaNoSujeta, ivaPerci, totalFinal)
+
+    // CÓDIGO NUEVO: Actualizar tipo de documento en Room
+    suspend fun actualizarTipoDocumentoLocal(idPedido: Int, tipoDoc: String) =
+        dao.actualizarTipoDocumento(idPedido, tipoDoc)
 
     //---------------------------------------------------------
     // REFACTORIZACIÓN MVVM: ACTUALIZAR SUCURSAL

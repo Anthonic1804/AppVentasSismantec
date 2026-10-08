@@ -36,6 +36,7 @@ class PedidoDetalleAdapter(
     override fun onBindViewHolder(vista: PedidoDetalleAdapter.MyViewHolder, position: Int) {
         preferencias = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
         val decTotales = preferencias!!.getInt("decTotales", 2)
+        val decPrecios = preferencias!!.getInt("decPrecios", 2)
 
         val data = getItem(position)
         
@@ -50,6 +51,10 @@ class PedidoDetalleAdapter(
         val desc = data.Descripcion ?: "Sin descripción"
         val loteInfo = if (data.Lote != null) " | LOTE: ${data.Lote} | F. VENCIMIENTO: ${data.FechaVencimiento ?: "N/A"}" else ""
         vista.descripcion.text = "$desc$loteInfo"
+
+        // CÓDIGO NUEVO: Formatear y mostrar el Precio Unitario
+        val precioUnitario = data.Precio_venta ?: 0f
+        vista.precioU.text = "$${String.format("%.${decPrecios}f", precioUnitario)}"
         
         // Formatear total de forma segura
         val totalIva = data.Total_iva ?: 0f
@@ -76,11 +81,13 @@ class PedidoDetalleAdapter(
 
         internal var cantidad: TextView
         internal var descripcion: TextView
+        internal var precioU: TextView // CÓDIGO NUEVO: TextView para Precio Unitario
         internal var total: TextView
 
         init {
             cantidad = itemView.findViewById(R.id.txtcantidad)
             descripcion = itemView.findViewById(R.id.txtdescripcion)
+            precioU = itemView.findViewById(R.id.txtprecioU) // CÓDIGO NUEVO
             total = itemView.findViewById(R.id.txtprecio)
             itemView.setOnClickListener({ itemClick(layoutPosition) })
 

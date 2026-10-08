@@ -1067,17 +1067,44 @@ class Producto_agregar : AppCompatActivity() {
     } //muestra la alerta para agregar precio
 
     //---------------------------------------------------------------------------------
-     // Prepara el objeto de detalle del pedido y solicita la confirmación del token al ViewModel.
+    // CÓDIGO NUEVO: Función auxiliar para construir el objeto PedidoDetalleEntity
+    // aplicando las reglas fiscales para Gravado (G), Exento (E) y No Sujeto (NS)
     //---------------------------------------------------------------------------------
-    private fun prepararYConfirmarToken() {
+    private fun crearPedidoDetalleEntity(): com.example.acae30.data.local.entity.PedidoDetalleEntity {
         val bonificados = binding.txtBonificados.text.toString().toInt()
         val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
         val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
-
-        // Usamos el precio final validado por el ViewModel
         val precioFinalVm = viewModel.precioFinal.value
 
-        val detalle = com.example.acae30.data.local.entity.PedidoDetalleEntity(
+        // Determinar el tipo fiscal efectivo considerando la categoría del cliente
+        val esClienteExento = viewModel.esClienteExento.value
+        val tipoFiscalProd = datosProducto?.TipoFiscal?.trim() ?: "Gravado"
+        
+        val tipoFiscalEfectivo = if (esClienteExento) {
+            "E"
+        } else {
+            when (tipoFiscalProd) {
+                "Gravado", "G" -> "G"
+                "Exento", "E" -> "E"
+                "No Sujeto", "NS" -> "NS"
+                else -> "G"
+            }
+        }
+
+        // Para productos Exentos ("E") o No Sujetos ("NS"), el precio sin IVA NO se divide entre 1.13
+        val precioSinIva = if (tipoFiscalEfectivo == "E" || tipoFiscalEfectivo == "NS") {
+            precioFinalVm.toDouble()
+        } else {
+            (precioFinalVm / 1.13)
+        }
+
+        val totalSinIva = if (tipoFiscalEfectivo == "E" || tipoFiscalEfectivo == "NS") {
+            totalIva
+        } else {
+            (totalIva / 1.13)
+        }
+
+        return com.example.acae30.data.local.entity.PedidoDetalleEntity(
             id = idpedidodetalle ?: 0,
             idPedido = idpedido,
             idProducto = idproducto!!,
@@ -1085,9 +1112,9 @@ class Producto_agregar : AppCompatActivity() {
             cantidad = cantidad.toDouble(),
             unidad = unidadActual,
             idUnidad = idUnidad,
-            precio = (precioFinalVm / 1.13),
+            precio = precioSinIva,
             precioIva = precioFinalVm.toDouble(),
-            total = (totalIva / 1.13),
+            total = totalSinIva,
             totalIva = totalIva,
             precioOferta = 0.0,
             bonificado = bonificados,
@@ -1101,66 +1128,26 @@ class Producto_agregar : AppCompatActivity() {
             comentario = 0,
             tipo = if (datosProducto?.Tipo?.trim() == "Producto") "PRD" else "SVC",
             metodoGestion = datosProducto?.MetodoGestion ?: "NINGUNO",
-            tipoFiscal = when (datosProducto?.TipoFiscal) {
-                "Gravado" -> "G"
-                "Exento" -> "E"
-                else -> "NS"
-            },
+            tipoFiscal = tipoFiscalEfectivo,
             idLote = idLoteSeleccionado,
             lote = loteSeleccionado,
             fechaVencimiento = fechaVencimientoLote,
             ordenDespacho = 0
         )
+    }
 
-        Timber.d("[PRODUCTO_AGREGAR] GUARDANDO CON TOKEN - Precio: $precioFinalVm | Total: $totalIva")
+    //---------------------------------------------------------------------------------
+    // Prepara el objeto de detalle del pedido y solicita la confirmación del token al ViewModel.
+    //---------------------------------------------------------------------------------
+    private fun prepararYConfirmarToken() {
+        val detalle = crearPedidoDetalleEntity()
+        Timber.d("[PRODUCTO_AGREGAR] GUARDANDO CON TOKEN - Precio: ${detalle.precioIva} | Total: ${detalle.totalIva}")
         viewModel.confirmarTokenYGuardar(codEmpleado, codigoProducto, detalle, sinExistencias)
     }
 
     private fun agregarProducto() {
-        // Construimos la entidad y la enviamos al ViewModel
-        val bonificados = binding.txtBonificados.text.toString().toInt()
-        val totalIvaStr = binding.txttotal.text.toString().replace(",", ".")
-        val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
-
-        // Usamos el precio final validado por el ViewModel
-        val precioFinalVm = viewModel.precioFinal.value
-        
-        val detalle = com.example.acae30.data.local.entity.PedidoDetalleEntity(
-            id = idpedidodetalle ?: 0,
-            idPedido = idpedido,
-            idProducto = idproducto!!,
-            descripcion = binding.txtdescripcion.text.toString(),
-            cantidad = cantidad.toDouble(),
-            unidad = unidadActual,
-            idUnidad = idUnidad,
-            precio = (precioFinalVm / 1.13),
-            precioIva = precioFinalVm.toDouble(),
-            total = (totalIva / 1.13),
-            totalIva = totalIva,
-            precioOferta = 0.0,
-            bonificado = bonificados,
-            descuento = 0.0,
-            precioEditado = if (precioEditado > 0) "*" else "",
-            idInventarioPrecios = idEscala,
-            codigoBarra = datosProducto?.codigo_de_barra ?: "",
-            equivaleUni = equivaleUni.toDouble(),
-            equivaleFra = equivaleFra.toDouble(),
-            uniEquivale = uniEquivale,
-            comentario = 0,
-            tipo = if (datosProducto?.Tipo?.trim() == "Producto") "PRD" else "SVC",
-            metodoGestion = datosProducto?.MetodoGestion ?: "NINGUNO",
-            tipoFiscal = when (datosProducto?.TipoFiscal) {
-                "Gravado" -> "G"
-                "Exento" -> "E"
-                else -> "NS"
-            },
-            idLote = idLoteSeleccionado,
-            lote = loteSeleccionado,
-            fechaVencimiento = fechaVencimientoLote,
-            ordenDespacho = 0 
-        )
-
-        Timber.d("[PRODUCTO_AGREGAR] GUARDANDO PRODUCTO - Precio: $precioFinalVm | Total: $totalIva")
+        val detalle = crearPedidoDetalleEntity()
+        Timber.d("[PRODUCTO_AGREGAR] GUARDANDO PRODUCTO - Precio: ${detalle.precioIva} | Total: ${detalle.totalIva}")
         viewModel.guardarProducto(detalle, sinExistencias)
     }
 

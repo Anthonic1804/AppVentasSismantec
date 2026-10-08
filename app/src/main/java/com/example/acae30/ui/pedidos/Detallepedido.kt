@@ -65,6 +65,7 @@ import com.example.acae30.domain.usecase.ActualizarSucursalPedidoUseCase
 import com.example.acae30.domain.usecase.GetSucursalesUseCase
 import com.example.acae30.domain.usecase.pedidos.ActualizarNombreClienteUseCase
 import com.example.acae30.domain.usecase.pedidos.ActualizarTotalesFiscalesUseCase
+import com.example.acae30.domain.usecase.pedidos.ActualizarTipoDocumentoUseCase
 import com.example.acae30.domain.usecase.pedidos.CalcularTotalesFiscalesUseCase
 import com.example.acae30.domain.usecase.pedidos.CrearPedidoUseCase
 import com.example.acae30.domain.usecase.pedidos.EliminarPedidoUseCase
@@ -333,7 +334,9 @@ class Detallepedido : AppCompatActivity() {
             GetTicketDataUseCase(pedidosRepository, clientesRepository, settingsRepository),
             GetPedidosBorradoresUseCase(pedidosRepository),
             CrearPedidoUseCase(pedidosRepository, clientesRepository),
-            ActualizarNombreClienteUseCase(pedidosRepository)
+            ActualizarNombreClienteUseCase(pedidosRepository),
+            // CÓDIGO NUEVO: Inyección de caso de uso para actualizar tipo de documento
+            ActualizarTipoDocumentoUseCase(pedidosRepository)
         )
         viewModel = androidx.lifecycle.ViewModelProvider(this, factory)[DetallePedidoViewModel::class.java]
     }
@@ -405,6 +408,9 @@ class Detallepedido : AppCompatActivity() {
         viewModel.totalesFiscales.observe(this) { resultado ->
             binding.txtSumas.text = String.format("%.2f", resultado.sumas)
             binding.txtIva.text = String.format("%.2f", resultado.iva)
+            // CÓDIGO NUEVO: Mostrar desgloses de Venta Exenta y Venta No Sujeta
+            binding.txtExenta.text = String.format("%.2f", resultado.ventaExenta)
+            binding.txtNoSujeta.text = String.format("%.2f", resultado.ventaNoSujeta)
             binding.txtIvaPerci.text = String.format("%.2f", resultado.ivaPerci)
             binding.txttotal.text = String.format("%.2f", resultado.totalFinal)
             total = resultado.totalFinal.toFloat()
@@ -605,8 +611,12 @@ class Detallepedido : AppCompatActivity() {
                 // Actualizamos el límite visual
                 actualizarLimitePorDocumento()
                 
+                /* CÓDIGO VIEJO:
                 pedidosController.updateTipoDocumento(tipoDocumento, idpedido, this@Detallepedido)
                 pedidosController.actualizarTotalesPedido(this@Detallepedido, idpedido, true)
+                */
+                // CÓDIGO NUEVO: Notificar al ViewModel para actualizar el tipo de documento en Room y recalcular los totales de inmediato
+                viewModel.cambiarTipoDocumento(idpedido, tipoDocumento)
             }
             override fun onNothingSelected(p: AdapterView<*>?) {}
         }

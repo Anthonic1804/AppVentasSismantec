@@ -14,6 +14,7 @@ import com.example.acae30.domain.usecase.ActualizarSucursalPedidoUseCase
 import com.example.acae30.domain.usecase.GetSucursalesUseCase
 import com.example.acae30.domain.models.TicketData
 import com.example.acae30.domain.usecase.pedidos.ActualizarTotalesFiscalesUseCase
+import com.example.acae30.domain.usecase.pedidos.ActualizarTipoDocumentoUseCase
 import com.example.acae30.domain.usecase.pedidos.ActualizarNombreClienteUseCase
 import com.example.acae30.domain.usecase.pedidos.CalcularTotalesFiscalesUseCase
 import com.example.acae30.domain.usecase.pedidos.EliminarPedidoUseCase
@@ -47,7 +48,9 @@ class DetallePedidoViewModel(
     private val getTicketDataUseCase: GetTicketDataUseCase,
     private val getPedidosBorradoresUseCase: GetPedidosBorradoresUseCase,
     private val crearPedidoUseCase: CrearPedidoUseCase,
-    private val actualizarNombreClienteUseCase: ActualizarNombreClienteUseCase
+    private val actualizarNombreClienteUseCase: ActualizarNombreClienteUseCase,
+    // CÓDIGO NUEVO: Inyección del caso de uso para actualizar el tipo de documento
+    private val actualizarTipoDocumentoUseCase: ActualizarTipoDocumentoUseCase
 ) : ViewModel() {
 
     // Jobs para cancelar observaciones previas al cambiar de pedido
@@ -312,7 +315,11 @@ class DetallePedidoViewModel(
         _validacionSaldo.value = null
     }
 
-     //Calcula y guarda los totales fiscales.
+    //---------------------------------------------------------------------------
+    // CÓDIGO NUEVO: Calcula y guarda los totales fiscales desglosados
+    // (Sumas, IVA, Ventas Exentas, Ventas No Sujetas, IVA Percibido, Total)
+    //---------------------------------------------------------------------------
+    /* CÓDIGO VIEJO:
     fun actualizarTotalesFiscales(
         idPedido: Int,
         totalBase: Double,
@@ -325,9 +332,32 @@ class DetallePedidoViewModel(
             actualizarTotalesFiscalesUseCase(idPedido, resultado.sumas, resultado.iva, resultado.ivaPerci, resultado.totalFinal)
         }
     }
+    */
+    fun actualizarTotalesFiscales(
+        idPedido: Int,
+        lista: List<DetallePedido>,
+        tipoDocumento: String,
+        esGranContribuyente: Boolean
+    ) {
+        viewModelScope.launch {
+            val resultado = calcularTotalesFiscalesUseCase(lista, tipoDocumento, esGranContribuyente)
+            _totalesFiscales.value = resultado
+            actualizarTotalesFiscalesUseCase(
+                idPedido, 
+                resultado.sumas, 
+                resultado.iva, 
+                resultado.ventaExenta, 
+                resultado.ventaNoSujeta, 
+                resultado.ivaPerci, 
+                resultado.totalFinal
+            )
+        }
+    }
 
     private fun recalcularTotales(idPedido: Int, lista: List<DetallePedido>) {
+        /* CÓDIGO VIEJO:
         val totalBase = lista.sumOf { it.Total_iva?.toDouble() ?: 0.0 }
+        */
         val currentP = _infoPedido.value
         val currentC = _infoCliente.value
         
@@ -335,7 +365,26 @@ class DetallePedidoViewModel(
         val categoria = currentC?.Categoria_cliente ?: ""
         val esGranContribuyente = categoria.contains("Gran contribuyente", ignoreCase = true)
         
-        actualizarTotalesFiscales(idPedido, totalBase, tipoDoc, esGranContribuyente)
+        actualizarTotalesFiscales(idPedido, lista, tipoDoc, esGranContribuyente)
+    }
+
+    // CÓDIGO NUEVO: Permite cambiar el tipo de documento del pedido y recalcular los totales de inmediato
+    fun cambiarTipoDocumento(idPedido: Int, nuevoTipoDoc: String) {
+        viewModelScope.launch {
+            // 1. Actualizar el tipo de documento en Room usando el caso de uso
+            actualizarTipoDocumentoUseCase(idPedido, nuevoTipoDoc)
+            
+            // 2. Actualizar la variable local de infoPedido
+            val currentP = _infoPedido.value
+            if (currentP != null) {
+                currentP.Tipo_documento = nuevoTipoDoc
+                _infoPedido.value = currentP
+            }
+            
+            // 3. Recalcular de inmediato los totales con el nuevo tipo de documento
+            val lista = _detallePedido.value ?: emptyList()
+            recalcularTotales(idPedido, lista)
+        }
     }
 
      //Envia el pedido al servidor de forma asíncrona.

@@ -40,6 +40,10 @@ class ProductoAgregarViewModel(
     private val _esMayorista = MutableStateFlow(false)
     val esMayorista = _esMayorista.asStateFlow()
 
+    // CÓDIGO NUEVO: Estado para determinar si el cliente es de categoría Exento
+    private val _esClienteExento = MutableStateFlow(false)
+    val esClienteExento = _esClienteExento.asStateFlow()
+
     // Listado de lotes para el producto
     private val _listaLotes = MutableStateFlow<List<InventarioLotesEntity>>(emptyList())
     val listaLotes = _listaLotes.asStateFlow()
@@ -120,10 +124,15 @@ class ProductoAgregarViewModel(
     fun cargarProducto(idProducto: Int, idCliente: Int, idPedido: Int, unidadInicial: String) {
         viewModelScope.launch {
             try {
-                // 1. Cargar Info del Cliente primero para asegurar el flag de Mayorista
+                // 1. Cargar Info del Cliente primero para asegurar flags de Mayorista y Exento
                 val cliente = clientesRepository.obtenerClientePorId(idCliente)
                 val mayorista = (cliente?.mayorista?.trim()?.uppercase() == "S")
                 _esMayorista.value = mayorista
+
+                // CÓDIGO NUEVO: Determinar si el cliente es de categoría Exento
+                val catCliente = cliente?.categoriaCliente?.trim()?.uppercase() ?: ""
+                val exento = catCliente.contains("EXENTO")
+                _esClienteExento.value = exento
 
                 // 2. Cargar Info Producto
                 val p = inventarioRepository.obtenerProductoPorId(idProducto)
@@ -208,7 +217,18 @@ class ProductoAgregarViewModel(
         viewModelScope.launch {
             val p = _producto.value ?: return@launch
             
+            /* CÓDIGO VIEJO:
             val precioBaseFicha = if (unidad == "FRA") p.Precio_u_iva ?: 0f else p.Precio_iva ?: 0f
+            */
+            // CÓDIGO NUEVO: Si el cliente o el producto es Exento, tomar el precio sin IVA (Precio / Precio_u).
+            // Si es Gravado o No Sujeto, tomar el precio con IVA (Precio_iva / Precio_u_iva).
+            val esExento = _esClienteExento.value || (p.TipoFiscal?.trim()?.uppercase() in listOf("EXENTO", "E"))
+            val precioBaseFicha = if (esExento) {
+                if (unidad == "FRA") p.Precio_u ?: 0f else p.Precio ?: 0f
+            } else {
+                if (unidad == "FRA") p.Precio_u_iva ?: 0f else p.Precio_iva ?: 0f
+            }
+
             val precioConvenio = calcularPrecioUseCase.ejecutar(idCliente, idProducto, unidad, precioBaseFicha)
             val esPersonalizado = (precioConvenio != precioBaseFicha && unidad == "UNI")
             

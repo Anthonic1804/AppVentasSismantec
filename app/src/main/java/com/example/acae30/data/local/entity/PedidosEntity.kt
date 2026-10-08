@@ -31,6 +31,13 @@ data class PedidosEntity (
     @ColumnInfo(name = "Iva", defaultValue = "0.0")
     val iva: Double,
 
+    // NOMBRES NUEVOS: Campos para almacenar los montos desglosados de ventas exentas y no sujetas de IVA
+    @ColumnInfo(name = "Venta_exenta", defaultValue = "0.0")
+    val ventaExenta: Double = 0.0,
+
+    @ColumnInfo(name = "Venta_nosujeta", defaultValue = "0.0")
+    val ventaNoSujeta: Double = 0.0,
+
     @ColumnInfo(name = "SubTotal", defaultValue = "0.0")
     val subTotal: Double,
 

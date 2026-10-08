@@ -28,21 +28,33 @@
 
         <TextView
             android:id="@+id/txtdescripcion"
-            android:layout_width="176dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="2"
             android:text="TextView"
             android:textAlignment="textStart"
             android:textColor="@color/moderado"
             android:textStyle="bold" />
 
+        <!-- CÓDIGO NUEVO: Campo para mostrar el Precio Unitario (Precio U) -->
+        <TextView
+            android:id="@+id/txtprecioU"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="P.U: $0.00"
+            android:textAlignment="center"
+            android:textColor="@color/colordark"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
         <TextView
             android:id="@+id/txtprecio"
-            android:layout_width="10dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="TextView"
-            android:textAlignment="textStart"
+            android:textAlignment="textEnd"
             android:textColor="@color/colordark"
             android:textStyle="bold" />
 

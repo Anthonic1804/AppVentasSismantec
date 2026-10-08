@@ -89,7 +89,9 @@ import com.example.acae30.data.local.views.DetalleProductoView
     views = [
         DetalleProductoView::class
             ],
-    version = 4,
+    // CÓDIGO VIEJO: version = 4
+    // CÓDIGO NUEVO: Incrementada la versión de la BD a 5 para incluir Venta_exenta y Venta_nosujeta en PedidosEntity
+    version = 5,
     exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun inventarioDao(): InventarioDao

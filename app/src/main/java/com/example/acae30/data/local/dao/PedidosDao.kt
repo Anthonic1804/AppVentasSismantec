@@ -155,14 +155,35 @@ interface PedidosDao {
     suspend fun actualizarNombreCliente(idPedido: Int, nombre: String)
 
     //-------------------------------------------------------
-    // Actualizar totales fiscales del pedido
+    // Actualizar totales fiscales del pedido (Sumas, IVA, Exentas, No Sujetas, IVA Percibido, Total)
     //-------------------------------------------------------
+    /* CÓDIGO VIEJO:
     @Query("""
         UPDATE pedidos 
         SET Sumas = :sumas, Iva = :iva, Iva_percibido = :ivaPerci, Total = :totalFinal
         WHERE Id = :idPedido
     """)
     suspend fun actualizarTotalesFiscales(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double, totalFinal: Double)
+    */
+    // CÓDIGO NUEVO: Actualización extendida con desgloses de Venta_exenta y Venta_nosujeta
+    @Query("""
+        UPDATE pedidos 
+        SET Sumas = :sumas, Iva = :iva, Venta_exenta = :ventaExenta, Venta_nosujeta = :ventaNoSujeta, Iva_percibido = :ivaPerci, Total = :totalFinal
+        WHERE Id = :idPedido
+    """)
+    suspend fun actualizarTotalesFiscales(
+        idPedido: Int, 
+        sumas: Double, 
+        iva: Double, 
+        ventaExenta: Double, 
+        ventaNoSujeta: Double, 
+        ivaPerci: Double, 
+        totalFinal: Double
+    )
+
+    // CÓDIGO NUEVO: Actualizar el tipo de documento del pedido en Room
+    @Query("UPDATE pedidos SET Tipo_documento = :tipoDoc WHERE Id = :idPedido")
+    suspend fun actualizarTipoDocumento(idPedido: Int, tipoDoc: String)
 
     //-------------------------------------------------------
     // Obtener detalle del pedido de forma reactiva (Flow)

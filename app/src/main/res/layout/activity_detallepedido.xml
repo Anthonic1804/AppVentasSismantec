@@ -393,7 +393,7 @@
                             android:text="SUMAS"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="18sp"
+                            android:textSize="12sp"
                             android:textAlignment="center"/>
                         <TextView
                             android:id="@+id/txtSumas"
@@ -402,7 +402,7 @@
                             android:text="0.0000"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="16sp"
+                            android:textSize="12sp"
                             android:textAlignment="center"/>
 
                     </LinearLayout>
@@ -421,7 +421,7 @@
                             android:text="IVA"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="18sp"
+                            android:textSize="12sp"
                             android:textAlignment="center"/>
                         <TextView
                             android:id="@+id/txtIva"
@@ -430,7 +430,65 @@
                             android:text="0.0000"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="16sp"
+                            android:textSize="12sp"
+                            android:textAlignment="center"/>
+
+                    </LinearLayout>
+
+                    <!-- CÓDIGO NUEVO: Bloque para mostrar Ventas Exentas -->
+                    <LinearLayout
+                        android:id="@+id/lyExenta"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="EXENTA"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
+                            android:textAlignment="center"/>
+                        <TextView
+                            android:id="@+id/txtExenta"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.0000"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
+                            android:textAlignment="center"/>
+
+                    </LinearLayout>
+
+                    <!-- CÓDIGO NUEVO: Bloque para mostrar Ventas No Sujetas -->
+                    <LinearLayout
+                        android:id="@+id/lyNoSujeta"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="NO SUJETA"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
+                            android:textAlignment="center"/>
+                        <TextView
+                            android:id="@+id/txtNoSujeta"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.0000"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
                             android:textAlignment="center"/>
 
                     </LinearLayout>
@@ -449,7 +507,7 @@
                             android:text="IVA RET."
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="18sp"
+                            android:textSize="12sp"
                             android:textAlignment="center"/>
                         <TextView
                             android:id="@+id/txtIvaPerci"
@@ -458,7 +516,7 @@
                             android:text="0.0000"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="16sp"
+                            android:textSize="12sp"
                             android:textAlignment="center"/>
 
                     </LinearLayout>
@@ -477,7 +535,7 @@
                             android:text="TOTAL"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="18sp"
+                            android:textSize="12sp"
                             android:textAlignment="center"/>
                         <TextView
                             android:id="@+id/txttotal"
@@ -486,7 +544,7 @@
                             android:text="0.0000"
                             android:textColor="@color/moderado"
                             android:textStyle="bold"
-                            android:textSize="16sp"
+                            android:textSize="12sp"
                             android:textAlignment="center"/>
 
                     </LinearLayout>

@@ -219,35 +219,50 @@ class PedidosController {
             val consulta = "SELECT * FROM pedidos WHERE Id=$idPedido"
             val cursor = base.query(consulta)
             cursor.use {
-                if(cursor.count > 0){
-                    cursor.moveToFirst()
+                if(cursor.moveToFirst()){
+                    /* CÓDIGO VIEJO:
                     infoPedido = Pedidos(
                         cursor.getInt(0),
                         cursor.getInt(1),
                         cursor.getString(2),
                         cursor.getFloat(11),
-                        cursor.getFloat(5),
-                        cursor.getInt(12),
-                        cursor.getString(13),
-                        cursor.getInt(14),
-                        cursor.getString(15),
-                        cursor.getInt(16),
-                        cursor.getInt(17),
-                        cursor.getString(18),
-                        cursor.getFloat(6),
-                        cursor.getFloat(7),
-                        cursor.getFloat(10),
-                        cursor.getInt(40),
-                        cursor.getInt(41),
-                        cursor.getString(42),
-                        cursor.getString(43),
-                        cursor.getString(44),
-                        cursor.getString(45),
-                        cursor.getString(22),
-                        cursor.getString(24),
-                        cursor.getString(21),
-                        cursor.getString(49),
-                        ""
+                        ...
+                        cursor.getString(18), // Daba error de índice por nuevas columnas Venta_exenta y Venta_nosujeta
+                        ...
+                    )
+                    */
+                    // CÓDIGO NUEVO: Búsqueda segura por nombre de columna para evitar desplazamientos de índice al agregar nuevas columnas
+                    fun getInt(col: String) = try { cursor.getInt(cursor.getColumnIndexOrThrow(col)) } catch (e: Exception) { 0 }
+                    fun getFloat(col: String) = try { cursor.getFloat(cursor.getColumnIndexOrThrow(col)) } catch (e: Exception) { 0f }
+                    fun getString(col: String) = try { cursor.getString(cursor.getColumnIndexOrThrow(col)) ?: "" } catch (e: Exception) { "" }
+
+                    infoPedido = Pedidos(
+                        Id = getInt("Id"),
+                        Id_cliente = getInt("Id_cliente"),
+                        Nombre_cliente = getString("Nombre_cliente"),
+                        Total = getFloat("Total"),
+                        Descuento = getFloat("Descuento"),
+                        Enviado = getInt("Enviado"),
+                        Fecha_enviado = getString("Fecha_enviado"),
+                        Id_pedido_sistema = getInt("Id_pedido_sistema"),
+                        Gps = getString("Gps"),
+                        Cerrado = getInt("Cerrado"),
+                        Idvisita = getInt("Idvisita"),
+                        Fecha_creado = getString("Fecha_creado"),
+                        Suma = getFloat("Sumas"),
+                        Iva = getFloat("Iva"),
+                        Iva_Percibido = getFloat("Iva_percibido"),
+                        pedido_dte = getInt("pedido_dte"),
+                        pedido_dte_error = getInt("pedido_dte_error"),
+                        dteAmbiente = getString("dteAmbiente"),
+                        dteCodigoGeneracion = getString("dteCodigoGeneracion"),
+                        dteSelloRecibido = getString("dteSelloRecibido"),
+                        dteNumeroControl = getString("dteNumeroControl"),
+                        Tipo_documento = getString("Tipo_documento"),
+                        Terminos = getString("Terminos"),
+                        Nombre_sucursal = getString("Nombre_sucursal"),
+                        Sucursal_Direccion = getString("DTEDireccion"),
+                        IdPedidoApp = getString("Id_pedido_app")
                     )
                 }
             }
