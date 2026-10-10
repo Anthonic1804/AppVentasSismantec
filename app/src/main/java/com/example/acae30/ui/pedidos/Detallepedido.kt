@@ -67,6 +67,7 @@ import com.example.acae30.domain.usecase.pedidos.ActualizarNombreClienteUseCase
 import com.example.acae30.domain.usecase.pedidos.ActualizarTotalesFiscalesUseCase
 import com.example.acae30.domain.usecase.pedidos.ActualizarTipoDocumentoUseCase
 import com.example.acae30.domain.usecase.pedidos.CalcularTotalesFiscalesUseCase
+import java.util.Locale
 import com.example.acae30.domain.usecase.pedidos.CrearPedidoUseCase
 import com.example.acae30.domain.usecase.pedidos.EliminarPedidoUseCase
 import com.example.acae30.domain.usecase.pedidos.EnviarPedidoUseCase
@@ -834,6 +835,11 @@ class Detallepedido : AppCompatActivity() {
         Dialog(this).apply {
             setContentView(R.layout.vista_cobro)
             setCancelable(false)
+
+            // Configurar el ancho del diálogo para que ocupe el 92% de la pantalla y no se encoja
+            window?.setBackgroundDrawableResource(android.R.color.transparent)
+            val widthPx = (resources.displayMetrics.widthPixels * 0.92).toInt()
+            window?.setLayout(widthPx, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
             val etTotal = findViewById<TextInputEditText>(R.id.txtTotalPago)
             etTotal.setText(String.format("$%.2f", total))
             val etCambio = findViewById<TextInputEditText>(R.id.txtCambioPago)
@@ -845,6 +851,10 @@ class Detallepedido : AppCompatActivity() {
             val lyCheque = findViewById<LinearLayout>(R.id.lyContenedorCheque)
             val lyTarjeta = findViewById<LinearLayout>(R.id.lyContenedorTarjeta)
             val lyDeposito = findViewById<LinearLayout>(R.id.lyContenedorDeposito)
+
+            // Pre-llenar automáticamente el pago con el valor total a pagar
+            etPago.setText(String.format(Locale.US, "%.2f", total))
+            etCambio.setText("0.00")
 
             spForma.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
@@ -860,12 +870,24 @@ class Detallepedido : AppCompatActivity() {
                 override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
                 override fun onTextChanged(pago: CharSequence?, p1: Int, p2: Int, p3: Int) {
                     val pVal = pago?.toString()?.toFloatOrNull() ?: 0f
-                    etCambio.setText(String.format("%.2f", pVal - total))
+                    if (pVal >= total) {
+                        etPago.error = null
+                    }
+                    etCambio.setText(String.format(Locale.US, "%.2f", pVal - total))
                 }
                 override fun afterTextChanged(p0: Editable?) {}
             })
 
             findViewById<Button>(R.id.btnaceptar).setOnClickListener {
+                val pagoMonto = etPago.text.toString().toFloatOrNull() ?: 0f
+
+                // Validar que el pago ingresado sea mayor o igual al total a pagar
+                if (pagoMonto < total) {
+                    etPago.error = "EL MONTO ES MENOR AL TOTAL A PAGAR ($" + String.format(Locale.US, "%.2f", total) + ")"
+                    Toast.makeText(this@Detallepedido, "EL MONTO INGRESADO ES MENOR AL TOTAL A PAGAR", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+
                 val nOrden = etOrden.text.toString()
 
                 if ((infoCliente?.Nrc == "193-7" || infoCliente?.Nrc == "1937") && nOrden.isEmpty()) {
@@ -879,9 +901,7 @@ class Detallepedido : AppCompatActivity() {
                     "TARJETA" -> "Tarjeta"
                     "DEPOSITO" -> "Transferencia-Depósito Ba"
                     else -> "Efectivo"
-
                 }
-                val pagoMonto = etPago.text.toString().toFloatOrNull() ?: 0f
 
                 CoroutineScope(Dispatchers.IO).launch {
                     // MULTIPLES PEDIDOS: Si el código es 01, guardamos el nombre ingresado

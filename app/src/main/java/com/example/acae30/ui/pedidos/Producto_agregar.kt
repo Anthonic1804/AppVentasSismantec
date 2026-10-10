@@ -1083,17 +1083,19 @@ class Producto_agregar : AppCompatActivity() {
         val totalIva = totalIvaStr.toDoubleOrNull() ?: 0.0
         val precioFinalVm = viewModel.precioFinal.value
 
-        // Determinar el tipo fiscal efectivo considerando la categoría del cliente
+        // Determinar el tipo fiscal efectivo considerando la categoría del cliente (Prioridad absoluta para No Sujeto)
         val esClienteExento = viewModel.esClienteExento.value
-        val tipoFiscalProd = datosProducto?.TipoFiscal?.trim() ?: "Gravado"
+        val tipoFiscalProd = datosProducto?.TipoFiscal?.trim()?.uppercase() ?: "G"
+        val esNoSujeto = (tipoFiscalProd == "NS" || tipoFiscalProd == "NO SUJETO")
         
-        val tipoFiscalEfectivo = if (esClienteExento) {
+        val tipoFiscalEfectivo = if (esNoSujeto) {
+            "NS"
+        } else if (esClienteExento) {
             "E"
         } else {
             when (tipoFiscalProd) {
                 "Gravado", "G" -> "G"
                 "Exento", "E" -> "E"
-                "No Sujeto", "NS" -> "NS"
                 else -> "G"
             }
         }

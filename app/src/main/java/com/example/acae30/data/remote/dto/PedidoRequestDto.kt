@@ -57,7 +57,14 @@ data class EnviarPedidoRequestDto(
     @SerializedName("numeroCaja") val numeroCaja: Int,
     @SerializedName("idBodega") val idBodega: Int?,
     @SerializedName("codBodega") val codBodega: String?,
-    @SerializedName("bodega") val bodega: String?
+    @SerializedName("bodega") val bodega: String?,
+    @SerializedName("ivaRetenido") val ivaRetenido: Double = 0.0,
+    @SerializedName("ivaPercibido") val ivaPercibido: Double = 0.0,
+    @SerializedName("pago") val pago: Double = 0.0,
+    @SerializedName("ventasExentas") val ventasExentas: Double = 0.0,
+    @SerializedName("ventasNoSujetas") val ventasNoSujetas: Double = 0.0,
+    @SerializedName("iva") val iva: Double = 0.0,
+    @SerializedName("plazo") val plazo: Int = 0
 )
 
 data class EnviarPedidoDetalleDto(

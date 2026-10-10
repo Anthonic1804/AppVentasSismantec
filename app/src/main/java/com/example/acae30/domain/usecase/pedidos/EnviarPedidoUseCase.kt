@@ -46,6 +46,12 @@ class EnviarPedidoUseCase(
             val codBodega = prefs.getString("codBodega", "-1").let { if (it == "-1") null else it }
             val bodega = prefs.getString("bodega", "-1").let { if (it == "-1") null else it }
 
+            // Consultar plazo de crédito del cliente si los términos del pedido son CREDITO
+            val clienteEntity = db.clienteDao().obtenerClientePorId(pedidoEntity.idCliente)
+            val terminosUpper = pedidoEntity.terminos.uppercase()
+            val esCredito = terminosUpper.contains("CREDITO") || terminosUpper.contains("CRÉDITO")
+            val plazoCalculado = if (esCredito) (clienteEntity?.plazoCredito ?: 0) else 0
+
             // Construir DTO de Cabecera
             val request = EnviarPedidoRequestDto(
                 idCliente = pedidoEntity.idCliente,
@@ -96,6 +102,13 @@ class EnviarPedidoUseCase(
                 idBodega = idBodega,
                 codBodega = codBodega,
                 bodega = bodega,
+                ivaRetenido = pedidoEntity.ivaRetenido,
+                ivaPercibido = pedidoEntity.ivaPercibido,
+                pago = pedidoEntity.pago,
+                ventasExentas = pedidoEntity.ventaExenta,
+                ventasNoSujetas = pedidoEntity.ventaNoSujeta,
+                iva = pedidoEntity.iva,
+                plazo = plazoCalculado,
                 detalle = detalleView.map { d ->
                     EnviarPedidoDetalleDto(
                         id = d.Id,
