@@ -116,7 +116,7 @@ class PedidosController {
     fun actualizarTotalesFiscales(context: Context, IdPedido: Int, sumas:Float, iva:Float, iva_perci:Float){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            bd.execSQL("UPDATE pedidos SET Sumas=$sumas, Iva=$iva, Iva_percibido=$iva_perci" +
+            bd.execSQL("UPDATE pedidos SET Sumas=$sumas, SubTotal=$sumas, Iva=$iva, Iva_percibido=$iva_perci" +
                     " WHERE Id=$IdPedido")
         }catch (e:Exception){
             throw Exception(e.message)

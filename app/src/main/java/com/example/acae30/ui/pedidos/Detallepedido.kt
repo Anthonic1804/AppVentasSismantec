@@ -832,6 +832,9 @@ class Detallepedido : AppCompatActivity() {
     }
 
     private fun alertaPago(total: Float){
+        // Normalizar total a 2 decimales exactos para evitar imprecisiones de coma flotante (e.g. 128.650009 vs 128.65)
+        val total2Dec = (Math.round(total * 100.0) / 100.0).toFloat()
+
         Dialog(this).apply {
             setContentView(R.layout.vista_cobro)
             setCancelable(false)
@@ -841,7 +844,7 @@ class Detallepedido : AppCompatActivity() {
             val widthPx = (resources.displayMetrics.widthPixels * 0.92).toInt()
             window?.setLayout(widthPx, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
             val etTotal = findViewById<TextInputEditText>(R.id.txtTotalPago)
-            etTotal.setText(String.format("$%.2f", total))
+            etTotal.setText(String.format("$%.2f", total2Dec))
             val etCambio = findViewById<TextInputEditText>(R.id.txtCambioPago)
             val etPago = findViewById<TextInputEditText>(R.id.txtEfectivoPago)
             val etOrden = findViewById<TextInputEditText>(R.id.txtNumeroOrden)
@@ -853,7 +856,7 @@ class Detallepedido : AppCompatActivity() {
             val lyDeposito = findViewById<LinearLayout>(R.id.lyContenedorDeposito)
 
             // Pre-llenar automáticamente el pago con el valor total a pagar
-            etPago.setText(String.format(Locale.US, "%.2f", total))
+            etPago.setText(String.format(Locale.US, "%.2f", total2Dec))
             etCambio.setText("0.00")
 
             spForma.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -870,10 +873,10 @@ class Detallepedido : AppCompatActivity() {
                 override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
                 override fun onTextChanged(pago: CharSequence?, p1: Int, p2: Int, p3: Int) {
                     val pVal = pago?.toString()?.toFloatOrNull() ?: 0f
-                    if (pVal >= total) {
+                    if (pVal >= total2Dec) {
                         etPago.error = null
                     }
-                    etCambio.setText(String.format(Locale.US, "%.2f", pVal - total))
+                    etCambio.setText(String.format(Locale.US, "%.2f", pVal - total2Dec))
                 }
                 override fun afterTextChanged(p0: Editable?) {}
             })
@@ -882,7 +885,8 @@ class Detallepedido : AppCompatActivity() {
                 val pagoMonto = etPago.text.toString().toFloatOrNull() ?: 0f
 
                 // Validar que el pago ingresado sea mayor o igual al total a pagar
-                if (pagoMonto < total) {
+                if (pagoMonto < total2Dec) {
+                    etPago.error = "EL MONTO ES MENOR AL TOTAL A PAGAR ($" + String.format(Locale.US, "%.2f", total2Dec) + ")"
                     etPago.error = "EL MONTO ES MENOR AL TOTAL A PAGAR ($" + String.format(Locale.US, "%.2f", total) + ")"
                     Toast.makeText(this@Detallepedido, "EL MONTO INGRESADO ES MENOR AL TOTAL A PAGAR", Toast.LENGTH_LONG).show()
                     return@setOnClickListener

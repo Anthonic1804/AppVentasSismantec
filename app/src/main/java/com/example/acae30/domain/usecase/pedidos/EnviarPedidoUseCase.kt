@@ -109,6 +109,7 @@ class EnviarPedidoUseCase(
                 ventasNoSujetas = pedidoEntity.ventaNoSujeta,
                 iva = pedidoEntity.iva,
                 plazo = plazoCalculado,
+                sumas = pedidoEntity.sumas,
                 detalle = detalleView.map { d ->
                     EnviarPedidoDetalleDto(
                         id = d.Id,

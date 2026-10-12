@@ -81,8 +81,9 @@ class CalcularTotalesFiscalesUseCase {
             ivaPerci = acumSumas * 0.01
         }
 
-        // Paso 3: Total Final = Gravado + IVA + Exenta + No Sujeta - IVA Percibido
-        val totalFinal = acumSumas + acumIva + acumExenta + acumNoSujeta - ivaPerci
+        // Paso 3: Total Final = Gravado + IVA + Exenta + No Sujeta - IVA Percibido (normalizado a 2 decimales)
+        val rawTotal = acumSumas + acumIva + acumExenta + acumNoSujeta - ivaPerci
+        val totalFinal = Math.round(rawTotal * 100.0) / 100.0
 
         return ResultadoTotales(
             sumas = acumSumas,

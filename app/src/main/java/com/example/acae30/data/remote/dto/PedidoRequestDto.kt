@@ -64,7 +64,8 @@ data class EnviarPedidoRequestDto(
     @SerializedName("ventasExentas") val ventasExentas: Double = 0.0,
     @SerializedName("ventasNoSujetas") val ventasNoSujetas: Double = 0.0,
     @SerializedName("iva") val iva: Double = 0.0,
-    @SerializedName("plazo") val plazo: Int = 0
+    @SerializedName("plazo") val plazo: Int = 0,
+    @SerializedName("sumas") val sumas: Double = 0.0
 )
 
 data class EnviarPedidoDetalleDto(

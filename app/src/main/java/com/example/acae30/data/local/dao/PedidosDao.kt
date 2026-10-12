@@ -148,27 +148,18 @@ interface PedidosDao {
     @Query("SELECT COUNT(*) FROM detalle_pedidos WHERE Id_pedido = :idPedido")
     suspend fun obtenerCantidadItemsPedido(idPedido: Int): Int
 
-    @Query("UPDATE pedidos SET Total = :total WHERE Id = :idPedido")
+    @Query("UPDATE pedidos SET Total = :total, SubTotal = :total, Sumas = :total WHERE Id = :idPedido")
     suspend fun actualizarTotalCabeceraPedido(idPedido: Int, total: Double)
 
     @Query("UPDATE pedidos SET Nombre_cliente = :nombre WHERE Id = :idPedido")
     suspend fun actualizarNombreCliente(idPedido: Int, nombre: String)
 
     //-------------------------------------------------------
-    // Actualizar totales fiscales del pedido (Sumas, IVA, Exentas, No Sujetas, IVA Percibido, Total)
+    // Actualizar totales fiscales del pedido (Sumas, SubTotal, IVA, Exentas, No Sujetas, IVA Percibido, Total)
     //-------------------------------------------------------
-    /* CÓDIGO VIEJO:
     @Query("""
         UPDATE pedidos 
-        SET Sumas = :sumas, Iva = :iva, Iva_percibido = :ivaPerci, Total = :totalFinal
-        WHERE Id = :idPedido
-    """)
-    suspend fun actualizarTotalesFiscales(idPedido: Int, sumas: Double, iva: Double, ivaPerci: Double, totalFinal: Double)
-    */
-    // CÓDIGO NUEVO: Actualización extendida con desgloses de Venta_exenta y Venta_nosujeta
-    @Query("""
-        UPDATE pedidos 
-        SET Sumas = :sumas, Iva = :iva, Venta_exenta = :ventaExenta, Venta_nosujeta = :ventaNoSujeta, Iva_percibido = :ivaPerci, Total = :totalFinal
+        SET Sumas = :sumas, SubTotal = :sumas, Iva = :iva, Venta_exenta = :ventaExenta, Venta_nosujeta = :ventaNoSujeta, Iva_percibido = :ivaPerci, Total = :totalFinal
         WHERE Id = :idPedido
     """)
     suspend fun actualizarTotalesFiscales(
