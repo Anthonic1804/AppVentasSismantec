@@ -835,6 +835,13 @@ class Detallepedido : AppCompatActivity() {
         // Normalizar total a 2 decimales exactos para evitar imprecisiones de coma flotante (e.g. 128.650009 vs 128.65)
         val total2Dec = (Math.round(total * 100.0) / 100.0).toFloat()
 
+        val terminosActuales = if (terminosPedidos.isNullOrEmpty() || terminosPedidos == "") {
+            infoCliente?.Terminos_cliente ?: "Contado"
+        } else {
+            terminosPedidos
+        }
+        val esCredito = terminosActuales.equals("CREDITO", ignoreCase = true)
+
         Dialog(this).apply {
             setContentView(R.layout.vista_cobro)
             setCancelable(false)
@@ -855,9 +862,10 @@ class Detallepedido : AppCompatActivity() {
             val lyTarjeta = findViewById<LinearLayout>(R.id.lyContenedorTarjeta)
             val lyDeposito = findViewById<LinearLayout>(R.id.lyContenedorDeposito)
 
-            // Pre-llenar automáticamente el pago con el valor total a pagar
-            etPago.setText(String.format(Locale.US, "%.2f", total2Dec))
-            etCambio.setText("0.00")
+            // Pre-llenar automáticamente el pago con el valor total a pagar si es Contado, o 0.00 si es Credito
+            val pagoInicial = if (esCredito) 0f else total2Dec
+            etPago.setText(String.format(Locale.US, "%.2f", pagoInicial))
+            etCambio.setText(String.format(Locale.US, "%.2f", if (esCredito) 0f else (pagoInicial - total2Dec)))
 
             spForma.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
@@ -873,7 +881,7 @@ class Detallepedido : AppCompatActivity() {
                 override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
                 override fun onTextChanged(pago: CharSequence?, p1: Int, p2: Int, p3: Int) {
                     val pVal = pago?.toString()?.toFloatOrNull() ?: 0f
-                    if (pVal >= total2Dec) {
+                    if (esCredito || pVal >= total2Dec) {
                         etPago.error = null
                     }
                     etCambio.setText(String.format(Locale.US, "%.2f", pVal - total2Dec))
@@ -884,10 +892,9 @@ class Detallepedido : AppCompatActivity() {
             findViewById<Button>(R.id.btnaceptar).setOnClickListener {
                 val pagoMonto = etPago.text.toString().toFloatOrNull() ?: 0f
 
-                // Validar que el pago ingresado sea mayor o igual al total a pagar
-                if (pagoMonto < total2Dec) {
+                // Validar que el pago ingresado sea mayor o igual al total a pagar (solo si es Contado)
+                if (!esCredito && pagoMonto < total2Dec) {
                     etPago.error = "EL MONTO ES MENOR AL TOTAL A PAGAR ($" + String.format(Locale.US, "%.2f", total2Dec) + ")"
-                    etPago.error = "EL MONTO ES MENOR AL TOTAL A PAGAR ($" + String.format(Locale.US, "%.2f", total) + ")"
                     Toast.makeText(this@Detallepedido, "EL MONTO INGRESADO ES MENOR AL TOTAL A PAGAR", Toast.LENGTH_LONG).show()
                     return@setOnClickListener
                 }

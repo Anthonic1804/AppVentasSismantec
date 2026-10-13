@@ -772,8 +772,8 @@ class Producto_agregar : AppCompatActivity() {
             val precioss = ArrayList<String>()
 
             val tipoFiscalProd = p.TipoFiscal?.trim()?.uppercase() ?: "G"
-            val esNoSujeto = (tipoFiscalProd == "NS" || tipoFiscalProd == "NO SUJETO")
-            val esExento = !esNoSujeto && (viewModel.esClienteExento.value || (tipoFiscalProd in listOf("EXENTO", "E")))
+            val esNoSujeto = (tipoFiscalProd in listOf("NS", "NO SUJETO") || tipoFiscalProd.contains("NO SUJETO"))
+            val esExento = !esNoSujeto && (viewModel.esClienteExento.value || tipoFiscalProd in listOf("E", "EXENTO", "EXENTA") || tipoFiscalProd.contains("EXENT"))
 
             // Usamos el estado del ViewModel para evitar consultas SQL manuales.
             val detalle = viewModel.detallePedido.value
@@ -1085,19 +1085,16 @@ class Producto_agregar : AppCompatActivity() {
 
         // Determinar el tipo fiscal efectivo considerando la categoría del cliente (Prioridad absoluta para No Sujeto)
         val esClienteExento = viewModel.esClienteExento.value
-        val tipoFiscalProd = datosProducto?.TipoFiscal?.trim()?.uppercase() ?: "G"
-        val esNoSujeto = (tipoFiscalProd == "NS" || tipoFiscalProd == "NO SUJETO")
+        val pInfo = datosProducto ?: viewModel.producto.value
+        val tipoFiscalProd = pInfo?.TipoFiscal?.trim()?.uppercase() ?: "G"
+        val esNoSujeto = (tipoFiscalProd in listOf("NS", "NO SUJETO") || tipoFiscalProd.contains("NO SUJETO"))
         
         val tipoFiscalEfectivo = if (esNoSujeto) {
             "NS"
-        } else if (esClienteExento) {
+        } else if (esClienteExento || tipoFiscalProd in listOf("E", "EXENTO", "EXENTA") || tipoFiscalProd.contains("EXENT")) {
             "E"
         } else {
-            when (tipoFiscalProd) {
-                "Gravado", "G" -> "G"
-                "Exento", "E" -> "E"
-                else -> "G"
-            }
+            "G"
         }
 
         // Para productos Exentos ("E") o No Sujetos ("NS"), el precio sin IVA NO se divide entre 1.13
@@ -1130,13 +1127,13 @@ class Producto_agregar : AppCompatActivity() {
             descuento = 0.0,
             precioEditado = if (precioEditado > 0) "*" else "",
             idInventarioPrecios = idEscala,
-            codigoBarra = datosProducto?.codigo_de_barra ?: "",
+            codigoBarra = pInfo?.codigo_de_barra ?: datosProducto?.codigo_de_barra ?: "",
             equivaleUni = equivaleUni.toDouble(),
             equivaleFra = equivaleFra.toDouble(),
             uniEquivale = uniEquivale,
             comentario = 0,
-            tipo = if (datosProducto?.Tipo?.trim() == "Producto") "PRD" else "SVC",
-            metodoGestion = datosProducto?.MetodoGestion ?: "NINGUNO",
+            tipo = if ((pInfo?.Tipo ?: datosProducto?.Tipo)?.trim() == "Producto") "PRD" else "SVC",
+            metodoGestion = pInfo?.MetodoGestion ?: datosProducto?.MetodoGestion ?: "NINGUNO",
             tipoFiscal = tipoFiscalEfectivo,
             idLote = idLoteSeleccionado,
             lote = loteSeleccionado,

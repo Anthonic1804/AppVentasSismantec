@@ -26,7 +26,9 @@ interface PedidosDao {
     //-------------------------------------------------------------
     @Query("""
         SELECT *, strftime('%d/%m/%Y %H:%M', fecha_creado) as Fecha_creado 
-        FROM pedidos ORDER BY Id DESC
+        FROM pedidos 
+        WHERE NOT (Cerrado = 0 AND Enviado = 0)
+        ORDER BY Id DESC
     """)
     fun obtenerTodosLosPedidosFlow(): Flow<List<PedidosEntity>>
 
@@ -111,6 +113,18 @@ interface PedidosDao {
     //-------------------------------------------------------------
     @Query("DELETE FROM detalle_pedidos WHERE Id_pedido NOT IN (SELECT Id FROM pedidos)")
     suspend fun limpiarDetallesHuerfanos()
+
+    //-------------------------------------------------------------
+    // Eliminar detalles de pedidos con error (Enviado = 0 Y Cerrado = 0)
+    //-------------------------------------------------------------
+    @Query("DELETE FROM detalle_pedidos WHERE Id_pedido IN (SELECT Id FROM pedidos WHERE Enviado = 0 AND Cerrado = 0)")
+    suspend fun eliminarDetallesPedidosConError(): Int
+
+    //-------------------------------------------------------------
+    // Eliminar pedidos con error (Enviado = 0 Y Cerrado = 0)
+    //-------------------------------------------------------------
+    @Query("DELETE FROM pedidos WHERE Enviado = 0 AND Cerrado = 0")
+    suspend fun eliminarPedidosConError(): Int
 
     //-------------------------------------------------------
     // Insertar un nuevo pedido en Room

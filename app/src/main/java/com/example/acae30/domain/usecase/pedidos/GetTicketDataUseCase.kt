@@ -163,7 +163,7 @@ class GetTicketDataUseCase(
             cliente = cliente,
             detalle = detalle,
             esDte = pedido.Enviado == 1 && pedido.pedido_dte == 1,
-            totalFacturado = (pedido.Total ?: 0f) - (pedido.Iva_Percibido ?: 0f)
+            totalFacturado = pedido.Total ?: 0f
         )
     }
 }

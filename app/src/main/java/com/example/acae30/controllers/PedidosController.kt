@@ -569,35 +569,13 @@ class PedidosController {
 
     //FUNCION PARA ELIMINAR EL PEDIDO AL CERRAR LA APP COMPLETAMENTE
     fun eliminarPedidoConError(context: Context){
-        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
         try {
-            // 1. Buscar los Id de los pedidos que cumplen la condición
-            val idsPedidos = mutableListOf<String>()
-            val consulta = "SELECT Id FROM Pedidos WHERE Enviado = 0 AND Cerrado = 0"
-            val cursor = bd.query(consulta)
-            cursor.use {
-                while (cursor.moveToNext()) {
-                    idsPedidos.add(cursor.getInt(0).toString())
-                }
-            }
-
-            // 2. Eliminar pedidos
-            val pedidosEliminados = bd.delete(
-                "Pedidos",
-                "Enviado = 0 AND Cerrado = 0",
-                null
-            )
-
-            // 3. Si eliminamos pedidos, borramos sus detalles
-            if (pedidosEliminados > 0 && idsPedidos.isNotEmpty()) {
-                // Construir cláusula WHERE dinámica con los Ids
-                val placeholders = idsPedidos.joinToString(",") { "?" }
-
-                bd.delete(
-                    "detalle_pedidos",
-                    "Id_pedido IN ($placeholders)",
-                    idsPedidos.toTypedArray()
-                )
+            val db = AppDatabase.getInstance(context)
+            val dao = db.pedidosDao()
+            kotlinx.coroutines.runBlocking {
+                dao.eliminarDetallesPedidosConError()
+                dao.eliminarPedidosConError()
+                dao.limpiarDetallesHuerfanos()
             }
         }catch (e:Exception){
             println("ERROR: NO SE PUDO ELIMINAR EL PEDIDO -> " + e.message)
@@ -677,7 +655,7 @@ class PedidosController {
 
         val fecha = funciones.obtenerFecha()
 
-        val consulta = "SELECT SUM(Total-iva_percibido) AS Total FROM pedidos WHERE Fecha='$fecha' AND Enviado = 1 AND pedido_dte_error = 0"
+        val consulta = "SELECT SUM(Total) AS Total FROM pedidos WHERE Fecha='$fecha' AND Enviado = 1 AND pedido_dte_error = 0"
         val cursor = bd.query(consulta)
         cursor.use {
             if(cursor.count > 0){

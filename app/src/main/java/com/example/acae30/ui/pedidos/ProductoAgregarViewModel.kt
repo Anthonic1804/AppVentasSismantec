@@ -223,8 +223,8 @@ class ProductoAgregarViewModel(
             // CÓDIGO NUEVO: Si el cliente o el producto es Exento (y no es No Sujeto), tomar el precio sin IVA (Precio / Precio_u).
             // Si es Gravado o No Sujeto, tomar el precio con IVA (Precio_iva / Precio_u_iva).
             val tipoFiscalProd = p.TipoFiscal?.trim()?.uppercase() ?: "G"
-            val esNoSujeto = (tipoFiscalProd == "NS" || tipoFiscalProd == "NO SUJETO")
-            val esExento = !esNoSujeto && (_esClienteExento.value || (tipoFiscalProd in listOf("EXENTO", "E")))
+            val esNoSujeto = (tipoFiscalProd in listOf("NS", "NO SUJETO") || tipoFiscalProd.contains("NO SUJETO"))
+            val esExento = !esNoSujeto && (_esClienteExento.value || tipoFiscalProd in listOf("E", "EXENTO", "EXENTA") || tipoFiscalProd.contains("EXENT"))
             val precioBaseFicha = if (esExento) {
                 if (unidad == "FRA") p.Precio_u ?: 0f else p.Precio ?: 0f
             } else {

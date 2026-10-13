@@ -49,12 +49,12 @@ class CalcularTotalesFiscalesUseCase {
             val totalIvaLine = item.Total_iva?.toDouble() ?: 0.0
             val totalSinIvaLine = item.Total?.toDouble() ?: 0.0
 
-            when (tipo) {
-                "E", "EXENTO" -> {
+            when {
+                tipo in listOf("E", "EXENTO", "EXENTA") || tipo.contains("EXENT") -> {
                     // Ítem Exento: Suma directa a ventas exentas
                     acumExenta += totalIvaLine
                 }
-                "NS", "NO SUJETO" -> {
+                tipo in listOf("NS", "NO SUJETO") || tipo.contains("NO SUJETO") -> {
                     // Ítem No Sujeto: Suma directa a ventas no sujetas
                     acumNoSujeta += totalIvaLine
                 }

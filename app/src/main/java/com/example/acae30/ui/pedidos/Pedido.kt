@@ -77,6 +77,9 @@ class Pedido : AppCompatActivity() {
         binding = ActivityPedidoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Limpiar pedidos inconclusos con error al cargar la vista de pedidos
+        //com.example.acae30.controllers.PedidosController().eliminarPedidoConError(this@Pedido)
+
         preferencias = getSharedPreferences(this.instancia, MODE_PRIVATE)
         idvendedor = preferencias.getInt("Idvendedor", 0)
         vendedor = preferencias.getString("Vendedor", "").toString()

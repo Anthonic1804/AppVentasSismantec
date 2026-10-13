@@ -41,12 +41,8 @@ class PedidosAdapter(
         holder.txtCliente.text = data.Nombre_cliente
         holder.txtTipoDoc.text = data.Tipo_documento
 
-        var total = data.Total ?: 0f
-        if((data.Iva_Percibido ?: 0f) > 0f){
-            total = (data.Total ?: 0f) - (data.Iva_Percibido ?: 0f)
-        }
-
-        holder.txtTotal.text = "$" + "${String.format("%.2f".format(total))}"
+        val total = data.Total ?: 0f
+        holder.txtTotal.text = "$" + String.format(java.util.Locale.getDefault(), "%.2f", total)
 
         var estado = "ENVIADO"
         if (data.Enviado == 0) {
