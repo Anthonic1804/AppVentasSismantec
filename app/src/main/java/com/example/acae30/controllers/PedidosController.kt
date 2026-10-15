@@ -8,33 +8,23 @@ import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import androidx.core.database.getFloatOrNull
+import androidx.core.database.getIntOrNull
+import androidx.core.database.getStringOrNull
 import com.example.acae30.Funciones
-import com.example.acae30.ui.pedidos.Pedido
-import com.example.acae30.R
+import com.example.acae30.Utilidades.CrearSslNoSeguro
+import com.example.acae30.data.local.appDatabase.AppDatabase
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.JSONmodels.PedidoDTE
 import com.example.acae30.modelos.Pedidos
+import com.example.acae30.ui.pedidos.Pedido
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import androidx.core.content.edit
-import androidx.core.database.getFloatOrNull
-import androidx.core.database.getIntOrNull
-import androidx.core.database.getStringOrNull
-import com.example.acae30.Utilidades.CrearSslNoSeguro
-import com.example.acae30.data.local.appDatabase.AppDatabase
-import com.example.acae30.data.remote.api.pedidos.PedidosApi
-import com.example.acae30.data.remote.api.retrofit.RetrofitCliente
-import com.example.acae30.data.remote.dto.PedidoTransmitidoDTO
-import timber.log.Timber
-import java.util.UUID
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 
@@ -48,22 +38,6 @@ class PedidosController {
     private val clientesController = ClientesController()
     private lateinit var base : AppDatabase
     private lateinit var servidor : String
-
-    private fun inicializarVariables(context: Context){
-        base = AppDatabase.getInstance(context)
-        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
-    }
-
-    //FUNCION PARA ACTUALIZAR EL TIPO DE ENVIO SELECCIONADO
-    fun updateTipoPedido(tipoPedido:Int, idpedido:Int, context: Context){
-        val data = funciones.obtenerInstancia(context).openHelper.writableDatabase
-        try {
-            data.execSQL("UPDATE pedidos set tipo_envio=$tipoPedido WHERE id=$idpedido")
-        }catch (e: Exception) {
-            throw Exception(e.message)
-        }
-    }
 
     //FUNCION PARA ACTUALIZAR EL PAGO Y EL CAMBIO DEL CLIENTE
     fun actualizarPagoCambioPedido(context: Context, idpedido: Int, pago:Float, cambio:Float, pagoEfectivo:Float,
@@ -123,16 +97,6 @@ class PedidosController {
         }
     }
 
-    //FUNCION PARA ACTUALIZAR EL TIPO DE DOCUMENTO SELECCIONADO
-    fun updateTipoDocumento(tipoDocumento:String, idpedido: Int, context: Context){
-        val data = funciones.obtenerInstancia(context).openHelper.writableDatabase
-        try {
-            data.execSQL("UPDATE pedidos SET tipo_documento='$tipoDocumento' WHERE id=$idpedido")
-        }catch (e: Exception){
-            throw Exception(e.message)
-        }
-    }
-
     //FUNCION PARA ACTUALIZAR EL ESTADO DEL PEDIDO AL GUARDARLO
     fun actualizarEstadoAlGuardar(idpedido: Int, context: Context, view: View){
         val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
@@ -141,74 +105,6 @@ class PedidosController {
         } catch (e: Exception) {
             funciones.mostrarAlerta("ERROR: NO SE ACTUALIZO EL ESTADO DEL PEDIDO AL GUARDARLO", context, view)
         }
-    }
-
-    //FUNCION PARA OBTENER PEDIDOS NO TRANSMITIDOS EN SQLITE
-    fun obtenerPedidosNoTransmitidos(context: Context) :ArrayList<Pedidos>{
-        val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
-        val pedido = ArrayList<Pedidos>()
-        try {
-            val consulta = "SELECT Id," +
-                    " Id_cliente," +
-                    " Nombre_cliente," +
-                    " Total," +
-                    " Descuento," +
-                    " Enviado," +
-                    " Fecha_enviado," +
-                    " Id_pedido_sistema," +
-                    " Gps," +
-                    " Cerrado," +
-                    " Idvisita," +
-                    " strftime('%d/%m/%Y %H:%M'," +
-                    " fecha_creado) as fecha_creado," +
-                    "Sumas," +
-                    "Iva," +
-                    "Iva_percibido, " +
-                    "pedido_dte, " +
-                    "pedido_dte_error," +
-                    "Id_pedido_app FROM pedidos WHERE (enviado = 0 OR pedido_dte=0) AND Tipo_documento != 'RC'"
-            val cursor = db.query(consulta)
-            cursor.use {
-                if(cursor.count > 0){
-                    cursor.moveToFirst()
-                    do {
-                        val item = Pedidos(
-                            cursor.getInt(0),
-                            cursor.getInt(1),
-                            cursor.getString(2),
-                            cursor.getFloat(3),
-                            cursor.getFloat(4),
-                            cursor.getInt(5),
-                            cursor.getString(6),
-                            cursor.getInt(7),
-                            cursor.getString(8),
-                            cursor.getInt(9),
-                            cursor.getInt(10),
-                            cursor.getString(11),
-                            cursor.getFloat(12),
-                            cursor.getFloat(13),
-                            cursor.getFloat(14),
-                            cursor.getInt(15),
-                            cursor.getInt(16),
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            cursor.getString(17)
-                        )
-                        pedido.add(item)
-                    }while (cursor.moveToNext())
-                }
-            }
-        }catch (e:Exception){
-            Timber.e(e, "[PEDIDO_CONTROLLER] ERROR AL OBTENER EL LISTADO DE PEDIDOS NO ENVIADOS")
-        }
-
-        return pedido
     }
 
     //FUNCION PARA OBTENER INFORMACION DEL PEDIDO
@@ -379,88 +275,6 @@ class PedidosController {
         return eliminados
     }
 
-    //FUNCION PARA ACTUALIZAR EL ESTADO DE TRANSMISION
-    fun actualizarEstadoTransmisionPedido(context: Context, idPedidoServidor:Int, pedido_dte : Int, pedido_dte_error:Int,
-                                          dteAmbiente:String, dteCodigoGeneracion:String, dteSelloRecibido:String, dteNumeroControl:String,
-                                          idDocTransmitido: Int){
-        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
-        try {
-            bd.execSQL("UPDATE pedidos SET pedido_dte=$pedido_dte, pedido_dte_error=$pedido_dte_error, " +
-                    "dteAmbiente='$dteAmbiente', dteCodigoGeneracion='$dteCodigoGeneracion', dteSelloRecibido='$dteSelloRecibido'," +
-                    "dteNumeroControl='$dteNumeroControl', idDocTransmitido=$idDocTransmitido " +
-                    "WHERE Id_pedido_sistema = $idPedidoServidor")
-        }catch (e:Exception){
-            throw Exception("ERROR AL ACTUALIZAR EL PEDIDO")
-        }
-    }
-
-
-    //ACTUALIZAR TOTALES SEGUN DOCUMENTO
-    fun actualizarTotalesPedido(context: Context, idPedido: Int, precioConIVASeleccionado:Boolean){
-        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
-        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
-        val precioConIvaShared = preferences.getBoolean("precioConIva", false)
-        try {
-
-            val consulta = "SELECT * FROM detalle_pedidos where id_pedido=$idPedido LIMIT 1"
-            val cursor = bd.query(consulta)
-            cursor.use {
-                if (cursor.count > 0) {
-                    if(precioConIvaShared != precioConIVASeleccionado){
-                        if(!precioConIVASeleccionado){
-                            //actualizar quitando iva
-                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio/1.13), precio_iva=(precio_iva/1.13), " +
-                                    "total=cantidad*(precio/1.13), total_iva=cantidad*(precio_iva/1.13) WHERE Id_pedido=$idPedido")
-
-                            actualizarTotalPedido(context, idPedido)
-                            println("SE QUITO IVA")
-                        }else{
-                            //actualiar agregando iva
-                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio*1.13), precio_iva=(precio_iva*1.13), " +
-                                    "total=cantidad*(precio*1.13), total_iva=cantidad*(precio_iva*1.13) WHERE Id_pedido=$idPedido")
-
-                            actualizarTotalPedido(context, idPedido)
-                            println("SE AGREGO IVA")
-                        }
-                        preferences.edit {
-                            remove("precioConIva")
-                            putBoolean("precioConIva", precioConIVASeleccionado)
-                        }
-                    }
-                }
-            }
-        }catch (e:Exception){
-            throw Exception("ERROR AL ACTUALIZAR LOS PRECIOS CON IVA O SIN IVA -> " + e.message)
-        }
-    }
-
-    //ACTUALIZAR TOTAL DEL PEDIDO
-    private fun actualizarTotalPedido(context: Context, idPedido: Int){
-        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
-        try{
-            val consulta = "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idPedido"
-            val cursor = bd.query(consulta)
-            cursor.use {
-                var total = 0.toFloat()
-                if (cursor.count > 0) {
-                    cursor.moveToFirst()
-
-                    total = cursor.getFloat(0)
-
-                    val t = ContentValues()
-                    t.put("Total", total)
-
-                    bd.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?",arrayOf(idPedido.toString()))
-
-                } else {
-                    throw Exception("No se encontro el pedido asociado")
-                }
-            }
-        }catch (e:Exception){
-            throw Exception("ERROR AL ACTUALIZAR TOTAL EN PEDIDO -> " + e.message)
-        }
-    }
-
     //FUNCION PARA OBTENER SI EL DOCUMENTO TRANSMITDO ESTA INVALIDADO
     suspend fun obtenerDocumentosTransmitidosInvalidados(idPedidoServidor:Int, context:Context, idPedido: Int) {
 
@@ -582,28 +396,6 @@ class PedidosController {
         }
     }
 
-    //FUNCION PARA CONTAR LA CANTIDAD DE ITEMS EN EL PEDIDO
-    fun obtenerCantidadItemsPedido(context: Context, idPedido: Int) : Int{
-
-        var cantidadItems : Int = 0
-
-        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
-        try {
-            val sql = "SELECT COUNT(*) AS Cantidad FROM detalle_pedidos WHERE Id_pedido = $idPedido"
-            val cursor = bd.query(sql)
-            cursor.use {
-                if(cursor.count > 0){
-                    cursor.moveToFirst()
-                    cantidadItems = cursor.getInt(0)
-                }
-            }
-        }catch (e: Exception){
-            println("ERROR NO SE LOGRO OBTENER LA CANTIDAD DE REGISTROS EN EL PEDIDO -> " + e.message)
-        }
-
-        return  cantidadItems
-    }
-
     //FUNCION PARA AGREGAR COMENTARIOS AL PEDIDOS
     fun agregarComentarioAlPedido(context: Context, idPedido: Int, comentario: String){
         val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
@@ -668,6 +460,8 @@ class PedidosController {
 
         return totalObtenido
     }
+
+    /*
 
     //----------------------------------------
     //Función para verificar si el producto ya existe en el pedido
@@ -858,4 +652,212 @@ class PedidosController {
 
 
     }
+
+
+     */
+
+    /*
+    private fun inicializarVariables(context: Context){
+        base = AppDatabase.getInstance(context)
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        servidor = funciones.getServidor(preferences.getString("ip", ""), preferences.getInt("puerto", 0).toString(), context)
+    }
+
+    //FUNCION PARA ACTUALIZAR EL TIPO DE ENVIO SELECCIONADO
+    fun updateTipoPedido(tipoPedido:Int, idpedido:Int, context: Context){
+        val data = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            data.execSQL("UPDATE pedidos set tipo_envio=$tipoPedido WHERE id=$idpedido")
+        }catch (e: Exception) {
+            throw Exception(e.message)
+        }
+    }
+*/
+    /*
+    //FUNCION PARA ACTUALIZAR EL TIPO DE DOCUMENTO SELECCIONADO
+    fun updateTipoDocumento(tipoDocumento:String, idpedido: Int, context: Context){
+        val data = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            data.execSQL("UPDATE pedidos SET tipo_documento='$tipoDocumento' WHERE id=$idpedido")
+        }catch (e: Exception){
+            throw Exception(e.message)
+        }
+    }
+*/
+    /*
+    //FUNCION PARA OBTENER PEDIDOS NO TRANSMITIDOS EN SQLITE
+    fun obtenerPedidosNoTransmitidos(context: Context) :ArrayList<Pedidos>{
+        val db = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        val pedido = ArrayList<Pedidos>()
+        try {
+            val consulta = "SELECT Id," +
+                    " Id_cliente," +
+                    " Nombre_cliente," +
+                    " Total," +
+                    " Descuento," +
+                    " Enviado," +
+                    " Fecha_enviado," +
+                    " Id_pedido_sistema," +
+                    " Gps," +
+                    " Cerrado," +
+                    " Idvisita," +
+                    " strftime('%d/%m/%Y %H:%M'," +
+                    " fecha_creado) as fecha_creado," +
+                    "Sumas," +
+                    "Iva," +
+                    "Iva_percibido, " +
+                    "pedido_dte, " +
+                    "pedido_dte_error," +
+                    "Id_pedido_app FROM pedidos WHERE (enviado = 0 OR pedido_dte=0) AND Tipo_documento != 'RC'"
+            val cursor = db.query(consulta)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    do {
+                        val item = Pedidos(
+                            cursor.getInt(0),
+                            cursor.getInt(1),
+                            cursor.getString(2),
+                            cursor.getFloat(3),
+                            cursor.getFloat(4),
+                            cursor.getInt(5),
+                            cursor.getString(6),
+                            cursor.getInt(7),
+                            cursor.getString(8),
+                            cursor.getInt(9),
+                            cursor.getInt(10),
+                            cursor.getString(11),
+                            cursor.getFloat(12),
+                            cursor.getFloat(13),
+                            cursor.getFloat(14),
+                            cursor.getInt(15),
+                            cursor.getInt(16),
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            cursor.getString(17)
+                        )
+                        pedido.add(item)
+                    }while (cursor.moveToNext())
+                }
+            }
+        }catch (e:Exception){
+            Timber.e(e, "[PEDIDO_CONTROLLER] ERROR AL OBTENER EL LISTADO DE PEDIDOS NO ENVIADOS")
+        }
+
+        return pedido
+    }
+*/
+    /*
+    //FUNCION PARA ACTUALIZAR EL ESTADO DE TRANSMISION
+    fun actualizarEstadoTransmisionPedido(context: Context, idPedidoServidor:Int, pedido_dte : Int, pedido_dte_error:Int,
+                                          dteAmbiente:String, dteCodigoGeneracion:String, dteSelloRecibido:String, dteNumeroControl:String,
+                                          idDocTransmitido: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        try {
+            bd.execSQL("UPDATE pedidos SET pedido_dte=$pedido_dte, pedido_dte_error=$pedido_dte_error, " +
+                    "dteAmbiente='$dteAmbiente', dteCodigoGeneracion='$dteCodigoGeneracion', dteSelloRecibido='$dteSelloRecibido'," +
+                    "dteNumeroControl='$dteNumeroControl', idDocTransmitido=$idDocTransmitido " +
+                    "WHERE Id_pedido_sistema = $idPedidoServidor")
+        }catch (e:Exception){
+            throw Exception("ERROR AL ACTUALIZAR EL PEDIDO")
+        }
+    }
+
+
+    //ACTUALIZAR TOTALES SEGUN DOCUMENTO
+    fun actualizarTotalesPedido(context: Context, idPedido: Int, precioConIVASeleccionado:Boolean){
+        val bd = funciones.obtenerInstancia(context).openHelper.writableDatabase
+        preferences = context.getSharedPreferences(instancia, Context.MODE_PRIVATE)
+        val precioConIvaShared = preferences.getBoolean("precioConIva", false)
+        try {
+
+            val consulta = "SELECT * FROM detalle_pedidos where id_pedido=$idPedido LIMIT 1"
+            val cursor = bd.query(consulta)
+            cursor.use {
+                if (cursor.count > 0) {
+                    if(precioConIvaShared != precioConIVASeleccionado){
+                        if(!precioConIVASeleccionado){
+                            //actualizar quitando iva
+                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio/1.13), precio_iva=(precio_iva/1.13), " +
+                                    "total=cantidad*(precio/1.13), total_iva=cantidad*(precio_iva/1.13) WHERE Id_pedido=$idPedido")
+
+                            actualizarTotalPedido(context, idPedido)
+                            println("SE QUITO IVA")
+                        }else{
+                            //actualiar agregando iva
+                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio*1.13), precio_iva=(precio_iva*1.13), " +
+                                    "total=cantidad*(precio*1.13), total_iva=cantidad*(precio_iva*1.13) WHERE Id_pedido=$idPedido")
+
+                            actualizarTotalPedido(context, idPedido)
+                            println("SE AGREGO IVA")
+                        }
+                        preferences.edit {
+                            remove("precioConIva")
+                            putBoolean("precioConIva", precioConIVASeleccionado)
+                        }
+                    }
+                }
+            }
+        }catch (e:Exception){
+            throw Exception("ERROR AL ACTUALIZAR LOS PRECIOS CON IVA O SIN IVA -> " + e.message)
+        }
+    }
+*/
+    /*
+    //FUNCION PARA CONTAR LA CANTIDAD DE ITEMS EN EL PEDIDO
+    fun obtenerCantidadItemsPedido(context: Context, idPedido: Int) : Int{
+
+        var cantidadItems : Int = 0
+
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        try {
+            val sql = "SELECT COUNT(*) AS Cantidad FROM detalle_pedidos WHERE Id_pedido = $idPedido"
+            val cursor = bd.query(sql)
+            cursor.use {
+                if(cursor.count > 0){
+                    cursor.moveToFirst()
+                    cantidadItems = cursor.getInt(0)
+                }
+            }
+        }catch (e: Exception){
+            println("ERROR NO SE LOGRO OBTENER LA CANTIDAD DE REGISTROS EN EL PEDIDO -> " + e.message)
+        }
+
+        return  cantidadItems
+    }
+    */
+    /*
+    //ACTUALIZAR TOTAL DEL PEDIDO
+    private fun actualizarTotalPedido(context: Context, idPedido: Int){
+        val bd = funciones.obtenerInstancia(context).openHelper.readableDatabase
+        try{
+            val consulta = "SELECT SUM(Total_iva)  FROM detalle_pedidos where Id_pedido=$idPedido"
+            val cursor = bd.query(consulta)
+            cursor.use {
+                var total = 0.toFloat()
+                if (cursor.count > 0) {
+                    cursor.moveToFirst()
+
+                    total = cursor.getFloat(0)
+
+                    val t = ContentValues()
+                    t.put("Total", total)
+
+                    bd.update("pedidos", SQLiteDatabase.CONFLICT_REPLACE, t, "Id=?",arrayOf(idPedido.toString()))
+
+                } else {
+                    throw Exception("No se encontro el pedido asociado")
+                }
+            }
+        }catch (e:Exception){
+            throw Exception("ERROR AL ACTUALIZAR TOTAL EN PEDIDO -> " + e.message)
+        }
+    }
+*/
 }
