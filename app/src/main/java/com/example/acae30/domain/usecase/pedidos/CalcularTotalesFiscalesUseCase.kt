@@ -70,7 +70,7 @@ class CalcularTotalesFiscalesUseCase {
 
         Timber.d("FISCAL_CALC: tipoDoc=$tipoDocumento, acumSumas=$acumSumas, empresaCat='$empresaCat', clienteCat='$clienteCat'")
 
-        if (tipoDocumento == "CF" && acumSumas > 100.0) {
+        if ((tipoDocumento == "CF" || tipoDocumento == "FC") && acumSumas > 100.0) {
             val esEmpresaGran = empresaCat.contains("GRAN")
             val esClienteGran = clienteCat.contains("GRAN")
             // Respaldo robusto: si empresaCat está vacía pero el cliente es Gran Contribuyente, asumimos Pequeño Contribuyente para retención
@@ -79,10 +79,17 @@ class CalcularTotalesFiscalesUseCase {
 
             Timber.d("FISCAL_CALC: esEmpresaGran=$esEmpresaGran, esEmpresaPequeno=$esEmpresaPequeno, esClienteGran=$esClienteGran, esClientePequenoMediano=$esClientePequenoMediano")
 
-            if (esEmpresaGran && esClientePequenoMediano) {
-                ivaPerci = acumSumas * 0.01
-            } else if (esEmpresaPequeno && esClienteGran) {
-                ivaReteni = acumSumas * 0.01
+            if (tipoDocumento == "CF") {
+                if (esEmpresaGran && esClientePequenoMediano) {
+                    ivaPerci = acumSumas * 0.01
+                } else if (esEmpresaPequeno && esClienteGran) {
+                    ivaReteni = acumSumas * 0.01
+                }
+            } else if (tipoDocumento == "FC") {
+                if (esEmpresaPequeno && esClienteGran) {
+                    val baseImponible = acumSumas / 1.13
+                    ivaReteni = baseImponible * 0.01
+                }
             }
         }
 

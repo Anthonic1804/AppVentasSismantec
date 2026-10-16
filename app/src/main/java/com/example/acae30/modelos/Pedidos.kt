@@ -1,7 +1,6 @@
 package com.example.acae30.modelos
 
 data class Pedidos(
-
     var Id: Int,
     var Id_cliente: Int?,
     var Nombre_cliente: String?,
@@ -27,5 +26,8 @@ data class Pedidos(
     var Terminos: String?,
     var Nombre_sucursal: String?,
     var Sucursal_Direccion: String?,
-    var IdPedidoApp: String?
+    var IdPedidoApp: String?,
+    var Venta_Exenta: Float? = 0f,
+    var Venta_NoSujeta: Float? = 0f,
+    var Iva_Retenido: Float? = 0f
 )

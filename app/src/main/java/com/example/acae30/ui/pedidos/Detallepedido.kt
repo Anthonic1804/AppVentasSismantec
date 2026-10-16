@@ -442,6 +442,36 @@ class Detallepedido : AppCompatActivity() {
                 nombreSucursalPedido = it.Nombre_sucursal ?: ""
                 idPedidoServidor = it.Id_pedido_sistema ?: 0
 
+                // Si estamos en modo visualización ("ver"), cargamos los totales directamente desde la BD (Room)
+                if (from == "ver") {
+                    val sumasVal = it.Suma?.toDouble() ?: 0.0
+                    val ivaVal = it.Iva?.toDouble() ?: 0.0
+                    val exentaVal = it.Venta_Exenta?.toDouble() ?: 0.0
+                    val noSujetaVal = it.Venta_NoSujeta?.toDouble() ?: 0.0
+                    val ivaReteniVal = it.Iva_Retenido?.toDouble() ?: 0.0
+                    val ivaPerciVal = it.Iva_Percibido?.toDouble() ?: 0.0
+                    val totalVal = it.Total?.toDouble() ?: 0.0
+
+                    binding.txtSumas.text = String.format("%.2f", sumasVal)
+                    binding.txtIva.text = String.format("%.2f", ivaVal)
+                    binding.txtExenta.text = String.format("%.2f", exentaVal)
+                    binding.txtNoSujeta.text = String.format("%.2f", noSujetaVal)
+
+                    if (ivaReteniVal > 0) {
+                        binding.lblIvaRetePerci.text = "IVA RET."
+                        binding.txtIvaPerci.text = String.format("%.2f", ivaReteniVal)
+                    } else if (ivaPerciVal > 0) {
+                        binding.lblIvaRetePerci.text = "IVA PER."
+                        binding.txtIvaPerci.text = String.format("%.2f", ivaPerciVal)
+                    } else {
+                        binding.lblIvaRetePerci.text = "IVA RET."
+                        binding.txtIvaPerci.text = "0.00"
+                    }
+
+                    binding.txttotal.text = String.format("%.2f", totalVal)
+                    total = totalVal.toFloat()
+                }
+
                 // Refrescar el spinner de sucursal si ya tiene un valor guardado
                 if (!nombreSucursalPedido.isNullOrEmpty() && 
                     nombreSucursalPedido != "-- SELECCIONE UNA SUCURSAL --" && 
