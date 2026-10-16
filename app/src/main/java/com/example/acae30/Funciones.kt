@@ -353,8 +353,8 @@ class Funciones {
     //FUNCION PARA NORMALIZAR TEXTO
     //-------------------------------------------------
     fun normalizarTexto(texto: String): String {
-        val original = "ÁÀÂÄáàâäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖóòôöÚÙÛÜúùûüÇç"
-        val reemplazo = "AAAAaaaaEEEEeeeeIIIIiiiiOOOOooooUUUUuuuuCc"
+        val original = "ÁÀÂÄáàâäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖóòôöÚÙÛÜúùûüÇçÑñ"
+        val reemplazo = "AAAAaaaaEEEEeeeeIIIIiiiiOOOOooooUUUUuuuuCcNn"
 
         var resultado = texto
         for (i in original.indices) {

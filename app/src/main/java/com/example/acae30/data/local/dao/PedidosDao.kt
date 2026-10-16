@@ -173,7 +173,7 @@ interface PedidosDao {
     //-------------------------------------------------------
     @Query("""
         UPDATE pedidos 
-        SET Sumas = :sumas, SubTotal = :sumas, Iva = :iva, Venta_exenta = :ventaExenta, Venta_nosujeta = :ventaNoSujeta, Iva_percibido = :ivaPerci, Total = :totalFinal
+        SET Sumas = :sumas, SubTotal = :sumas, Iva = :iva, Venta_exenta = :ventaExenta, Venta_nosujeta = :ventaNoSujeta, Iva_percibido = :ivaPerci, Iva_retenido = :ivaReteni, Total = :totalFinal
         WHERE Id = :idPedido
     """)
     suspend fun actualizarTotalesFiscales(
@@ -183,6 +183,7 @@ interface PedidosDao {
         ventaExenta: Double, 
         ventaNoSujeta: Double, 
         ivaPerci: Double, 
+        ivaReteni: Double,
         totalFinal: Double
     )
 

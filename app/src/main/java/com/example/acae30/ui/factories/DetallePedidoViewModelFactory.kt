@@ -2,6 +2,7 @@ package com.example.acae30.ui.factories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.acae30.data.repository.SettingsRepository
 import com.example.acae30.domain.usecase.ActualizarSucursalPedidoUseCase
 import com.example.acae30.domain.usecase.GetSucursalesUseCase
 import com.example.acae30.domain.usecase.pedidos.*
@@ -22,7 +23,8 @@ class DetallePedidoViewModelFactory(
     private val actualizarNombreClienteUseCase: ActualizarNombreClienteUseCase,
     // CÓDIGO NUEVO: Inyección de caso de uso para actualizar tipo de documento
     private val actualizarTipoDocumentoUseCase: ActualizarTipoDocumentoUseCase,
-    private val gestionarDetallePedidoUseCase: GestionarDetallePedidoUseCase
+    private val gestionarDetallePedidoUseCase: GestionarDetallePedidoUseCase,
+    private val settingsRepository: SettingsRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -42,7 +44,8 @@ class DetallePedidoViewModelFactory(
                 crearPedidoUseCase,
                 actualizarNombreClienteUseCase,
                 actualizarTipoDocumentoUseCase,
-                gestionarDetallePedidoUseCase
+                gestionarDetallePedidoUseCase,
+                settingsRepository
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

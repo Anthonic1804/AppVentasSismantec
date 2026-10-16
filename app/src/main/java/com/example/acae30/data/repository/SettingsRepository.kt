@@ -18,6 +18,7 @@ class SettingsRepository(private val context: Context) {
             nrc = preferences.getString("nrc", "") ?: "",
             nit = preferences.getString("nit", "") ?: "",
             giro = preferences.getString("giro", "") ?: "",
+            categoriaEmpresa = preferences.getString("categoriaEmpresa", "") ?: "",
             vendedor = preferences.getString("Vendedor", "") ?: "",
             puntoVenta = preferences.getString("puntoVenta", "") ?: "",
             numeroCaja = preferences.getInt("numeroCaja", 0)
@@ -46,6 +47,7 @@ class SettingsRepository(private val context: Context) {
         val nrc: String,
         val nit: String,
         val giro: String,
+        val categoriaEmpresa: String,
         val vendedor: String,
         val puntoVenta: String,
         val numeroCaja: Int

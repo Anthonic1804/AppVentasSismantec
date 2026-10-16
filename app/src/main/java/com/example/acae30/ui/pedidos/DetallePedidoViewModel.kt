@@ -25,6 +25,7 @@ import com.example.acae30.domain.usecase.pedidos.GetPedidosBorradoresUseCase
 import com.example.acae30.domain.usecase.pedidos.GetTicketDataUseCase
 import com.example.acae30.domain.usecase.pedidos.ObtenerCantidadItemsUseCase
 import com.example.acae30.domain.usecase.pedidos.GestionarDetallePedidoUseCase
+import com.example.acae30.data.repository.SettingsRepository
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.Pedidos
@@ -52,7 +53,8 @@ class DetallePedidoViewModel(
     private val actualizarNombreClienteUseCase: ActualizarNombreClienteUseCase,
     // CÓDIGO NUEVO: Inyección del caso de uso para actualizar el tipo de documento
     private val actualizarTipoDocumentoUseCase: ActualizarTipoDocumentoUseCase,
-    private val gestionarDetalleUseCase: GestionarDetallePedidoUseCase
+    private val gestionarDetalleUseCase: GestionarDetallePedidoUseCase,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     // Jobs para cancelar observaciones previas al cambiar de pedido
@@ -339,10 +341,11 @@ class DetallePedidoViewModel(
         idPedido: Int,
         lista: List<DetallePedido>,
         tipoDocumento: String,
-        esGranContribuyente: Boolean
+        categoriaEmpresa: String,
+        categoriaCliente: String
     ) {
         viewModelScope.launch {
-            val resultado = calcularTotalesFiscalesUseCase(lista, tipoDocumento, esGranContribuyente)
+            val resultado = calcularTotalesFiscalesUseCase(lista, tipoDocumento, categoriaEmpresa, categoriaCliente)
             _totalesFiscales.value = resultado
             actualizarTotalesFiscalesUseCase(
                 idPedido, 
@@ -351,23 +354,21 @@ class DetallePedidoViewModel(
                 resultado.ventaExenta, 
                 resultado.ventaNoSujeta, 
                 resultado.ivaPerci, 
+                resultado.ivaReteni,
                 resultado.totalFinal
             )
         }
     }
 
     private fun recalcularTotales(idPedido: Int, lista: List<DetallePedido>) {
-        /* CÓDIGO VIEJO:
-        val totalBase = lista.sumOf { it.Total_iva?.toDouble() ?: 0.0 }
-        */
         val currentP = _infoPedido.value
         val currentC = _infoCliente.value
         
         val tipoDoc = currentP?.Tipo_documento ?: "FC"
-        val categoria = currentC?.Categoria_cliente ?: ""
-        val esGranContribuyente = categoria.contains("Gran contribuyente", ignoreCase = true)
+        val categoriaCliente = currentC?.Categoria_cliente ?: ""
+        val categoriaEmpresa = settingsRepository.getEmpresaInfo().categoriaEmpresa
         
-        actualizarTotalesFiscales(idPedido, lista, tipoDoc, esGranContribuyente)
+        actualizarTotalesFiscales(idPedido, lista, tipoDoc, categoriaEmpresa, categoriaCliente)
     }
 
     // CÓDIGO NUEVO: Permite cambiar el tipo de documento del pedido y recalcular los totales de inmediato

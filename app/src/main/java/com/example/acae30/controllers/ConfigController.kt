@@ -171,6 +171,7 @@ class ConfigController {
                         nrc = dato.getString("nrc"),
                         nit = dato.getString("nit"),
                         giro = dato.getString("giro"),
+                        categoriaEmpresa = dato.optString("categoriaEmpresa", ""),
                         dteUrlQRHacienda = dato.optString("dteUrlQR_Hacienda", "0"),
                         dteUrlQRempresa = dato.optString("dteUrlQR_empresa", "0"),
                         numItemFactura = dato.optInt("numItemFactura", 100),
@@ -240,6 +241,7 @@ class ConfigController {
             putString("nrc", obj.nrc)
             putString("nit", obj.nit)
             putString("giro", obj.giro)
+            putString("categoriaEmpresa", obj.categoriaEmpresa)
 
             //Datos Qr
             putString("dteUrlQRHacienda", obj.dteUrlQRHacienda)
@@ -333,6 +335,7 @@ class ConfigController {
             remove("nrc")
             remove("nit")
             remove("giro")
+            remove("categoriaEmpresa")
             remove("dteUrlQR_Hacienda")
             remove("dteUrlQR_empresa")
             //Item por documento

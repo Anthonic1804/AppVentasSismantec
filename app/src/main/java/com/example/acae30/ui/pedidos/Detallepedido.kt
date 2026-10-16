@@ -343,7 +343,8 @@ class Detallepedido : AppCompatActivity() {
             ActualizarNombreClienteUseCase(pedidosRepository),
             // CÓDIGO NUEVO: Inyección de caso de uso para actualizar tipo de documento
             ActualizarTipoDocumentoUseCase(pedidosRepository),
-            GestionarDetallePedidoUseCase(pedidosRepository)
+            GestionarDetallePedidoUseCase(pedidosRepository),
+            settingsRepository
         )
         viewModel = androidx.lifecycle.ViewModelProvider(this, factory)[DetallePedidoViewModel::class.java]
     }
@@ -418,7 +419,18 @@ class Detallepedido : AppCompatActivity() {
             // CÓDIGO NUEVO: Mostrar desgloses de Venta Exenta y Venta No Sujeta
             binding.txtExenta.text = String.format("%.2f", resultado.ventaExenta)
             binding.txtNoSujeta.text = String.format("%.2f", resultado.ventaNoSujeta)
-            binding.txtIvaPerci.text = String.format("%.2f", resultado.ivaPerci)
+
+            if (resultado.ivaReteni > 0) {
+                binding.lblIvaRetePerci.text = "IVA RET."
+                binding.txtIvaPerci.text = String.format("%.2f", resultado.ivaReteni)
+            } else if (resultado.ivaPerci > 0) {
+                binding.lblIvaRetePerci.text = "IVA PER."
+                binding.txtIvaPerci.text = String.format("%.2f", resultado.ivaPerci)
+            } else {
+                binding.lblIvaRetePerci.text = "IVA RET."
+                binding.txtIvaPerci.text = "0.00"
+            }
+
             binding.txttotal.text = String.format("%.2f", resultado.totalFinal)
             total = resultado.totalFinal.toFloat()
         }

@@ -295,8 +295,9 @@ class PedidosRepository(
         ventaExenta: Double, 
         ventaNoSujeta: Double, 
         ivaPerci: Double, 
+        ivaReteni: Double,
         totalFinal: Double
-    ) = dao.actualizarTotalesFiscales(idPedido, sumas, iva, ventaExenta, ventaNoSujeta, ivaPerci, totalFinal)
+    ) = dao.actualizarTotalesFiscales(idPedido, sumas, iva, ventaExenta, ventaNoSujeta, ivaPerci, ivaReteni, totalFinal)
 
     // CÓDIGO NUEVO: Actualizar tipo de documento en Room
     suspend fun actualizarTipoDocumentoLocal(idPedido: Int, tipoDoc: String) =

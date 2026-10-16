@@ -1,41 +1,31 @@
 package com.example.acae30.domain.usecase.pedidos
 
 import com.example.acae30.modelos.DetallePedido
+import timber.log.Timber
 
 /**
- * Caso de uso que encapsula la lógica de cálculo de IVA, Exentos, No Sujetos e IVA Percibido.
+ * Caso de uso que encapsula la lógica de cálculo de IVA, Exentos, No Sujetos, IVA Percibido e IVA Retenido.
  */
 class CalcularTotalesFiscalesUseCase {
     
-    /* CÓDIGO VIEJO:
-    data class ResultadoTotales(
-        val sumas: Double,
-        val iva: Double,
-        val ivaPerci: Double,
-        val totalFinal: Double
-    )
-    */
-    // CÓDIGO NUEVO: Estructura extendida con desgloses de ventaExenta y ventaNoSujeta
     data class ResultadoTotales(
         val sumas: Double,
         val iva: Double,
         val ventaExenta: Double,
         val ventaNoSujeta: Double,
         val ivaPerci: Double,
+        val ivaReteni: Double,
         val totalFinal: Double
     )
 
-    /* CÓDIGO VIEJO:
-    operator fun invoke(totalBase: Double, tipoDocumento: String, esGranContribuyente: Boolean): ResultadoTotales { ... }
-    */
-    // CÓDIGO NUEVO: Función para calcular totales recorriendo los ítems del pedido según su tipo fiscal
     operator fun invoke(
         listaDetalle: List<DetallePedido>, 
         tipoDocumento: String, 
-        esGranContribuyente: Boolean
+        categoriaEmpresa: String,
+        categoriaCliente: String
     ): ResultadoTotales {
         if (listaDetalle.isEmpty()) {
-            return ResultadoTotales(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+            return ResultadoTotales(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         }
 
         var acumSumas = 0.0
@@ -51,23 +41,18 @@ class CalcularTotalesFiscalesUseCase {
 
             when {
                 tipo in listOf("E", "EXENTO", "EXENTA") || tipo.contains("EXENT") -> {
-                    // Ítem Exento: Suma directa a ventas exentas
                     acumExenta += totalIvaLine
                 }
                 tipo in listOf("NS", "NO SUJETO") || tipo.contains("NO SUJETO") -> {
-                    // Ítem No Sujeto: Suma directa a ventas no sujetas
                     acumNoSujeta += totalIvaLine
                 }
                 else -> {
-                    // Ítem Gravado ("G")
                     when (tipoDocumento) {
                         "CF", "RE" -> {
-                            // En Crédito Fiscal o Recibo, desglosar Net y IVA
                             acumSumas += totalSinIvaLine
                             acumIva += (totalIvaLine - totalSinIvaLine)
                         }
                         else -> {
-                            // En Factura (FC), el total de la línea incluye IVA
                             acumSumas += totalIvaLine
                         }
                     }
@@ -75,14 +60,34 @@ class CalcularTotalesFiscalesUseCase {
             }
         }
 
-        // Paso 2: Calcular IVA Percibido si aplica (Gran contribuyente en CF con sumas > $100)
+        // Paso 2: Calcular IVA Percibido o IVA Retenido
         var ivaPerci = 0.0
-        if (tipoDocumento == "CF" && esGranContribuyente && acumSumas > 100.0) {
-            ivaPerci = acumSumas * 0.01
+        var ivaReteni = 0.0
+
+        val funciones = com.example.acae30.Funciones()
+        val empresaCat = funciones.normalizarTexto(categoriaEmpresa).trim().uppercase()
+        val clienteCat = funciones.normalizarTexto(categoriaCliente).trim().uppercase()
+
+        Timber.d("FISCAL_CALC: tipoDoc=$tipoDocumento, acumSumas=$acumSumas, empresaCat='$empresaCat', clienteCat='$clienteCat'")
+
+        if (tipoDocumento == "CF" && acumSumas > 100.0) {
+            val esEmpresaGran = empresaCat.contains("GRAN")
+            val esClienteGran = clienteCat.contains("GRAN")
+            // Respaldo robusto: si empresaCat está vacía pero el cliente es Gran Contribuyente, asumimos Pequeño Contribuyente para retención
+            val esEmpresaPequeno = empresaCat.contains("PEQUE") || empresaCat.contains("PEQUEN") || (empresaCat.isEmpty() && esClienteGran)
+            val esClientePequenoMediano = clienteCat.contains("PEQUE") || clienteCat.contains("PEQUEN") || clienteCat.contains("MEDIANO")
+
+            Timber.d("FISCAL_CALC: esEmpresaGran=$esEmpresaGran, esEmpresaPequeno=$esEmpresaPequeno, esClienteGran=$esClienteGran, esClientePequenoMediano=$esClientePequenoMediano")
+
+            if (esEmpresaGran && esClientePequenoMediano) {
+                ivaPerci = acumSumas * 0.01
+            } else if (esEmpresaPequeno && esClienteGran) {
+                ivaReteni = acumSumas * 0.01
+            }
         }
 
-        // Paso 3: Total Final = Gravado + IVA + Exenta + No Sujeta - IVA Percibido (normalizado a 2 decimales)
-        val rawTotal = acumSumas + acumIva + acumExenta + acumNoSujeta - ivaPerci
+        // Paso 3: Total Final = Gravado + IVA + Exenta + No Sujeta + IVA Percibido - IVA Retenido
+        val rawTotal = acumSumas + acumIva + acumExenta + acumNoSujeta + ivaPerci - ivaReteni
         val totalFinal = Math.round(rawTotal * 100.0) / 100.0
 
         return ResultadoTotales(
@@ -91,6 +96,7 @@ class CalcularTotalesFiscalesUseCase {
             ventaExenta = acumExenta,
             ventaNoSujeta = acumNoSujeta,
             ivaPerci = ivaPerci,
+            ivaReteni = ivaReteni,
             totalFinal = totalFinal
         )
     }

@@ -21,9 +21,10 @@ class ActualizarTotalesFiscalesUseCase(private val repository: PedidosRepository
         ventaExenta: Double, 
         ventaNoSujeta: Double, 
         ivaPerci: Double, 
+        ivaReteni: Double,
         totalFinal: Double
     ) = withContext(Dispatchers.IO) {
-        repository.actualizarTotalesFiscalesLocal(idPedido, sumas, iva, ventaExenta, ventaNoSujeta, ivaPerci, totalFinal)
+        repository.actualizarTotalesFiscalesLocal(idPedido, sumas, iva, ventaExenta, ventaNoSujeta, ivaPerci, ivaReteni, totalFinal)
     }
 }
 
