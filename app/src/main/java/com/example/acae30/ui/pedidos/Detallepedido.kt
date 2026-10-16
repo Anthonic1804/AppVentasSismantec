@@ -430,6 +430,16 @@ class Detallepedido : AppCompatActivity() {
                 nombreSucursalPedido = it.Nombre_sucursal ?: ""
                 idPedidoServidor = it.Id_pedido_sistema ?: 0
 
+                // Refrescar el spinner de sucursal si ya tiene un valor guardado
+                if (!nombreSucursalPedido.isNullOrEmpty() && 
+                    nombreSucursalPedido != "-- SELECCIONE UNA SUCURSAL --" && 
+                    nombreSucursalPedido != "-- TOQUE PARA SELECCIONAR SUCURSAL --") {
+                    val listVisual = listOf(nombreSucursalPedido!!)
+                    val adaptador = ArrayAdapter(this, android.R.layout.simple_spinner_item, listVisual)
+                    binding.spSucursal.adapter = adaptador
+                    binding.spSucursal.setSelection(0)
+                }
+
                 // Actualizamos el límite de ítems inmediatamente al cargar el pedido
                 actualizarLimitePorDocumento()
 
