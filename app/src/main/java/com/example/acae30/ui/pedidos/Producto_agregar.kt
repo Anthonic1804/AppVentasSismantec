@@ -461,6 +461,7 @@ class Producto_agregar : AppCompatActivity() {
                     // intento.putExtra("sucursalPosition", getSucursalPosition)
                     intento.putExtra("facturaExportacion", false)
                     startActivity(intento)
+                    finish()
                 }else{
                     val intento = Intent(
                         this@Producto_agregar,
@@ -476,6 +477,7 @@ class Producto_agregar : AppCompatActivity() {
                     // intento.putExtra("sucursalPosition", getSucursalPosition)
                     intento.putExtra("facturaExportacion", false)
                     startActivity(intento)
+                    finish()
                 }
             }
 

@@ -26,6 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.dcastalia.localappupdate.DownloadApk
 import com.example.acae30.AlertDialogo
+import com.example.acae30.BuildConfig
 import com.example.acae30.Funciones
 import com.example.acae30.Inicio
 import com.example.acae30.controllers.ConfigController
@@ -53,6 +54,7 @@ class Configuracion : AppCompatActivity() {
     private lateinit var tvUpdate : TextView
     private lateinit var tvCancel : TextView
     private var versionActual : Float = 0f
+    private var versionActualNombre : String = ""
     private val instancia = "CONFIG_SERVIDOR"
     private var preferencias: SharedPreferences? = null
     private var alerta: AlertDialogo? = null
@@ -221,7 +223,7 @@ class Configuracion : AppCompatActivity() {
 
         //OBTENIENDO LA VERSION ACTUAL DE LA APP
         versionActualApp()
-        binding.tvVersionActualApp.text = "ACAE APP Ver. $versionActual"
+        binding.tvVersionActualApp.text = "ACAE APP $versionActualNombre"
 
         //BUSCAR NUEVA ACTUALIZACION
         binding.btnBuscarUpdate.setOnClickListener {
@@ -810,6 +812,7 @@ class Configuracion : AppCompatActivity() {
         }
 
         versionActual = versionName.toString().toFloat()
+        versionActualNombre = BuildConfig.VERSION_DISPLAY
 
     }
 

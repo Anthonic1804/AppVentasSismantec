@@ -1,11 +1,9 @@
 package com.example.acae30.controllers
 
 import android.app.Activity
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.database.sqlite.SQLiteDatabase
 import android.view.View
 import android.widget.Toast
 import androidx.core.database.getFloatOrNull
@@ -396,49 +394,6 @@ class PedidosController {
             }
         }catch (e:Exception){
             println("ERROR: NO SE PUDO ELIMINAR EL PEDIDO -> " + e.message)
-        }
-    }
-
-    //FUNCION PARA AGREGAR COMENTARIOS AL PEDIDOS
-    fun agregarComentarioAlPedido(context: Context, idPedido: Int, comentario: String){
-        val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
-
-        try {
-            base.beginTransaction()
-
-            val detalle = ContentValues()
-            detalle.put("Id_pedido", idPedido)
-            detalle.put("Id_producto", 0)
-            detalle.put("Cantidad", 1)
-            detalle.put("Unidad", "UNI")
-            detalle.put("Descripcion", comentario)
-            detalle.put("Idunidad", 0)
-            detalle.put("precio", 0f)
-            detalle.put("Precio_iva", 0f)
-            detalle.put("Precio_oferta", 0f)
-            detalle.put("Total", 0f)
-            detalle.put("Total_iva", 0f)
-            detalle.put("Descuento", 0f)
-            detalle.put("Bonificado", 0f)
-            detalle.put("Precio_editado", "")
-            detalle.put("Id_Inventario_Precios", 0)
-            detalle.put("Codigo_de_barra", "")
-            detalle.put("EquivaleUni", 0f)
-            detalle.put("EquivaleFra", 0f)
-            detalle.put("UniEquivale", "")
-            detalle.put("Comentario", 1)
-            detalle.put("Tipo", "PRD")
-            detalle.put("Metodo_gestion", "NINGUNO")
-            detalle.put("Tipo_fiscal", "G")
-            detalle.put("Departamento", "")
-
-            base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
-
-            base.setTransactionSuccessful()
-        }catch (e: Exception){
-            println("ERROR AL AGREGAR EL COMENTARIO AL PEDIDO -> " + e.message)
-        }finally {
-            base.endTransaction()
         }
     }
 
@@ -860,6 +815,50 @@ class PedidosController {
             }
         }catch (e:Exception){
             throw Exception("ERROR AL ACTUALIZAR TOTAL EN PEDIDO -> " + e.message)
+        }
+    }
+*/
+    /*
+    //FUNCION PARA AGREGAR COMENTARIOS AL PEDIDOS
+    fun agregarComentarioAlPedido(context: Context, idPedido: Int, comentario: String){
+        val base = funciones.obtenerInstancia(context).openHelper.writableDatabase
+
+        try {
+            base.beginTransaction()
+
+            val detalle = ContentValues()
+            detalle.put("Id_pedido", idPedido)
+            detalle.put("Id_producto", 0)
+            detalle.put("Cantidad", 1)
+            detalle.put("Unidad", "UNI")
+            detalle.put("Descripcion", comentario)
+            detalle.put("Idunidad", 0)
+            detalle.put("precio", 0f)
+            detalle.put("Precio_iva", 0f)
+            detalle.put("Precio_oferta", 0f)
+            detalle.put("Total", 0f)
+            detalle.put("Total_iva", 0f)
+            detalle.put("Descuento", 0f)
+            detalle.put("Bonificado", 0f)
+            detalle.put("Precio_editado", "")
+            detalle.put("Id_Inventario_Precios", 0)
+            detalle.put("Codigo_de_barra", "")
+            detalle.put("EquivaleUni", 0f)
+            detalle.put("EquivaleFra", 0f)
+            detalle.put("UniEquivale", "")
+            detalle.put("Comentario", 1)
+            detalle.put("Tipo", "PRD")
+            detalle.put("Metodo_gestion", "NINGUNO")
+            detalle.put("Tipo_fiscal", "G")
+            detalle.put("Departamento", "")
+
+            base.insert("detalle_pedidos", SQLiteDatabase.CONFLICT_REPLACE, detalle)
+
+            base.setTransactionSuccessful()
+        }catch (e: Exception){
+            println("ERROR AL AGREGAR EL COMENTARIO AL PEDIDO -> " + e.message)
+        }finally {
+            base.endTransaction()
         }
     }
 */

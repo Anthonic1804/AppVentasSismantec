@@ -11,9 +11,22 @@ android {
     defaultConfig {
         applicationId = "com.example.acae30"
         minSdk = 26
-        versionCode = 1
-        versionName = "3.80"
+
+        //Valores para el Versionamiento
+        val appVersionCode = 2
+        val appVersionName = "3.80"
+
+        versionCode = appVersionCode
+        versionName = appVersionName
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        //Formateando el Texto para el Versionamiento
+        val versionNameDisplay = "Ver. $appVersionName - Rev. %03d".format(appVersionCode)
+
+        // BuildConfig
+        buildConfigField("String", "VERSION_DISPLAY", "\"$versionNameDisplay\"")
+
     }
 
     buildFeatures {
