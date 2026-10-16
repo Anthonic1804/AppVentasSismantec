@@ -21,7 +21,8 @@ class DetallePedidoViewModelFactory(
     private val crearPedidoUseCase: CrearPedidoUseCase,
     private val actualizarNombreClienteUseCase: ActualizarNombreClienteUseCase,
     // CÓDIGO NUEVO: Inyección de caso de uso para actualizar tipo de documento
-    private val actualizarTipoDocumentoUseCase: ActualizarTipoDocumentoUseCase
+    private val actualizarTipoDocumentoUseCase: ActualizarTipoDocumentoUseCase,
+    private val gestionarDetallePedidoUseCase: GestionarDetallePedidoUseCase
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -40,7 +41,8 @@ class DetallePedidoViewModelFactory(
                 getPedidosBorradoresUseCase,
                 crearPedidoUseCase,
                 actualizarNombreClienteUseCase,
-                actualizarTipoDocumentoUseCase
+                actualizarTipoDocumentoUseCase,
+                gestionarDetallePedidoUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

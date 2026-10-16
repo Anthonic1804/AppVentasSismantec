@@ -75,6 +75,7 @@ import com.example.acae30.domain.usecase.pedidos.GetDetallePedidoFlowUseCase
 import com.example.acae30.domain.usecase.pedidos.GetTicketDataUseCase
 import com.example.acae30.domain.usecase.pedidos.GetPedidosBorradoresUseCase
 import com.example.acae30.domain.usecase.pedidos.ObtenerCantidadItemsUseCase
+import com.example.acae30.domain.usecase.pedidos.GestionarDetallePedidoUseCase
 import com.example.acae30.listas.PedidoDetalleAdapter
 import com.example.acae30.listas.PedidosBorradoresAdapter
 import com.example.acae30.listas.SucursalBusquedaAdapter
@@ -218,6 +219,10 @@ class Detallepedido : AppCompatActivity() {
         viewModel.observarBorradores()
 
         binding.imbtnatras.setOnClickListener { menuPedidos() }
+
+        binding.btnAgregarComentario.setOnClickListener {
+            mostrarDialogoComentario()
+        }
         
         binding.btnGestionPedidos.setOnClickListener {
             if (from == "visita") {
@@ -337,7 +342,8 @@ class Detallepedido : AppCompatActivity() {
             CrearPedidoUseCase(pedidosRepository, clientesRepository),
             ActualizarNombreClienteUseCase(pedidosRepository),
             // CÓDIGO NUEVO: Inyección de caso de uso para actualizar tipo de documento
-            ActualizarTipoDocumentoUseCase(pedidosRepository)
+            ActualizarTipoDocumentoUseCase(pedidosRepository),
+            GestionarDetallePedidoUseCase(pedidosRepository)
         )
         viewModel = androidx.lifecycle.ViewModelProvider(this, factory)[DetallePedidoViewModel::class.java]
     }
@@ -1198,6 +1204,37 @@ class Detallepedido : AppCompatActivity() {
         if (deniedPermissions.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, deniedPermissions.toTypedArray(), 1001)
         }
+    }
+
+    private fun mostrarDialogoComentario() {
+        val dialog = Dialog(this)
+        val vista = LayoutInflater.from(this).inflate(R.layout.comentario_pedidos, null)
+        dialog.setContentView(vista)
+        dialog.setCancelable(true)
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        val widthPx = (resources.displayMetrics.widthPixels * 0.92).toInt()
+        dialog.window?.setLayout(widthPx, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
+
+        val txtComentario = vista.findViewById<TextInputEditText>(R.id.txtComentarioPedido)
+        val btnAceptar = vista.findViewById<Button>(R.id.btnAceptarComentario)
+        val btnCancelar = vista.findViewById<Button>(R.id.btnCancelarComentario)
+
+        btnAceptar.setOnClickListener {
+            val comentario = txtComentario.text.toString().trim()
+            if (comentario.isNotEmpty()) {
+                viewModel.agregarComentario(idpedido, comentario)
+                dialog.dismiss()
+            } else {
+                txtComentario.error = "EL COMENTARIO NO PUEDE ESTAR VACÍO"
+            }
+        }
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     @Deprecated("Deprecated in Java")

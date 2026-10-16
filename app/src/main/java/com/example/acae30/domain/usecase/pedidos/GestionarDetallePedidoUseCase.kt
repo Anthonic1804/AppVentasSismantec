@@ -137,4 +137,39 @@ class GestionarDetallePedidoUseCase(
     suspend fun obtenerDetallePorId(idDetalle: Int): PedidoDetalleEntity? {
         return repository.obtenerDetallePedidoPorId(idDetalle)
     }
+
+    /**
+     * Agrega un comentario al pedido (idProducto = 0, comentario = 1).
+     */
+    suspend fun agregarComentario(idPedido: Int, comentario: String) {
+        val detalle = PedidoDetalleEntity(
+            id = 0,
+            idPedido = idPedido,
+            idProducto = 0,
+            descripcion = comentario,
+            cantidad = 1.0,
+            unidad = "UNI",
+            idUnidad = 0,
+            precio = 0.0,
+            precioIva = 0.0,
+            total = 0.0,
+            totalIva = 0.0,
+            precioOferta = 0.0,
+            bonificado = 0,
+            descuento = 0.0,
+            precioEditado = "",
+            idInventarioPrecios = 0,
+            codigoBarra = "",
+            equivaleUni = 0.0,
+            equivaleFra = 0.0,
+            uniEquivale = "",
+            comentario = 1,
+            tipo = "PRD",
+            metodoGestion = "NINGUNO",
+            tipoFiscal = "G",
+            ordenDespacho = 0
+        )
+        repository.insertarDetallePedido(detalle)
+        repository.recalcularTotalPedido(idPedido)
+    }
 }

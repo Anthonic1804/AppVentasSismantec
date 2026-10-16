@@ -24,6 +24,7 @@ import com.example.acae30.domain.usecase.pedidos.GetDetallePedidoFlowUseCase
 import com.example.acae30.domain.usecase.pedidos.GetPedidosBorradoresUseCase
 import com.example.acae30.domain.usecase.pedidos.GetTicketDataUseCase
 import com.example.acae30.domain.usecase.pedidos.ObtenerCantidadItemsUseCase
+import com.example.acae30.domain.usecase.pedidos.GestionarDetallePedidoUseCase
 import com.example.acae30.modelos.Cliente
 import com.example.acae30.modelos.DetallePedido
 import com.example.acae30.modelos.Pedidos
@@ -50,7 +51,8 @@ class DetallePedidoViewModel(
     private val crearPedidoUseCase: CrearPedidoUseCase,
     private val actualizarNombreClienteUseCase: ActualizarNombreClienteUseCase,
     // CÓDIGO NUEVO: Inyección del caso de uso para actualizar el tipo de documento
-    private val actualizarTipoDocumentoUseCase: ActualizarTipoDocumentoUseCase
+    private val actualizarTipoDocumentoUseCase: ActualizarTipoDocumentoUseCase,
+    private val gestionarDetalleUseCase: GestionarDetallePedidoUseCase
 ) : ViewModel() {
 
     // Jobs para cancelar observaciones previas al cambiar de pedido
@@ -446,5 +448,15 @@ class DetallePedidoViewModel(
 
     fun resetTicketData() {
         _ticketData.value = null
+    }
+
+    fun agregarComentario(idPedido: Int, comentario: String) {
+        viewModelScope.launch {
+            try {
+                gestionarDetalleUseCase.agregarComentario(idPedido, comentario)
+            } catch (e: Exception) {
+                Timber.e(e, "Error al agregar comentario")
+            }
+        }
     }
 }
