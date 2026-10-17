@@ -13,7 +13,7 @@ android {
         minSdk = 26
 
         //Valores para el Versionamiento
-        val appVersionCode = 2
+        val appVersionCode = 3
         val appVersionName = "3.80"
 
         versionCode = appVersionCode

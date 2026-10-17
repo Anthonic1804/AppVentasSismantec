@@ -116,26 +116,27 @@ class EnviarPedidoUseCase(
                         idPedido = d.Id_pedido,
                         idProducto = d.Id_producto,
                         codigo = d.Codigo,
-                        codigoBarra = d.Codigo_de_barra,
                         descripcion = d.Descripcion,
-                        precio = if ((d.Precio_venta_siva ?: 0.0) > 0.0) d.Precio_venta_siva!! else (d.Precio ?: 0.0),
-                        precioIva = if ((d.Precio_venta ?: 0.0) > 0.0) d.Precio_venta!! else (d.Precio_iva ?: 0.0),
-                        precioU = d.Precio_u ?: 0.0,
-                        precioUIva = d.Precio_u_iva ?: 0.0,
-                        precioVenta = d.Precio_venta ?: 0.0,
-                        precioOfertado = d.Precio_ofertado ?: 0.0, // Campo incluido
-                        cantidad = d.Cantidad ?: 0.0,
-                        subtotal = d.Total ?: 0.0, // Room.Total -> JSON.subtotal (sin iva)
-                        total = d.Total_iva ?: 0.0, // Room.Total_iva -> JSON.total (con iva)
-                        bonificado = (d.Bonificado ?: 0).toDouble(),
+                        fraccion = d.Unidad,
+                        precioLista = d.Precio ?: 0.0,
+                        precioListaIva = d.Precio_iva ?: 0.0,
                         descuento = d.Descuento ?: 0.0,
+                        precioU = if ((d.Precio_venta_siva ?: 0.0) > 0.0) d.Precio_venta_siva!! else (d.Precio ?: 0.0),
+                        precioUIva = if ((d.Precio_venta ?: 0.0) > 0.0) d.Precio_venta!! else (d.Precio_iva ?: 0.0),
+                        cantidad = d.Cantidad ?: 0.0,
+                        bonificado = (d.Bonificado ?: 0).toDouble(),
+                        total = d.Total ?: 0.0,
+                        totalIva = d.Total_iva ?: 0.0,
                         precioEditado = d.Precio_editado,
                         idUnidad = d.Idunidad ?: 0,
                         equivaleUni = d.EquivaleUni ?: 0.0,
                         equivaleFra = d.EquivaleFra ?: 0.0,
                         uniEquivale = d.UniEquivale,
+                        idTalla = 0,
+                        idPrecio = 0,
                         fechaCreado = pedidoEntity.fechaCreado,
-                        tipo = d.Tipo,
+                        codigoBarra = d.Codigo_de_barra,
+                        servicio = if (d.Tipo?.trim()?.uppercase() == "SVC") "SVC" else "PRD",
                         idMarca = d.IdMarca,
                         idSku = d.IdSku,
                         idLinea = d.IdLinea,
@@ -154,8 +155,7 @@ class EnviarPedidoUseCase(
                         idBodega = d.IdBodega,
                         codBodega = d.CodBodega,
                         bodega = d.Bodega,
-                        ordenDespacho = d.OrdenDespacho ?: 0,
-                        unidad = d.Unidad
+                        ordenDespacho = d.OrdenDespacho ?: 0
                     )
                 }
             )

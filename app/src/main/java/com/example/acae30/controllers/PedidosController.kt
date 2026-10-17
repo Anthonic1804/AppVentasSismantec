@@ -33,9 +33,9 @@ class PedidosController {
     private lateinit var preferences: SharedPreferences
     private var instancia = "CONFIG_SERVIDOR"
     private var utilidades = CrearSslNoSeguro()
-    private val clientesController = ClientesController()
-    private lateinit var base : AppDatabase
-    private lateinit var servidor : String
+    //private val clientesController = ClientesController()
+    //private lateinit var base : AppDatabase
+    //private lateinit var servidor : String
 
     //FUNCION PARA ACTUALIZAR EL PAGO Y EL CAMBIO DEL CLIENTE
     fun actualizarPagoCambioPedido(context: Context, idpedido: Int, pago:Float, cambio:Float, pagoEfectivo:Float,
@@ -741,16 +741,16 @@ class PedidosController {
                 if (cursor.count > 0) {
                     if(precioConIvaShared != precioConIVASeleccionado){
                         if(!precioConIVASeleccionado){
-                            //actualizar quitando iva
-                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio/1.13), precio_iva=(precio_iva/1.13), " +
-                                    "total=cantidad*(precio/1.13), total_iva=cantidad*(precio_iva/1.13) WHERE Id_pedido=$idPedido")
+                            //actualizar quitando iva (excluye productos Exentos 'E' y No Sujetos 'NS')
+                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio/1.13), " +
+                                    "total=(total/1.13) WHERE Id_pedido=$idPedido AND (tipo_fiscal NOT IN ('E', 'NS') OR tipo_fiscal IS NULL)")
 
                             actualizarTotalPedido(context, idPedido)
                             println("SE QUITO IVA")
                         }else{
-                            //actualiar agregando iva
-                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio*1.13), precio_iva=(precio_iva*1.13), " +
-                                    "total=cantidad*(precio*1.13), total_iva=cantidad*(precio_iva*1.13) WHERE Id_pedido=$idPedido")
+                            //actualizar agregando iva (excluye productos Exentos 'E' y No Sujetos 'NS')
+                            bd.execSQL("UPDATE detalle_pedidos SET precio=(precio*1.13), " +
+                                    "total=(total*1.13) WHERE Id_pedido=$idPedido AND (tipo_fiscal NOT IN ('E', 'NS') OR tipo_fiscal IS NULL)")
 
                             actualizarTotalPedido(context, idPedido)
                             println("SE AGREGO IVA")
